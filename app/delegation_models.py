@@ -10,10 +10,9 @@ from .db import Base
 
 class AgentSigningIdentity(Base):
     __tablename__ = "agent_signing_identities"
-    __table_args__ = (UniqueConstraint("user_id", name="uq_signing_identity_user"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     key_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     algorithm: Mapped[str] = mapped_column(String(16), default="Ed25519")
     public_key_b64: Mapped[str] = mapped_column(String(128))
