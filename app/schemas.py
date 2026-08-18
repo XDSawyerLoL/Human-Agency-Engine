@@ -52,3 +52,13 @@ class OpportunityOut(BaseModel):
     status: str
 
     model_config = {"from_attributes": True}
+
+
+class ConnectorStatusOut(BaseModel):
+    provider: str
+    enabled: bool
+    scopes: list[str]
+    last_synced_at: datetime | None
+    last_error: str
+
+    model_config = {"from_attributes": True}
