@@ -154,6 +154,53 @@ def list_dry_runs(external_id: str, db: Session = Depends(get_db)):
     return [_dry_run_out(item) for item in rows]
 
 
+@router.get("/users/{external_id}/export")
+def export_execution_authorization(external_id: str, db: Session = Depends(get_db)):
+    user = _user_or_404(db, external_id)
+    receipts = (
+        db.query(PolicyReceipt)
+        .filter(PolicyReceipt.user_id == user.id)
+        .order_by(PolicyReceipt.created_at.asc())
+        .all()
+    )
+    commits = (
+        db.query(HumanCommitAuthorization)
+        .filter(HumanCommitAuthorization.user_id == user.id)
+        .order_by(HumanCommitAuthorization.prepared_at.asc())
+        .all()
+    )
+    dry_runs = (
+        db.query(ExecutionDryRun)
+        .filter(ExecutionDryRun.user_id == user.id)
+        .order_by(ExecutionDryRun.created_at.asc())
+        .all()
+    )
+    return {
+        "policy_receipts": [
+            {
+                "receipt_id": item.receipt_id,
+                "engine_version": item.engine_version,
+                "candidate_id": item.candidate_id,
+                "mandate_version": item.mandate_version,
+                "capability": item.capability,
+                "audience": item.audience,
+                "action_fingerprint": item.action_fingerprint,
+                "decision": item.decision,
+                "reasons": item.reasons,
+                "evaluated_constraints": item.evaluated_constraints,
+                "receipt_hash": item.receipt_hash,
+                "created_at": item.created_at,
+            }
+            for item in receipts
+        ],
+        "human_commits": [_commit_out(item) for item in commits],
+        "dry_runs": [_dry_run_out(item) for item in dry_runs],
+        "human_commit_tokens_included": False,
+        "delegation_tokens_included": False,
+        "external_dispatch_records_included": False,
+    }
+
+
 # The package initializer imports this module before app.main imports agency.router.
 # Mounting here keeps app.main stable while producing the intended /v1/execution URLs.
 from .agency import router as agency_router  # noqa: E402
