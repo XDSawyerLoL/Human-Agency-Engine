@@ -19,10 +19,21 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Compile Python
-        run: python -m compileall -q app scripts
+        run: python -m compileall -q app scripts migrations
+      - name: Validate migrations
+        env:
+          PYTHONPATH: .
+          DATABASE_URL: sqlite:///./migration-test.db
+          API_KEY: change-me
+        run: |
+          rm -f migration-test.db
+          alembic upgrade head
+          alembic current
       - name: Run tests
         env:
           PYTHONPATH: .
           DATABASE_URL: sqlite:///./test.db
           API_KEY: change-me
-        run: pytest -q
+        run: |
+          rm -f test.db
+          pytest -q

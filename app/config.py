@@ -16,5 +16,28 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    @property
+    def is_production(self) -> bool:
+        return self.app_env.lower() == "production"
+
+    def validate_runtime(self) -> None:
+        errors: list[str] = []
+
+        if bool(self.google_client_id) != bool(self.google_client_secret):
+            errors.append(
+                "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be configured together"
+            )
+
+        if self.is_production:
+            if self.api_key == "change-me" or len(self.api_key) < 32:
+                errors.append("API_KEY must be a non-default secret of at least 32 characters")
+            if self.database_url.startswith("sqlite"):
+                errors.append("Production requires a persistent non-SQLite DATABASE_URL")
+            if not self.token_encryption_key:
+                errors.append("TOKEN_ENCRYPTION_KEY is required in production")
+
+        if errors:
+            raise RuntimeError("Invalid runtime configuration: " + "; ".join(errors))
+
 
 settings = Settings()
