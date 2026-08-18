@@ -40,7 +40,7 @@ class ExecutionReadinessService:
         )
         candidate = (
             self.db.query(CandidateIntervention)
-            .filter(CandidateIntervention.id == preflight.dry_run_id * 0 + preflight.user_id * 0 + (dry_run.candidate_id if dry_run else -1))
+            .filter(CandidateIntervention.id == dry_run.candidate_id)
             .one_or_none()
             if dry_run
             else None
@@ -174,9 +174,11 @@ class ExecutionReadinessService:
             "current_policy_allow": bool(policy_receipt and policy_receipt.decision == "allow"),
             "external_dispatch_enabled": False,
         }
+        if not candidate:
+            raise ValueError("candidate no longer exists")
         receipt = ExecutionReadinessReceipt(
             user_id=user.id,
-            candidate_id=candidate.id if candidate else (dry_run.candidate_id if dry_run else 0),
+            candidate_id=candidate.id,
             preflight_id=preflight.id,
             attestation_id=attestation.id if attestation else None,
             policy_receipt_id=policy_receipt.id if policy_receipt else None,
