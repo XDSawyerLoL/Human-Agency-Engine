@@ -16,6 +16,7 @@ from .routers.agency import router as agency_router
 from .routers.future import router as future_router
 from .routers.privacy import router as privacy_router
 from .routers.state import router as state_router
+from .routers.synthesis import router as synthesis_router
 from .routers.world import router as world_router
 from .schemas import (
     ConnectorStatusOut,
@@ -28,16 +29,17 @@ from .schemas import (
 from .security import require_api_key
 from .services.cycle import AgencyCycle
 from .services.engine import OpportunityEngine
-from .services.proactivity import ProactivityService
+from .services.synthesis import SynthesisService
 from .services.world_model import WorldModelService
 from .world_schemas import EventCreate
 
 settings.validate_runtime()
 Base.metadata.create_all(bind=engine)
-app = FastAPI(title="Human Agency Engine", version="0.6.0")
+app = FastAPI(title="Human Agency Engine", version="0.7.0")
 app.include_router(agency_router)
 app.include_router(state_router)
 app.include_router(future_router)
+app.include_router(synthesis_router)
 app.include_router(world_router)
 app.include_router(privacy_router)
 
@@ -222,12 +224,11 @@ def sync_google(external_id: str, db: Session = Depends(get_db)):
     try:
         sync_result = GoogleReadOnlyConnector(db).sync(account.id)
         opportunities = OpportunityEngine(db).run_for_user(user)
-        notifications = ProactivityService(db).evaluate_many(user, opportunities)
+        synthesis = SynthesisService(db).run(user)
         return {
             **sync_result,
             "created_opportunities": len(opportunities),
-            "queued_notifications": sum(1 for item in notifications if item.status == "queued"),
-            "suppressed_notifications": sum(1 for item in notifications if item.status == "suppressed"),
+            "synthesis": synthesis,
         }
     except Exception as exc:
         raise HTTPException(502, f"Google sync failed: {exc}") from exc
@@ -284,24 +285,30 @@ def run_engine(external_id: str, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(404, "user not found")
     opportunities = OpportunityEngine(db).run_for_user(user)
-    ProactivityService(db).evaluate_many(user, opportunities)
+    SynthesisService(db).run(user)
     return opportunities
 
 
 @app.post("/v1/engine/run-all", dependencies=[Depends(require_api_key)])
 def run_all(db: Session = Depends(get_db)):
     total_created = 0
-    queued = 0
-    suppressed = 0
+    synthesis_totals = {
+        "evaluated": 0,
+        "ready_for_review": 0,
+        "needs_information": 0,
+        "rejected": 0,
+        "queued_notifications": 0,
+        "suppressed_notifications": 0,
+    }
     engine_service = OpportunityEngine(db)
-    proactivity = ProactivityService(db)
+    synthesis_service = SynthesisService(db)
     for user in db.query(User).all():
         opportunities = engine_service.run_for_user(user)
         total_created += len(opportunities)
-        notifications = proactivity.evaluate_many(user, opportunities)
-        queued += sum(1 for item in notifications if item.status == "queued")
-        suppressed += sum(1 for item in notifications if item.status == "suppressed")
-    return {"created": total_created, "queued_notifications": queued, "suppressed_notifications": suppressed}
+        result = synthesis_service.run(user)
+        for key in synthesis_totals:
+            synthesis_totals[key] += int(result.get(key, 0))
+    return {"created_opportunities": total_created, "synthesis": synthesis_totals}
 
 
 @app.get(

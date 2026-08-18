@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from ..connectors.google import GoogleReadOnlyConnector
 from ..models import ConnectorAccount, User
 from .engine import OpportunityEngine
-from .proactivity import ProactivityService
+from .synthesis import SynthesisService
 
 
 class AgencyCycle:
@@ -15,8 +15,15 @@ class AgencyCycle:
     def run(self) -> dict:
         connector_results: list[dict] = []
         created_opportunities = 0
-        queued_notifications = 0
-        suppressed_notifications = 0
+        synthesis_totals = {
+            "generated": 0,
+            "evaluated": 0,
+            "ready_for_review": 0,
+            "needs_information": 0,
+            "rejected": 0,
+            "queued_notifications": 0,
+            "suppressed_notifications": 0,
+        }
 
         accounts = (
             self.db.query(ConnectorAccount)
@@ -37,17 +44,16 @@ class AgencyCycle:
                     )
 
         engine = OpportunityEngine(self.db)
-        proactivity = ProactivityService(self.db)
+        synthesis = SynthesisService(self.db)
         for user in self.db.query(User).all():
             created = engine.run_for_user(user)
             created_opportunities += len(created)
-            notifications = proactivity.evaluate_many(user, created)
-            queued_notifications += sum(1 for item in notifications if item.status == "queued")
-            suppressed_notifications += sum(1 for item in notifications if item.status == "suppressed")
+            result = synthesis.run(user)
+            for key in synthesis_totals:
+                synthesis_totals[key] += int(result.get(key, 0))
 
         return {
             "connectors": connector_results,
             "created_opportunities": created_opportunities,
-            "queued_notifications": queued_notifications,
-            "suppressed_notifications": suppressed_notifications,
+            "synthesis": synthesis_totals,
         }

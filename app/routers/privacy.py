@@ -21,6 +21,7 @@ from ..models import (
     User,
 )
 from ..security import require_api_key
+from ..synthesis_models import CandidateIntervention
 from ..world_models import (
     Experiment,
     ExperimentObservation,
@@ -55,6 +56,7 @@ def export_user_data(external_id: str, db: Session = Depends(get_db)):
     outcomes = db.query(Outcome).filter(Outcome.opportunity_id.in_(opportunity_ids)).all() if opportunity_ids else []
     notifications = db.query(Notification).filter(Notification.user_id == user.id).all()
     connectors = db.query(ConnectorAccount).filter(ConnectorAccount.user_id == user.id).all()
+    candidates = db.query(CandidateIntervention).filter(CandidateIntervention.user_id == user.id).all()
 
     future_runs = db.query(FutureRun).filter(FutureRun.user_id == user.id).all()
     run_ids = [item.id for item in future_runs]
@@ -154,6 +156,33 @@ def export_user_data(external_id: str, db: Session = Depends(get_db)):
                 "created_at": _dt(item.created_at),
             }
             for item in opportunities
+        ],
+        "candidate_interventions": [
+            {
+                "id": item.id,
+                "candidate_key": item.candidate_key,
+                "source_type": item.source_type,
+                "source_ref": item.source_ref,
+                "source_opportunity_id": item.source_opportunity_id,
+                "hypothesis_ids": item.hypothesis_ids,
+                "intent_ids": item.intent_ids,
+                "name": item.name,
+                "rationale": item.rationale,
+                "intervention": item.intervention,
+                "effects": item.effects,
+                "assumptions": item.assumptions,
+                "evidence": item.evidence,
+                "confidence": item.confidence,
+                "status": item.status,
+                "rejection_reason": item.rejection_reason,
+                "future_run_id": item.future_run_id,
+                "scenario_id": item.scenario_id,
+                "decision_status": item.decision_status,
+                "surfaced_opportunity_id": item.surfaced_opportunity_id,
+                "created_at": _dt(item.created_at),
+                "updated_at": _dt(item.updated_at),
+            }
+            for item in candidates
         ],
         "outcomes": [
             {
@@ -352,6 +381,7 @@ def delete_user_data(
     db.query(WorldHypothesis).filter(WorldHypothesis.user_id == user.id).delete(synchronize_session=False)
     db.query(WorldEvent).filter(WorldEvent.user_id == user.id).delete(synchronize_session=False)
 
+    db.query(CandidateIntervention).filter(CandidateIntervention.user_id == user.id).delete(synchronize_session=False)
     if opportunity_ids:
         db.query(Outcome).filter(Outcome.opportunity_id.in_(opportunity_ids)).delete(synchronize_session=False)
     if run_ids:
