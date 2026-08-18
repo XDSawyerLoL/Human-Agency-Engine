@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: human-agency-engine
+    runtime: docker
+    region: frankfurt
+    plan: free
+    autoDeployTrigger: checksPass
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: human-agency-db
+          property: connectionString
+      - key: API_KEY
+        generateValue: true
+      - key: TOKEN_ENCRYPTION_KEY
+        generateValue: true
+      - key: GOOGLE_SYNC_LOOKBACK_DAYS
+        value: "14"
+      - key: GOOGLE_SYNC_LOOKAHEAD_DAYS
+        value: "60"
+      - key: GOOGLE_MAX_GMAIL_MESSAGES
+        value: "250"
+
+databases:
+  - name: human-agency-db
+    region: frankfurt
+    plan: free
+    databaseName: human_agency
+    user: human_agency
+    postgresMajorVersion: "18"
+    ipAllowList: []
