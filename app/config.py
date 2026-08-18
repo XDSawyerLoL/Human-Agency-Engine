@@ -28,6 +28,14 @@ class Settings(BaseSettings):
         return self.app_env.lower() == "production"
 
     @property
+    def sqlalchemy_database_url(self) -> str:
+        if self.database_url.startswith("postgres://"):
+            return self.database_url.replace("postgres://", "postgresql+psycopg://", 1)
+        if self.database_url.startswith("postgresql://"):
+            return self.database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+        return self.database_url
+
+    @property
     def resolved_google_redirect_uri(self) -> str:
         if self.google_redirect_uri:
             return self.google_redirect_uri
