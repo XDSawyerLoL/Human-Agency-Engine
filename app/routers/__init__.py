@@ -1,4 +1,5 @@
-# Import execution first, then mount adapter routes beneath it.
-# This keeps app.main stable while agency.router remains the single /v1 parent.
+# Import in dependency order so nested routers mount deterministically.
+# agency -> execution -> adapters -> sandbox
 from . import execution as _execution  # noqa: F401,E402
 from . import adapters as _adapters  # noqa: F401,E402
+from . import sandbox as _sandbox  # noqa: F401,E402
