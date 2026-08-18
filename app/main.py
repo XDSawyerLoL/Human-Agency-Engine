@@ -1,16 +1,29 @@
 from datetime import datetime
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from .connectors.google import (
+    GoogleReadOnlyConnector,
+    finish_google_oauth,
+    start_google_oauth,
+)
 from .db import Base, engine, get_db
-from .models import Intent, Opportunity, Outcome, Signal, User
-from .schemas import IntentCreate, OpportunityOut, OutcomeCreate, SignalCreate, UserUpsert
+from .models import ConnectorAccount, Intent, Opportunity, Outcome, Signal, User
+from .schemas import (
+    ConnectorStatusOut,
+    IntentCreate,
+    OpportunityOut,
+    OutcomeCreate,
+    SignalCreate,
+    UserUpsert,
+)
 from .security import require_api_key
+from .services.cycle import AgencyCycle
 from .services.engine import OpportunityEngine
 
 Base.metadata.create_all(bind=engine)
-app = FastAPI(title="Human Agency Engine", version="0.2.0")
+app = FastAPI(title="Human Agency Engine", version="0.3.0")
 
 
 @app.get("/health")
@@ -84,6 +97,113 @@ def ingest_signal(
     return {"id": signal.id, "processed": signal.processed}
 
 
+@app.get(
+    "/v1/users/{external_id}/connectors",
+    response_model=list[ConnectorStatusOut],
+    dependencies=[Depends(require_api_key)],
+)
+def list_connectors(external_id: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.external_id == external_id).one_or_none()
+    if not user:
+        raise HTTPException(404, "user not found")
+    return db.query(ConnectorAccount).filter(ConnectorAccount.user_id == user.id).all()
+
+
+@app.post(
+    "/v1/users/{external_id}/connectors/google/start",
+    dependencies=[Depends(require_api_key)],
+)
+def google_oauth_start(external_id: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.external_id == external_id).one_or_none()
+    if not user:
+        raise HTTPException(404, "user not found")
+    try:
+        return {"authorization_url": start_google_oauth(db, user)}
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+
+
+@app.get("/v1/connectors/google/callback")
+def google_oauth_callback(
+    state: str = Query(...),
+    code: str = Query(...),
+    db: Session = Depends(get_db),
+):
+    try:
+        account = finish_google_oauth(db, state, code)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+
+    return {
+        "connected": True,
+        "provider": account.provider,
+        "scopes": account.scopes,
+    }
+
+
+@app.post(
+    "/v1/users/{external_id}/connectors/google/sync",
+    dependencies=[Depends(require_api_key)],
+)
+def sync_google(external_id: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.external_id == external_id).one_or_none()
+    if not user:
+        raise HTTPException(404, "user not found")
+    account = (
+        db.query(ConnectorAccount)
+        .filter(
+            ConnectorAccount.user_id == user.id,
+            ConnectorAccount.provider == "google",
+            ConnectorAccount.enabled == True,  # noqa: E712
+        )
+        .one_or_none()
+    )
+    if not account:
+        raise HTTPException(404, "Google connector not connected")
+    try:
+        sync_result = GoogleReadOnlyConnector(db).sync(account.id)
+        opportunities = OpportunityEngine(db).run_for_user(user)
+        return {
+            **sync_result,
+            "created_opportunities": len(opportunities),
+        }
+    except Exception as exc:
+        raise HTTPException(502, f"Google sync failed: {exc}") from exc
+
+
+@app.delete(
+    "/v1/users/{external_id}/connectors/google",
+    dependencies=[Depends(require_api_key)],
+)
+def disable_google(external_id: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.external_id == external_id).one_or_none()
+    if not user:
+        raise HTTPException(404, "user not found")
+    account = (
+        db.query(ConnectorAccount)
+        .filter(
+            ConnectorAccount.user_id == user.id,
+            ConnectorAccount.provider == "google",
+        )
+        .one_or_none()
+    )
+    if not account:
+        raise HTTPException(404, "Google connector not connected")
+    account.enabled = False
+    account.encrypted_token_json = ""
+    account.last_error = ""
+    account.updated_at = datetime.utcnow()
+    db.commit()
+    return {"disconnected": True, "provider": "google"}
+
+
+@app.post("/v1/cycle/run", dependencies=[Depends(require_api_key)])
+def run_cycle(db: Session = Depends(get_db)):
+    return AgencyCycle(db).run()
+
+
 @app.post(
     "/v1/users/{external_id}/engine/run",
     response_model=list[OpportunityOut],
@@ -132,11 +252,19 @@ def record_outcome(
     payload: OutcomeCreate,
     db: Session = Depends(get_db),
 ):
-    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).one_or_none()
+    opportunity = (
+        db.query(Opportunity)
+        .filter(Opportunity.id == opportunity_id)
+        .one_or_none()
+    )
     if not opportunity:
         raise HTTPException(404, "opportunity not found")
 
-    outcome = db.query(Outcome).filter(Outcome.opportunity_id == opportunity_id).one_or_none()
+    outcome = (
+        db.query(Outcome)
+        .filter(Outcome.opportunity_id == opportunity_id)
+        .one_or_none()
+    )
     if outcome is None:
         outcome = Outcome(opportunity_id=opportunity_id, **payload.model_dump())
         db.add(outcome)
