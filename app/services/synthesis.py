@@ -85,7 +85,10 @@ class SynthesisService:
                 )
             except ValidationError as exc:
                 candidate.status = "needs_information"
-                candidate.rejection_reason = f"effect/assumption model is structurally invalid: {exc.errors()[0]['msg']}"
+                candidate.rejection_reason = (
+                    "effect/assumption model is structurally invalid: "
+                    f"{exc.errors()[0]['msg']}"
+                )
                 candidate.updated_at = datetime.utcnow()
                 continue
             scenario_inputs.append(scenario)
@@ -108,7 +111,9 @@ class SynthesisService:
             user,
             FutureCompareRequest(
                 horizon_days=horizon_days,
-                objective="Evaluate synthesized interventions before they may reach user attention.",
+                objective=(
+                    "Evaluate synthesized interventions before they may reach user attention."
+                ),
                 scenarios=scenario_inputs,
             ),
         )
@@ -150,16 +155,30 @@ class SynthesisService:
             if scenario is None:
                 candidate.status = "needs_information"
                 candidate.rejection_reason = "scenario mapping missing after FUTURE run"
+                candidate.updated_at = datetime.utcnow()
                 needs_information += 1
                 continue
+
             analysis = analysis_by_scenario.get(scenario.id, {})
-            decision_status = str(analysis.get("decision_status", "insufficient_information"))
+            decision_status = str(
+                analysis.get("decision_status", "insufficient_information")
+            )
             candidate.future_run_id = run.id
             candidate.scenario_id = scenario.id
             candidate.decision_status = decision_status
             candidate.updated_at = datetime.utcnow()
 
-            if decision_status in READY_STATUSES:
+            care_gate = self._care_gate(candidate)
+            if care_gate is not None:
+                care_status, care_decision, care_reason = care_gate
+                candidate.status = care_status
+                candidate.decision_status = care_decision
+                candidate.rejection_reason = care_reason
+                if care_status == "rejected":
+                    rejected += 1
+                else:
+                    needs_information += 1
+            elif decision_status in READY_STATUSES:
                 candidate.status = "ready_for_review"
                 candidate.rejection_reason = ""
                 ready += 1
@@ -225,6 +244,36 @@ class SynthesisService:
             "future_run_id": run.id,
         }
 
+    def _care_gate(
+        self, candidate: CandidateIntervention
+    ) -> tuple[str, str, str] | None:
+        if candidate.source_opportunity_id is None:
+            return None
+        source = (
+            self.db.query(Opportunity)
+            .filter(Opportunity.id == candidate.source_opportunity_id)
+            .one_or_none()
+        )
+        if source is None:
+            return (
+                "needs_information",
+                "care_source_missing",
+                "source opportunity is missing; CARE cannot be verified",
+            )
+        if source.care_status == "blocked":
+            return (
+                "rejected",
+                "care_blocked",
+                source.care_reason or "CARE blocked the source opportunity",
+            )
+        if source.care_status != "approved":
+            return (
+                "needs_information",
+                "care_review_required",
+                source.care_reason or "CARE requires review before surfacing",
+            )
+        return None
+
     def _generate_candidates(self, user: User, *, horizon_days: int) -> int:
         active_intents = (
             self.db.query(Intent)
@@ -243,7 +292,9 @@ class SynthesisService:
             .all()
         )
         for opportunity in raw_opportunities:
-            spec = self._from_opportunity(user, opportunity, active_intents, horizon_days)
+            spec = self._from_opportunity(
+                user, opportunity, active_intents, horizon_days
+            )
             if spec:
                 specs.append(spec)
 
@@ -296,7 +347,10 @@ class SynthesisService:
         intents: list[Intent],
         horizon_days: int,
     ) -> dict | None:
-        text = f"{opportunity.title} {opportunity.rationale} {_canonical(opportunity.proposed_action)}"
+        text = (
+            f"{opportunity.title} {opportunity.rationale} "
+            f"{_canonical(opportunity.proposed_action)}"
+        )
         intent, match_score = best_intent_match(text, intents)
         intent_ids = [intent.id] if intent is not None and match_score >= 0.15 else []
         if not intent_ids and opportunity.category not in {"money", "risk", "timing"}:
@@ -317,18 +371,30 @@ class SynthesisService:
                     "high": maximum,
                     "unit": user.currency,
                     "direction": "higher_is_better",
-                    "rationale": "mechanical avoided subscription cost over the simulation horizon if cancellation is appropriate",
+                    "rationale": (
+                        "mechanical avoided subscription cost over the simulation "
+                        "horizon if cancellation is appropriate"
+                    ),
                 }
                 assumptions.append(
                     {
-                        "statement": "the subscription can be reduced or cancelled without losing value the user still needs",
+                        "statement": (
+                            "the subscription can be reduced or cancelled without "
+                            "losing value the user still needs"
+                        ),
                         "confidence": min(float(opportunity.confidence), 0.6),
                         "source": f"opportunity:{opportunity.id}",
-                        "falsifiable_by": "verify actual use, cancellation terms and replacement need",
+                        "falsifiable_by": (
+                            "verify actual use, cancellation terms and replacement need"
+                        ),
                     }
                 )
         elif action_type == "consider_purchase":
-            savings = opportunity.counterfactual.get("savings_vs_reference") if isinstance(opportunity.counterfactual, dict) else None
+            savings = (
+                opportunity.counterfactual.get("savings_vs_reference")
+                if isinstance(opportunity.counterfactual, dict)
+                else None
+            )
             if isinstance(savings, (int, float)) and savings > 0:
                 effects["purchase_cost_avoided"] = {
                     "low": 0.0,
@@ -336,26 +402,43 @@ class SynthesisService:
                     "high": float(savings),
                     "unit": user.currency,
                     "direction": "higher_is_better",
-                    "rationale": "difference versus the recorded reference price, conditional on the purchase being needed anyway",
+                    "rationale": (
+                        "difference versus the recorded reference price, conditional "
+                        "on the purchase being needed anyway"
+                    ),
                 }
                 assumptions.append(
                     {
-                        "statement": "the user would otherwise make the same purchase later near the reference price",
+                        "statement": (
+                            "the user would otherwise make the same purchase later "
+                            "near the reference price"
+                        ),
                         "confidence": min(float(opportunity.confidence), 0.55),
                         "source": f"opportunity:{opportunity.id}",
-                        "falsifiable_by": "confirm the purchase remains intended and compare current alternatives",
+                        "falsifiable_by": (
+                            "confirm the purchase remains intended and compare current alternatives"
+                        ),
                     }
                 )
 
         if not assumptions:
             assumptions.append(
                 {
-                    "statement": "the detected opportunity is still relevant to the user's current context",
+                    "statement": (
+                        "the detected opportunity is still relevant to the user's "
+                        "current context"
+                    ),
                     "confidence": min(float(opportunity.confidence), 0.65),
                     "source": f"opportunity:{opportunity.id}",
-                    "falsifiable_by": "verify the triggering signal and current intent before acting",
+                    "falsifiable_by": (
+                        "verify the triggering signal and current intent before acting"
+                    ),
                 }
             )
+
+        sources = [f"opportunity:{opportunity.id}"]
+        if opportunity.signal_id is not None:
+            sources.append(f"signal:{opportunity.signal_id}")
 
         return {
             "source_type": "opportunity",
@@ -370,21 +453,36 @@ class SynthesisService:
             "assumptions": assumptions,
             "evidence": {
                 "level": "observational",
-                "sources": [f"opportunity:{opportunity.id}", f"signal:{opportunity.signal_id}" if opportunity.signal_id else ""],
-                "notes": "candidate derived from observed signal/opportunity; not causal evidence",
+                "sources": sources,
+                "notes": (
+                    "candidate derived from observed signal/opportunity; not causal evidence"
+                ),
             },
             "confidence": float(opportunity.confidence),
         }
 
-    def _from_hypothesis(self, hypothesis: WorldHypothesis, intents: list[Intent]) -> dict | None:
-        intervention = hypothesis.cause_pattern.get("intervention") if isinstance(hypothesis.cause_pattern, dict) else None
-        metrics = hypothesis.effect_pattern.get("metrics") if isinstance(hypothesis.effect_pattern, dict) else None
+    def _from_hypothesis(
+        self, hypothesis: WorldHypothesis, intents: list[Intent]
+    ) -> dict | None:
+        intervention = (
+            hypothesis.cause_pattern.get("intervention")
+            if isinstance(hypothesis.cause_pattern, dict)
+            else None
+        )
+        metrics = (
+            hypothesis.effect_pattern.get("metrics")
+            if isinstance(hypothesis.effect_pattern, dict)
+            else None
+        )
         if not isinstance(intervention, dict) or not intervention:
             return None
         if not isinstance(metrics, dict):
             metrics = {}
 
-        text = f"{hypothesis.name} {_canonical(hypothesis.cause_pattern)} {_canonical(hypothesis.effect_pattern)}"
+        text = (
+            f"{hypothesis.name} {_canonical(hypothesis.cause_pattern)} "
+            f"{_canonical(hypothesis.effect_pattern)}"
+        )
         intent, match_score = best_intent_match(text, intents)
         if intents and (intent is None or match_score < 0.15):
             return None
@@ -397,26 +495,44 @@ class SynthesisService:
             "hypothesis_ids": [hypothesis.id],
             "intent_ids": intent_ids,
             "name": hypothesis.name,
-            "rationale": "intervention candidate derived from repeated personal evidence; FUTURE and Decision Lab must still gate it",
+            "rationale": (
+                "intervention candidate derived from repeated personal evidence; "
+                "FUTURE and Decision Lab must still gate it"
+            ),
             "intervention": intervention,
             "effects": metrics,
             "assumptions": [
                 {
-                    "statement": "the repeated personal pattern remains applicable in the current context",
+                    "statement": (
+                        "the repeated personal pattern remains applicable in the current context"
+                    ),
                     "confidence": float(hypothesis.confidence),
                     "source": f"world_hypothesis:{hypothesis.id}",
-                    "falsifiable_by": str(hypothesis.context.get("falsifiable_by", "compare current context with prior experiments")) if isinstance(hypothesis.context, dict) else "compare current context with prior experiments",
+                    "falsifiable_by": (
+                        str(
+                            hypothesis.context.get(
+                                "falsifiable_by",
+                                "compare current context with prior experiments",
+                            )
+                        )
+                        if isinstance(hypothesis.context, dict)
+                        else "compare current context with prior experiments"
+                    ),
                 }
             ],
             "evidence": {
                 "level": "personal_repeated",
                 "sources": [f"world_hypothesis:{hypothesis.id}"],
-                "notes": "personal repeated evidence; not automatically general causal evidence",
+                "notes": (
+                    "personal repeated evidence; not automatically general causal evidence"
+                ),
             },
             "confidence": float(hypothesis.confidence),
         }
 
-    def _surface_candidate(self, user: User, candidate: CandidateIntervention, baseline, scenario) -> Opportunity:
+    def _surface_candidate(
+        self, user: User, candidate: CandidateIntervention, baseline, scenario
+    ) -> Opportunity:
         if candidate.surfaced_opportunity_id is not None:
             existing = (
                 self.db.query(Opportunity)
@@ -435,7 +551,8 @@ class SynthesisService:
             title=candidate.name,
             rationale=(
                 candidate.rationale
-                + f" Decision gate: {candidate.decision_status}. This is a candidate for review, not authorization."
+                + f" Decision gate: {candidate.decision_status}. "
+                "This is a candidate for review, not authorization."
             ),
             proposed_action=proposed_action,
             baseline=baseline.projected_metrics,
@@ -443,7 +560,10 @@ class SynthesisService:
             expected_value=0.0,
             confidence=float(scenario.confidence),
             care_status="approved",
-            care_reason="passed FUTURE + Decision Lab gate; execution still requires user authorization",
+            care_reason=(
+                "passed CARE + FUTURE + Decision Lab gate; execution still requires "
+                "user authorization"
+            ),
             status="open",
         )
         self.db.add(opportunity)
