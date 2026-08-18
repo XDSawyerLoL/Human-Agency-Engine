@@ -13,6 +13,7 @@ from .connectors.google import (
 from .db import Base, engine, get_db
 from .models import ConnectorAccount, Intent, Opportunity, Outcome, Signal, User
 from .routers.agency import router as agency_router
+from .routers.delegation import router as delegation_router
 from .routers.future import router as future_router
 from .routers.privacy import router as privacy_router
 from .routers.state import router as state_router
@@ -35,11 +36,12 @@ from .world_schemas import EventCreate
 
 settings.validate_runtime()
 Base.metadata.create_all(bind=engine)
-app = FastAPI(title="Human Agency Engine", version="0.7.0")
+app = FastAPI(title="Human Agency Engine", version="0.8.0")
 app.include_router(agency_router)
 app.include_router(state_router)
 app.include_router(future_router)
 app.include_router(synthesis_router)
+app.include_router(delegation_router)
 app.include_router(world_router)
 app.include_router(privacy_router)
 
