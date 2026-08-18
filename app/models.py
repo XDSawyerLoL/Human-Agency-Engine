@@ -66,3 +66,17 @@ class Opportunity(Base):
     care_reason: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(32), default="open", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class Outcome(Base):
+    __tablename__ = "outcomes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    opportunity_id: Mapped[int] = mapped_column(ForeignKey("opportunities.id"), unique=True, index=True)
+    useful: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    accepted: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    executed: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    realized_value: Mapped[float | None] = mapped_column(Float, nullable=True)
+    feedback: Mapped[str] = mapped_column(Text, default="")
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
