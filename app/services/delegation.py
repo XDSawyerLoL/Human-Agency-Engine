@@ -317,38 +317,7 @@ class DelegationService:
             .filter(DelegationGrant.grant_id == claims.get("jti"))
             .one_or_none()
         )
-        if not grant or grant.token != token:
-            raise ValueError("delegation grant is not registered")
-        if grant.identity_id != identity.id:
-            raise ValueError("delegation signing identity mismatch")
-        if identity.revoked_at is not None:
-            raise ValueError("signing identity is revoked")
-        if grant.revoked_at is not None:
-            raise ValueError("delegation grant is revoked")
-        now = datetime.utcnow()
-        if grant.expires_at <= now or int(claims.get("exp", 0)) <= _utc_epoch(now):
-            raise ValueError("delegation grant is expired")
-        if audience is not None and audience != grant.audience:
-            raise ValueError("delegation audience mismatch")
-        if claims.get("aud") != grant.audience:
-            raise ValueError("signed audience does not match registered grant")
-        if grant.use_count >= grant.max_uses:
-            raise ValueError("delegation grant is exhausted")
-
-        mandate = (
-            self.db.query(PersonalMandate)
-            .filter(PersonalMandate.user_id == grant.user_id)
-            .one_or_none()
-        )
-        if not mandate or mandate.version != grant.mandate_version:
-            raise ValueError("delegation grant is stale because Personal Mandate changed")
-        if claims.get("mandate", {}).get("version") != grant.mandate_version:
-            raise ValueError("signed mandate version mismatch")
-        if claims.get("action", {}).get("fingerprint") != grant.action_fingerprint:
-            raise ValueError("signed action fingerprint mismatch")
-        if claims.get("capability") != grant.capability:
-            raise ValueError("signed capability mismatch")
-
+        self._validate_registered_grant(grant, identity, claims, token, audience)
         return {
             "valid": True,
             "header": header,
@@ -358,9 +327,21 @@ class DelegationService:
         }
 
     def consume(self, request: DelegationConsume) -> DelegationUse:
-        verified = self.verify(request.token, audience=request.audience)
-        grant: DelegationGrant = verified["grant"]
-        claimed_fingerprint = verified["claims"].get("action", {}).get("fingerprint")
+        header, claims, identity = self._verify_signature(request.token)
+        grant = (
+            self.db.query(DelegationGrant)
+            .filter(DelegationGrant.grant_id == claims.get("jti"))
+            .with_for_update()
+            .one_or_none()
+        )
+        self._validate_registered_grant(
+            grant,
+            identity,
+            claims,
+            request.token,
+            request.audience,
+        )
+        claimed_fingerprint = claims.get("action", {}).get("fingerprint")
         if request.action_fingerprint and request.action_fingerprint != claimed_fingerprint:
             raise ValueError("requested action fingerprint does not match delegation")
         existing = (
@@ -427,6 +408,52 @@ class DelegationService:
             self.db.commit()
             self.db.refresh(grant)
         return grant
+
+    def _validate_registered_grant(
+        self,
+        grant: DelegationGrant | None,
+        identity: AgentSigningIdentity,
+        claims: dict,
+        token: str,
+        audience: str | None,
+    ) -> None:
+        if not grant or grant.token != token:
+            raise ValueError("delegation grant is not registered")
+        if grant.identity_id != identity.id:
+            raise ValueError("delegation signing identity mismatch")
+        if identity.revoked_at is not None:
+            raise ValueError("signing identity is revoked")
+        if grant.revoked_at is not None:
+            raise ValueError("delegation grant is revoked")
+        now = datetime.utcnow()
+        if grant.expires_at <= now or int(claims.get("exp", 0)) <= _utc_epoch(now):
+            raise ValueError("delegation grant is expired")
+        if audience is not None and audience != grant.audience:
+            raise ValueError("delegation audience mismatch")
+        if claims.get("aud") != grant.audience:
+            raise ValueError("signed audience does not match registered grant")
+        if grant.use_count >= grant.max_uses:
+            raise ValueError("delegation grant is exhausted")
+
+        mandate = (
+            self.db.query(PersonalMandate)
+            .filter(PersonalMandate.user_id == grant.user_id)
+            .one_or_none()
+        )
+        if not mandate or mandate.version != grant.mandate_version:
+            raise ValueError("delegation grant is stale because Personal Mandate changed")
+        if claims.get("mandate", {}).get("version") != grant.mandate_version:
+            raise ValueError("signed mandate version mismatch")
+        if claims.get("action", {}).get("fingerprint") != grant.action_fingerprint:
+            raise ValueError("signed action fingerprint mismatch")
+        if claims.get("capability") != grant.capability:
+            raise ValueError("signed capability mismatch")
+        if claims.get("jti") != grant.grant_id:
+            raise ValueError("signed grant identifier mismatch")
+        if claims.get("nonce") != grant.nonce:
+            raise ValueError("signed nonce mismatch")
+        if int(claims.get("max_uses", 0)) != grant.max_uses:
+            raise ValueError("signed max_uses mismatch")
 
     def _sign(self, identity: AgentSigningIdentity, claims: dict) -> str:
         header = {
