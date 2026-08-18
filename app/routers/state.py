@@ -10,8 +10,10 @@ from ..db import get_db
 from ..models import Intent, StateFact, User
 from ..schemas import IntentUpdate, StateFactCreate, StateFactOut
 from ..security import require_api_key
+from ..services.world_model import WorldModelService
+from ..world_schemas import EventCreate
 
-router = APIRouter(dependencies=[Depends(require_api_key)])
+router = APIRouter(prefix="/v1", dependencies=[Depends(require_api_key)])
 
 
 def _user_or_404(db: Session, external_id: str) -> User:
@@ -51,6 +53,24 @@ def add_state_fact(
     db.add(fact)
     db.commit()
     db.refresh(fact)
+    WorldModelService(db).append_event(
+        user,
+        EventCreate(
+            event_type="state.fact_observed",
+            source=fact.source,
+            subject_type="state_fact",
+            subject_id=str(fact.id),
+            payload={
+                "domain": fact.domain,
+                "key": fact.key,
+                "confidence": fact.confidence,
+                "sensitivity": fact.sensitivity,
+                "expires_at": fact.expires_at.isoformat() if fact.expires_at else None,
+            },
+            confidence=fact.confidence,
+            occurred_at=fact.observed_at,
+        ),
+    )
     return fact
 
 
@@ -122,6 +142,17 @@ def supersede_state_fact(fact_id: int, db: Session = Depends(get_db)):
         raise HTTPException(404, "state fact not found")
     fact.superseded = True
     db.commit()
+    user = db.query(User).filter(User.id == fact.user_id).one()
+    WorldModelService(db).append_event(
+        user,
+        EventCreate(
+            event_type="state.fact_superseded",
+            source="user",
+            subject_type="state_fact",
+            subject_id=str(fact.id),
+            payload={"domain": fact.domain, "key": fact.key},
+        ),
+    )
     return {"id": fact.id, "superseded": True}
 
 
@@ -155,6 +186,17 @@ def update_intent(intent_id: int, payload: IntentUpdate, db: Session = Depends(g
         setattr(intent, key, value)
     db.commit()
     db.refresh(intent)
+    user = db.query(User).filter(User.id == intent.user_id).one()
+    WorldModelService(db).append_event(
+        user,
+        EventCreate(
+            event_type="intent.updated",
+            source="user",
+            subject_type="intent",
+            subject_id=str(intent.id),
+            payload={"changed_fields": sorted(changes.keys()), "priority": intent.priority, "active": intent.active},
+        ),
+    )
     return {
         "id": intent.id,
         "kind": intent.kind,

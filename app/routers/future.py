@@ -9,6 +9,8 @@ from ..models import ForecastOutcome, FutureRun, FutureScenario, User
 from ..security import require_api_key
 from ..services.decision_lab import DecisionLab
 from ..services.future import FutureEngine
+from ..services.world_model import WorldModelService
+from ..world_schemas import EventCreate
 
 router = APIRouter(prefix="/v1", dependencies=[Depends(require_api_key)])
 
@@ -47,6 +49,22 @@ def compare_futures(
 ):
     user = _user_or_404(db, external_id)
     run, scenarios = FutureEngine(db).compare(user, payload)
+    WorldModelService(db).append_event(
+        user,
+        EventCreate(
+            event_type="future.run_created",
+            source="future_engine",
+            subject_type="future_run",
+            subject_id=str(run.id),
+            payload={
+                "horizon_days": run.horizon_days,
+                "objective": run.objective,
+                "scenario_ids": [item.id for item in scenarios],
+                "scenario_count": len(scenarios),
+            },
+            correlation_id=f"future-run:{run.id}",
+        ),
+    )
     return {
         "run": {
             "id": run.id,
@@ -155,6 +173,23 @@ def record_forecast_outcome(
     db.add(outcome)
     db.commit()
     db.refresh(outcome)
+    user = db.query(User).filter(User.id == run.user_id).one()
+    WorldModelService(db).append_event(
+        user,
+        EventCreate(
+            event_type="future.outcome_observed",
+            source="observation",
+            subject_type="forecast_outcome",
+            subject_id=str(outcome.id),
+            payload={
+                "run_id": run.id,
+                "scenario_id": outcome.scenario_id,
+                "observed_metric_names": sorted(outcome.observed_metrics.keys()),
+                "observation_window": outcome.observation_window,
+            },
+            correlation_id=f"future-run:{run.id}",
+        ),
+    )
     return {
         "id": outcome.id,
         "run_id": outcome.run_id,
