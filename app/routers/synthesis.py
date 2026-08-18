@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -72,7 +74,11 @@ def list_candidates(
 
 @router.post("/candidates/{candidate_id}/requeue")
 def requeue_candidate(candidate_id: int, db: Session = Depends(get_db)):
-    item = db.query(CandidateIntervention).filter(CandidateIntervention.id == candidate_id).one_or_none()
+    item = (
+        db.query(CandidateIntervention)
+        .filter(CandidateIntervention.id == candidate_id)
+        .one_or_none()
+    )
     if not item:
         raise HTTPException(404, "candidate not found")
     if item.status == "ready_for_review":
@@ -82,6 +88,6 @@ def requeue_candidate(candidate_id: int, db: Session = Depends(get_db)):
     item.future_run_id = None
     item.scenario_id = None
     item.decision_status = ""
-    item.updated_at = __import__("datetime").datetime.utcnow()
+    item.updated_at = datetime.utcnow()
     db.commit()
     return {"id": item.id, "status": item.status}
