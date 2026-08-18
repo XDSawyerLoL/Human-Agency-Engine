@@ -1,0 +1,33 @@
+name: Agency Cycle
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: human-agency-cycle
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    env:
+      ENGINE_URL: ${{ secrets.ENGINE_URL }}
+      ENGINE_API_KEY: ${{ secrets.ENGINE_API_KEY }}
+    steps:
+      - name: Trigger proactive engine cycle
+        shell: bash
+        run: |
+          if [ -z "$ENGINE_URL" ] || [ -z "$ENGINE_API_KEY" ]; then
+            echo "Agency cycle not configured yet; skipping cleanly."
+            exit 0
+          fi
+          curl --fail-with-body --silent --show-error \
+            --retry 2 \
+            --max-time 180 \
+            -X POST "${ENGINE_URL%/}/v1/cycle/run" \
+            -H "X-API-Key: ${ENGINE_API_KEY}"
