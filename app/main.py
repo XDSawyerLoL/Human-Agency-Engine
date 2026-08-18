@@ -13,7 +13,9 @@ from .connectors.google import (
 from .db import Base, engine, get_db
 from .models import ConnectorAccount, Intent, Opportunity, Outcome, Signal, User
 from .routers.agency import router as agency_router
+from .routers.future import router as future_router
 from .routers.privacy import router as privacy_router
+from .routers.state import router as state_router
 from .schemas import (
     ConnectorStatusOut,
     IntentCreate,
@@ -29,8 +31,10 @@ from .services.proactivity import ProactivityService
 
 settings.validate_runtime()
 Base.metadata.create_all(bind=engine)
-app = FastAPI(title="Human Agency Engine", version="0.4.0")
+app = FastAPI(title="Human Agency Engine", version="0.5.0")
 app.include_router(agency_router)
+app.include_router(state_router)
+app.include_router(future_router)
 app.include_router(privacy_router)
 
 
