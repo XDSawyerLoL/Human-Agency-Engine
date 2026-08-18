@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..models import (
     ConnectorAccount,
+    ForecastOutcome,
+    FutureRun,
+    FutureScenario,
     IngestionRecord,
     Intent,
     Notification,
@@ -45,6 +48,17 @@ def export_user_data(external_id: str, db: Session = Depends(get_db)):
     outcomes = db.query(Outcome).filter(Outcome.opportunity_id.in_(opportunity_ids)).all() if opportunity_ids else []
     notifications = db.query(Notification).filter(Notification.user_id == user.id).all()
     connectors = db.query(ConnectorAccount).filter(ConnectorAccount.user_id == user.id).all()
+
+    future_runs = db.query(FutureRun).filter(FutureRun.user_id == user.id).all()
+    run_ids = [item.id for item in future_runs]
+    future_scenarios = (
+        db.query(FutureScenario).filter(FutureScenario.run_id.in_(run_ids)).all()
+        if run_ids else []
+    )
+    forecast_outcomes = (
+        db.query(ForecastOutcome).filter(ForecastOutcome.run_id.in_(run_ids)).all()
+        if run_ids else []
+    )
 
     return {
         "user": {
@@ -151,6 +165,50 @@ def export_user_data(external_id: str, db: Session = Depends(get_db)):
             }
             for item in notifications
         ],
+        "future_runs": [
+            {
+                "id": item.id,
+                "horizon_days": item.horizon_days,
+                "objective": item.objective,
+                "state_snapshot": item.state_snapshot,
+                "intent_snapshot": item.intent_snapshot,
+                "mandate_snapshot": item.mandate_snapshot,
+                "engine_version": item.engine_version,
+                "created_at": _dt(item.created_at),
+            }
+            for item in future_runs
+        ],
+        "future_scenarios": [
+            {
+                "id": item.id,
+                "run_id": item.run_id,
+                "name": item.name,
+                "scenario_type": item.scenario_type,
+                "intervention": item.intervention,
+                "assumptions": item.assumptions,
+                "projected_metrics": item.projected_metrics,
+                "uncertainty": item.uncertainty,
+                "evidence": item.evidence,
+                "agency_delta": item.agency_delta,
+                "confidence": item.confidence,
+                "claim_level": item.claim_level,
+                "robustness": item.robustness,
+                "created_at": _dt(item.created_at),
+            }
+            for item in future_scenarios
+        ],
+        "forecast_outcomes": [
+            {
+                "id": item.id,
+                "run_id": item.run_id,
+                "scenario_id": item.scenario_id,
+                "observed_metrics": item.observed_metrics,
+                "observation_window": item.observation_window,
+                "notes": item.notes,
+                "recorded_at": _dt(item.recorded_at),
+            }
+            for item in forecast_outcomes
+        ],
         "connectors": [
             {
                 "provider": item.provider,
@@ -183,9 +241,17 @@ def delete_user_data(
         item[0]
         for item in db.query(ConnectorAccount.id).filter(ConnectorAccount.user_id == user.id).all()
     ]
+    run_ids = [
+        item[0]
+        for item in db.query(FutureRun.id).filter(FutureRun.user_id == user.id).all()
+    ]
 
     if opportunity_ids:
         db.query(Outcome).filter(Outcome.opportunity_id.in_(opportunity_ids)).delete(synchronize_session=False)
+    if run_ids:
+        db.query(ForecastOutcome).filter(ForecastOutcome.run_id.in_(run_ids)).delete(synchronize_session=False)
+        db.query(FutureScenario).filter(FutureScenario.run_id.in_(run_ids)).delete(synchronize_session=False)
+    db.query(FutureRun).filter(FutureRun.user_id == user.id).delete(synchronize_session=False)
     db.query(Notification).filter(Notification.user_id == user.id).delete(synchronize_session=False)
     db.query(Opportunity).filter(Opportunity.user_id == user.id).delete(synchronize_session=False)
     if connector_ids:
