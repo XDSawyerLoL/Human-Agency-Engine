@@ -7,6 +7,7 @@ from ..db import get_db
 from ..future_schemas import ForecastOutcomeCreate, FutureCompareRequest
 from ..models import ForecastOutcome, FutureRun, FutureScenario, User
 from ..security import require_api_key
+from ..services.decision_lab import DecisionLab
 from ..services.future import FutureEngine
 
 router = APIRouter(prefix="/v1", dependencies=[Depends(require_api_key)])
@@ -112,6 +113,14 @@ def get_future_run(run_id: int, db: Session = Depends(get_db)):
         },
         "scenarios": [_scenario_dict(item) for item in scenarios],
     }
+
+
+@router.get("/future/runs/{run_id}/decision-lab")
+def decision_lab(run_id: int, db: Session = Depends(get_db)):
+    run = db.query(FutureRun).filter(FutureRun.id == run_id).one_or_none()
+    if not run:
+        raise HTTPException(404, "future run not found")
+    return DecisionLab(db).analyze(run)
 
 
 @router.post("/future/runs/{run_id}/outcomes")
