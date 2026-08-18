@@ -9,8 +9,10 @@ from ..db import get_db
 from ..models import Notification, Opportunity, Outcome, PersonalMandate, User
 from ..schemas import MandateOut, MandateUpsert, NotificationOut
 from ..security import require_api_key
+from .state import router as state_router
 
 router = APIRouter(prefix="/v1", dependencies=[Depends(require_api_key)])
+router.include_router(state_router)
 
 
 def _user_or_404(db: Session, external_id: str) -> User:
