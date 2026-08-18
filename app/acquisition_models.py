@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, JSON, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -33,6 +33,8 @@ class InformationNeed(Base):
     resolution_source: Mapped[str] = mapped_column(String(64), default="")
     resolution_provenance: Mapped[dict] = mapped_column(JSON, default=dict)
     resolution_confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    ask_count: Mapped[int] = mapped_column(Integer, default=0)
+    last_asked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
