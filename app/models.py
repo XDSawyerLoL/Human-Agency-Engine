@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, JSON, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -46,6 +46,50 @@ class Signal(Base):
     payload: Mapped[dict] = mapped_column(JSON)
     observed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
     processed: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+
+
+class ConnectorAccount(Base):
+    __tablename__ = "connector_accounts"
+    __table_args__ = (
+        UniqueConstraint("user_id", "provider", name="uq_connector_account_user_provider"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    provider: Mapped[str] = mapped_column(String(64), index=True)
+    encrypted_token_json: Mapped[str] = mapped_column(Text)
+    scopes: Mapped[list] = mapped_column(JSON, default=list)
+    cursor: Mapped[dict] = mapped_column(JSON, default=dict)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    last_synced_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_error: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class OAuthState(Base):
+    __tablename__ = "oauth_states"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    state_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    provider: Mapped[str] = mapped_column(String(64), index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    consumed: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class IngestionRecord(Base):
+    __tablename__ = "ingestion_records"
+    __table_args__ = (
+        UniqueConstraint("connector_id", "external_key", name="uq_ingestion_connector_external_key"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    connector_id: Mapped[int] = mapped_column(ForeignKey("connector_accounts.id"), index=True)
+    external_key: Mapped[str] = mapped_column(String(255), index=True)
+    signal_id: Mapped[int | None] = mapped_column(ForeignKey("signals.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class Opportunity(Base):
