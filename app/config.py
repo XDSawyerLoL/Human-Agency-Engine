@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,6 +18,10 @@ class Settings(BaseSettings):
     google_max_gmail_messages: int = 250
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    def model_post_init(self, __context: Any) -> None:
+        if not self.google_redirect_uri:
+            self.google_redirect_uri = self.resolved_google_redirect_uri
 
     @property
     def is_production(self) -> bool:
