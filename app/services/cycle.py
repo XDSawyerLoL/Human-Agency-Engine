@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from ..connectors.google import GoogleReadOnlyConnector
 from ..models import ConnectorAccount, User
+from .acquisition import InformationAcquisitionService
 from .engine import OpportunityEngine
 from .synthesis import SynthesisService
 
@@ -23,6 +24,12 @@ class AgencyCycle:
             "rejected": 0,
             "queued_notifications": 0,
             "suppressed_notifications": 0,
+        }
+        acquisition_totals = {
+            "candidates_scanned": 0,
+            "needs_created": 0,
+            "auto_resolved": 0,
+            "open_needs": 0,
         }
 
         accounts = (
@@ -45,15 +52,20 @@ class AgencyCycle:
 
         engine = OpportunityEngine(self.db)
         synthesis = SynthesisService(self.db)
+        acquisition = InformationAcquisitionService(self.db)
         for user in self.db.query(User).all():
             created = engine.run_for_user(user)
             created_opportunities += len(created)
-            result = synthesis.run(user)
+            synthesis_result = synthesis.run(user)
             for key in synthesis_totals:
-                synthesis_totals[key] += int(result.get(key, 0))
+                synthesis_totals[key] += int(synthesis_result.get(key, 0))
+            acquisition_result = acquisition.materialize(user)
+            for key in acquisition_totals:
+                acquisition_totals[key] += int(acquisition_result.get(key, 0))
 
         return {
             "connectors": connector_results,
             "created_opportunities": created_opportunities,
             "synthesis": synthesis_totals,
+            "information_acquisition": acquisition_totals,
         }
