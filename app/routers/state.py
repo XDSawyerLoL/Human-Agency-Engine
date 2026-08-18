@@ -11,7 +11,7 @@ from ..models import Intent, StateFact, User
 from ..schemas import IntentUpdate, StateFactCreate, StateFactOut
 from ..security import require_api_key
 
-router = APIRouter(prefix="/v1", dependencies=[Depends(require_api_key)])
+router = APIRouter(dependencies=[Depends(require_api_key)])
 
 
 def _user_or_404(db: Session, external_id: str) -> User:
