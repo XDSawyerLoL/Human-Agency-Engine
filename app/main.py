@@ -1,8 +1,10 @@
 from datetime import datetime
 
 from fastapi import Depends, FastAPI, HTTPException, Query
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .config import settings
 from .connectors.google import (
     GoogleReadOnlyConnector,
     finish_google_oauth,
@@ -10,6 +12,8 @@ from .connectors.google import (
 )
 from .db import Base, engine, get_db
 from .models import ConnectorAccount, Intent, Opportunity, Outcome, Signal, User
+from .routers.agency import router as agency_router
+from .routers.privacy import router as privacy_router
 from .schemas import (
     ConnectorStatusOut,
     IntentCreate,
@@ -21,14 +25,27 @@ from .schemas import (
 from .security import require_api_key
 from .services.cycle import AgencyCycle
 from .services.engine import OpportunityEngine
+from .services.proactivity import ProactivityService
 
+settings.validate_runtime()
 Base.metadata.create_all(bind=engine)
-app = FastAPI(title="Human Agency Engine", version="0.3.0")
+app = FastAPI(title="Human Agency Engine", version="0.4.0")
+app.include_router(agency_router)
+app.include_router(privacy_router)
 
 
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "human-agency-engine"}
+
+
+@app.get("/ready")
+def readiness(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception as exc:
+        raise HTTPException(503, "database not ready") from exc
+    return {"status": "ready", "database": "ok"}
 
 
 @app.put("/v1/users/{external_id}", dependencies=[Depends(require_api_key)])
@@ -165,9 +182,12 @@ def sync_google(external_id: str, db: Session = Depends(get_db)):
     try:
         sync_result = GoogleReadOnlyConnector(db).sync(account.id)
         opportunities = OpportunityEngine(db).run_for_user(user)
+        notifications = ProactivityService(db).evaluate_many(user, opportunities)
         return {
             **sync_result,
             "created_opportunities": len(opportunities),
+            "queued_notifications": sum(1 for item in notifications if item.status == "queued"),
+            "suppressed_notifications": sum(1 for item in notifications if item.status == "suppressed"),
         }
     except Exception as exc:
         raise HTTPException(502, f"Google sync failed: {exc}") from exc
@@ -213,16 +233,25 @@ def run_engine(external_id: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.external_id == external_id).one_or_none()
     if not user:
         raise HTTPException(404, "user not found")
-    return OpportunityEngine(db).run_for_user(user)
+    opportunities = OpportunityEngine(db).run_for_user(user)
+    ProactivityService(db).evaluate_many(user, opportunities)
+    return opportunities
 
 
 @app.post("/v1/engine/run-all", dependencies=[Depends(require_api_key)])
 def run_all(db: Session = Depends(get_db)):
     total_created = 0
+    queued = 0
+    suppressed = 0
     engine_service = OpportunityEngine(db)
+    proactivity = ProactivityService(db)
     for user in db.query(User).all():
-        total_created += len(engine_service.run_for_user(user))
-    return {"created": total_created}
+        opportunities = engine_service.run_for_user(user)
+        total_created += len(opportunities)
+        notifications = proactivity.evaluate_many(user, opportunities)
+        queued += sum(1 for item in notifications if item.status == "queued")
+        suppressed += sum(1 for item in notifications if item.status == "suppressed")
+    return {"created": total_created, "queued_notifications": queued, "suppressed_notifications": suppressed}
 
 
 @app.get(
