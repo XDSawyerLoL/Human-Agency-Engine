@@ -19,6 +19,9 @@ The engine does not optimize engagement. Its purpose is to detect useful interve
 - CARE checks
 - Manual and scheduled cycle runner
 - SQLite for local development; PostgreSQL supported through `DATABASE_URL`
+- Versioned Alembic schema migrations
+- Docker migration-first startup
+- Render infrastructure blueprint for Frankfurt
 
 The Google connector intentionally does **not** send email, modify calendar events or purchase anything. It uses read-only scopes and only reads the minimum useful Gmail fields: subject, sender, date, labels and snippet.
 
@@ -62,6 +65,16 @@ API docs:
 
 `http://localhost:8000/docs`
 
+## Database migrations
+
+Create or upgrade a database with:
+
+```bash
+alembic upgrade head
+```
+
+The Docker image runs this automatically before starting the API. CI also upgrades a fresh database before running application tests.
+
 ## Connect a Google account
 
 1. Create/update a user.
@@ -74,6 +87,8 @@ The connector requests:
 
 - `gmail.readonly`
 - `calendar.readonly`
+
+On Render, `GOOGLE_REDIRECT_URI` is derived automatically from `RENDER_EXTERNAL_HOSTNAME` when no explicit override is set.
 
 ## Continuous cycle
 
@@ -89,6 +104,35 @@ The cycle:
 2. ingests only unseen external items,
 3. runs the opportunity engine,
 4. leaves all resulting actions for human review.
+
+The repository also contains `.github/workflows/agency-cycle.yml`. It triggers `/v1/cycle/run` hourly once these GitHub repository secrets exist:
+
+- `ENGINE_URL` — deployed API base URL, e.g. `https://...onrender.com`
+- `ENGINE_API_KEY` — same value as the deployed service's `API_KEY`
+
+If these secrets are absent, the scheduled workflow exits successfully without doing anything.
+
+## Render deployment
+
+`render.yaml` defines the initial live-test infrastructure:
+
+- Docker web service in Frankfurt
+- Render Postgres in Frankfurt
+- CI-gated auto-deploys
+- generated API key
+- generated token-encryption key
+- database accessible only through Render networking
+
+The Blueprint intentionally uses free web/database plans for the first live validation. Render's free Postgres is not a permanent production datastore and must be upgraded or moved before relying on it long term.
+
+After the Blueprint creates the service:
+
+1. copy the Render `API_KEY` value into the GitHub secret `ENGINE_API_KEY`;
+2. set `ENGINE_URL` to the service's HTTPS URL;
+3. add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to the Render web service when the OAuth client is ready;
+4. register the callback shown by the service (`https://<host>/v1/connectors/google/callback`) in Google Cloud.
+
+Never commit OAuth client secrets, API keys or encryption keys.
 
 ## Current proactive rules
 
