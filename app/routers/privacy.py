@@ -14,6 +14,7 @@ from ..models import (
     Outcome,
     PersonalMandate,
     Signal,
+    StateFact,
     User,
 )
 from ..security import require_api_key
@@ -35,6 +36,7 @@ def _dt(value):
 @router.get("/users/{external_id}/export")
 def export_user_data(external_id: str, db: Session = Depends(get_db)):
     user = _user_or_404(db, external_id)
+    state_facts = db.query(StateFact).filter(StateFact.user_id == user.id).all()
     intents = db.query(Intent).filter(Intent.user_id == user.id).all()
     mandate = db.query(PersonalMandate).filter(PersonalMandate.user_id == user.id).one_or_none()
     signals = db.query(Signal).filter(Signal.user_id == user.id).all()
@@ -57,6 +59,22 @@ def export_user_data(external_id: str, db: Session = Depends(get_db)):
             "preferences": user.preferences,
             "created_at": _dt(user.created_at),
         },
+        "state_facts": [
+            {
+                "id": item.id,
+                "domain": item.domain,
+                "key": item.key,
+                "value": item.value,
+                "source": item.source,
+                "provenance": item.provenance,
+                "confidence": item.confidence,
+                "sensitivity": item.sensitivity,
+                "observed_at": _dt(item.observed_at),
+                "expires_at": _dt(item.expires_at),
+                "superseded": item.superseded,
+            }
+            for item in state_facts
+        ],
         "mandate": None if mandate is None else {
             "mission": mandate.mission,
             "principles": mandate.principles,
@@ -175,6 +193,7 @@ def delete_user_data(
     db.query(OAuthState).filter(OAuthState.user_id == user.id).delete(synchronize_session=False)
     db.query(ConnectorAccount).filter(ConnectorAccount.user_id == user.id).delete(synchronize_session=False)
     db.query(Signal).filter(Signal.user_id == user.id).delete(synchronize_session=False)
+    db.query(StateFact).filter(StateFact.user_id == user.id).delete(synchronize_session=False)
     db.query(Intent).filter(Intent.user_id == user.id).delete(synchronize_session=False)
     db.query(PersonalMandate).filter(PersonalMandate.user_id == user.id).delete(synchronize_session=False)
     db.delete(user)
