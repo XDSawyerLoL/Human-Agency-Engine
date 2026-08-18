@@ -10,7 +10,7 @@ from ..models import User
 from ..security import require_api_key
 from ..services.acquisition import InformationAcquisitionService
 
-router = APIRouter(prefix="/v1", dependencies=[Depends(require_api_key)])
+router = APIRouter(dependencies=[Depends(require_api_key)])
 
 
 def _user_or_404(db: Session, external_id: str) -> User:
