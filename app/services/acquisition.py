@@ -378,7 +378,7 @@ class InformationAcquisitionService:
         allow_state_update: bool,
     ) -> None:
         if need.need_type == "verify_assumption":
-            assumptions = list(candidate.assumptions or [])
+            assumptions = [dict(item) for item in (candidate.assumptions or [])]
             question = need.question.strip()
             for assumption in assumptions:
                 statement = str(assumption.get("statement", "")).strip()
