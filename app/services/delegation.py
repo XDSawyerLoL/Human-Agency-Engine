@@ -58,6 +58,10 @@ def _sha256(value: dict) -> str:
     return "sha256:" + hashlib.sha256(_canonical(value)).hexdigest()
 
 
+def _token_hash(token: str) -> str:
+    return "sha256:" + hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
 def _utc_epoch(value: datetime) -> int:
     aware = value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
     return int(aware.timestamp())
@@ -277,7 +281,7 @@ class DelegationService:
             constraints=constraints,
             nonce=nonce,
             max_uses=request.max_uses,
-            token=token,
+            token_hash=_token_hash(token),
             issued_at=now,
             expires_at=expires_at,
         )
@@ -417,7 +421,8 @@ class DelegationService:
         token: str,
         audience: str | None,
     ) -> None:
-        if not grant or grant.token != token:
+        presented_hash = _token_hash(token)
+        if not grant or not secrets.compare_digest(grant.token_hash, presented_hash):
             raise ValueError("delegation grant is not registered")
         if grant.identity_id != identity.id:
             raise ValueError("delegation signing identity mismatch")
