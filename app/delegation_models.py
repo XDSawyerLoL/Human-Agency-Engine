@@ -40,7 +40,7 @@ class DelegationGrant(Base):
     nonce: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     max_uses: Mapped[int] = mapped_column(Integer, default=1)
     use_count: Mapped[int] = mapped_column(Integer, default=0)
-    token: Mapped[str] = mapped_column(Text)
+    token_hash: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     issued_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
