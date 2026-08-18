@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, JSON, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -15,6 +15,7 @@ class User(Base):
     external_id: Mapped[str] = mapped_column(String(128), unique=True, index=True)
     country: Mapped[str] = mapped_column(String(2), default="FR")
     currency: Mapped[str] = mapped_column(String(3), default="EUR")
+    timezone: Mapped[str] = mapped_column(String(64), default="Europe/Paris")
     monthly_income: Mapped[float | None] = mapped_column(Float, nullable=True)
     monthly_fixed_costs: Mapped[float | None] = mapped_column(Float, nullable=True)
     liquid_cash: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -34,6 +35,22 @@ class Intent(Base):
     priority: Mapped[float] = mapped_column(Float, default=0.5)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class PersonalMandate(Base):
+    __tablename__ = "personal_mandates"
+    __table_args__ = (UniqueConstraint("user_id", name="uq_personal_mandate_user"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
+    mission: Mapped[str] = mapped_column(Text, default="")
+    principles: Mapped[list] = mapped_column(JSON, default=list)
+    constraints: Mapped[dict] = mapped_column(JSON, default=dict)
+    autonomy: Mapped[dict] = mapped_column(JSON, default=dict)
+    notification_policy: Mapped[dict] = mapped_column(JSON, default=dict)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class Signal(Base):
@@ -109,6 +126,23 @@ class Opportunity(Base):
     care_status: Mapped[str] = mapped_column(String(32), default="review")
     care_reason: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(32), default="open", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    __table_args__ = (UniqueConstraint("opportunity_id", name="uq_notification_opportunity"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    opportunity_id: Mapped[int] = mapped_column(ForeignKey("opportunities.id"), unique=True, index=True)
+    channel: Mapped[str] = mapped_column(String(32), default="in_app")
+    title: Mapped[str] = mapped_column(String(255))
+    body: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(32), default="queued", index=True)
+    suppression_reason: Mapped[str] = mapped_column(Text, default="")
+    priority: Mapped[float] = mapped_column(Float, default=0.5)
+    available_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
