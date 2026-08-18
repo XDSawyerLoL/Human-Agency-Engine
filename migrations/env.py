@@ -19,6 +19,7 @@ from app import readiness_models  # noqa: F401
 from app import market_models  # noqa: F401
 from app import collective_models  # noqa: F401
 from app import collective_offer_models  # noqa: F401
+from app import quorum_models  # noqa: F401
 
 config = context.config
 DATABASE_URL = settings.sqlalchemy_database_url
