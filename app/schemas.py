@@ -7,6 +7,7 @@ class UserUpsert(BaseModel):
     external_id: str
     country: str = "FR"
     currency: str = "EUR"
+    timezone: str = "Europe/Paris"
     monthly_income: float | None = None
     monthly_fixed_costs: float | None = None
     liquid_cash: float | None = None
@@ -19,6 +20,21 @@ class IntentCreate(BaseModel):
     statement: str
     target: dict = Field(default_factory=dict)
     priority: float = Field(0.5, ge=0, le=1)
+
+
+class MandateUpsert(BaseModel):
+    mission: str = ""
+    principles: list[str] = Field(default_factory=list)
+    constraints: dict = Field(default_factory=dict)
+    autonomy: dict = Field(default_factory=dict)
+    notification_policy: dict = Field(default_factory=dict)
+
+
+class MandateOut(MandateUpsert):
+    version: int
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
 
 
 class SignalCreate(BaseModel):
@@ -50,6 +66,21 @@ class OpportunityOut(BaseModel):
     care_status: str
     care_reason: str
     status: str
+
+    model_config = {"from_attributes": True}
+
+
+class NotificationOut(BaseModel):
+    id: int
+    opportunity_id: int
+    channel: str
+    title: str
+    body: str
+    status: str
+    suppression_reason: str
+    priority: float
+    available_at: datetime
+    created_at: datetime
 
     model_config = {"from_attributes": True}
 
