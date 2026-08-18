@@ -15,11 +15,47 @@ class UserUpsert(BaseModel):
     preferences: dict = Field(default_factory=dict)
 
 
+class StateFactCreate(BaseModel):
+    domain: str
+    key: str
+    value: dict
+    source: str = "user"
+    provenance: dict = Field(default_factory=dict)
+    confidence: float = Field(1.0, ge=0, le=1)
+    sensitivity: str = Field("personal", pattern="^(standard|personal|sensitive)$")
+    observed_at: datetime | None = None
+    expires_at: datetime | None = None
+    replace_current: bool = True
+
+
+class StateFactOut(BaseModel):
+    id: int
+    domain: str
+    key: str
+    value: dict
+    source: str
+    provenance: dict
+    confidence: float
+    sensitivity: str
+    observed_at: datetime
+    expires_at: datetime | None
+    superseded: bool
+
+    model_config = {"from_attributes": True}
+
+
 class IntentCreate(BaseModel):
     kind: str
     statement: str
     target: dict = Field(default_factory=dict)
     priority: float = Field(0.5, ge=0, le=1)
+
+
+class IntentUpdate(BaseModel):
+    statement: str | None = None
+    target: dict | None = None
+    priority: float | None = Field(default=None, ge=0, le=1)
+    active: bool | None = None
 
 
 class MandateUpsert(BaseModel):
