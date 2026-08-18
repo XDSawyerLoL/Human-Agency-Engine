@@ -84,6 +84,7 @@ def test_delegation_export_is_non_reusable_and_user_delete_removes_all_secret_st
     )
     assert issued.status_code == 200
     token = issued.json()["proof"]["token"]
+    grant_public_id = issued.json()["grant"]["grant_id"]
     fingerprint = issued.json()["proof"]["claims"]["action"]["fingerprint"]
 
     consumed = client.post(
@@ -112,6 +113,33 @@ def test_delegation_export_is_non_reusable_and_user_delete_removes_all_secret_st
     assert token not in serialized
     assert "encrypted_private_key" not in serialized
 
+    db = SessionLocal()
+    try:
+        user_row = db.query(User).filter(User.external_id == uid).one()
+        deleted_user_id = user_row.id
+        identity_ids = [
+            row[0]
+            for row in db.query(AgentSigningIdentity.id)
+            .filter(AgentSigningIdentity.user_id == deleted_user_id)
+            .all()
+        ]
+        grant_row = (
+            db.query(DelegationGrant)
+            .filter(DelegationGrant.grant_id == grant_public_id)
+            .one()
+        )
+        deleted_grant_id = grant_row.id
+        use_ids = [
+            row[0]
+            for row in db.query(DelegationUse.id)
+            .filter(DelegationUse.grant_id == deleted_grant_id)
+            .all()
+        ]
+        assert identity_ids
+        assert use_ids
+    finally:
+        db.close()
+
     deleted = client.delete(
         f"/v1/users/{uid}",
         params={"confirm": f"DELETE {uid}"},
@@ -120,9 +148,9 @@ def test_delegation_export_is_non_reusable_and_user_delete_removes_all_secret_st
 
     db = SessionLocal()
     try:
-        assert db.query(User).filter(User.external_id == uid).count() == 0
-        assert db.query(AgentSigningIdentity).count() == 0
-        assert db.query(DelegationGrant).count() == 0
-        assert db.query(DelegationUse).count() == 0
+        assert db.query(User).filter(User.id == deleted_user_id).count() == 0
+        assert db.query(AgentSigningIdentity).filter(AgentSigningIdentity.id.in_(identity_ids)).count() == 0
+        assert db.query(DelegationGrant).filter(DelegationGrant.id == deleted_grant_id).count() == 0
+        assert db.query(DelegationUse).filter(DelegationUse.id.in_(use_ids)).count() == 0
     finally:
         db.close()
