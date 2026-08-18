@@ -1,3 +1,5 @@
+import uuid
+
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 
@@ -47,7 +49,7 @@ def ready_candidate(uid: str, *, reversible: bool = True) -> int:
         user = db.query(User).filter(User.external_id == uid).one()
         candidate = CandidateIntervention(
             user_id=user.id,
-            candidate_key=(uid.replace("_", "-") + "-proof-candidate")[:64],
+            candidate_key=uuid.uuid4().hex,
             source_type="test",
             source_ref="delegation-test",
             hypothesis_ids=[],
