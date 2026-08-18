@@ -6,7 +6,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from ..models import FutureScenario, User
+from ..models import FutureRun, FutureScenario, User
 from ..world_models import (
     Experiment,
     ExperimentObservation,
@@ -27,7 +27,19 @@ def _canonical(value: dict) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), default=str, ensure_ascii=False)
 
 
-def _event_digest(*, previous_hash: str, event_type: str, source: str, subject_type: str, subject_id: str, payload: dict, confidence: float, occurred_at: datetime, causation_id: str, correlation_id: str) -> str:
+def _event_digest(
+    *,
+    previous_hash: str,
+    event_type: str,
+    source: str,
+    subject_type: str,
+    subject_id: str,
+    payload: dict,
+    confidence: float,
+    occurred_at: datetime,
+    causation_id: str,
+    correlation_id: str,
+) -> str:
     material = {
         "previous_hash": previous_hash,
         "event_type": event_type,
@@ -48,6 +60,8 @@ class WorldModelService:
         self.db = db
 
     def append_event(self, user: User, payload: EventCreate, *, commit: bool = True) -> WorldEvent:
+        # Serialize a user's ledger on databases that support row-level locking.
+        self.db.query(User.id).filter(User.id == user.id).with_for_update().one()
         previous = (
             self.db.query(WorldEvent)
             .filter(WorldEvent.user_id == user.id)
@@ -150,9 +164,17 @@ class WorldModelService:
 
     def create_experiment(self, user: User, payload: ExperimentCreate) -> Experiment:
         if payload.scenario_id is not None:
-            scenario = self.db.query(FutureScenario).filter(FutureScenario.id == payload.scenario_id).one_or_none()
+            scenario = (
+                self.db.query(FutureScenario)
+                .join(FutureRun, FutureRun.id == FutureScenario.run_id)
+                .filter(
+                    FutureScenario.id == payload.scenario_id,
+                    FutureRun.user_id == user.id,
+                )
+                .one_or_none()
+            )
             if not scenario:
-                raise ValueError("future scenario not found")
+                raise ValueError("future scenario not found for user")
         if payload.hypothesis_id is not None:
             hypothesis = (
                 self.db.query(WorldHypothesis)
@@ -185,7 +207,14 @@ class WorldModelService:
         self.db.refresh(experiment)
         return experiment
 
-    def authorize_experiment(self, user: User, experiment: Experiment, *, confirm: str, irreversible_ack: bool = False) -> Experiment:
+    def authorize_experiment(
+        self,
+        user: User,
+        experiment: Experiment,
+        *,
+        confirm: str,
+        irreversible_ack: bool = False,
+    ) -> Experiment:
         required = f"AUTHORIZE {experiment.id}"
         if confirm != required:
             raise ValueError(f"confirmation must equal: {required}")
@@ -218,6 +247,7 @@ class WorldModelService:
             raise ValueError("experiment cannot be started from current state")
         experiment.execution_status = "running"
         experiment.started_at = datetime.utcnow()
+        experiment.completed_at = None
         self.append_event(
             user,
             EventCreate(
@@ -233,7 +263,35 @@ class WorldModelService:
         self.db.refresh(experiment)
         return experiment
 
-    def record_observation(self, user: User, experiment: Experiment, payload: ExperimentObservationCreate) -> ExperimentObservation:
+    def stop_experiment(self, user: User, experiment: Experiment, reason: str = "") -> Experiment:
+        if experiment.execution_status != "running":
+            raise ValueError("only running experiments can be stopped")
+        experiment.execution_status = "stopped"
+        experiment.completed_at = datetime.utcnow()
+        self.append_event(
+            user,
+            EventCreate(
+                event_type="experiment.stopped",
+                source="user",
+                subject_type="experiment",
+                subject_id=str(experiment.id),
+                payload={"reason": reason, "stop_conditions": experiment.stop_conditions},
+            ),
+            commit=False,
+        )
+        self.db.commit()
+        self.db.refresh(experiment)
+        return experiment
+
+    def record_observation(
+        self,
+        user: User,
+        experiment: Experiment,
+        payload: ExperimentObservationCreate,
+    ) -> ExperimentObservation:
+        if experiment.execution_status != "running":
+            raise ValueError("observations require a running experiment")
+
         observation = ExperimentObservation(experiment_id=experiment.id, **payload.model_dump())
         self.db.add(observation)
         self.db.flush()
@@ -274,6 +332,13 @@ class WorldModelService:
     def complete_experiment(self, user: User, experiment: Experiment) -> Experiment:
         if experiment.execution_status != "running":
             raise ValueError("only running experiments can be completed")
+        observation_count = (
+            self.db.query(ExperimentObservation)
+            .filter(ExperimentObservation.experiment_id == experiment.id)
+            .count()
+        )
+        if observation_count == 0:
+            raise ValueError("experiment cannot complete without at least one observation")
         experiment.execution_status = "completed"
         experiment.completed_at = datetime.utcnow()
         self.append_event(
@@ -283,7 +348,7 @@ class WorldModelService:
                 source="system",
                 subject_type="experiment",
                 subject_id=str(experiment.id),
-                payload={},
+                payload={"observation_count": observation_count},
             ),
             commit=False,
         )
@@ -315,9 +380,15 @@ class WorldModelService:
         self.db.refresh(experiment)
         return experiment
 
-    def add_evidence(self, user: User, hypothesis: WorldHypothesis, payload: EvidenceCreate) -> HypothesisEvidence:
+    def add_evidence(
+        self,
+        user: User,
+        hypothesis: WorldHypothesis,
+        payload: EvidenceCreate,
+    ) -> HypothesisEvidence:
         if hypothesis.user_id != user.id:
             raise ValueError("hypothesis does not belong to user")
+        self._validate_evidence_references(user, payload)
         evidence = self._add_evidence(hypothesis.id, payload)
         self.append_event(
             user,
@@ -338,6 +409,36 @@ class WorldModelService:
         self.db.commit()
         self.db.refresh(evidence)
         return evidence
+
+    def _validate_evidence_references(self, user: User, payload: EvidenceCreate) -> None:
+        if payload.event_id is not None:
+            event = (
+                self.db.query(WorldEvent)
+                .filter(WorldEvent.id == payload.event_id, WorldEvent.user_id == user.id)
+                .one_or_none()
+            )
+            if not event:
+                raise ValueError("event evidence does not belong to user")
+        if payload.experiment_id is not None:
+            experiment = (
+                self.db.query(Experiment)
+                .filter(Experiment.id == payload.experiment_id, Experiment.user_id == user.id)
+                .one_or_none()
+            )
+            if not experiment:
+                raise ValueError("experiment evidence does not belong to user")
+        if payload.observation_id is not None:
+            observation = (
+                self.db.query(ExperimentObservation)
+                .join(Experiment, Experiment.id == ExperimentObservation.experiment_id)
+                .filter(
+                    ExperimentObservation.id == payload.observation_id,
+                    Experiment.user_id == user.id,
+                )
+                .one_or_none()
+            )
+            if not observation:
+                raise ValueError("observation evidence does not belong to user")
 
     def _add_evidence(self, hypothesis_id: int, payload: EvidenceCreate) -> HypothesisEvidence:
         hypothesis = self.db.query(WorldHypothesis).filter(WorldHypothesis.id == hypothesis_id).one_or_none()
@@ -372,13 +473,21 @@ class WorldModelService:
         else:
             hypothesis.confidence = 0.0
 
-        experiment_supports = [
-            item for item in supports if item.experiment_id is not None and float(item.quality) >= 0.6
-        ]
-        experiment_contradictions = [
-            item for item in contradictions if item.experiment_id is not None and float(item.quality) >= 0.6
-        ]
-        if len(experiment_supports) >= 3 and len(experiment_contradictions) <= 1 and hypothesis.confidence >= 0.55:
+        supporting_experiment_ids = {
+            item.experiment_id
+            for item in supports
+            if item.experiment_id is not None and float(item.quality) >= 0.6
+        }
+        contradicting_experiment_ids = {
+            item.experiment_id
+            for item in contradictions
+            if item.experiment_id is not None and float(item.quality) >= 0.6
+        }
+        if (
+            len(supporting_experiment_ids) >= 3
+            and len(contradicting_experiment_ids) <= 1
+            and hypothesis.confidence >= 0.55
+        ):
             hypothesis.claim_level = "personal_empirical"
         else:
             hypothesis.claim_level = "correlation"
