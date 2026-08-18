@@ -159,6 +159,66 @@ def list_grants(external_id: str, db: Session = Depends(get_db)):
     return [_grant_out(item) for item in grants]
 
 
+@router.get(
+    "/users/{external_id}/export",
+    dependencies=[Depends(require_api_key)],
+)
+def export_delegation_audit(external_id: str, db: Session = Depends(get_db)):
+    user = _user_or_404(db, external_id)
+    identities = (
+        db.query(AgentSigningIdentity)
+        .filter(AgentSigningIdentity.user_id == user.id)
+        .order_by(AgentSigningIdentity.created_at.asc())
+        .all()
+    )
+    grants = (
+        db.query(DelegationGrant)
+        .filter(DelegationGrant.user_id == user.id)
+        .order_by(DelegationGrant.issued_at.asc())
+        .all()
+    )
+    grant_ids = [item.id for item in grants]
+    uses = (
+        db.query(DelegationUse)
+        .filter(DelegationUse.grant_id.in_(grant_ids))
+        .order_by(DelegationUse.recorded_at.asc())
+        .all()
+        if grant_ids
+        else []
+    )
+    grant_public_ids = {item.id: item.grant_id for item in grants}
+    return {
+        "identities": [
+            {
+                "key_id": item.key_id,
+                "algorithm": item.algorithm,
+                "public_jwk": _public_jwk(item),
+                "created_at": item.created_at,
+                "rotated_at": item.rotated_at,
+                "revoked_at": item.revoked_at,
+            }
+            for item in identities
+        ],
+        "grants": [_grant_out(item) for item in grants],
+        "uses": [
+            {
+                "grant_id": grant_public_ids.get(item.grant_id),
+                "request_id": item.request_id,
+                "audience": item.audience,
+                "action_fingerprint": item.action_fingerprint,
+                "metadata": item.metadata_json,
+                "recorded_at": item.recorded_at,
+            }
+            for item in uses
+        ],
+        "private_keys_included": False,
+        "bearer_tokens_included": False,
+        "self_graph_included": False,
+        "raw_intents_included": False,
+        "raw_personal_mandate_included": False,
+    }
+
+
 @router.post(
     "/users/{external_id}/grants/{grant_id}/revoke",
     dependencies=[Depends(require_api_key)],
