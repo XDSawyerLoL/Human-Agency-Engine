@@ -67,3 +67,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+settings.validate_runtime()
