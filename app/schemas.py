@@ -28,6 +28,15 @@ class SignalCreate(BaseModel):
     observed_at: datetime | None = None
 
 
+class OutcomeCreate(BaseModel):
+    useful: bool | None = None
+    accepted: bool | None = None
+    executed: bool | None = None
+    realized_value: float | None = None
+    feedback: str = ""
+    metadata_json: dict = Field(default_factory=dict)
+
+
 class OpportunityOut(BaseModel):
     id: int
     category: str
