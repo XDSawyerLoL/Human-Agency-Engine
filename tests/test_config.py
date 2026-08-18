@@ -26,3 +26,18 @@ def test_production_accepts_hardened_runtime_config():
         token_encryption_key="opaque-encryption-key",
     )
     settings.validate_runtime()
+
+
+def test_generic_postgres_url_is_normalized_to_psycopg3():
+    settings = Settings(database_url="postgresql://user:pass@db.example/human_agency")
+    assert settings.sqlalchemy_database_url.startswith("postgresql+psycopg://")
+
+
+def test_render_hostname_derives_google_callback_url():
+    settings = Settings(
+        google_redirect_uri="",
+        render_external_hostname="human-agency-engine.onrender.com",
+    )
+    assert settings.google_redirect_uri == (
+        "https://human-agency-engine.onrender.com/v1/connectors/google/callback"
+    )
