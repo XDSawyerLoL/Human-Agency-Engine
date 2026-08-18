@@ -16,6 +16,7 @@ from .routers.agency import router as agency_router
 from .routers.future import router as future_router
 from .routers.privacy import router as privacy_router
 from .routers.state import router as state_router
+from .routers.world import router as world_router
 from .schemas import (
     ConnectorStatusOut,
     IntentCreate,
@@ -28,13 +29,16 @@ from .security import require_api_key
 from .services.cycle import AgencyCycle
 from .services.engine import OpportunityEngine
 from .services.proactivity import ProactivityService
+from .services.world_model import WorldModelService
+from .world_schemas import EventCreate
 
 settings.validate_runtime()
 Base.metadata.create_all(bind=engine)
-app = FastAPI(title="Human Agency Engine", version="0.5.0")
+app = FastAPI(title="Human Agency Engine", version="0.6.0")
 app.include_router(agency_router)
 app.include_router(state_router)
 app.include_router(future_router)
+app.include_router(world_router)
 app.include_router(privacy_router)
 
 
@@ -62,6 +66,7 @@ def upsert_user(
         raise HTTPException(400, "external_id mismatch")
 
     user = db.query(User).filter(User.external_id == external_id).one_or_none()
+    created = user is None
     if user is None:
         user = User(**payload.model_dump())
         db.add(user)
@@ -71,6 +76,16 @@ def upsert_user(
 
     db.commit()
     db.refresh(user)
+    WorldModelService(db).append_event(
+        user,
+        EventCreate(
+            event_type="user.created" if created else "user.profile_updated",
+            source="api",
+            subject_type="user",
+            subject_id=str(user.id),
+            payload={"country": user.country, "currency": user.currency, "timezone": user.timezone},
+        ),
+    )
     return {"id": user.id, "external_id": user.external_id}
 
 
@@ -91,6 +106,16 @@ def add_intent(
     db.add(intent)
     db.commit()
     db.refresh(intent)
+    WorldModelService(db).append_event(
+        user,
+        EventCreate(
+            event_type="intent.created",
+            source="user",
+            subject_type="intent",
+            subject_id=str(intent.id),
+            payload={"kind": intent.kind, "priority": intent.priority, "active": intent.active},
+        ),
+    )
     return {"id": intent.id}
 
 
@@ -115,6 +140,17 @@ def ingest_signal(
     db.add(signal)
     db.commit()
     db.refresh(signal)
+    WorldModelService(db).append_event(
+        user,
+        EventCreate(
+            event_type="signal.observed",
+            source=signal.source,
+            subject_type="signal",
+            subject_id=str(signal.id),
+            payload={"signal_type": signal.type, "processed": signal.processed},
+            occurred_at=signal.observed_at,
+        ),
+    )
     return {"id": signal.id, "processed": signal.processed}
 
 
@@ -220,6 +256,16 @@ def disable_google(external_id: str, db: Session = Depends(get_db)):
     account.last_error = ""
     account.updated_at = datetime.utcnow()
     db.commit()
+    WorldModelService(db).append_event(
+        user,
+        EventCreate(
+            event_type="connector.disconnected",
+            source="user",
+            subject_type="connector",
+            subject_id=str(account.id),
+            payload={"provider": "google"},
+        ),
+    )
     return {"disconnected": True, "provider": "google"}
 
 
@@ -315,6 +361,23 @@ def record_outcome(
 
     db.commit()
     db.refresh(outcome)
+    user = db.query(User).filter(User.id == opportunity.user_id).one()
+    WorldModelService(db).append_event(
+        user,
+        EventCreate(
+            event_type="opportunity.outcome_recorded",
+            source="user",
+            subject_type="opportunity",
+            subject_id=str(opportunity.id),
+            payload={
+                "status": opportunity.status,
+                "useful": outcome.useful,
+                "accepted": outcome.accepted,
+                "executed": outcome.executed,
+                "realized_value": outcome.realized_value,
+            },
+        ),
+    )
     return {
         "opportunity_id": opportunity_id,
         "status": opportunity.status,
