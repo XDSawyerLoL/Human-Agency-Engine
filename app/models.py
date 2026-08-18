@@ -147,6 +147,51 @@ class Opportunity(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class FutureRun(Base):
+    __tablename__ = "future_runs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    horizon_days: Mapped[int] = mapped_column(Integer)
+    objective: Mapped[str] = mapped_column(Text, default="")
+    state_snapshot: Mapped[dict] = mapped_column(JSON, default=dict)
+    intent_snapshot: Mapped[list] = mapped_column(JSON, default=list)
+    mandate_snapshot: Mapped[dict] = mapped_column(JSON, default=dict)
+    engine_version: Mapped[str] = mapped_column(String(32), default="future-v0.1")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class FutureScenario(Base):
+    __tablename__ = "future_scenarios"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int] = mapped_column(ForeignKey("future_runs.id"), index=True)
+    name: Mapped[str] = mapped_column(String(255))
+    scenario_type: Mapped[str] = mapped_column(String(32), default="intervention", index=True)
+    intervention: Mapped[dict] = mapped_column(JSON, default=dict)
+    assumptions: Mapped[list] = mapped_column(JSON, default=list)
+    projected_metrics: Mapped[dict] = mapped_column(JSON, default=dict)
+    uncertainty: Mapped[dict] = mapped_column(JSON, default=dict)
+    evidence: Mapped[dict] = mapped_column(JSON, default=dict)
+    agency_delta: Mapped[dict] = mapped_column(JSON, default=dict)
+    confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    claim_level: Mapped[str] = mapped_column(String(32), default="projection", index=True)
+    robustness: Mapped[str] = mapped_column(String(32), default="uncertain", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class ForecastOutcome(Base):
+    __tablename__ = "forecast_outcomes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int] = mapped_column(ForeignKey("future_runs.id"), index=True)
+    scenario_id: Mapped[int | None] = mapped_column(ForeignKey("future_scenarios.id"), nullable=True, index=True)
+    observed_metrics: Mapped[dict] = mapped_column(JSON, default=dict)
+    observation_window: Mapped[dict] = mapped_column(JSON, default=dict)
+    notes: Mapped[str] = mapped_column(Text, default="")
+    recorded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class Notification(Base):
     __tablename__ = "notifications"
     __table_args__ = (UniqueConstraint("opportunity_id", name="uq_notification_opportunity"),)
