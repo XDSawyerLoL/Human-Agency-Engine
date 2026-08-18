@@ -8,10 +8,13 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..models import User
 from ..security import require_api_key
+from ..services.acquisition import InformationAcquisitionService
 from ..services.synthesis import SynthesisService
 from ..synthesis_models import CandidateIntervention
+from .acquisition import router as acquisition_router
 
 router = APIRouter(prefix="/v1", dependencies=[Depends(require_api_key)])
+router.include_router(acquisition_router)
 
 
 def _user_or_404(db: Session, external_id: str) -> User:
@@ -29,7 +32,9 @@ def run_synthesis(
     db: Session = Depends(get_db),
 ):
     user = _user_or_404(db, external_id)
-    return SynthesisService(db).run(user, horizon_days=horizon_days, limit=limit)
+    synthesis = SynthesisService(db).run(user, horizon_days=horizon_days, limit=limit)
+    acquisition = InformationAcquisitionService(db).materialize(user)
+    return {**synthesis, "information_acquisition": acquisition}
 
 
 @router.get("/users/{external_id}/candidates")
