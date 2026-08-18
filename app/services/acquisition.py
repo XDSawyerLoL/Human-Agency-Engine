@@ -379,8 +379,11 @@ class InformationAcquisitionService:
     ) -> None:
         if need.need_type == "verify_assumption":
             assumptions = list(candidate.assumptions or [])
+            question = need.question.strip()
             for assumption in assumptions:
-                if str(assumption.get("falsifiable_by", "")).strip() == need.question.strip():
+                statement = str(assumption.get("statement", "")).strip()
+                falsifier = str(assumption.get("falsifiable_by", "")).strip()
+                if question in {statement, falsifier}:
                     assumption["confidence"] = max(
                         float(assumption.get("confidence", 0.0)), payload.confidence
                     )
