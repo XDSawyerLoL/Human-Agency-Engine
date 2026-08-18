@@ -24,6 +24,24 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class StateFact(Base):
+    __tablename__ = "state_facts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    domain: Mapped[str] = mapped_column(String(64), index=True)
+    key: Mapped[str] = mapped_column(String(128), index=True)
+    value: Mapped[dict] = mapped_column(JSON)
+    source: Mapped[str] = mapped_column(String(64), index=True)
+    provenance: Mapped[dict] = mapped_column(JSON, default=dict)
+    confidence: Mapped[float] = mapped_column(Float, default=1.0)
+    sensitivity: Mapped[str] = mapped_column(String(32), default="personal", index=True)
+    observed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    superseded: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class Intent(Base):
     __tablename__ = "intents"
 
