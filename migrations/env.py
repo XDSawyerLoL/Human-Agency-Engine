@@ -11,6 +11,7 @@ from app import models  # noqa: F401
 from app import world_models  # noqa: F401
 from app import synthesis_models  # noqa: F401
 from app import acquisition_models  # noqa: F401
+from app import delegation_models  # noqa: F401
 
 config = context.config
 DATABASE_URL = settings.sqlalchemy_database_url
