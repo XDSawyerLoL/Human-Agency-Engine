@@ -16,7 +16,7 @@ from ..security import require_api_key
 from ..services.execution import DualKeyExecutionGateway, HumanCommitService
 
 router = APIRouter(
-    prefix="/v1/execution",
+    prefix="/execution",
     dependencies=[Depends(require_api_key)],
 )
 
@@ -152,3 +152,10 @@ def list_dry_runs(external_id: str, db: Session = Depends(get_db)):
         .all()
     )
     return [_dry_run_out(item) for item in rows]
+
+
+# The package initializer imports this module before app.main imports agency.router.
+# Mounting here keeps app.main stable while producing the intended /v1/execution URLs.
+from .agency import router as agency_router  # noqa: E402
+
+agency_router.include_router(router)
