@@ -32,7 +32,9 @@ def test_personal_mandate_versions_and_limits_proactivity():
             "constraints": {},
             "autonomy": {"default": "suggest"},
             "notification_policy": {
-                "min_confidence": 0.7,
+                # Deliberately below the observational evidence cap so this test
+                # exercises max_per_day rather than the scientific confidence gate.
+                "min_confidence": 0.5,
                 "max_per_day": 1,
                 "category_cooldown_hours": 24,
                 "quiet_hours": {"start": 23, "end": 7},
