@@ -4,13 +4,13 @@ from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
 from .db import Base, engine, get_db
-from .models import Intent, Opportunity, Signal, User
-from .schemas import IntentCreate, OpportunityOut, SignalCreate, UserUpsert
+from .models import Intent, Opportunity, Outcome, Signal, User
+from .schemas import IntentCreate, OpportunityOut, OutcomeCreate, SignalCreate, UserUpsert
 from .security import require_api_key
 from .services.engine import OpportunityEngine
 
 Base.metadata.create_all(bind=engine)
-app = FastAPI(title="Human Agency Engine", version="0.1.0")
+app = FastAPI(title="Human Agency Engine", version="0.2.0")
 
 
 @app.get("/health")
@@ -96,6 +96,15 @@ def run_engine(external_id: str, db: Session = Depends(get_db)):
     return OpportunityEngine(db).run_for_user(user)
 
 
+@app.post("/v1/engine/run-all", dependencies=[Depends(require_api_key)])
+def run_all(db: Session = Depends(get_db)):
+    total_created = 0
+    engine_service = OpportunityEngine(db)
+    for user in db.query(User).all():
+        total_created += len(engine_service.run_for_user(user))
+    return {"created": total_created}
+
+
 @app.get(
     "/v1/users/{external_id}/opportunities",
     response_model=list[OpportunityOut],
@@ -112,3 +121,42 @@ def list_opportunities(external_id: str, db: Session = Depends(get_db)):
         .order_by(Opportunity.created_at.desc())
         .all()
     )
+
+
+@app.put(
+    "/v1/opportunities/{opportunity_id}/outcome",
+    dependencies=[Depends(require_api_key)],
+)
+def record_outcome(
+    opportunity_id: int,
+    payload: OutcomeCreate,
+    db: Session = Depends(get_db),
+):
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).one_or_none()
+    if not opportunity:
+        raise HTTPException(404, "opportunity not found")
+
+    outcome = db.query(Outcome).filter(Outcome.opportunity_id == opportunity_id).one_or_none()
+    if outcome is None:
+        outcome = Outcome(opportunity_id=opportunity_id, **payload.model_dump())
+        db.add(outcome)
+    else:
+        for key, value in payload.model_dump().items():
+            setattr(outcome, key, value)
+        outcome.recorded_at = datetime.utcnow()
+
+    if payload.executed is True:
+        opportunity.status = "executed"
+    elif payload.accepted is False:
+        opportunity.status = "dismissed"
+    elif payload.accepted is True:
+        opportunity.status = "accepted"
+
+    db.commit()
+    db.refresh(outcome)
+    return {
+        "opportunity_id": opportunity_id,
+        "status": opportunity.status,
+        "realized_value": outcome.realized_value,
+        "useful": outcome.useful,
+    }
