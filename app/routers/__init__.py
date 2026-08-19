@@ -25,3 +25,4 @@ from . import horizon_media_attention as _horizon_media_attention  # noqa: F401,
 from . import horizon_fuel as _horizon_fuel  # noqa: F401,E402
 from . import horizon_reevaluation as _horizon_reevaluation  # noqa: F401,E402
 from . import horizon_warning as _horizon_warning  # noqa: F401,E402
+from . import horizon_emerging as _horizon_emerging  # noqa: F401,E402

@@ -45,6 +45,16 @@ jobs:
             --data '{}'
 
           echo
+          echo "Clustering closed GDELT buckets into explicitly unconfirmed emerging-event candidates."
+          curl --fail-with-body --silent --show-error \
+            --retry 2 \
+            --max-time 120 \
+            -X POST "${ENGINE_URL%/}/v1/horizon/emerging/gdelt/cluster" \
+            -H "X-API-Key: ${ENGINE_API_KEY}" \
+            -H "Content-Type: application/json" \
+            --data '{"bucket_minutes":15,"lookback_buckets":4,"min_articles":3}'
+
+          echo
           echo "Polling Météo-France official-primary feed (cleanly skips if server credential is absent)."
           curl --fail-with-body --silent --show-error \
             --retry 2 \
