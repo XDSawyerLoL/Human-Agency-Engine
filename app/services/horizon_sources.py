@@ -45,6 +45,43 @@ BUILTIN_SOURCES = (
             "rate_limit_per_minute": 60,
         },
     ),
+    HorizonSourceUpsert(
+        source_key="windy-point-forecast",
+        name="Windy Point Forecast",
+        source_class="model_forecast",
+        adapter_kind="windy_point_forecast_v2",
+        domains=["weather", "forecast_models", "model_consensus"],
+        geography=["FR"],
+        base_locator="https://api.windy.com/api/point-forecast/v2",
+        trust_weight=0.72,
+        refresh_seconds=1800,
+        requires_credentials=True,
+        metadata_json={
+            "role": "weather_dynamics_and_model_divergence_not_ground_truth",
+            "credential_policy": "server_secret_only",
+            "historical_forecast_api_available": False,
+            "supported_france_models": ["aromeFrance", "iconEu", "gfs"],
+            "ecmwf_point_forecast_available": False,
+        },
+    ),
+    HorizonSourceUpsert(
+        source_key="rte-eco2mix-national-cons-def",
+        name="RTE eco2mix national consolidated and definitive",
+        source_class="official_statistical",
+        adapter_kind="odre_eco2mix_national_v2",
+        domains=["electricity", "consumption", "behavioral_outcomes", "historical_archive"],
+        geography=["FR"],
+        base_locator="https://odre.opendatasoft.com/api/explore/v2.1/catalog/datasets/eco2mix-national-cons-def/records",
+        trust_weight=0.94,
+        refresh_seconds=86400,
+        requires_credentials=False,
+        metadata_json={
+            "role": "official_historical_electricity_consumption_outcome_stream",
+            "dataset_id": "eco2mix-national-cons-def",
+            "temporal_depth_from": "2012-01-01",
+            "signal_scope": ["cooling_load_pressure"],
+        },
+    ),
 )
 
 
