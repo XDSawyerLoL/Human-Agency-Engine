@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..horizon_source_models import HorizonEventCandidate, HorizonRawObservation, HorizonSource
+from ..horizon_source_models import HorizonEventCandidate, HorizonSource
 from ..horizon_source_schemas import HorizonCandidateBuild, HorizonObservationIngest, HorizonSourceUpsert
 from ..security import require_api_key
 from ..services.horizon_sources import HorizonSourceService
@@ -39,10 +39,7 @@ def sync_builtin_sources(db: Session = Depends(get_db)):
 
 @router.put("")
 def upsert_source(payload: HorizonSourceUpsert, db: Session = Depends(get_db)):
-    try:
-        row = HorizonSourceService(db).upsert_source(payload)
-    except ValueError as exc:
-        raise HTTPException(400, str(exc)) from exc
+    row = HorizonSourceService(db).upsert_source(payload)
     return {
         "source_key": row.source_key,
         "name": row.name,
@@ -91,7 +88,10 @@ def ingest_observation(
     db: Session = Depends(get_db),
 ):
     source = _source_or_404(db, source_key)
-    row, created = HorizonSourceService(db).ingest_observation(source, payload)
+    try:
+        row, created = HorizonSourceService(db).ingest_observation(source, payload)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
     return {
         "id": row.id,
         "created": created,
