@@ -1,0 +1,36 @@
+name: HORIZON Live Radar
+
+on:
+  schedule:
+    - cron: '3,18,33,48 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: horizon-live-radar
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    env:
+      ENGINE_URL: ${{ secrets.ENGINE_URL }}
+      ENGINE_API_KEY: ${{ secrets.ENGINE_API_KEY }}
+    steps:
+      - name: Poll HORIZON world-event radar
+        shell: bash
+        run: |
+          if [ -z "$ENGINE_URL" ] || [ -z "$ENGINE_API_KEY" ]; then
+            echo "HORIZON live radar not configured yet; skipping cleanly."
+            exit 0
+          fi
+          curl --fail-with-body --silent --show-error \
+            --retry 2 \
+            --retry-all-errors \
+            --max-time 180 \
+            -X POST "${ENGINE_URL%/}/v1/horizon/live/gdelt/poll" \
+            -H "X-API-Key: ${ENGINE_API_KEY}" \
+            -H "Content-Type: application/json" \
+            --data '{}'
