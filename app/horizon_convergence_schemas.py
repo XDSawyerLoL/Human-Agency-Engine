@@ -41,6 +41,7 @@ class HorizonWindyPoint(BaseModel):
 class HorizonLiveConvergencePollRequest(BaseModel):
     include_gdelt: bool = True
     include_meteofrance: bool = True
+    include_fuel: bool = True
     include_rte_realtime: bool = True
     include_vigicrues: bool = True
     include_sncf: bool = True
