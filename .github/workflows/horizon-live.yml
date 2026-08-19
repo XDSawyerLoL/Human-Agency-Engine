@@ -29,95 +29,91 @@ jobs:
 
           echo "Syncing versioned Human Response Library."
           curl --fail-with-body --silent --show-error \
-            --retry 2 \
-            --max-time 60 \
+            --retry 2 --max-time 60 \
             -X POST "${ENGINE_URL%/}/v1/horizon/response-library/builtins/sync" \
             -H "X-API-Key: ${ENGINE_API_KEY}"
 
           echo
           curl --fail-with-body --silent --show-error \
-            --retry 2 \
-            --retry-all-errors \
-            --max-time 180 \
+            --retry 2 --retry-all-errors --max-time 180 \
             -X POST "${ENGINE_URL%/}/v1/horizon/live/gdelt/poll" \
             -H "X-API-Key: ${ENGINE_API_KEY}" \
-            -H "Content-Type: application/json" \
-            --data '{}'
+            -H "Content-Type: application/json" --data '{}'
 
           echo
           echo "Clustering closed GDELT buckets into explicitly unconfirmed emerging-event candidates."
           curl --fail-with-body --silent --show-error \
-            --retry 2 \
-            --max-time 120 \
+            --retry 2 --max-time 120 \
             -X POST "${ENGINE_URL%/}/v1/horizon/emerging/gdelt/cluster" \
             -H "X-API-Key: ${ENGINE_API_KEY}" \
             -H "Content-Type: application/json" \
             --data '{"bucket_minutes":15,"lookback_buckets":4,"min_articles":3}'
 
           echo
+          echo "Starting internal provisional forecasts before confirmation; never user-facing."
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --max-time 120 \
+            -X POST "${ENGINE_URL%/}/v1/horizon/provisional-forecasts/refresh" \
+            -H "X-API-Key: ${ENGINE_API_KEY}" \
+            -H "Content-Type: application/json" --data '{"max_candidates":100}'
+
+          echo
           echo "Polling Météo-France official-primary feed (cleanly skips if server credential is absent)."
           curl --fail-with-body --silent --show-error \
-            --retry 2 \
-            --retry-all-errors \
-            --max-time 120 \
+            --retry 2 --retry-all-errors --max-time 120 \
             -X POST "${ENGINE_URL%/}/v1/horizon/live/meteofrance/poll" \
             -H "X-API-Key: ${ENGINE_API_KEY}"
 
           echo
           echo "Normalizing latest official weather alerts into personally scoped HORIZON events."
           curl --fail-with-body --silent --show-error \
-            --retry 2 \
-            --retry-all-errors \
-            --max-time 120 \
+            --retry 2 --retry-all-errors --max-time 120 \
             -X POST "${ENGINE_URL%/}/v1/horizon/normalize/meteofrance/latest" \
             -H "X-API-Key: ${ENGINE_API_KEY}"
 
           echo
           echo "Polling official French fuel rupture feed."
           curl --fail-with-body --silent --show-error \
-            --retry 2 \
-            --retry-all-errors \
-            --max-time 180 \
+            --retry 2 --retry-all-errors --max-time 180 \
             -X POST "${ENGINE_URL%/}/v1/horizon/live/fuel-ruptures/poll" \
             -H "X-API-Key: ${ENGINE_API_KEY}"
 
           echo
           echo "Normalizing material fuel shortages into personally scoped events and stock signals."
           curl --fail-with-body --silent --show-error \
-            --retry 2 \
-            --retry-all-errors \
-            --max-time 120 \
+            --retry 2 --retry-all-errors --max-time 120 \
             -X POST "${ENGINE_URL%/}/v1/horizon/normalize/fuel-ruptures/latest" \
             -H "X-API-Key: ${ENGINE_API_KEY}" \
-            -H "Content-Type: application/json" \
-            --data '{}'
+            -H "Content-Type: application/json" --data '{}'
+
+          echo
+          echo "Reconciling provisional forecasts that gained confirmed corroboration."
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --max-time 120 \
+            -X POST "${ENGINE_URL%/}/v1/horizon/provisional-forecasts/reconcile" \
+            -H "X-API-Key: ${ENGINE_API_KEY}" \
+            -H "Content-Type: application/json" --data '{"max_forecasts":500}'
 
           echo
           echo "Refreshing normalized GDELT media-attention acceleration signals."
           curl --fail-with-body --silent --show-error \
-            --retry 2 \
-            --retry-all-errors \
-            --max-time 180 \
+            --retry 2 --retry-all-errors --max-time 180 \
             -X POST "${ENGINE_URL%/}/v1/horizon/signals/media-attention/refresh" \
             -H "X-API-Key: ${ENGINE_API_KEY}" \
-            -H "Content-Type: application/json" \
-            --data '{}'
+            -H "Content-Type: application/json" --data '{}'
 
           echo
           echo "Refreshing cross-signal HORIZON early-warning episodes."
           curl --fail-with-body --silent --show-error \
-            --retry 2 \
-            --max-time 180 \
+            --retry 2 --max-time 180 \
             -X POST "${ENGINE_URL%/}/v1/horizon/warnings/refresh" \
             -H "X-API-Key: ${ENGINE_API_KEY}" \
-            -H "Content-Type: application/json" \
-            --data '{"max_events":100,"recency_hours":72}'
+            -H "Content-Type: application/json" --data '{"max_events":100,"recency_hours":72}'
 
           echo
           echo "Re-evaluating only materially changed HORIZON human trajectories."
           curl --fail-with-body --silent --show-error \
-            --retry 2 \
-            --max-time 240 \
+            --retry 2 --max-time 240 \
             -X POST "${ENGINE_URL%/}/v1/horizon/reevaluate/run" \
             -H "X-API-Key: ${ENGINE_API_KEY}" \
             -H "Content-Type: application/json" \
