@@ -94,6 +94,16 @@ jobs:
             --data '{}'
 
           echo
+          echo "Refreshing cross-signal HORIZON early-warning episodes."
+          curl --fail-with-body --silent --show-error \
+            --retry 2 \
+            --max-time 180 \
+            -X POST "${ENGINE_URL%/}/v1/horizon/warnings/refresh" \
+            -H "X-API-Key: ${ENGINE_API_KEY}" \
+            -H "Content-Type: application/json" \
+            --data '{"max_events":100,"recency_hours":72}'
+
+          echo
           echo "Re-evaluating only materially changed HORIZON human trajectories."
           curl --fail-with-body --silent --show-error \
             --retry 2 \
