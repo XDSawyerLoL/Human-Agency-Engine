@@ -39,7 +39,9 @@ def sync_builtin_sources(db: Session = Depends(get_db)):
 
 @router.put("")
 def upsert_source(payload: HorizonSourceUpsert, db: Session = Depends(get_db)):
-    row = HorizonSourceService(db).upsert_source(payload)
+    # This protected administrative route is the explicit control plane and may
+    # intentionally enable/disable a source. Adapter syncs preserve that choice.
+    row = HorizonSourceService(db).upsert_source(payload, preserve_enabled=False)
     return {
         "source_key": row.source_key,
         "name": row.name,
