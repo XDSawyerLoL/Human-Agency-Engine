@@ -28,6 +28,7 @@ from app import vault_models  # noqa: F401
 from app import horizon_models  # noqa: F401
 from app import horizon_cascade_models  # noqa: F401
 from app import horizon_impact_models  # noqa: F401
+from app import horizon_source_models  # noqa: F401
 
 config = context.config
 DATABASE_URL = settings.sqlalchemy_database_url
