@@ -16,7 +16,7 @@ from ..models import User
 from ..security import require_api_key
 from ..services.horizon import HorizonService
 
-router = APIRouter(prefix="/v1/horizon", dependencies=[Depends(require_api_key)])
+router = APIRouter(prefix="/horizon", dependencies=[Depends(require_api_key)])
 
 
 def _user_or_404(db: Session, external_id: str) -> User:
@@ -207,3 +207,8 @@ def resolve_forecast(
 def calibration_summary(external_id: str, db: Session = Depends(get_db)):
     user = _user_or_404(db, external_id)
     return HorizonService(db).calibration_summary(user)
+
+
+from .agency import router as agency_router  # noqa: E402
+
+agency_router.include_router(router)
