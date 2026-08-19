@@ -36,6 +36,7 @@ from app import horizon_materialization_models  # noqa: F401
 from app import horizon_expiry_models  # noqa: F401
 from app import horizon_backtest_models  # noqa: F401
 from app import horizon_backfill_models  # noqa: F401
+from app import horizon_weather_chain_models  # noqa: F401
 
 config = context.config
 DATABASE_URL = settings.sqlalchemy_database_url
