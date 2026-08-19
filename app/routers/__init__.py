@@ -28,3 +28,4 @@ from . import horizon_warning as _horizon_warning  # noqa: F401,E402
 from . import horizon_emerging as _horizon_emerging  # noqa: F401,E402
 from . import horizon_provisional as _horizon_provisional  # noqa: F401,E402
 from . import horizon_materialization as _horizon_materialization  # noqa: F401,E402
+from . import horizon_expiry as _horizon_expiry  # noqa: F401,E402
