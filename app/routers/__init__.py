@@ -22,3 +22,4 @@ from . import horizon_meteofrance as _horizon_meteofrance  # noqa: F401,E402
 from . import horizon_normalizer as _horizon_normalizer  # noqa: F401,E402
 from . import horizon_response_library as _horizon_response_library  # noqa: F401,E402
 from . import horizon_media_attention as _horizon_media_attention  # noqa: F401,E402
+from . import horizon_fuel as _horizon_fuel  # noqa: F401,E402
