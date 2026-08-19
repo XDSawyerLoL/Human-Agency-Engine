@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
@@ -50,11 +51,16 @@ SOURCE_FALLBACK_ROLES = {
     "behavioral_signal": {"behavioral_outcome"},
     "official_primary": {"confirmation", "physical_state"},
     "official_statistical": {"physical_state"},
+    "official_multilateral": {"precursor", "confirmation", "physical_state"},
+    "official_aggregator": {"confirmation", "physical_state"},
 }
 
 CAPABILITY_MATRIX = (
     {"source_key": "windy-point-forecast", "role": "weather multi-model precursor", "status": "implemented_requires_key", "evidence_roles": ["precursor"], "historical_backtest_safe": False, "reason": "current Point Forecast API exposes latest forecasts, not historical forecast snapshots"},
     {"source_key": "meteofrance-vigilance", "role": "official weather confirmation", "status": "implemented_requires_key", "evidence_roles": ["confirmation", "physical_state"], "historical_backtest_safe": True},
+    {"source_key": "meteoalarm-atom", "role": "European official-warning aggregation", "status": "implemented_open_data", "evidence_roles": ["confirmation", "physical_state"], "historical_backtest_safe": False, "reason": "public Atom feeds are live distribution; direct archived EDR queries require access token"},
+    {"source_key": "meteoalarm-edr", "role": "European realtime and archived official warnings", "status": "gated_external_access", "evidence_roles": ["confirmation", "physical_state"], "historical_backtest_safe": True, "reason": "MeteoAlarm EDR location queries and MQTT require a registered token"},
+    {"source_key": "gdacs-official", "role": "global multilateral disaster detection and corroboration", "status": "implemented_open_data", "evidence_roles": ["precursor", "confirmation", "physical_state"], "historical_backtest_safe": True, "reason": "GDACS search API supports custom historical extraction; imported provider timestamps must remain point-in-time"},
     {"source_key": "rte-eco2mix-regional-tr", "role": "near-live regional collective load", "status": "implemented_open_data", "evidence_roles": ["behavioral_outcome", "physical_state"], "historical_backtest_safe": False, "reason": "realtime telemetry/estimates are not final labels"},
     {"source_key": "rte-eco2mix-regional-cons-def", "role": "consolidated/final regional load truth stream", "status": "implemented_open_data", "evidence_roles": ["behavioral_outcome", "materialization"], "historical_backtest_safe": True},
     {"source_key": "vigicrues-official", "role": "official river-flood vigilance and physical state", "status": "implemented_open_data", "evidence_roles": ["confirmation", "physical_state"], "historical_backtest_safe": False, "reason": "live feed alone is not a historical archive"},
@@ -84,8 +90,10 @@ def _source_roles(source: HorizonSource) -> set[str]:
 
 def _unregistered_event_roles(source_key: str) -> set[str]:
     key = source_key.lower()
-    if any(item in key for item in ("meteofrance", "vigicrues", "sncf", "fuel")):
+    if any(item in key for item in ("meteofrance", "meteoalarm", "vigicrues", "sncf", "fuel")):
         return {"confirmation", "physical_state"}
+    if "gdacs" in key:
+        return {"precursor", "confirmation", "physical_state"}
     if "rte" in key:
         return {"physical_state"}
     if "gdelt" in key or "media" in key:
@@ -95,8 +103,22 @@ def _unregistered_event_roles(source_key: str) -> set[str]:
     return {"context"}
 
 
+def _independence_family(source_key: str, source: HorizonSource | None) -> str:
+    if source is not None:
+        metadata = source.metadata_json or {}
+        explicit = str(metadata.get("independence_family") or "").strip()
+        if explicit:
+            return explicit
+    normalized = source_key.lower().strip()
+    if normalized in {"meteofrance-vigilance", "meteofrance-vigilance-archive"}:
+        return "weather-warning:france"
+    if normalized.startswith("meteoalarm:"):
+        return f"weather-warning:{normalized.split(':', 1)[1]}"
+    return source_key
+
+
 class HorizonConvergenceService:
-    ENGINE_VERSION = "horizon-evidence-convergence-v0.2"
+    ENGINE_VERSION = "horizon-evidence-convergence-v0.3"
 
     def __init__(self, db: Session):
         self.db = db
@@ -109,6 +131,7 @@ class HorizonConvergenceService:
             "critical_semantics": {
                 "more_sources_do_not_automatically_mean_more_truth": True,
                 "independence_and_role_diversity_matter": True,
+                "relay_or_aggregator_sources_can_share_independence_family": True,
                 "convergence_score_is_probability": False,
                 "gated_sources_are_not_claimed_as_connected": True,
             },
@@ -204,26 +227,31 @@ class HorizonConvergenceService:
         source_keys: set[str] = set()
         source_classes: set[str] = set()
         roles: set[str] = set()
-        trust_by_source: dict[str, float] = {}
+        family_members: dict[str, set[str]] = defaultdict(set)
+        trust_by_family: dict[str, float] = {}
         knowledge_times = [item.first_observed_at for item in events]
+
+        def register_source(source_key: str, source: HorizonSource | None, trust: float) -> str:
+            family = _independence_family(source_key, source)
+            source_keys.add(source_key)
+            family_members[family].add(source_key)
+            trust_by_family[family] = max(trust_by_family.get(family, 0.0), float(trust))
+            if source is not None:
+                source_classes.add(source.source_class)
+            return family
 
         event_evidence = []
         for item in events:
             source_key = str(item.source)
-            source_keys.add(source_key)
             source = event_source_by_key.get(source_key)
-            if source is not None:
-                source_classes.add(source.source_class)
-                source_roles = _source_roles(source)
-                trust_by_source[source_key] = float(source.trust_weight)
-            else:
-                source_roles = _unregistered_event_roles(source_key)
-                trust_by_source[source_key] = max(trust_by_source.get(source_key, 0.0), float(item.source_reliability))
+            source_roles = _source_roles(source) if source is not None else _unregistered_event_roles(source_key)
+            family = register_source(source_key, source, float(source.trust_weight) if source is not None else float(item.source_reliability))
             roles.update(source_roles)
             event_evidence.append({
                 "event_id": item.id,
                 "event_type": item.event_type,
                 "source_key": source_key,
+                "independence_family": family,
                 "roles": sorted(source_roles),
                 "first_observed_at": item.first_observed_at.isoformat(),
             })
@@ -233,16 +261,15 @@ class HorizonConvergenceService:
             source = sources_by_id.get(observation.source_id)
             if source is None:
                 continue
-            source_keys.add(source.source_key)
-            source_classes.add(source.source_class)
             source_roles = _source_roles(source)
+            family = register_source(source.source_key, source, float(source.trust_weight))
             roles.update(source_roles)
-            trust_by_source[source.source_key] = max(trust_by_source.get(source.source_key, 0.0), float(source.trust_weight))
             knowledge_times.append(observation.observed_at)
             observation_evidence.append({
                 "observation_id": observation.id,
                 "source_key": source.source_key,
                 "source_class": source.source_class,
+                "independence_family": family,
                 "roles": sorted(source_roles),
                 "observation_type": observation.observation_type,
                 "observed_at": observation.observed_at.isoformat(),
@@ -251,14 +278,14 @@ class HorizonConvergenceService:
         signal_evidence = []
         for signal in signals:
             source_key = str(signal.source)
-            source_keys.add(source_key)
             source = signal_source_by_key.get(source_key)
+            family = register_source(
+                source_key,
+                source,
+                float(source.trust_weight) if source is not None else float(signal.reliability),
+            )
             if source is not None:
-                source_classes.add(source.source_class)
                 roles.update(_source_roles(source))
-                trust_by_source[source_key] = max(trust_by_source.get(source_key, 0.0), float(source.trust_weight))
-            else:
-                trust_by_source[source_key] = max(trust_by_source.get(source_key, 0.0), float(signal.reliability))
             signal_roles = set(SIGNAL_ROLE_MAP.get(signal.signal_type, {"context"}))
             roles.update(signal_roles)
             knowledge_times.append(signal.observed_at)
@@ -266,6 +293,7 @@ class HorizonConvergenceService:
                 "signal_id": signal.id,
                 "event_id": signal.event_id,
                 "source_key": source_key,
+                "independence_family": family,
                 "signal_type": signal.signal_type,
                 "roles": sorted(signal_roles),
                 "reliability": float(signal.reliability),
@@ -277,8 +305,9 @@ class HorizonConvergenceService:
             roles.update({"confirmation", "behavioral_outcome", "materialization"})
             knowledge_times.extend(item.created_at for item in related_chains)
 
-        independent_sources = len(source_keys)
-        mean_trust = sum(trust_by_source.values()) / len(trust_by_source) if trust_by_source else 0.0
+        independence_families = sorted(family_members)
+        independent_sources = len(independence_families)
+        mean_trust = sum(trust_by_family.values()) / len(trust_by_family) if trust_by_family else 0.0
         source_diversity = min(independent_sources / 5.0, 1.0)
         role_diversity = min(len(roles) / 5.0, 1.0)
         class_diversity = min(len(source_classes) / 4.0, 1.0)
@@ -292,22 +321,26 @@ class HorizonConvergenceService:
             "signal_evidence": signal_evidence,
             "weather_chain_ids": [item.id for item in related_chains],
             "source_keys": sorted(source_keys),
+            "provider_source_count": len(source_keys),
+            "independence_families": independence_families,
+            "family_members": {key: sorted(value) for key, value in sorted(family_members.items())},
             "source_classes": sorted(source_classes),
-            "source_trust": {key: round(value, 4) for key, value in sorted(trust_by_source.items())},
+            "independence_family_trust": {key: round(value, 4) for key, value in sorted(trust_by_family.items())},
             "evidence_roles": [role for role in ROLE_ORDER if role in roles],
-            "mean_unique_source_trust": round(mean_trust, 4),
+            "mean_unique_independence_family_trust": round(mean_trust, 4),
             "role_coverage": {role: role in roles for role in ROLE_ORDER},
             "knowledge_as_of": knowledge_as_of.isoformat(),
             "diagnostic_formula": {
                 "role_diversity_weight": 0.30,
-                "source_diversity_weight": 0.25,
+                "independence_family_diversity_weight": 0.25,
                 "source_class_diversity_weight": 0.20,
-                "mean_unique_source_trust_weight": 0.25,
+                "mean_unique_independence_family_trust_weight": 0.25,
             },
             "critical_semantics": {
                 "convergence_score_is_probability": False,
                 "repeated_rows_from_same_source_do_not_create_source_independence": True,
-                "source_trust_counted_once_per_unique_source": True,
+                "aggregator_and_origin_can_share_independence_family": True,
+                "source_trust_counted_once_per_independence_family": True,
                 "official_confirmation_remains_distinct_from_behavior": True,
                 "materialization_remains_distinct_from_precursor": True,
                 "evidence_after_cutoff_excluded": True,

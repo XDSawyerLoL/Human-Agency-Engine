@@ -8,6 +8,8 @@ from pydantic import BaseModel, Field, model_validator
 SOURCE_CLASSES = {
     "official_primary",
     "official_statistical",
+    "official_multilateral",
+    "official_aggregator",
     "model_forecast",
     "news_global",
     "behavioral_signal",
