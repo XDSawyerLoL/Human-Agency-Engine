@@ -35,7 +35,7 @@ BUILTIN_PATTERNS = (
         "confidence": 0.52,
         "support_count": 0,
         "contradiction_count": 0,
-        "knowledge_available_at": datetime(2026, 8, 16, 0, 0, 0),
+        "knowledge_available_at": datetime(2022, 10, 1, 0, 0, 0),
         "provenance": {
             "library_version": LIBRARY_VERSION,
             "status": "provisional_prior",
@@ -50,15 +50,24 @@ BUILTIN_PATTERNS = (
             },
             "evidence": [
                 {
+                    "kind": "peer_reviewed",
+                    "title": "The weather affects air conditioner purchases to fill the energy efficiency gap",
+                    "published": "2022-10-01",
+                    "doi": "10.1038/s41467-022-33531-2",
+                    "locator": "https://www.nature.com/articles/s41467-022-33531-2",
+                    "note": "Transaction-level US data from 2006–2019 show short-run temperature changes materially affect air-conditioner purchase behavior.",
+                },
+                {
                     "kind": "market_observation",
                     "source": "Financial Times",
                     "published": "2026-08-16",
                     "locator": "https://www.ft.com/content/1419012f-feca-4efd-a817-dc0392cd76e3",
                     "note": "European firms reported sharply higher demand for fans and other heat-adaptation products during extreme heat.",
-                }
+                },
             ],
             "limitations": [
-                "Observed heat-driven demand does not establish a universal shortage cascade.",
+                "Evidence supports heat-driven changes in cooling purchases, not a universal shortage cascade.",
+                "The inventory-compression and stockout stages require independent live evidence before HORIZON may mark them reached.",
                 "Local inventory, housing, income and forecast severity can materially alter the response.",
             ],
         },
