@@ -132,11 +132,22 @@ def _setup_case(tag: str):
     return uid, event_id, pattern_id, forecast_id
 
 
+def _scan(forecast_id: int, as_of: str):
+    return client.post(
+        "/v1/horizon/materialization/scan",
+        json={
+            "mode": "backtest",
+            "as_of": as_of,
+            "max_forecasts": 500,
+            "forecast_ids": [forecast_id],
+        },
+    )
+
+
 def test_materialization_requires_post_forecast_final_stage_and_strong_evidence():
     tag = _tag()
     uid, event_id, _, forecast_id = _setup_case(tag)
 
-    # A final-stage signal from before the forecast cannot retroactively create lead time.
     _signal(
         event_id,
         tag,
@@ -145,7 +156,6 @@ def test_materialization_requires_post_forecast_final_stage_and_strong_evidence(
         source="pre-forecast-source",
         reliability=0.95,
     )
-    # A strong intermediate signal is not the predicted final observable outcome.
     _signal(
         event_id,
         tag,
@@ -155,7 +165,6 @@ def test_materialization_requires_post_forecast_final_stage_and_strong_evidence(
         reliability=0.95,
         score=3.0,
     )
-    # A weak final-stage report is insufficient on its own.
     _signal(
         event_id,
         tag,
@@ -165,10 +174,7 @@ def test_materialization_requires_post_forecast_final_stage_and_strong_evidence(
         reliability=0.60,
     )
 
-    unresolved = client.post(
-        "/v1/horizon/materialization/scan",
-        json={"mode": "backtest", "as_of": "2020-07-04T18:00:00Z", "max_forecasts": 500},
-    )
+    unresolved = _scan(forecast_id, "2020-07-04T18:00:00Z")
     assert unresolved.status_code == 200, unresolved.text
     assert forecast_id not in unresolved.json()["resolved_forecast_ids"]
 
@@ -180,10 +186,7 @@ def test_materialization_requires_post_forecast_final_stage_and_strong_evidence(
         source="official-stock-source",
         reliability=0.95,
     )
-    resolved = client.post(
-        "/v1/horizon/materialization/scan",
-        json={"mode": "backtest", "as_of": "2020-07-06T00:00:00Z", "max_forecasts": 500},
-    )
+    resolved = _scan(forecast_id, "2020-07-06T00:00:00Z")
     assert resolved.status_code == 200, resolved.text
     assert forecast_id in resolved.json()["resolved_forecast_ids"]
 
@@ -201,10 +204,7 @@ def test_materialization_requires_post_forecast_final_stage_and_strong_evidence(
     assert detection["rule"]["probability"] is False
     assert detection["rule"]["causal_proof"] is False
 
-    replay = client.post(
-        "/v1/horizon/materialization/scan",
-        json={"mode": "backtest", "as_of": "2020-07-06T00:00:00Z", "max_forecasts": 500},
-    )
+    replay = _scan(forecast_id, "2020-07-06T00:00:00Z")
     assert replay.status_code == 200
     assert forecast_id not in replay.json()["resolved_forecast_ids"]
 
@@ -221,10 +221,7 @@ def test_two_independent_medium_sources_materialize_at_second_source_arrival():
         source="medium-source-a",
         reliability=0.72,
     )
-    first = client.post(
-        "/v1/horizon/materialization/scan",
-        json={"mode": "backtest", "as_of": "2020-07-04T13:00:00Z", "max_forecasts": 500},
-    )
+    first = _scan(forecast_id, "2020-07-04T13:00:00Z")
     assert first.status_code == 200
     assert forecast_id not in first.json()["resolved_forecast_ids"]
 
@@ -236,10 +233,7 @@ def test_two_independent_medium_sources_materialize_at_second_source_arrival():
         source="medium-source-b",
         reliability=0.72,
     )
-    second = client.post(
-        "/v1/horizon/materialization/scan",
-        json={"mode": "backtest", "as_of": "2020-07-04T19:00:00Z", "max_forecasts": 500},
-    )
+    second = _scan(forecast_id, "2020-07-04T19:00:00Z")
     assert second.status_code == 200, second.text
     assert forecast_id in second.json()["resolved_forecast_ids"]
 
