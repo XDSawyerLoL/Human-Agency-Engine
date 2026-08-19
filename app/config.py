@@ -17,6 +17,16 @@ class Settings(BaseSettings):
     google_sync_lookahead_days: int = 60
     google_max_gmail_messages: int = 250
 
+    horizon_live_sync_enabled: bool = False
+    horizon_http_timeout_seconds: float = 20.0
+    horizon_gdacs_url: str = (
+        "https://www.gdacs.org/gdacsapi/api/Events/geteventlist/EVENTS4APP"
+    )
+    horizon_meteoalarm_countries: str = "france"
+    horizon_meteoalarm_atom_template: str = (
+        "https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-{country}"
+    )
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     def model_post_init(self, __context: Any) -> None:
@@ -46,6 +56,14 @@ class Settings(BaseSettings):
             )
         return "http://localhost:8000/v1/connectors/google/callback"
 
+    @property
+    def horizon_meteoalarm_country_list(self) -> list[str]:
+        return [
+            value.strip().lower()
+            for value in self.horizon_meteoalarm_countries.split(",")
+            if value.strip()
+        ]
+
     def validate_runtime(self) -> None:
         errors: list[str] = []
 
@@ -53,6 +71,11 @@ class Settings(BaseSettings):
             errors.append(
                 "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be configured together"
             )
+
+        if self.horizon_http_timeout_seconds <= 0:
+            errors.append("HORIZON_HTTP_TIMEOUT_SECONDS must be positive")
+        if "{country}" not in self.horizon_meteoalarm_atom_template:
+            errors.append("HORIZON_METEOALARM_ATOM_TEMPLATE must contain {country}")
 
         if self.is_production:
             if self.api_key == "change-me" or len(self.api_key) < 32:
