@@ -60,7 +60,7 @@ def _prepared_oversubscribed_group(category: str, *, users: int = 10, quantity: 
         public_b64,
         offer_id=f"{category}-offer",
         unit_price=70,
-        minimum_collective_quantity=10,
+        minimum_collective_quantity=min(10, capacity),
         maximum_collective_quantity=capacity,
     )
     accepted = client.post(

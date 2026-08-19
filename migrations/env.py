@@ -20,6 +20,12 @@ from app import market_models  # noqa: F401
 from app import collective_models  # noqa: F401
 from app import collective_offer_models  # noqa: F401
 from app import quorum_models  # noqa: F401
+from app import allocation_models  # noqa: F401
+from app import acceptance_models  # noqa: F401
+from app import settlement_models  # noqa: F401
+from app import settlement_permit_models  # noqa: F401
+from app import vault_models  # noqa: F401
+from app import horizon_models  # noqa: F401
 
 config = context.config
 DATABASE_URL = settings.sqlalchemy_database_url

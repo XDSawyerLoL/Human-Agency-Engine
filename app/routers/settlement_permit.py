@@ -151,9 +151,3 @@ def list_user_settlement_permits(external_id: str, db: Session = Depends(get_db)
         "address_disclosed": False,
         "payment_instrument_disclosed": False,
     }
-
-
-from .agency import router as agency_router  # noqa: E402
-
-agency_router.include_router(router)
-agency_router.include_router(public_router)
