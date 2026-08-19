@@ -15,6 +15,7 @@ from ..horizon_source_models import HorizonSource
 from ..horizon_source_schemas import HorizonObservationIngest, HorizonSourceUpsert
 from .horizon_coverage import HorizonHistoricalCoverageService
 from .horizon_heat_regions import HorizonRegionalHeatService
+from .horizon_response_library import HorizonResponseLibraryService
 from .horizon_sources import HorizonSourceService
 from .policy import sha256_dict
 
@@ -142,8 +143,7 @@ class HorizonRteCoolingLoadBackfillService:
             }
 
         result: dict[date, dict] = {}
-        ordered_days = sorted(valid_means)
-        for day in ordered_days:
+        for day in sorted(valid_means):
             start = day - timedelta(days=request.baseline_lookback_days)
             comparables = [
                 metrics["mean_consumption_mw"]
@@ -225,6 +225,9 @@ class HorizonRteCoolingLoadBackfillService:
             raise ValueError("one RTE historical backfill run is limited to 366 days")
 
         source = self._source()
+        # A real backfill must leave the matching behavior prior available for the
+        # Backtest Factory; syncing is idempotent and built-in pattern versions are immutable.
+        HorizonResponseLibraryService(self.db).sync_builtins()
         regionalization = HorizonRegionalHeatService(self.db).aggregate(
             start_at=start_at,
             end_at=end_at,
@@ -254,6 +257,15 @@ class HorizonRteCoolingLoadBackfillService:
 
         region_codes = sorted({code for event in relevant_events if (code := _event_region_code(event))})
         lookback_start = start_at - timedelta(days=request.baseline_lookback_days + 7)
+        metric_spec_id = sha256_dict(
+            {
+                "engine": self.ENGINE_VERSION,
+                "metric": "regional_afternoon_load_vs_recent_weekday_class_median",
+                "baseline_lookback_days": request.baseline_lookback_days,
+                "minimum_afternoon_points": request.minimum_afternoon_points,
+                "minimum_lift_ratio": request.minimum_lift_ratio,
+            }
+        )[:16]
         fingerprint = sha256_dict(
             {
                 "engine": self.ENGINE_VERSION,
@@ -262,6 +274,7 @@ class HorizonRteCoolingLoadBackfillService:
                 "end_at": end_at.isoformat(),
                 "regions": region_codes,
                 "request": request.model_dump(mode="json"),
+                "metric_spec_id": metric_spec_id,
                 "regional_event_ids": [event.id for event in relevant_events],
             }
         )
@@ -318,7 +331,9 @@ class HorizonRteCoolingLoadBackfillService:
                     days_with_metric += 1
                     observed_at = metrics["last_observed_at"]
                     observation = HorizonObservationIngest(
-                        external_key=f"rte-regional-cooling:{region_code}:{day.isoformat()}",
+                        external_key=(
+                            f"rte-regional-cooling:{metric_spec_id}:{region_code}:{day.isoformat()}"
+                        ),
                         observation_type="regional_electricity_consumption_outcome",
                         title=f"RTE charge électrique région {region_code} — {day.isoformat()}",
                         summary=(
@@ -328,6 +343,7 @@ class HorizonRteCoolingLoadBackfillService:
                         source_url=RTE_REGIONAL_ENDPOINT,
                         geography=["FR", f"REGION:{region_code}"],
                         canonical_facts={
+                            "metric_spec_id": metric_spec_id,
                             "region_code": region_code,
                             "local_date": day.isoformat(),
                             "afternoon_mean_consumption_mw": round(metrics["mean_consumption_mw"], 3),
@@ -335,11 +351,14 @@ class HorizonRteCoolingLoadBackfillService:
                             "lift_ratio": round(metrics["lift_ratio"], 6),
                             "point_count": metrics["point_count"],
                             "baseline_comparable_days": metrics["baseline_comparable_days"],
+                            "baseline_lookback_days": request.baseline_lookback_days,
+                            "minimum_afternoon_points": request.minimum_afternoon_points,
                             "minimum_lift_ratio": request.minimum_lift_ratio,
                         },
                         raw_metadata={
                             "engine": self.ENGINE_VERSION,
                             "dataset_id": RTE_REGIONAL_DATASET,
+                            "metric_spec_id": metric_spec_id,
                             "metric": "12:00-20:00 Europe/Paris mean vs recent weekday/weekend-class median",
                             "cooling_causality_proven": False,
                             "archive_is_consolidated": True,
@@ -363,7 +382,9 @@ class HorizonRteCoolingLoadBackfillService:
                         observed_naive = _utc_naive(observed_at)
                         if observed_naive <= event.first_observed_at or observed_naive > outcome_deadline:
                             continue
-                        signal_key = f"rte-cooling-load:{event.id}:{region_code}:{day.isoformat()}"
+                        signal_key = (
+                            f"rte-cooling-load:{metric_spec_id}:{event.id}:{region_code}:{day.isoformat()}"
+                        )
                         existing_signal = self.db.query(HorizonSocialSignal).filter(
                             HorizonSocialSignal.signal_key == signal_key
                         ).one_or_none()
@@ -384,6 +405,7 @@ class HorizonRteCoolingLoadBackfillService:
                             reliability=0.94,
                             evidence={
                                 "raw_observation_id": observation_row.id,
+                                "metric_spec_id": metric_spec_id,
                                 "region_code": region_code,
                                 "local_date": day.isoformat(),
                                 "lift_ratio": round(metrics["lift_ratio"], 6),
@@ -412,10 +434,12 @@ class HorizonRteCoolingLoadBackfillService:
                     provenance={
                         "engine": self.ENGINE_VERSION,
                         "dataset_id": RTE_REGIONAL_DATASET,
+                        "metric_spec_id": metric_spec_id,
                         "records_fetched": len(records),
                         "truncated": truncated,
                         "target_calendar_days": len(target_days),
                         "days_with_valid_baseline_metric": len(complete_days),
+                        "baseline_lookback_days": request.baseline_lookback_days,
                         "minimum_afternoon_points": request.minimum_afternoon_points,
                         "minimum_lift_ratio": request.minimum_lift_ratio,
                         "absence_under_complete_coverage_can_authorize_negative_label": True,
@@ -426,6 +450,7 @@ class HorizonRteCoolingLoadBackfillService:
                 region_results.append(
                     {
                         "region_code": region_code,
+                        "metric_spec_id": metric_spec_id,
                         "records_fetched": len(records),
                         "days_with_metric": days_with_metric,
                         "elevated_signal_links_created_or_reused": signal_days,
@@ -442,6 +467,7 @@ class HorizonRteCoolingLoadBackfillService:
             "engine": self.ENGINE_VERSION,
             "adapter": self.ADAPTER_KIND,
             "source_key": source.source_key,
+            "metric_spec_id": metric_spec_id,
             "window": {"start_at": start_at.isoformat(), "end_at": end_at.isoformat()},
             "regionalization": regionalization,
             "regional_heat_events_considered": len(relevant_events),
@@ -456,6 +482,7 @@ class HorizonRteCoolingLoadBackfillService:
                 "rte_load_proves_air_conditioning_causality": False,
                 "department_heat_compared_directly_to_national_load": False,
                 "regional_heat_requires_multiple_departments": True,
+                "derived_metric_identity_includes_configuration": True,
                 "negative_labels_require_complete_signal_coverage": True,
                 "numeric_probabilities_enabled": False,
             },
