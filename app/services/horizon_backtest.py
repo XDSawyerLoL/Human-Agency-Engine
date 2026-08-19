@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
+from ..horizon_backfill_models import HorizonHistoricalCoverageInterval
 from ..horizon_backtest_models import HorizonHistoricalBacktestRun
 from ..horizon_backtest_schemas import HorizonHistoricalBacktestRequest
 from ..horizon_expiry_schemas import HorizonForecastExpiryScanRequest
@@ -19,6 +20,7 @@ from ..horizon_schemas import HorizonForecastRequest
 from ..models import Intent, StateFact, User
 from .horizon import HorizonService
 from .horizon_calibration import HorizonEmpiricalCalibrationService
+from .horizon_coverage import HorizonHistoricalCoverageService
 from .horizon_expiry import HorizonForecastExpiryService
 from .horizon_materialization import HorizonMaterializationService
 from .policy import sha256_dict
@@ -31,7 +33,7 @@ def _utc_naive(value: datetime) -> datetime:
 
 
 class HorizonHistoricalBacktestFactory:
-    ENGINE_VERSION = "horizon-historical-backtest-factory-v0.1"
+    ENGINE_VERSION = "horizon-historical-backtest-factory-v0.2"
     EXCLUDED_STATUS = "excluded_backtest_factory"
     EXCLUDED_CALIBRATION_STATUS = "excluded_factory_duplicate"
 
@@ -83,10 +85,6 @@ class HorizonHistoricalBacktestFactory:
         if not signal_types:
             return False
         min_reliability, _, min_score = HorizonMaterializationService._thresholds(pattern)
-        # Deliberately conservative: any qualifying final-stage signal already visible
-        # at the decision cutoff disqualifies the case, even if it would not yet be
-        # sufficient by itself to auto-resolve a forecast. A backtest must never get
-        # credit for predicting an outcome that may already have been observable.
         return any(
             row.observed_at <= cutoff
             and row.signal_type in signal_types
@@ -116,6 +114,15 @@ class HorizonHistoricalBacktestFactory:
             self.db.query(Intent)
             .filter(Intent.user_id == user.id, Intent.created_at <= end_at)
             .order_by(Intent.id.asc())
+            .all()
+        )
+        coverage_rows = (
+            self.db.query(HorizonHistoricalCoverageInterval)
+            .filter(
+                HorizonHistoricalCoverageInterval.start_at <= evaluation_as_of,
+                HorizonHistoricalCoverageInterval.end_at >= end_at,
+            )
+            .order_by(HorizonHistoricalCoverageInterval.id.asc())
             .all()
         )
         return sha256_dict(
@@ -157,6 +164,20 @@ class HorizonHistoricalBacktestFactory:
                         "status": row.status,
                     }
                     for row in patterns
+                ],
+                "coverage": [
+                    {
+                        "id": row.id,
+                        "key": row.coverage_key,
+                        "kind": row.coverage_kind,
+                        "event_types": row.event_types,
+                        "signal_types": row.signal_types,
+                        "geography": row.geography,
+                        "start_at": row.start_at.isoformat(),
+                        "end_at": row.end_at.isoformat(),
+                        "completeness": row.completeness,
+                    }
+                    for row in coverage_rows
                 ],
                 "state_facts": [
                     {
@@ -222,7 +243,11 @@ class HorizonHistoricalBacktestFactory:
                     HorizonSocialSignal.event_id.in_(event_ids),
                     HorizonSocialSignal.observed_at <= evaluation_as_of,
                 )
-                .order_by(HorizonSocialSignal.event_id.asc(), HorizonSocialSignal.observed_at.asc(), HorizonSocialSignal.id.asc())
+                .order_by(
+                    HorizonSocialSignal.event_id.asc(),
+                    HorizonSocialSignal.observed_at.asc(),
+                    HorizonSocialSignal.id.asc(),
+                )
                 .all()
             )
 
@@ -273,14 +298,18 @@ class HorizonHistoricalBacktestFactory:
             "event_pattern_mismatch_or_missing_precursor": 0,
             "no_materialization_rule": 0,
             "outcome_already_obvious_at_cutoff": 0,
+            "outcome_window_after_evaluation": 0,
+            "outcome_coverage_incomplete": 0,
             "cutoff_after_evaluation": 0,
             "forecast_not_created": 0,
         }
         planned: list[dict] = []
+        coverage_service = HorizonHistoricalCoverageService(self.db)
         for event in events:
             event_signals = signals_by_event[event.id]
             for pattern in patterns:
-                if not HorizonMaterializationService.materialization_signal_types_for_pattern(pattern):
+                materialization_types = HorizonMaterializationService.materialization_signal_types_for_pattern(pattern)
+                if not materialization_types:
                     if self._event_type_matches(pattern, event):
                         skipped["no_materialization_rule"] += 1
                     continue
@@ -300,6 +329,22 @@ class HorizonHistoricalBacktestFactory:
                 if self._outcome_already_obvious(pattern, event_signals, cutoff):
                     skipped["outcome_already_obvious_at_cutoff"] += 1
                     continue
+                coverage_end = cutoff + timedelta(
+                    hours=float(pattern.expected_lag_hours_high)
+                    + HorizonMaterializationService.grace_hours_for_pattern(pattern)
+                )
+                if coverage_end > evaluation_as_of:
+                    skipped["outcome_window_after_evaluation"] += 1
+                    continue
+                coverage = coverage_service.signal_coverage(
+                    event,
+                    materialization_types,
+                    start_at=cutoff,
+                    end_at=coverage_end,
+                )
+                if not coverage["complete"]:
+                    skipped["outcome_coverage_incomplete"] += 1
+                    continue
                 planned.append(
                     {
                         "event_id": event.id,
@@ -308,6 +353,8 @@ class HorizonHistoricalBacktestFactory:
                         "pattern_id": pattern.id,
                         "pattern_key": pattern.pattern_key,
                         "cutoff": cutoff,
+                        "outcome_window_end": coverage_end,
+                        "outcome_coverage": coverage,
                     }
                 )
 
@@ -317,8 +364,10 @@ class HorizonHistoricalBacktestFactory:
         planned = planned[: request.max_cases]
 
         groups: dict[tuple[int, datetime], set[int]] = defaultdict(set)
+        planned_by_pair: dict[tuple[int, int], dict] = {}
         for item in planned:
             groups[(item["event_id"], item["cutoff"])].add(item["pattern_id"])
+            planned_by_pair[(item["event_id"], item["pattern_id"])] = item
 
         selected_forecast_ids: list[int] = []
         excluded_collateral_ids: list[int] = []
@@ -359,12 +408,15 @@ class HorizonHistoricalBacktestFactory:
                     row.calibration_status = "uncalibrated"
                 if row.id not in selected_forecast_ids:
                     selected_forecast_ids.append(row.id)
+                    plan = planned_by_pair[(event_id, pattern_id)]
                     selected_cases.append(
                         {
                             "event_id": event_id,
                             "pattern_id": pattern_id,
                             "forecast_id": row.id,
                             "cutoff": cutoff.isoformat(),
+                            "outcome_window_end": plan["outcome_window_end"].isoformat(),
+                            "outcome_coverage": plan["outcome_coverage"],
                         }
                     )
 
@@ -452,9 +504,12 @@ class HorizonHistoricalBacktestFactory:
                 "future_signals_visible_to_forecast": False,
                 "outcome_already_obvious_cases_disqualified": True,
                 "only_patterns_with_materialization_rules_are_scored": True,
+                "complete_outcome_signal_coverage_required_for_every_scored_case": True,
+                "absence_of_signal_without_complete_coverage_counts_as_failure": False,
+                "positive_cases_bypass_coverage_gate": False,
                 "numeric_probabilities_enabled": False,
-                "historical_source_scope": "already_ingested_horizon_event_and_signal_snapshots",
-                "historical_event_status_scope": "active_snapshots_only_v0.1",
+                "historical_source_scope": "already_ingested_horizon_event_signal_and_coverage_snapshots",
+                "historical_event_status_scope": "active_snapshots_only_v0.2",
             },
         }
         run = HorizonHistoricalBacktestRun(
