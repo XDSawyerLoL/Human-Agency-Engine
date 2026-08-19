@@ -31,6 +31,11 @@ DEPARTMENT_TO_REGION = {
     for department in departments
 }
 
+APPROVED_METEOFRANCE_EVENT_SOURCES = {
+    "meteofrance-vigilance",
+    "meteofrance-vigilance-archive",
+}
+
 
 def _utc_naive(value: datetime) -> datetime:
     if value.tzinfo is None:
@@ -58,9 +63,10 @@ class HorizonRegionalHeatService:
     def _department(event: HorizonGlobalEvent) -> str | None:
         normalized = (event.raw_facts or {}).get("normalized_facts") or {}
         if isinstance(normalized, dict):
-            value = str(normalized.get("department") or "").upper().strip()
-            if value:
-                return value
+            for key in ("department", "domain_id"):
+                value = str(normalized.get(key) or "").upper().strip()
+                if value in DEPARTMENT_TO_REGION:
+                    return value
         for item in event.geography or []:
             value = str(item).upper().strip()
             if value in DEPARTMENT_TO_REGION:
@@ -72,11 +78,21 @@ class HorizonRegionalHeatService:
         normalized = (event.raw_facts or {}).get("normalized_facts") or {}
         if not isinstance(normalized, dict):
             return None
+
+        # Archive-normalized episodes expose a direct interval.
         start = _parse(normalized.get("episode_start"))
         end = _parse(normalized.get("episode_end"))
-        if start is None or end is None or end <= start:
-            return None
-        return start, end
+        if start is not None and end is not None and end > start:
+            return start, end
+
+        # Live Météo-France normalization preserves the provider validity period.
+        period = normalized.get("period") or {}
+        if isinstance(period, dict):
+            start = _parse(period.get("begin_validity_time"))
+            end = _parse(period.get("end_validity_time"))
+            if start is not None and end is not None and end > start:
+                return start, end
+        return None
 
     def aggregate(self, *, start_at: datetime, end_at: datetime, merge_gap_hours: int = 24) -> dict:
         start_at = _utc_naive(start_at)
@@ -88,7 +104,7 @@ class HorizonRegionalHeatService:
             self.db.query(HorizonGlobalEvent)
             .filter(
                 HorizonGlobalEvent.event_type == "extreme_heat",
-                HorizonGlobalEvent.source == "meteofrance-vigilance-archive",
+                HorizonGlobalEvent.source.in_(APPROVED_METEOFRANCE_EVENT_SOURCES),
                 HorizonGlobalEvent.status == "active",
                 HorizonGlobalEvent.first_observed_at <= end_at,
             )
@@ -148,10 +164,22 @@ class HorizonRegionalHeatService:
                     key=lambda event: (event.first_observed_at, event.id),
                 )
                 member_ids = [event.id for event in member_events]
-                known_times = sorted(event.first_observed_at for event in member_events)
-                became_regional_at = known_times[1]
+
+                # The regional state must not become observable merely because two
+                # snapshots exist for one department. Use the first-known time for
+                # each distinct department, then wait for the second department.
+                first_known_by_department: dict[str, datetime] = {}
+                for item in cluster:
+                    event_time = _utc_naive(item["event"].first_observed_at)
+                    current_first = first_known_by_department.get(item["department"])
+                    if current_first is None or event_time < current_first:
+                        first_known_by_department[item["department"]] = event_time
+                distinct_department_times = sorted(first_known_by_department.values())
+                became_regional_at = distinct_department_times[1]
+
                 episode_start = min(item["start"] for item in cluster)
                 episode_end = max(item["end"] for item in cluster)
+                member_sources = sorted({event.source for event in member_events})
                 key = "regional-heat-" + sha256_dict(
                     {
                         "engine": self.ENGINE_VERSION,
@@ -176,7 +204,7 @@ class HorizonRegionalHeatService:
                         "Il ne constitue pas une nouvelle observation météo indépendante."
                     ),
                     geography=["FR", f"REGION:{region_code}"],
-                    source="meteofrance-vigilance-archive",
+                    source="meteofrance-vigilance-derived",
                     source_url="https://vigilance.meteofrance.fr/fr",
                     source_reliability=min(float(event.source_reliability) for event in member_events),
                     raw_facts={
@@ -186,9 +214,11 @@ class HorizonRegionalHeatService:
                         "region_name": region_name,
                         "departments": departments,
                         "member_event_ids": member_ids,
+                        "member_sources": member_sources,
                         "episode_start": episode_start.isoformat(),
                         "episode_end": episode_end.isoformat(),
                         "regional_condition_requires_distinct_departments": 2,
+                        "first_observed_at_basis": "second_distinct_department_first_observed_at",
                         "causal_claim": False,
                     },
                     occurred_at=became_regional_at,
@@ -209,8 +239,10 @@ class HorizonRegionalHeatService:
             "skipped_single_department_clusters": skipped_single_department,
             "critical_semantics": {
                 "regional_event_is_independent_weather_source": False,
+                "accepted_member_sources": sorted(APPROVED_METEOFRANCE_EVENT_SOURCES),
                 "minimum_distinct_departments": 2,
-                "first_observed_at_uses_second_known_department": True,
+                "first_observed_at_uses_second_distinct_department": True,
+                "duplicate_snapshots_same_department_advance_regional_clock": False,
                 "causal_claim": False,
             },
         }
