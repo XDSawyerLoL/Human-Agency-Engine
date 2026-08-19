@@ -150,15 +150,29 @@ class HorizonSourceService:
             self.db.refresh(row)
         return rows
 
-    def upsert_source(self, payload: HorizonSourceUpsert) -> HorizonSource:
+    def upsert_source(
+        self,
+        payload: HorizonSourceUpsert,
+        *,
+        preserve_enabled: bool = True,
+    ) -> HorizonSource:
+        """Create/update a source contract without silently overriding operator control.
+
+        Internal adapters preserve the current enabled/disabled state by default.
+        Administrative API callers can pass preserve_enabled=False when they
+        intentionally want to change that state.
+        """
         row = self.db.query(HorizonSource).filter(HorizonSource.source_key == payload.source_key).one_or_none()
         data = payload.model_dump()
         if row is None:
             row = HorizonSource(**data)
             self.db.add(row)
         else:
+            enabled = row.enabled
             for key, value in data.items():
-                setattr(row, key, value)
+                if key != "enabled":
+                    setattr(row, key, value)
+            row.enabled = enabled if preserve_enabled else bool(data["enabled"])
             row.updated_at = datetime.utcnow()
         self.db.commit()
         self.db.refresh(row)
