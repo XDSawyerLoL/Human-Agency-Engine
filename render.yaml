@@ -23,6 +23,8 @@ services:
         value: "60"
       - key: GOOGLE_MAX_GMAIL_MESSAGES
         value: "250"
+      - key: METEOFRANCE_APPLICATION_ID
+        sync: false
 
 databases:
   - name: human-agency-db

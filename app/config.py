@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     google_sync_lookback_days: int = 14
     google_sync_lookahead_days: int = 60
     google_max_gmail_messages: int = 250
+    # Opaque credential shown after `Authorization: Basic` by the
+    # Météo-France API portal. Never commit the real value.
+    meteofrance_application_id: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
