@@ -132,6 +132,8 @@ class HorizonMaterializationService:
         query = self.db.query(HorizonForecast).filter(HorizonForecast.status == "open")
         if request.mode != "all":
             query = query.filter(HorizonForecast.mode == request.mode)
+        if request.forecast_ids:
+            query = query.filter(HorizonForecast.id.in_(set(request.forecast_ids)))
         forecasts = (
             query.filter(HorizonForecast.as_of < cutoff)
             .order_by(HorizonForecast.as_of.asc(), HorizonForecast.id.asc())
