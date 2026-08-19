@@ -19,3 +19,4 @@ from . import horizon_impact as _horizon_impact  # noqa: F401,E402
 from . import horizon_sources as _horizon_sources  # noqa: F401,E402
 from . import horizon_live as _horizon_live  # noqa: F401,E402
 from . import horizon_meteofrance as _horizon_meteofrance  # noqa: F401,E402
+from . import horizon_normalizer as _horizon_normalizer  # noqa: F401,E402
