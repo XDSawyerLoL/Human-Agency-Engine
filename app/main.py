@@ -17,8 +17,11 @@ from .routers.delegation import router as delegation_router
 from .routers.future import router as future_router
 from .routers.privacy import router as privacy_router
 from .routers.settlement_permit import (
-    public_router as settlement_permit_public_router,
-    router as settlement_permit_router,
+    consume_settlement_permit,
+    issue_settlement_permit,
+    list_user_settlement_permits,
+    revoke_settlement_permit,
+    verify_settlement_permit,
 )
 from .routers.state import router as state_router
 from .routers.synthesis import router as synthesis_router
@@ -48,8 +51,39 @@ app.include_router(synthesis_router)
 app.include_router(delegation_router)
 app.include_router(world_router)
 app.include_router(privacy_router)
-app.include_router(settlement_permit_router, prefix="/v1")
-app.include_router(settlement_permit_public_router, prefix="/v1")
+
+# Settlement permits are deliberately registered directly on the application.
+# This boundary has mixed public/private authorization semantics and must not
+# depend on package-import side effects or nested-router copy timing.
+app.add_api_route(
+    "/v1/settlement-permits/verify",
+    verify_settlement_permit,
+    methods=["POST"],
+)
+app.add_api_route(
+    "/v1/settlement-permits/consume",
+    consume_settlement_permit,
+    methods=["POST"],
+    dependencies=[Depends(require_api_key)],
+)
+app.add_api_route(
+    "/v1/settlement-permits/users/{external_id}",
+    issue_settlement_permit,
+    methods=["POST"],
+    dependencies=[Depends(require_api_key)],
+)
+app.add_api_route(
+    "/v1/settlement-permits/users/{external_id}",
+    list_user_settlement_permits,
+    methods=["GET"],
+    dependencies=[Depends(require_api_key)],
+)
+app.add_api_route(
+    "/v1/settlement-permits/users/{external_id}/{permit_id}/revoke",
+    revoke_settlement_permit,
+    methods=["POST"],
+    dependencies=[Depends(require_api_key)],
+)
 
 
 @app.get("/health")
