@@ -26,6 +26,7 @@ jobs:
             echo "HORIZON live radar not configured yet; skipping cleanly."
             exit 0
           fi
+
           curl --fail-with-body --silent --show-error \
             --retry 2 \
             --retry-all-errors \
@@ -34,3 +35,12 @@ jobs:
             -H "X-API-Key: ${ENGINE_API_KEY}" \
             -H "Content-Type: application/json" \
             --data '{}'
+
+          echo
+          echo "Polling Météo-France official-primary feed (cleanly skips if server credential is absent)."
+          curl --fail-with-body --silent --show-error \
+            --retry 2 \
+            --retry-all-errors \
+            --max-time 120 \
+            -X POST "${ENGINE_URL%/}/v1/horizon/live/meteofrance/poll" \
+            -H "X-API-Key: ${ENGINE_API_KEY}"
