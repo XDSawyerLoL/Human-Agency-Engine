@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
+from ..config import settings
 from ..connectors.google import GoogleReadOnlyConnector
 from ..models import ConnectorAccount, User
 from .acquisition import InformationAcquisitionService
 from .engine import OpportunityEngine
+from .horizon_live import HorizonLiveIngestionService
 from .synthesis import SynthesisService
 
 
@@ -31,6 +33,18 @@ class AgencyCycle:
             "auto_resolved": 0,
             "open_needs": 0,
         }
+
+        horizon_live = {
+            "enabled": settings.horizon_live_sync_enabled,
+            "sources": [],
+            "created_snapshots": 0,
+            "errors": 0,
+        }
+        if settings.horizon_live_sync_enabled:
+            horizon_live = {
+                "enabled": True,
+                **HorizonLiveIngestionService(self.db).sync_all(),
+            }
 
         accounts = (
             self.db.query(ConnectorAccount)
@@ -64,6 +78,7 @@ class AgencyCycle:
                 acquisition_totals[key] += int(acquisition_result.get(key, 0))
 
         return {
+            "horizon_live": horizon_live,
             "connectors": connector_results,
             "created_opportunities": created_opportunities,
             "synthesis": synthesis_totals,
