@@ -121,7 +121,7 @@ def test_empirical_calibration_counts_successes_and_failures_without_enabling_pr
     assert response.status_code == 200, response.text
     body = response.json()
 
-    assert body["engine"] == "horizon-empirical-calibration-v0.1"
+    assert body["engine"] == "horizon-empirical-calibration-v0.2"
     assert body["mode"] == "backtest"
     assert body["decisive_labels"] == 2
     assert body["weighted_precision"] == 0.5
