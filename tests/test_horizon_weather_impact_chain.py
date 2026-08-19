@@ -48,6 +48,14 @@ def _windy_candidate(db, *, department: str, first_observed_at: datetime, tag: s
     db.commit()
     db.refresh(candidate)
     HorizonProvisionalService(db).refresh(HorizonProvisionalRefreshRequest(max_candidates=1000))
+    # The fixture represents a forecast created immediately after the Windy snapshot,
+    # even though the test itself is replaying a synthetic timestamp.
+    forecasts = db.query(HorizonProvisionalForecast).filter(
+        HorizonProvisionalForecast.candidate_id == candidate.id
+    ).all()
+    for forecast in forecasts:
+        forecast.as_of = first_observed_at + timedelta(minutes=1)
+    db.commit()
     return candidate
 
 
@@ -133,6 +141,7 @@ def test_windy_confirmation_requires_same_department_and_overlapping_validity_wi
         )
         second = HorizonWeatherChainService(db).match_official_confirmations(max_forecasts=5000)
         assert second["windy_candidates_matched"] == 1
+        assert second["provisional_forecasts_skipped_as_hindsight"] == 0
         match = next(item for item in second["matches"] if item["candidate_id"] == candidate.id)
         assert match["confirmed_event_id"] == matching.id
         assert match["windy_to_official_lead_hours"] == 6.0
@@ -149,6 +158,42 @@ def test_windy_confirmation_requires_same_department_and_overlapping_validity_wi
         assert own_resolutions
         assert all(row.resolution_type == "matched_external_official_confirmation" for row in own_resolutions)
         assert all(row.evidence["windy_candidate_was_promoted"] is False for row in own_resolutions)
+        assert all(row.evidence["forecast_existed_before_confirmation"] is True for row in own_resolutions)
+    finally:
+        db.close()
+
+
+def test_forecast_created_after_official_confirmation_cannot_receive_windy_lead_credit():
+    db = SessionLocal()
+    tag = uuid4().hex[:10]
+    start = datetime(2026, 8, 3, 0, 0, 0)
+    try:
+        candidate = _windy_candidate(db, department="75", first_observed_at=start, tag=f"hindsight-{tag}")
+        official = _official_event(
+            db,
+            department="75",
+            first_observed_at=start + timedelta(hours=6),
+            validity_start=start + timedelta(hours=10),
+            validity_end=start + timedelta(hours=26),
+            tag=f"hindsight-{tag}",
+        )
+        forecasts = db.query(HorizonProvisionalForecast).filter(
+            HorizonProvisionalForecast.candidate_id == candidate.id
+        ).all()
+        for forecast in forecasts:
+            forecast.as_of = official.first_observed_at + timedelta(minutes=1)
+        db.commit()
+
+        result = HorizonWeatherChainService(db).match_official_confirmations(max_forecasts=5000)
+        assert result["windy_candidates_matched"] == 0
+        assert result["provisional_forecasts_skipped_as_hindsight"] >= len(forecasts)
+        own = (
+            db.query(HorizonProvisionalResolution)
+            .join(HorizonProvisionalForecast, HorizonProvisionalForecast.id == HorizonProvisionalResolution.forecast_id)
+            .filter(HorizonProvisionalForecast.candidate_id == candidate.id)
+            .all()
+        )
+        assert own == []
     finally:
         db.close()
 
