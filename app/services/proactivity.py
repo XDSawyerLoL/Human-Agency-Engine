@@ -10,6 +10,7 @@ from ..models import Notification, Opportunity, PersonalMandate, User
 
 DEFAULT_POLICY = {
     "min_confidence": 0.72,
+    "horizon_min_attention_score": 0.62,
     "max_per_day": 3,
     "category_cooldown_hours": 24,
     "quiet_hours": {"start": 22, "end": 7},
@@ -20,12 +21,46 @@ class ProactivityService:
     """Decides whether an opportunity deserves the user's attention.
 
     Suppressed notifications are persisted too. Silence must remain auditable.
+    HORIZON attention scores are handled separately from confidence because an
+    attention score is a prioritization diagnostic, never a probability.
     """
 
     def __init__(self, db: Session):
         self.db = db
 
     def evaluate(self, user: User, opportunity: Opportunity) -> Notification:
+        return self._evaluate(
+            user,
+            opportunity,
+            score=float(opportunity.confidence),
+            threshold_key="min_confidence",
+            metric_name="confidence",
+        )
+
+    def evaluate_horizon(
+        self,
+        user: User,
+        opportunity: Opportunity,
+        *,
+        attention_score: float,
+    ) -> Notification:
+        return self._evaluate(
+            user,
+            opportunity,
+            score=max(0.0, min(1.0, float(attention_score))),
+            threshold_key="horizon_min_attention_score",
+            metric_name="HORIZON attention score",
+        )
+
+    def _evaluate(
+        self,
+        user: User,
+        opportunity: Opportunity,
+        *,
+        score: float,
+        threshold_key: str,
+        metric_name: str,
+    ) -> Notification:
         existing = (
             self.db.query(Notification)
             .filter(Notification.opportunity_id == opportunity.id)
@@ -35,7 +70,14 @@ class ProactivityService:
             return existing
 
         policy = self._policy_for(user)
-        reason = self._suppression_reason(user, opportunity, policy)
+        reason = self._suppression_reason(
+            user,
+            opportunity,
+            policy,
+            score=score,
+            threshold_key=threshold_key,
+            metric_name=metric_name,
+        )
         available_at = self._available_at(user, policy)
 
         notification = Notification(
@@ -46,7 +88,7 @@ class ProactivityService:
             body=opportunity.rationale,
             status="suppressed" if reason else "queued",
             suppression_reason=reason,
-            priority=max(0.0, min(1.0, opportunity.confidence)),
+            priority=max(0.0, min(1.0, score)),
             available_at=available_at,
         )
         self.db.add(notification)
@@ -68,13 +110,25 @@ class ProactivityService:
             policy.update(mandate.notification_policy)
         return policy
 
-    def _suppression_reason(self, user: User, opportunity: Opportunity, policy: dict) -> str:
+    def _suppression_reason(
+        self,
+        user: User,
+        opportunity: Opportunity,
+        policy: dict,
+        *,
+        score: float | None = None,
+        threshold_key: str = "min_confidence",
+        metric_name: str = "confidence",
+    ) -> str:
         if opportunity.care_status == "blocked":
             return "CARE blocked this opportunity"
 
-        min_confidence = float(policy.get("min_confidence", DEFAULT_POLICY["min_confidence"]))
-        if opportunity.confidence < min_confidence:
-            return f"confidence below proactive threshold ({opportunity.confidence:.2f} < {min_confidence:.2f})"
+        if score is None:
+            score = float(opportunity.confidence)
+        fallback = DEFAULT_POLICY.get(threshold_key, DEFAULT_POLICY["min_confidence"])
+        threshold = float(policy.get(threshold_key, fallback))
+        if score < threshold:
+            return f"{metric_name} below proactive threshold ({score:.2f} < {threshold:.2f})"
 
         mandate = (
             self.db.query(PersonalMandate)
