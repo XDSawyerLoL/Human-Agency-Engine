@@ -158,7 +158,7 @@ def extract_heat_intervals(payload: object, *, min_color_id: int, departments: s
             if not isinstance(domain, dict):
                 continue
             department = str(domain.get("domain_id") or "").upper().strip()
-            if not department or department == "FRA" or department.startswith("ZDF_") or department.endswith("10"):
+            if not department or department == "FRA" or department.startswith("ZDF_"):
                 continue
             if departments and department not in departments:
                 continue
@@ -239,6 +239,7 @@ class HorizonHistoricalBackfillService:
                 "available_from": "2022-11-28",
                 "product_scope": "CDP_CARTE_EXTERNE/QGFR40",
                 "historical_observed_at_rule": "product.update_time",
+                "event_time_rule": "official_warning_publication_time",
                 "direct_event_promotion": False,
             },
         )
@@ -271,7 +272,11 @@ class HorizonHistoricalBackfillService:
             geography = {str(item).upper() for item in (row.geography or [])}
             if department not in geography:
                 continue
-            if start - gap <= row.occurred_at <= end + gap:
+            normalized = (row.raw_facts or {}).get("normalized_facts") or {}
+            raw_start = normalized.get("episode_start") if isinstance(normalized, dict) else None
+            existing_start = _parse_datetime(raw_start) if raw_start else None
+            anchor = _utc_naive(existing_start) if existing_start else row.occurred_at
+            if start - gap <= anchor <= end + gap:
                 return row
         return None
 
@@ -426,8 +431,9 @@ class HorizonHistoricalBackfillService:
                             "archive_tree": METEOFRANCE_ARCHIVE_TREE_URL,
                             "snapshot_id": snapshot_id,
                             "historical_timestamp_semantics": "observed_at_equals_official_product_update_time",
+                            "event_semantics": "official_warning_publication_fact",
                         },
-                        event_time=item["begin"],
+                        event_time=update_time,
                         published_at=update_time,
                         observed_at=update_time,
                     )
@@ -467,6 +473,7 @@ class HorizonHistoricalBackfillService:
                             "episode_end": episode["end"].isoformat(),
                             "max_color_id": episode["max_color_id"],
                             "historical_fact_only": True,
+                            "trigger_fact_time": "official_product_update_time",
                         },
                         normalizer_version="horizon-mf-vigilance-archive-v0.1",
                     )
@@ -524,6 +531,8 @@ class HorizonHistoricalBackfillService:
                 "event_coverage_complete": coverage.completeness == "complete",
                 "critical_semantics": {
                     "historical_observed_at_uses_provider_update_time": True,
+                    "historical_event_time_uses_provider_update_time": True,
+                    "warning_validity_start_is_not_treated_as_already_occurred": True,
                     "adapter_directly_creates_confirmed_event": False,
                     "promotion_uses_source_intelligence": True,
                     "archive_event_coverage_is_materialization_signal_coverage": False,
