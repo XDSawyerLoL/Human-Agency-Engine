@@ -18,3 +18,18 @@ class HorizonMeteoFranceArchiveBackfillRequest(BaseModel):
         if self.end_at <= self.start_at:
             raise ValueError("end_at must be after start_at")
         return self
+
+
+class HorizonRteCoolingLoadBackfillRequest(BaseModel):
+    start_at: datetime
+    end_at: datetime
+    baseline_lookback_days: int = Field(default=28, ge=14, le=84)
+    minimum_lift_ratio: float = Field(default=0.03, ge=0.005, le=0.25)
+    minimum_afternoon_points: int = Field(default=12, ge=8, le=20)
+    max_records: int = Field(default=50000, ge=100, le=100000)
+
+    @model_validator(mode="after")
+    def validate_window(self):
+        if self.end_at <= self.start_at:
+            raise ValueError("end_at must be after start_at")
+        return self

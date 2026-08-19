@@ -28,13 +28,14 @@ def test_builtin_human_response_library_is_versioned_idempotent_and_not_fake_cal
     assert body["library_version"] == "human-response-library-v0.1"
     assert body["formal_probabilities"] is False
     assert body["horizon_support_counts_are_real_labels_only"] is True
-    assert len(body["patterns"]) == 2
+    assert len(body["patterns"]) == 3
 
     by_key = {item["pattern_key"]: item for item in body["patterns"]}
     heat = by_key["builtin-extreme-heat-cooling-demand-v1"]
     supply = by_key["builtin-supply-risk-precautionary-buying-v1"]
+    regional_load = by_key["builtin-extreme-heat-regional-cooling-load-v1"]
 
-    for item in (heat, supply):
+    for item in (heat, supply, regional_load):
         assert item["support_count"] == 0
         assert item["contradiction_count"] == 0
         assert item["confidence_is_probability"] is False
@@ -53,6 +54,8 @@ def test_builtin_human_response_library_is_versioned_idempotent_and_not_fake_cal
         "scarcity_mentions",
         "queue_reports",
     ]
+    assert regional_load["event_types"] == ["extreme_heat_region"]
+    assert regional_load["provenance"]["materialization_signal_types"] == ["cooling_load_pressure"]
 
     second = client.post("/v1/horizon/response-library/builtins/sync")
     assert second.status_code == 200, second.text

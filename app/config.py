@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     # Opaque credential shown after `Authorization: Basic` by the
     # Météo-France API portal. Never commit the real value.
     meteofrance_application_id: str = ""
+    # Windy Point Forecast API key. The free testing key intentionally returns
+    # modified/shuffled data and must never be treated as production evidence.
+    windy_point_forecast_api_key: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
