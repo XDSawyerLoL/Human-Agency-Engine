@@ -53,6 +53,8 @@ class HorizonLiveConvergencePollRequest(BaseModel):
     refresh_provisional_candidates: bool = True
     snapshot_recent_active_events: bool = True
     max_active_events: int = Field(default=100, ge=1, le=1000)
+    build_event_graph: bool = True
+    event_graph_lookback_hours: int = Field(default=336, ge=24, le=24 * 30)
     gdacs: HorizonGdacsPollRequest = Field(default_factory=HorizonGdacsPollRequest)
     meteoalarm: HorizonMeteoAlarmPollRequest = Field(default_factory=HorizonMeteoAlarmPollRequest)
     rte: HorizonRteRealtimePollRequest = Field(default_factory=HorizonRteRealtimePollRequest)
