@@ -8,6 +8,7 @@ from app.db import SessionLocal
 from app.horizon_source_models import HorizonEventCandidate, HorizonSource
 from app.horizon_windy_schemas import HorizonWindyPollRequest
 from app.main import app
+from app.services.horizon_sources import HorizonSourceService
 from app.services.horizon_windy import HorizonWindyService, WINDY_POINT_FORECAST_ENDPOINT
 
 
@@ -72,6 +73,10 @@ def test_windy_multi_model_heat_consensus_creates_unconfirmed_candidate_only():
         assert candidate.promotion_status == "candidate"
         assert candidate.promoted_event_id is None
         assert candidate.normalized_facts["forecast_only"] is True
+        readiness = HorizonSourceService(db).promotion_readiness(candidate)
+        assert readiness["ready"] is False
+        assert readiness["forecast_only_candidate"] is True
+        assert readiness["official_primary_present"] is False
 
         source = db.query(HorizonSource).filter(HorizonSource.source_key == "windy-point-forecast").one()
         assert source.source_class == "model_forecast"
@@ -83,7 +88,7 @@ def test_windy_multi_model_heat_consensus_creates_unconfirmed_candidate_only():
 
 def test_windy_divergent_hot_models_do_not_create_heat_candidate():
     db = SessionLocal()
-    observed = datetime(2026, 7, 2, 0, 0, tzinfo=timezone.utc)
+    observed = datetime(2026, 7, 1, 0, 0, tzinfo=timezone.utc)
     model_payloads = {
         "aromeFrance": _payload(40.0, 12),
         "iconEu": _payload(33.0, 12),
