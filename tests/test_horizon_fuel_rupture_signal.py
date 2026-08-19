@@ -24,8 +24,6 @@ def _pdv(station_id: int, cp: str, *, temp_gazole: bool = False, permanent_gazol
         fuel = '<rupture id="1" fuel="Gazole" debut="2020-01-01 00:00:00" fin="" type="definitive" />'
     else:
         fuel = '<prix nom="Gazole" id="1" maj="2026-08-19 08:00:00" valeur="1.899" />'
-    # Permanent SP95 is intentionally present everywhere; it must never be
-    # interpreted as a live stock crisis.
     permanent_sp95 = '<rupture id="2" fuel="SP95" debut="2020-01-01 00:00:00" fin="" type="definitive" />'
     return (
         f'<pdv id="{station_id}" latitude="4880000" longitude="230000" cp="{cp}" pop="R">'
@@ -35,14 +33,9 @@ def _pdv(station_id: int, cp: str, *, temp_gazole: bool = False, permanent_gazol
 
 def _feed_zip() -> bytes:
     rows = []
-    # Département 92: 10 stations normally offering Gazole, 4 temporarily out.
     for index in range(10):
         rows.append(_pdv(920000 + index, "92100", temp_gazole=index < 4))
-    # One additional station that definitively does not distribute Gazole: it
-    # must not enter the denominator.
     rows.append(_pdv(929999, "92100", permanent_gazole=True))
-
-    # Département 29: 5 stations, only one temporary outage -> below min count.
     for index in range(5):
         rows.append(_pdv(290000 + index, "29000", temp_gazole=index == 0))
 
@@ -125,7 +118,7 @@ def test_fuel_normalizer_creates_scoped_event_and_out_of_sequence_stock_signal_w
     network = _network(content)
     db = SessionLocal()
     try:
-        poll = HorizonFuelService(db).poll(client=network)
+        HorizonFuelService(db).poll(client=network)
         normalized = HorizonFuelService(db).normalize_latest(HorizonFuelNormalizeRequest())
         assert normalized["events_created_or_reused"] == 1
         event = normalized["events"][0]
@@ -173,7 +166,7 @@ def test_fuel_normalizer_creates_scoped_event_and_out_of_sequence_stock_signal_w
     stock_stage = next(item for item in body["stages"] if item["stage"] == "queue and inventory pressure")
     assert stock_stage["state"] in {"active", "established"}
     assert stock_stage["sequentially_reached"] is False
-    assert body["interpretation"]["out_of_sequence_evidence"] is True
+    assert body["interpretation"]["out_of_sequence_signal_count"] >= 1
 
     local_uid = f"fuel-local-{uuid4().hex[:8]}"
     remote_uid = f"fuel-remote-{uuid4().hex[:8]}"
