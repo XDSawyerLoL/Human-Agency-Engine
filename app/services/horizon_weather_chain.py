@@ -151,6 +151,7 @@ class HorizonWeatherChainService:
         resolutions_created = 0
         too_broad = 0
         waiting = 0
+        hindsight_forecasts = 0
         matches: list[dict] = []
         for candidate_id, forecasts in sorted(by_candidate.items()):
             candidate = self.db.query(HorizonEventCandidate).filter(
@@ -172,9 +173,20 @@ class HorizonWeatherChainService:
             if lead <= 0:
                 waiting += 1
                 continue
+            eligible_forecasts = [
+                forecast
+                for forecast in forecasts
+                if _utc_naive(forecast.as_of) <= confirmed_at
+                and _utc_naive(forecast.created_at) <= _utc_naive(event.created_at)
+            ]
+            hindsight_forecasts += len(forecasts) - len(eligible_forecasts)
+            if not eligible_forecasts:
+                waiting += 1
+                continue
+
             candidate_matches += 1
             created_for_candidate: list[int] = []
-            for forecast in forecasts:
+            for forecast in eligible_forecasts:
                 resolution = HorizonProvisionalResolution(
                     forecast_id=forecast.id,
                     resolution_type="matched_external_official_confirmation",
@@ -190,6 +202,7 @@ class HorizonWeatherChainService:
                         "official_source": event.source,
                         "geography_match": True,
                         "temporal_validity_overlap": True,
+                        "forecast_existed_before_confirmation": True,
                         "lead_time_anchor": "windy_candidate.first_observed_at",
                         "corroboration_lead_time_is_predictive_outcome_lead": False,
                         "candidate_event_hypothesis_confirmed": True,
@@ -217,6 +230,7 @@ class HorizonWeatherChainService:
             "provisional_forecasts_scanned": len(unresolved),
             "windy_candidates_matched": candidate_matches,
             "provisional_resolutions_created": resolutions_created,
+            "provisional_forecasts_skipped_as_hindsight": hindsight_forecasts,
             "windy_candidates_waiting_for_official_confirmation": waiting,
             "windy_candidates_skipped_for_broad_or_missing_scope": too_broad,
             "matches": matches,
@@ -225,6 +239,7 @@ class HorizonWeatherChainService:
                 "official_confirmation_required": True,
                 "precise_local_geography_required": True,
                 "forecast_and_warning_validity_must_overlap": True,
+                "forecast_must_preexist_official_confirmation": True,
                 "windy_to_official_lead_is_behavioral_predictive_lead": False,
             },
         }
