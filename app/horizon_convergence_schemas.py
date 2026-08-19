@@ -4,6 +4,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
 
+from .horizon_global_alert_schemas import HorizonGdacsPollRequest, HorizonMeteoAlarmPollRequest
+
 
 class HorizonRteRealtimePollRequest(BaseModel):
     region_codes: list[str] = Field(default_factory=list, max_length=13)
@@ -40,14 +42,19 @@ class HorizonWindyPoint(BaseModel):
 
 class HorizonLiveConvergencePollRequest(BaseModel):
     include_gdelt: bool = True
+    include_gdacs: bool = True
     include_meteofrance: bool = True
+    include_meteoalarm: bool = True
     include_fuel: bool = True
     include_rte_realtime: bool = True
     include_vigicrues: bool = True
     include_sncf: bool = True
     windy_points: list[HorizonWindyPoint] = Field(default_factory=list, max_length=20)
+    refresh_provisional_candidates: bool = True
     snapshot_recent_active_events: bool = True
     max_active_events: int = Field(default=100, ge=1, le=1000)
+    gdacs: HorizonGdacsPollRequest = Field(default_factory=HorizonGdacsPollRequest)
+    meteoalarm: HorizonMeteoAlarmPollRequest = Field(default_factory=HorizonMeteoAlarmPollRequest)
     rte: HorizonRteRealtimePollRequest = Field(default_factory=HorizonRteRealtimePollRequest)
     vigicrues: HorizonVigicruesPollRequest = Field(default_factory=HorizonVigicruesPollRequest)
     sncf: HorizonSncfPollRequest = Field(default_factory=HorizonSncfPollRequest)
