@@ -19,8 +19,6 @@ def upgrade() -> None:
         "horizon_weather_impact_chains",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("chain_key", sa.String(length=96), nullable=False),
-        sa.Column("provisional_forecast_id", sa.Integer(), nullable=False),
-        sa.Column("provisional_resolution_id", sa.Integer(), nullable=False),
         sa.Column("windy_candidate_id", sa.Integer(), nullable=False),
         sa.Column("confirmed_event_id", sa.Integer(), nullable=False),
         sa.Column("regional_event_id", sa.Integer(), nullable=False),
@@ -33,26 +31,24 @@ def upgrade() -> None:
         sa.Column("windy_to_behavior_lead_hours", sa.Float(), nullable=False),
         sa.Column("evidence", sa.JSON(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(["provisional_forecast_id"], ["horizon_provisional_forecasts.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["provisional_resolution_id"], ["horizon_provisional_resolutions.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["windy_candidate_id"], ["horizon_event_candidates.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["confirmed_event_id"], ["horizon_global_events.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["regional_event_id"], ["horizon_global_events.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["outcome_signal_id"], ["horizon_social_signals.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("chain_key", name="uq_horizon_weather_impact_chain_key"),
-        sa.UniqueConstraint("provisional_forecast_id", name="uq_horizon_weather_impact_chain_forecast"),
+        sa.UniqueConstraint("windy_candidate_id", name="uq_horizon_weather_impact_chain_candidate"),
     )
     for column in (
-        "chain_key", "provisional_forecast_id", "provisional_resolution_id", "windy_candidate_id",
-        "confirmed_event_id", "regional_event_id", "outcome_signal_id", "windy_first_observed_at",
-        "official_confirmed_at", "behavior_observed_at", "created_at",
+        "chain_key", "windy_candidate_id", "confirmed_event_id", "regional_event_id",
+        "outcome_signal_id", "windy_first_observed_at", "official_confirmed_at",
+        "behavior_observed_at", "created_at",
     ):
         op.create_index(
             f"ix_horizon_weather_impact_chains_{column}",
             "horizon_weather_impact_chains",
             [column],
-            unique=column in {"chain_key", "provisional_forecast_id"},
+            unique=column in {"chain_key", "windy_candidate_id"},
         )
 
 
