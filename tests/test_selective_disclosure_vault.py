@@ -13,6 +13,17 @@ from tests.test_privacy_preserving_allocation import _allocate, _prepared_oversu
 client = TestClient(app)
 
 
+def _leaf_values(value):
+    if isinstance(value, dict):
+        for item in value.values():
+            yield from _leaf_values(item)
+    elif isinstance(value, (list, tuple)):
+        for item in value:
+            yield from _leaf_values(item)
+    else:
+        yield value
+
+
 def _prepared_user(category: str):
     settings.token_encryption_key = Fernet.generate_key().decode("ascii")
     members, offer, _ = _prepared_oversubscribed_group(category, users=10, quantity=1, capacity=10)
@@ -149,9 +160,14 @@ def test_selective_disclosure_proof_contains_no_values_and_consumes_exact_subset
     assert proof["claims"]["capability"] == "reveal_fulfillment_claims"
     assert body["raw_values_in_proof"] is False
     assert body["payment_claims_allowed"] is False
-    serialized = str(proof)
+
+    # The compact JWS is intentionally opaque and contains random signature bytes.
+    # A raw substring search is therefore probabilistic (for example a short value
+    # such as "FR" can occur by chance in base64url). Verify the decoded structured
+    # claims instead: no sensitive value may exist as a claim value before consume.
+    structured_values = set(_leaf_values(proof["claims"]))
     for value in values.values():
-        assert value not in serialized
+        assert value not in structured_values
 
     verified = client.post(
         "/v1/vault/disclosures/verify",
