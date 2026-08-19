@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -22,16 +22,17 @@ def _utc_naive(value: datetime) -> datetime:
 
 
 class HorizonMaterializationService:
-    ENGINE_VERSION = "horizon-materialization-detector-v0.1"
+    ENGINE_VERSION = "horizon-materialization-detector-v0.2"
     DEFAULT_MIN_RELIABILITY = 0.65
     DEFAULT_STRONG_SOURCE_RELIABILITY = 0.85
     DEFAULT_MIN_NORMALIZED_SCORE = 0.50
+    DEFAULT_EXPIRY_GRACE_HOURS = 24.0
 
     def __init__(self, db: Session):
         self.db = db
 
     @staticmethod
-    def _materialization_signal_types(pattern: HorizonBehaviorPattern) -> set[str]:
+    def materialization_signal_types_for_pattern(pattern: HorizonBehaviorPattern) -> set[str]:
         provenance = pattern.provenance or {}
         explicit = provenance.get("materialization_signal_types")
         if isinstance(explicit, list):
@@ -53,6 +54,22 @@ class HorizonMaterializationService:
                 _, values = max(indexed, key=lambda item: item[0])
                 return {str(item) for item in values if str(item).strip()}
         return set()
+
+    @staticmethod
+    def grace_hours_for_pattern(pattern: HorizonBehaviorPattern) -> float:
+        provenance = pattern.provenance or {}
+        raw = provenance.get(
+            "forecast_expiry_grace_hours",
+            provenance.get("materialization_grace_hours", HorizonMaterializationService.DEFAULT_EXPIRY_GRACE_HOURS),
+        )
+        try:
+            value = float(raw)
+        except (TypeError, ValueError):
+            value = HorizonMaterializationService.DEFAULT_EXPIRY_GRACE_HOURS
+        return max(0.0, min(value, 168.0))
+
+    # Backward-compatible internal alias for earlier callers/tests.
+    _materialization_signal_types = materialization_signal_types_for_pattern
 
     @staticmethod
     def _thresholds(pattern: HorizonBehaviorPattern) -> tuple[float, float, float]:
@@ -80,16 +97,25 @@ class HorizonMaterializationService:
         pattern: HorizonBehaviorPattern,
         cutoff: datetime,
     ) -> dict | None:
-        signal_types = self._materialization_signal_types(pattern)
+        signal_types = self.materialization_signal_types_for_pattern(pattern)
         if not signal_types:
             return None
         min_reliability, strong_reliability, min_score = self._thresholds(pattern)
+        grace_hours = self.grace_hours_for_pattern(pattern)
+        validity_deadline = None
+        effective_cutoff = cutoff
+        if forecast.expected_onset_high is not None:
+            validity_deadline = forecast.expected_onset_high + timedelta(hours=grace_hours)
+            effective_cutoff = min(cutoff, validity_deadline)
+        if effective_cutoff <= forecast.as_of:
+            return None
+
         rows = (
             self.db.query(HorizonSocialSignal)
             .filter(
                 HorizonSocialSignal.event_id == forecast.event_id,
                 HorizonSocialSignal.observed_at > forecast.as_of,
-                HorizonSocialSignal.observed_at <= cutoff,
+                HorizonSocialSignal.observed_at <= effective_cutoff,
                 HorizonSocialSignal.signal_type.in_(signal_types),
                 HorizonSocialSignal.reliability >= min_reliability,
                 HorizonSocialSignal.normalized_score >= min_score,
@@ -116,11 +142,14 @@ class HorizonMaterializationService:
                     "signal_types": sorted(signal_types),
                     "rule": {
                         "engine": self.ENGINE_VERSION,
-                        "basis": "first time final-stage materialization evidence satisfies strength rule",
+                        "basis": "first time final-stage materialization evidence satisfies strength rule inside declared forecast validity window",
                         "min_reliability": min_reliability,
                         "strong_source_reliability": strong_reliability,
                         "min_normalized_score": min_score,
                         "one_strong_source_or_two_distinct_sources": True,
+                        "validity_deadline": validity_deadline.isoformat() if validity_deadline else None,
+                        "grace_hours": grace_hours,
+                        "late_occurrence_counts_as_success": False,
                         "probability": False,
                         "causal_proof": False,
                     },
@@ -164,7 +193,7 @@ class HorizonMaterializationService:
             if pattern is None:
                 unresolved_ids.append(forecast.id)
                 continue
-            if not self._materialization_signal_types(pattern):
+            if not self.materialization_signal_types_for_pattern(pattern):
                 no_rule_ids.append(forecast.id)
                 continue
 
@@ -235,6 +264,7 @@ class HorizonMaterializationService:
             "still_unresolved_forecast_ids": unresolved_ids,
             "no_materialization_rule_forecast_ids": no_rule_ids,
             "already_resolved_forecast_ids": skipped_already_resolved,
+            "late_occurrence_counts_as_success": False,
             "predictive_lead_time_is_probability": False,
             "automatic_resolution_proves_causality": False,
         }

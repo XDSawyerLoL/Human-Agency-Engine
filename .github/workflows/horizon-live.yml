@@ -119,6 +119,14 @@ jobs:
             -H "Content-Type: application/json" --data '{"mode":"live","max_forecasts":1000}'
 
           echo
+          echo "Expiring forecasts that passed their declared validity window without admissible materialization."
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --max-time 180 \
+            -X POST "${ENGINE_URL%/}/v1/horizon/expiry/scan" \
+            -H "X-API-Key: ${ENGINE_API_KEY}" \
+            -H "Content-Type: application/json" --data '{"mode":"live","max_forecasts":1000}'
+
+          echo
           echo "Re-evaluating only materially changed HORIZON human trajectories."
           curl --fail-with-body --silent --show-error \
             --retry 2 --max-time 240 \
