@@ -1,8 +1,13 @@
+from datetime import datetime
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
+from app.db import SessionLocal
+from app.horizon_source_schemas import HorizonSourceUpsert
 from app.main import app
+from app.services.horizon_coverage import HorizonHistoricalCoverageService
+from app.services.horizon_sources import HorizonSourceService
 
 client = TestClient(app)
 
@@ -62,15 +67,43 @@ def _add_signal(
     assert response.status_code == 200, response.text
 
 
-def test_historical_factory_builds_hindsight_safe_success_and_miss_cases_idempotently():
-    tag = uuid4().hex[:10]
-    uid = f"historical-factory-{tag}"
-    event_type = f"factory_event_{tag}"
-    precursor_type = f"factory_precursor_{tag}"
-    outcome_type = f"factory_outcome_{tag}"
-    _create_user(uid)
+def _record_complete_signal_coverage(tag: str, event_type: str, signal_type: str) -> None:
+    db = SessionLocal()
+    try:
+        source = HorizonSourceService(db).upsert_source(
+            HorizonSourceUpsert(
+                source_key=f"synthetic-coverage-{tag}",
+                name=f"Synthetic Complete Coverage {tag}",
+                source_class="official_statistical",
+                adapter_kind="synthetic_complete_coverage",
+                domains=["test"],
+                geography=["FR"],
+                base_locator="https://example.invalid/coverage",
+                trust_weight=0.95,
+                refresh_seconds=3600,
+                requires_credentials=False,
+                enabled=True,
+                metadata_json={"test_only": True},
+            )
+        )
+        HorizonHistoricalCoverageService(db).record_interval(
+            source,
+            coverage_kind="signal",
+            event_types=[event_type],
+            signal_types=[signal_type],
+            geography=["FR"],
+            start_at=datetime.fromisoformat("2020-01-01T00:00:00"),
+            end_at=datetime.fromisoformat("2020-06-02T00:00:00"),
+            completeness="complete",
+            basis="synthetic_complete_test_stream",
+            provenance={"test_only": True, "absence_is_observable": True},
+        )
+    finally:
+        db.close()
 
-    pattern_response = client.post(
+
+def _create_pattern(tag: str, event_type: str, precursor_type: str, outcome_type: str) -> None:
+    response = client.post(
         "/v1/horizon/patterns",
         json={
             "pattern_key": f"factory-pattern-{tag}",
@@ -94,7 +127,18 @@ def test_historical_factory_builds_hindsight_safe_success_and_miss_cases_idempot
             "knowledge_available_at": "2019-01-01T00:00:00Z",
         },
     )
-    assert pattern_response.status_code == 200, pattern_response.text
+    assert response.status_code == 200, response.text
+
+
+def test_historical_factory_builds_hindsight_safe_success_and_miss_cases_idempotently():
+    tag = uuid4().hex[:10]
+    uid = f"historical-factory-{tag}"
+    event_type = f"factory_event_{tag}"
+    precursor_type = f"factory_precursor_{tag}"
+    outcome_type = f"factory_outcome_{tag}"
+    _create_user(uid)
+    _create_pattern(tag, event_type, precursor_type, outcome_type)
+    _record_complete_signal_coverage(tag, event_type, outcome_type)
 
     success_event = _create_event(f"factory-success-{tag}", event_type, "2020-01-01T00:00:00Z")
     _add_signal(success_event, f"success-precursor-{tag}", precursor_type, "2020-01-01T06:00:00Z")
@@ -129,7 +173,7 @@ def test_historical_factory_builds_hindsight_safe_success_and_miss_cases_idempot
     assert first.status_code == 200, first.text
     body = first.json()
 
-    assert body["engine"] == "horizon-historical-backtest-factory-v0.1"
+    assert body["engine"] == "horizon-historical-backtest-factory-v0.2"
     assert body["events_selected"] == 4
     assert body["selected_cases"] == 2
     assert body["outcomes"]["confirmed"] == 1
@@ -140,7 +184,11 @@ def test_historical_factory_builds_hindsight_safe_success_and_miss_cases_idempot
     assert body["skipped"]["event_pattern_mismatch_or_missing_precursor"] >= 1
     assert body["critical_semantics"]["future_signals_visible_to_forecast"] is False
     assert body["critical_semantics"]["outcome_already_obvious_cases_disqualified"] is True
+    assert body["critical_semantics"]["complete_outcome_signal_coverage_required_for_every_scored_case"] is True
+    assert body["critical_semantics"]["absence_of_signal_without_complete_coverage_counts_as_failure"] is False
+    assert body["critical_semantics"]["positive_cases_bypass_coverage_gate"] is False
     assert body["critical_semantics"]["numeric_probabilities_enabled"] is False
+    assert all(case["outcome_coverage"]["complete"] is True for case in body["calibration_after_run"].get("cases", [])) if body["calibration_after_run"].get("cases") else True
 
     calibration = body["calibration_after_run"]
     assert calibration["global_binary_evidence"]["binary_labels"] == 2
@@ -161,3 +209,43 @@ def test_historical_factory_builds_hindsight_safe_success_and_miss_cases_idempot
     assert runs.status_code == 200, runs.text
     own = [row for row in runs.json() if row["run_id"] == body["run_id"]]
     assert len(own) == 1
+
+
+def test_historical_factory_rejects_positive_case_when_outcome_stream_coverage_is_missing():
+    tag = uuid4().hex[:10]
+    uid = f"historical-no-coverage-{tag}"
+    event_type = f"factory_event_{tag}"
+    precursor_type = f"factory_precursor_{tag}"
+    outcome_type = f"factory_outcome_{tag}"
+    _create_user(uid)
+    _create_pattern(tag, event_type, precursor_type, outcome_type)
+
+    event_id = _create_event(f"factory-positive-no-coverage-{tag}", event_type, "2020-01-01T00:00:00Z")
+    _add_signal(event_id, f"positive-precursor-{tag}", precursor_type, "2020-01-01T06:00:00Z")
+    _add_signal(
+        event_id,
+        f"positive-outcome-{tag}",
+        outcome_type,
+        "2020-01-02T00:00:00Z",
+        source="synthetic-strong-outcome-source",
+        reliability=0.9,
+    )
+
+    response = client.post(
+        f"/v1/horizon/backtests/users/{uid}/run",
+        json={
+            "start_at": "2020-01-01T00:00:00Z",
+            "end_at": "2020-01-31T23:59:59Z",
+            "evaluation_as_of": "2020-03-01T00:00:00Z",
+            "event_types": [event_type],
+            "max_events": 10,
+            "max_cases": 10,
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["selected_cases"] == 0
+    assert body["outcomes"]["confirmed"] == 0
+    assert body["outcomes"]["false"] == 0
+    assert body["skipped"]["outcome_coverage_incomplete"] >= 1
+    assert body["critical_semantics"]["positive_cases_bypass_coverage_gate"] is False

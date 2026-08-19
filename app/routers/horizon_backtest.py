@@ -7,7 +7,7 @@ from ..db import get_db
 from ..horizon_backtest_schemas import HorizonHistoricalBacktestRequest
 from ..models import User
 from ..security import require_api_key
-from ..services.horizon_backtest import HorizonHistoricalBacktestFactory
+from ..services.horizon_backtest_coverage import HorizonCoverageAwareHistoricalBacktestFactory
 
 router = APIRouter(prefix="/horizon/backtests", dependencies=[Depends(require_api_key)])
 
@@ -27,7 +27,7 @@ def run_historical_backtest(
 ):
     user = _user_or_404(db, external_id)
     try:
-        return HorizonHistoricalBacktestFactory(db).run(user, payload)
+        return HorizonCoverageAwareHistoricalBacktestFactory(db).run(user, payload)
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
 
@@ -39,7 +39,7 @@ def list_historical_backtest_runs(
     db: Session = Depends(get_db),
 ):
     user = _user_or_404(db, external_id)
-    return HorizonHistoricalBacktestFactory(db).list_runs(user, limit=limit)
+    return HorizonCoverageAwareHistoricalBacktestFactory(db).list_runs(user, limit=limit)
 
 
 from .agency import router as agency_router  # noqa: E402
