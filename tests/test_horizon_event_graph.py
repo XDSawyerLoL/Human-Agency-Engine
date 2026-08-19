@@ -135,12 +135,19 @@ def test_event_graph_clusters_cross_source_same_episode_and_attached_signal_with
         )
         graph = result["graph_snapshot"]
         node_keys = {node["key"] for node in graph["nodes"]}
-        assert f"event:{official.id}" in node_keys
-        assert f"candidate:{candidate.id}" in node_keys
-        assert f"signal:{signal.id}" in node_keys
+        assert f"event:{official.id}" in node_keys, graph["nodes"]
+        assert f"candidate:{candidate.id}" in node_keys, graph["nodes"]
+        assert f"signal:{signal.id}" in node_keys, graph["nodes"]
 
         same = [edge for edge in graph["edges"] if edge["relation"] == "same_episode_support"]
-        assert any({edge["left"], edge["right"]} == {f"event:{official.id}", f"candidate:{candidate.id}"} for edge in same)
+        relevant_nodes = [
+            node for node in graph["nodes"]
+            if node["key"] in {f"event:{official.id}", f"candidate:{candidate.id}"}
+        ]
+        assert any(
+            {edge["left"], edge["right"]} == {f"event:{official.id}", f"candidate:{candidate.id}"}
+            for edge in same
+        ), {"relevant_nodes": relevant_nodes, "same_episode_edges": same, "all_edges": graph["edges"]}
         attachment = [edge for edge in graph["edges"] if edge["relation"] == "observed_signal_attachment"]
         assert any(edge["left"] == f"event:{official.id}" and edge["right"] == f"signal:{signal.id}" for edge in attachment)
         episode = next(item for item in graph["episodes"] if f"event:{official.id}" in item["member_keys"])
@@ -260,6 +267,22 @@ def test_event_graph_is_evidence_idempotent_and_respects_cutoff_for_future_signa
 
 
 def test_event_graph_routes_are_mounted_and_pairwise_budget_is_bounded():
+    # Exercise the service directly first so CI exposes an exact Python traceback
+    # if any legacy row contains a timezone shape the HTTP boundary would otherwise hide.
+    db = SessionLocal()
+    try:
+        direct = HorizonEventGraphService(db).build(
+            HorizonEventGraphBuildRequest(
+                lookback_hours=24,
+                max_events=10,
+                max_candidates=10,
+                max_signals=10,
+            )
+        )
+        assert direct["engine_version"] == "horizon-event-graph-v0.1"
+    finally:
+        db.close()
+
     response = client.post(
         "/v1/horizon/event-graph/build",
         json={"lookback_hours": 24, "max_events": 10, "max_candidates": 10, "max_signals": 10},
