@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..horizon_source_models import HorizonRawObservation, HorizonSource
 from ..horizon_source_schemas import HorizonCandidateBuild
 from .horizon_sources import HorizonSourceService
+from .horizon_weather_chain import HorizonWeatherChainService
 
 
 METEOFRANCE_PHENOMENA = {
@@ -145,6 +146,9 @@ class HorizonMeteoFranceNormalizer:
                     }
                 )
 
+        weather_confirmation = HorizonWeatherChainService(self.db).match_official_confirmations(
+            max_forecasts=5000
+        )
         return {
             "source_observation_id": observation.id,
             "normalizer_version": self.VERSION,
@@ -152,6 +156,7 @@ class HorizonMeteoFranceNormalizer:
             "events": normalized,
             "scope_preserved": True,
             "raw_facts_rewritten": False,
+            "windy_confirmation_reconciliation": weather_confirmation,
         }
 
     def normalize_latest(self) -> dict:
