@@ -143,6 +143,58 @@ BUILTIN_PATTERNS = (
             ],
         },
     },
+    {
+        "pattern_key": "builtin-extreme-heat-regional-cooling-load-v1",
+        "name": "Regional extreme heat → electricity cooling-load pressure",
+        "event_types": ["extreme_heat_region"],
+        "required_signal_types": [],
+        "predicted_response": (
+            "A multi-department extreme-heat episode may be followed by measurable regional afternoon "
+            "electricity-load pressure consistent with increased cooling and HVAC use."
+        ),
+        "mechanism_chain": [
+            "multi-department heat exposure",
+            "increased cooling and HVAC use",
+            "regional afternoon electricity-load pressure",
+        ],
+        "expected_lag_hours_low": 0,
+        "expected_lag_hours_high": 72,
+        "confidence": 0.60,
+        "support_count": 0,
+        "contradiction_count": 0,
+        "knowledge_available_at": datetime(2021, 10, 1, 0, 0, 0),
+        "provenance": {
+            "library_version": "human-response-library-v0.2-additive",
+            "status": "provisional_prior",
+            "formal_probability": False,
+            "calibrated_on_horizon_outcomes": False,
+            "materialization_signal_types": ["cooling_load_pressure"],
+            "materialization_min_reliability": 0.85,
+            "materialization_strong_source_reliability": 0.90,
+            "materialization_min_normalized_score": 1.0,
+            "forecast_expiry_grace_hours": 24,
+            "stage_signal_types": {
+                "0": ["heat_attention", "weather_model_consensus"],
+                "1": ["cooling_load_pressure"],
+            },
+            "evidence": [
+                {
+                    "kind": "official_system_study",
+                    "source": "RTE",
+                    "title": "Futurs énergétiques 2050 — Climat et système électrique",
+                    "published": "2021-10",
+                    "locator": "https://assets.rte-france.com/prod/public/2021-10/BP2050_rapport-complet_chapitre8_climat-systeme-electrique.pdf",
+                    "note": "RTE documents summer temperature sensitivity of French electricity demand and increasing air-conditioning consumption under warming.",
+                }
+            ],
+            "limitations": [
+                "Regional aggregate electricity load does not prove that a particular increase was caused by air conditioning.",
+                "The signal is an observable collective load outcome, not a measurement of cooling-equipment purchases or retail shortages.",
+                "Calendar, tourism, industrial activity and other demand drivers can alter regional electricity consumption.",
+                "HORIZON therefore treats RTE load pressure as a behavioral outcome proxy and preserves the no-causality claim explicitly.",
+            ],
+        },
+    },
 )
 
 
