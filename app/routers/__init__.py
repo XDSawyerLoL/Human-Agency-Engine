@@ -30,3 +30,4 @@ from . import horizon_provisional as _horizon_provisional  # noqa: F401,E402
 from . import horizon_materialization as _horizon_materialization  # noqa: F401,E402
 from . import horizon_expiry as _horizon_expiry  # noqa: F401,E402
 from . import horizon_calibration as _horizon_calibration  # noqa: F401,E402
+from . import horizon_backtest as _horizon_backtest  # noqa: F401,E402

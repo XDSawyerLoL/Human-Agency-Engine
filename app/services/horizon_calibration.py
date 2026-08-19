@@ -6,6 +6,7 @@ from math import sqrt
 
 from sqlalchemy.orm import Session
 
+from ..horizon_expiry_models import HorizonForecastExpiry
 from ..horizon_models import (
     HorizonBehaviorPattern,
     HorizonForecast,
@@ -41,7 +42,7 @@ class HorizonEmpiricalCalibrationService:
     until there is enough binary, event-diverse evidence.
     """
 
-    ENGINE_VERSION = "horizon-empirical-calibration-v0.1"
+    ENGINE_VERSION = "horizon-empirical-calibration-v0.2"
     MIN_GLOBAL_BINARY_LABELS = 50
     MIN_GLOBAL_DISTINCT_EVENTS = 10
     MIN_STRATUM_BINARY_LABELS = 20
@@ -51,11 +52,20 @@ class HorizonEmpiricalCalibrationService:
         self.db = db
 
     @staticmethod
-    def _label_available_at(resolution: HorizonForecastResolution) -> datetime:
+    def _label_available_at(
+        resolution: HorizonForecastResolution,
+        expiry_deadline: datetime | None = None,
+    ) -> datetime:
         # Positive materialization becomes knowable when the outcome became obvious.
-        # Negative/manual labels conservatively use resolved_at; this prevents a
-        # historical backtest from learning from a label entered later.
-        return resolution.became_obvious_at or resolution.resolved_at
+        if resolution.became_obvious_at is not None:
+            return resolution.became_obvious_at
+        # An automatic historical miss becomes knowable when its declared validity
+        # window expires, not when a later backtest process happens to record it.
+        if resolution.correctness == "false" and expiry_deadline is not None:
+            return expiry_deadline
+        # Manual/inconclusive labels remain conservatively tied to entry time so a
+        # backtest cannot learn from a human label that did not exist at the cutoff.
+        return resolution.resolved_at
 
     @staticmethod
     def _binary_outcome(correctness: str) -> int | None:
@@ -117,12 +127,28 @@ class HorizonEmpiricalCalibrationService:
         if mode != "all":
             query = query.filter(HorizonForecast.mode == mode)
 
+        joined_rows = query.all()
+        forecast_ids = [forecast.id for forecast, _, _, _ in joined_rows]
+        expiry_by_forecast: dict[int, HorizonForecastExpiry] = {}
+        if forecast_ids:
+            expiry_by_forecast = {
+                row.forecast_id: row
+                for row in self.db.query(HorizonForecastExpiry)
+                .filter(HorizonForecastExpiry.forecast_id.in_(forecast_ids))
+                .all()
+            }
+
         items: list[dict] = []
-        for forecast, resolution, event, pattern in query.all():
+        for forecast, resolution, event, pattern in joined_rows:
+            expiry = expiry_by_forecast.get(forecast.id)
+            label_available_at = self._label_available_at(
+                resolution,
+                expiry.expiry_deadline if expiry is not None else None,
+            )
             if cutoff is not None:
                 if forecast.as_of > cutoff:
                     continue
-                if _utc_naive(self._label_available_at(resolution)) > cutoff:
+                if _utc_naive(label_available_at) > cutoff:
                     continue
             weighted = self._weighted_outcome(resolution.correctness)
             if weighted is None:
@@ -140,7 +166,7 @@ class HorizonEmpiricalCalibrationService:
                     "correctness": resolution.correctness,
                     "weighted_outcome": weighted,
                     "binary_outcome": binary,
-                    "label_available_at": self._label_available_at(resolution),
+                    "label_available_at": label_available_at,
                     "predictive_lead_time_hours": resolution.predictive_lead_time_hours,
                 }
             )
@@ -223,5 +249,6 @@ class HorizonEmpiricalCalibrationService:
                 "partial_labels_used_for_probability_rate": False,
                 "wilson_interval_is_descriptive_until_gate_passes": True,
                 "historical_cutoff_excludes_labels_not_yet_available": True,
+                "automatic_expiry_label_available_at_deadline": True,
             },
         }
