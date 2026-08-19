@@ -17,6 +17,7 @@ from .horizon_coverage import HorizonHistoricalCoverageService
 from .horizon_heat_regions import HorizonRegionalHeatService
 from .horizon_response_library import HorizonResponseLibraryService
 from .horizon_sources import HorizonSourceService
+from .horizon_weather_chain import HorizonWeatherChainService
 from .policy import sha256_dict
 
 
@@ -225,8 +226,6 @@ class HorizonRteCoolingLoadBackfillService:
             raise ValueError("one RTE historical backfill run is limited to 366 days")
 
         source = self._source()
-        # A real backfill must leave the matching behavior prior available for the
-        # Backtest Factory; syncing is idempotent and built-in pattern versions are immutable.
         HorizonResponseLibraryService(self.db).sync_builtins()
         regionalization = HorizonRegionalHeatService(self.db).aggregate(
             start_at=start_at,
@@ -463,6 +462,9 @@ class HorizonRteCoolingLoadBackfillService:
             if owned_client:
                 client.close()
 
+        weather_impact_reconciliation = HorizonWeatherChainService(self.db).refresh_impact_chains(
+            max_chains=5000
+        )
         result = {
             "engine": self.ENGINE_VERSION,
             "adapter": self.ADAPTER_KIND,
@@ -477,6 +479,7 @@ class HorizonRteCoolingLoadBackfillService:
             "coverage_interval_ids": coverage_ids,
             "regions": region_results,
             "errors": errors,
+            "windy_weather_impact_reconciliation": weather_impact_reconciliation,
             "critical_semantics": {
                 "rte_consumption_is_behavioral_outcome_proxy": True,
                 "rte_load_proves_air_conditioning_causality": False,
