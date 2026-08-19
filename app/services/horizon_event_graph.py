@@ -287,10 +287,9 @@ class HorizonEventGraphService:
             _parse_datetime(target.get("end"))
             or _parse_datetime(facts.get("expires_at"))
             or _utc_naive(candidate.last_observed_at)
-            or start + timedelta(hours=24)
         )
-        if end < start:
-            end = start
+        if end is None or end <= start:
+            end = start + timedelta(hours=24)
         return start, end
 
     def _source_registry(self) -> tuple[dict[str, HorizonSource], dict[int, HorizonSource]]:
@@ -513,7 +512,9 @@ class HorizonEventGraphService:
         strength = DEPENDENCY_RULES.get((left["event_family"], right["event_family"]))
         if strength is None:
             return None
-        if right["knowledge_at"] <= left["knowledge_at"]:
+        left_known = _parse_datetime(left["knowledge_at"])
+        right_known = _parse_datetime(right["knowledge_at"])
+        if left_known is None or right_known is None or right_known <= left_known:
             return None
         geo, geo_basis = _geo_score(left["geography"], right["geography"])
         if geo < 0.55:
