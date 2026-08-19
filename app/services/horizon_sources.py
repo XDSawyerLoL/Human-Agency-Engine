@@ -66,6 +66,28 @@ def _candidate_score(sources: list[HorizonSource]) -> float:
     return round(min(1.0, 0.35 * strongest + 0.25 * mean + 0.20 * diversity + 0.20 * class_diversity), 4)
 
 
+def _observation_payload(source: HorizonSource, payload: HorizonObservationIngest) -> tuple[dict, str]:
+    data = payload.model_dump()
+    data["event_time"] = _utc_naive(data["event_time"])
+    data["published_at"] = _utc_naive(data["published_at"])
+    data["observed_at"] = _utc_naive(data["observed_at"])
+    payload_hash = sha256_dict({
+        "source_key": source.source_key,
+        "external_key": payload.external_key,
+        "observation_type": payload.observation_type,
+        "title": payload.title,
+        "summary": payload.summary,
+        "source_url": payload.source_url,
+        "geography": payload.geography,
+        "canonical_facts": payload.canonical_facts,
+        "raw_metadata": payload.raw_metadata,
+        "event_time": data["event_time"].isoformat() if data["event_time"] else None,
+        "published_at": data["published_at"].isoformat() if data["published_at"] else None,
+        "observed_at": data["observed_at"].isoformat(),
+    })
+    return data, payload_hash
+
+
 class HorizonSourceService:
     def __init__(self, db: Session):
         self.db = db
@@ -79,7 +101,6 @@ class HorizonSourceService:
                 row = HorizonSource(**data)
                 self.db.add(row)
             else:
-                # Built-in identity/transport is code-owned. Runtime enablement may remain user/operator controlled.
                 enabled = row.enabled
                 for key, value in data.items():
                     if key != "enabled":
@@ -107,30 +128,15 @@ class HorizonSourceService:
         return row
 
     def ingest_observation(self, source: HorizonSource, payload: HorizonObservationIngest) -> tuple[HorizonRawObservation, bool]:
+        data, payload_hash = _observation_payload(source, payload)
         existing = self.db.query(HorizonRawObservation).filter(
             HorizonRawObservation.source_id == source.id,
             HorizonRawObservation.external_key == payload.external_key,
         ).one_or_none()
         if existing:
+            if existing.payload_hash != payload_hash:
+                raise ValueError("observation external_key collision with different immutable payload")
             return existing, False
-        data = payload.model_dump()
-        data["event_time"] = _utc_naive(data["event_time"])
-        data["published_at"] = _utc_naive(data["published_at"])
-        data["observed_at"] = _utc_naive(data["observed_at"])
-        payload_hash = sha256_dict({
-            "source_key": source.source_key,
-            "external_key": payload.external_key,
-            "observation_type": payload.observation_type,
-            "title": payload.title,
-            "summary": payload.summary,
-            "source_url": payload.source_url,
-            "geography": payload.geography,
-            "canonical_facts": payload.canonical_facts,
-            "raw_metadata": payload.raw_metadata,
-            "event_time": data["event_time"].isoformat() if data["event_time"] else None,
-            "published_at": data["published_at"].isoformat() if data["published_at"] else None,
-            "observed_at": data["observed_at"].isoformat(),
-        })
         row = HorizonRawObservation(source_id=source.id, payload_hash=payload_hash, **data)
         self.db.add(row)
         self.db.commit()
