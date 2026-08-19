@@ -7,7 +7,7 @@ import httpx
 from sqlalchemy.orm import Session
 
 from ..horizon_live_schemas import GDELT_QUERY_FAMILIES, HorizonGdeltPollRequest
-from ..horizon_source_models import HorizonSource
+from ..horizon_source_models import HorizonRawObservation, HorizonSource
 from ..horizon_source_schemas import HorizonObservationIngest
 from .horizon_sources import HorizonSourceService
 
@@ -119,10 +119,24 @@ class HorizonLiveService:
                     url = str(article.get("url") or "").strip()
                     if not url.startswith(("http://", "https://")):
                         continue
+                    external_key = _external_key(url)
+
+                    # A live poll has a new observation timestamp every run, but an
+                    # already-seen article is the same immutable raw observation.
+                    # Resolve it before reconstructing the payload so recurring polls
+                    # are idempotent without weakening the source ledger's collision rule.
+                    existing = self.db.query(HorizonRawObservation).filter(
+                        HorizonRawObservation.source_id == source.id,
+                        HorizonRawObservation.external_key == external_key,
+                    ).one_or_none()
+                    if existing is not None:
+                        replayed_ids.append(existing.id)
+                        continue
+
                     title = str(article.get("title") or "").strip()[:255]
                     seen_at = _parse_seen_date(article.get("seendate"))
                     observation = HorizonObservationIngest(
-                        external_key=_external_key(url),
+                        external_key=external_key,
                         observation_type="news_report",
                         title=title,
                         summary="",
