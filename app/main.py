@@ -16,6 +16,10 @@ from .routers.agency import router as agency_router
 from .routers.delegation import router as delegation_router
 from .routers.future import router as future_router
 from .routers.privacy import router as privacy_router
+from .routers.settlement_permit import (
+    public_router as settlement_permit_public_router,
+    router as settlement_permit_router,
+)
 from .routers.state import router as state_router
 from .routers.synthesis import router as synthesis_router
 from .routers.world import router as world_router
@@ -44,6 +48,8 @@ app.include_router(synthesis_router)
 app.include_router(delegation_router)
 app.include_router(world_router)
 app.include_router(privacy_router)
+app.include_router(settlement_permit_router, prefix="/v1")
+app.include_router(settlement_permit_public_router, prefix="/v1")
 
 
 @app.get("/health")
