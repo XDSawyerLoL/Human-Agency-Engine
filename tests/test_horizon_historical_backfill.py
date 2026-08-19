@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import datetime
 
 import httpx
@@ -101,6 +102,14 @@ def test_archive_tree_discovery_and_heat_parser_are_provider_timestamped():
     assert rows[0]["end"].isoformat() == "2023-06-18T20:00:00+00:00"
 
 
+def test_heat_parser_does_not_mistake_department_10_for_a_non_department_domain():
+    aube = deepcopy(CARTE_FIXTURE)
+    aube["product"]["periods"][0]["timelaps"]["domain_ids"][0]["domain_id"] = "10"
+    _, rows = extract_heat_intervals(aube, min_color_id=3, departments={"10"})
+    assert len(rows) == 1
+    assert rows[0]["department"] == "10"
+
+
 def test_meteofrance_archive_backfill_preserves_historical_availability_and_event_only_coverage():
     db = SessionLocal()
     mock = _mock_client()
@@ -123,6 +132,8 @@ def test_meteofrance_archive_backfill_preserves_historical_availability_and_even
         assert first["events_promoted"] == 1
         assert first["event_coverage_complete"] is True
         assert first["critical_semantics"]["historical_observed_at_uses_provider_update_time"] is True
+        assert first["critical_semantics"]["historical_event_time_uses_provider_update_time"] is True
+        assert first["critical_semantics"]["warning_validity_start_is_not_treated_as_already_occurred"] is True
         assert first["critical_semantics"]["adapter_directly_creates_confirmed_event"] is False
         assert first["critical_semantics"]["archive_event_coverage_is_materialization_signal_coverage"] is False
 
@@ -131,8 +142,9 @@ def test_meteofrance_archive_backfill_preserves_historical_availability_and_even
         ).one()
         assert observation.observed_at.isoformat() == "2023-06-18T06:00:00"
         assert observation.published_at.isoformat() == "2023-06-18T06:00:00"
-        assert observation.event_time.isoformat() == "2023-06-18T12:00:00"
+        assert observation.event_time.isoformat() == "2023-06-18T06:00:00"
         assert observation.canonical_facts["phenomenon"] == "canicule"
+        assert observation.canonical_facts["begin_validity_time"] == "2023-06-18T12:00:00+00:00"
 
         event = db.query(HorizonGlobalEvent).filter(
             HorizonGlobalEvent.id.in_(first["promoted_event_ids"])
@@ -140,8 +152,8 @@ def test_meteofrance_archive_backfill_preserves_historical_availability_and_even
         assert event.event_type == "extreme_heat"
         assert event.source == "meteofrance-vigilance-archive"
         assert event.first_observed_at.isoformat() == "2023-06-18T06:00:00"
-        assert event.occurred_at.isoformat() == "2023-06-18T12:00:00"
-        assert event.first_observed_at < event.occurred_at
+        assert event.occurred_at.isoformat() == "2023-06-18T06:00:00"
+        assert event.first_observed_at == event.occurred_at
 
         coverage = db.query(HorizonHistoricalCoverageInterval).filter(
             HorizonHistoricalCoverageInterval.id == first["event_coverage_interval_id"]
