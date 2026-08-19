@@ -194,7 +194,7 @@ def test_rte_regional_load_becomes_covered_behavioral_outcome_and_backtest_succe
         body = backtest.json()
         assert body["selected_cases"] >= 1
         assert body["outcomes"]["confirmed"] >= 1
-        assert body["critical_semantics"]["absence_without_outcome_coverage_counts_as_miss"] is False
+        assert body["critical_semantics"]["absence_of_signal_without_complete_coverage_counts_as_failure"] is False
         assert body["calibration_after_run"]["probability_calibration_enabled"] is False
     finally:
         db.close()
