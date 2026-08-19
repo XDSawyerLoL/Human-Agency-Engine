@@ -89,6 +89,21 @@ def _parse_datetime(value: object) -> datetime | None:
     return _utc_naive(parsed)
 
 
+def _normalized_window(
+    start: datetime | None,
+    end: datetime | None,
+    *,
+    fallback_hours: int = 0,
+) -> tuple[datetime, datetime]:
+    start = _utc_naive(start)
+    if start is None:
+        raise ValueError("event graph window has no valid start timestamp")
+    end = _utc_naive(end)
+    if end is None or end < start or (fallback_hours and end == start):
+        end = start + timedelta(hours=fallback_hours) if fallback_hours else start
+    return start, end
+
+
 def _family(event_type: str) -> str:
     if event_type in FAMILY_MAP:
         return FAMILY_MAP[event_type]
@@ -135,7 +150,7 @@ def _source_family(source_key: str, source: HorizonSource | None) -> str:
 def _geo_profile(values: list[str], facts: dict | None = None) -> dict:
     facts = facts or {}
     countries: set[str] = set()
-    locals_: set[str] = set()
+    local_tokens: set[str] = set()
     region_tokens: set[str] = set()
 
     raw_values = [str(item).strip() for item in values if str(item).strip()]
@@ -159,50 +174,53 @@ def _geo_profile(values: list[str], facts: dict | None = None) -> dict:
             code = upper.split(":", 1)[1]
             countries.add("FR")
             region_tokens.add(f"FR-REGION:{code}")
-            locals_.add(upper)
+            local_tokens.add(upper)
             continue
         if upper.startswith("VIGICRUES:"):
             countries.add("FR")
-            locals_.add(upper)
+            local_tokens.add(upper)
             continue
         if upper in DEPARTMENT_TO_REGION:
             countries.add("FR")
-            locals_.add(f"FR-DEPT:{upper}")
+            local_tokens.add(f"FR-DEPT:{upper}")
             region_tokens.add(f"FR-REGION:{DEPARTMENT_TO_REGION[upper]}")
             continue
         if len(upper) == 2 and upper.isalpha():
             countries.add(upper)
         elif upper:
-            locals_.add(upper)
+            local_tokens.add(upper)
     return {
         "countries": sorted(countries),
-        "local_tokens": sorted(locals_),
+        "local_tokens": sorted(local_tokens),
         "region_tokens": sorted(region_tokens),
     }
 
 
 def _geo_score(left: dict, right: dict) -> tuple[float, str]:
-    left_local = set(left["local_tokens"])
-    right_local = set(right["local_tokens"])
-    if left_local & right_local:
+    if set(left["local_tokens"]) & set(right["local_tokens"]):
         return 1.0, "exact_local_overlap"
-    left_regions = set(left["region_tokens"])
-    right_regions = set(right["region_tokens"])
-    if left_regions & right_regions:
+    if set(left["region_tokens"]) & set(right["region_tokens"]):
         return 0.90, "same_normalized_region"
-    left_countries = set(left["countries"])
-    right_countries = set(right["countries"])
-    if left_countries & right_countries:
+    if set(left["countries"]) & set(right["countries"]):
         return 0.55, "same_country_only"
     return 0.0, "no_geographic_overlap"
 
 
+def _node_window(node: dict) -> tuple[datetime, datetime]:
+    return _normalized_window(
+        _parse_datetime(node.get("valid_from")),
+        _parse_datetime(node.get("valid_to")),
+    )
+
+
 def _temporal_distance_hours(left: dict, right: dict) -> float:
-    if left["valid_from"] <= right["valid_to"] and right["valid_from"] <= left["valid_to"]:
+    left_from, left_to = _node_window(left)
+    right_from, right_to = _node_window(right)
+    if left_from <= right_to and right_from <= left_to:
         return 0.0
-    if left["valid_to"] < right["valid_from"]:
-        return (right["valid_from"] - left["valid_to"]).total_seconds() / 3600.0
-    return (left["valid_from"] - right["valid_to"]).total_seconds() / 3600.0
+    if left_to < right_from:
+        return (right_from - left_to).total_seconds() / 3600.0
+    return (left_from - right_to).total_seconds() / 3600.0
 
 
 def _temporal_score(left: dict, right: dict) -> tuple[float, float]:
@@ -242,7 +260,7 @@ class _DisjointSet:
 
 
 class HorizonEventGraphService:
-    ENGINE_VERSION = "horizon-event-graph-v0.1"
+    ENGINE_VERSION = "horizon-event-graph-v0.2"
 
     def __init__(self, db: Session):
         self.db = db
@@ -265,11 +283,9 @@ class HorizonEventGraphService:
             _parse_datetime(facts.get("episode_end"))
             or _parse_datetime(period.get("end_validity_time"))
             or _parse_datetime(normalized.get("expires_at") if isinstance(normalized, dict) else None)
-            or start + timedelta(hours=24)
+            or (start + timedelta(hours=24) if start is not None else None)
         )
-        if end < start:
-            end = start
-        return start, end
+        return _normalized_window(start, end)
 
     @staticmethod
     def _candidate_window(candidate: HorizonEventCandidate) -> tuple[datetime, datetime]:
@@ -288,37 +304,43 @@ class HorizonEventGraphService:
             or _parse_datetime(facts.get("expires_at"))
             or _utc_naive(candidate.last_observed_at)
         )
-        if end is None or end <= start:
-            end = start + timedelta(hours=24)
-        return start, end
+        return _normalized_window(start, end, fallback_hours=24)
 
     def _source_registry(self) -> tuple[dict[str, HorizonSource], dict[int, HorizonSource]]:
         sources = self.db.query(HorizonSource).all()
         return ({row.source_key: row for row in sources}, {row.id: row for row in sources})
 
     def _nodes(self, request: HorizonEventGraphBuildRequest, cutoff: datetime) -> tuple[list[dict], dict[str, object]]:
-        start = cutoff - timedelta(hours=request.lookback_hours)
+        cutoff = _utc_naive(cutoff) or datetime.utcnow()
+        window_start = cutoff - timedelta(hours=request.lookback_hours)
         source_by_key, source_by_id = self._source_registry()
+
+        # Fixed budgets must favor the evidence closest to the requested cutoff.
+        # We sort the selected rows chronologically afterwards so graph construction
+        # remains deterministic and readable.
         events = (
             self.db.query(HorizonGlobalEvent)
             .filter(
-                HorizonGlobalEvent.first_observed_at >= start,
+                HorizonGlobalEvent.first_observed_at >= window_start,
                 HorizonGlobalEvent.first_observed_at <= cutoff,
             )
-            .order_by(HorizonGlobalEvent.first_observed_at.asc(), HorizonGlobalEvent.id.asc())
+            .order_by(HorizonGlobalEvent.first_observed_at.desc(), HorizonGlobalEvent.id.desc())
             .limit(request.max_events)
             .all()
         )
+        events.sort(key=lambda row: (_utc_naive(row.first_observed_at), row.id))
+
         candidates = (
             self.db.query(HorizonEventCandidate)
             .filter(
-                HorizonEventCandidate.first_observed_at >= start,
+                HorizonEventCandidate.first_observed_at >= window_start,
                 HorizonEventCandidate.first_observed_at <= cutoff,
             )
-            .order_by(HorizonEventCandidate.first_observed_at.asc(), HorizonEventCandidate.id.asc())
+            .order_by(HorizonEventCandidate.first_observed_at.desc(), HorizonEventCandidate.id.desc())
             .limit(request.max_candidates)
             .all()
         )
+        candidates.sort(key=lambda row: (_utc_naive(row.first_observed_at), row.id))
 
         candidate_observation_ids: set[int] = set()
         for candidate in candidates:
@@ -356,7 +378,7 @@ class HorizonEventGraphService:
                 "title": event.title,
                 "status": event.status,
                 "fact_status": "confirmed_or_derived_event",
-                "knowledge_at": _utc_naive(event.first_observed_at).isoformat(),
+                "knowledge_at": (_utc_naive(event.first_observed_at) or start_at).isoformat(),
                 "valid_from": start_at,
                 "valid_to": end_at,
                 "geography": _geo_profile(event.geography or [], geo_facts),
@@ -393,7 +415,7 @@ class HorizonEventGraphService:
                 "title": candidate.title,
                 "status": candidate.promotion_status,
                 "fact_status": "unconfirmed_candidate" if candidate.promoted_event_id is None else "candidate_promoted",
-                "knowledge_at": _utc_naive(candidate.first_observed_at).isoformat(),
+                "knowledge_at": (_utc_naive(candidate.first_observed_at) or start_at).isoformat(),
                 "valid_from": start_at,
                 "valid_to": end_at,
                 "geography": _geo_profile(candidate.geography or [], candidate.normalized_facts or {}),
@@ -412,15 +434,19 @@ class HorizonEventGraphService:
                 HorizonSocialSignal.event_id.in_(event_ids),
                 HorizonSocialSignal.observed_at <= cutoff,
             )
-            .order_by(HorizonSocialSignal.observed_at.asc(), HorizonSocialSignal.id.asc())
+            .order_by(HorizonSocialSignal.observed_at.desc(), HorizonSocialSignal.id.desc())
             .limit(request.max_signals)
             .all()
         ) if event_ids else []
+        signals.sort(key=lambda row: (_utc_naive(row.observed_at), row.id))
+
         signal_node_keys: dict[int, str] = {}
         for signal in signals:
             source = source_by_key.get(signal.source)
             family = _source_family(signal.source, source)
             at = _utc_naive(signal.observed_at)
+            if at is None:
+                continue
             key = f"signal:{signal.id}"
             node = {
                 "key": key,
@@ -452,7 +478,7 @@ class HorizonEventGraphService:
             "signal_keys": signal_node_keys,
             "events": events,
             "candidates": candidates,
-            "signals": signals,
+            "signals": [signal for signal in signals if signal.id in signal_node_keys],
         }
 
     @staticmethod
@@ -519,7 +545,9 @@ class HorizonEventGraphService:
         geo, geo_basis = _geo_score(left["geography"], right["geography"])
         if geo < 0.55:
             return None
-        delta = (right["valid_from"] - left["valid_from"]).total_seconds() / 3600.0
+        left_from, _ = _node_window(left)
+        right_from, _ = _node_window(right)
+        delta = (right_from - left_from).total_seconds() / 3600.0
         if delta < -6 or delta > 120:
             return None
         temporal = 1.0 if 0 <= delta <= 24 else 0.75 if delta <= 72 else 0.55
@@ -547,6 +575,7 @@ class HorizonEventGraphService:
 
     def build(self, request: HorizonEventGraphBuildRequest) -> dict:
         cutoff = _utc_naive(request.as_of) if request.as_of else datetime.utcnow()
+        cutoff = cutoff or datetime.utcnow()
         nodes, context = self._nodes(request, cutoff)
         by_key = {node["key"]: node for node in nodes}
         edges: list[dict] = []
@@ -581,7 +610,7 @@ class HorizonEventGraphService:
                 })
 
         for signal in context["signals"]:
-            if signal.event_id in event_keys:
+            if signal.event_id in event_keys and signal.id in signal_keys:
                 add_edge({
                     "left": event_keys[signal.event_id],
                     "right": signal_keys[signal.id],
@@ -598,10 +627,11 @@ class HorizonEventGraphService:
                     },
                 })
 
-        chains = self.db.query(HorizonWeatherImpactChain).filter(
-            HorizonWeatherImpactChain.created_at <= cutoff
-        ).all()
+        chains = self.db.query(HorizonWeatherImpactChain).all()
         for chain in chains:
+            chain_created_at = _utc_naive(chain.created_at)
+            if chain_created_at is None or chain_created_at > cutoff:
+                continue
             if chain.windy_candidate_id in candidate_keys and chain.confirmed_event_id in event_keys:
                 add_edge({
                     "left": candidate_keys[chain.windy_candidate_id],
@@ -683,7 +713,10 @@ class HorizonEventGraphService:
                 "provider_sources": episode_sources,
                 "independence_families": episode_families,
                 "independent_origin_count": len(episode_families),
-                "contains_unconfirmed_candidate": any(node["node_type"] == "candidate" and node["fact_status"] == "unconfirmed_candidate" for node in member_nodes),
+                "contains_unconfirmed_candidate": any(
+                    node["node_type"] == "candidate" and node["fact_status"] == "unconfirmed_candidate"
+                    for node in member_nodes
+                ),
                 "episode_membership_is_probability": False,
             })
 
@@ -692,7 +725,7 @@ class HorizonEventGraphService:
         knowledge_times = [_parse_datetime(node["knowledge_at"]) for node in public_nodes]
         clean_knowledge = [value for value in knowledge_times if value is not None]
         knowledge_as_of = max(clean_knowledge) if clean_knowledge else cutoff
-        window_start = min(clean_knowledge) if clean_knowledge else cutoff - timedelta(hours=request.lookback_hours)
+        graph_window_start = min(clean_knowledge) if clean_knowledge else cutoff - timedelta(hours=request.lookback_hours)
         graph_snapshot = {
             "nodes": public_nodes,
             "edges": public_edges,
@@ -700,6 +733,10 @@ class HorizonEventGraphService:
             "thresholds": {
                 "minimum_same_episode_score": request.minimum_same_episode_score,
                 "minimum_dependency_score": request.minimum_dependency_score,
+            },
+            "selection_policy": {
+                "fixed_budget_prefers_most_recent_evidence": True,
+                "selected_rows_reordered_chronologically": True,
             },
             "relation_semantics": {
                 "explicit_evidence": "relation already recorded by HORIZON data structures",
@@ -714,13 +751,11 @@ class HorizonEventGraphService:
                 "weak_temporal_coincidence_creates_episode": False,
                 "signals_are_not_reclassified_as_facts": True,
                 "unconfirmed_candidates_remain_unconfirmed": True,
+                "all_internal_graph_clocks_are_utc_naive": True,
                 "evidence_after_cutoff_excluded": True,
             },
         }
-        graph_key = sha256_dict({
-            "engine": self.ENGINE_VERSION,
-            "graph": graph_snapshot,
-        })
+        graph_key = sha256_dict({"engine": self.ENGINE_VERSION, "graph": graph_snapshot})
         existing = self.db.query(HorizonEventGraphSnapshot).filter(
             HorizonEventGraphSnapshot.graph_key == graph_key
         ).one_or_none()
@@ -729,7 +764,7 @@ class HorizonEventGraphService:
                 graph_key=graph_key,
                 engine_version=self.ENGINE_VERSION,
                 as_of=knowledge_as_of,
-                window_start_at=window_start,
+                window_start_at=graph_window_start,
                 node_count=len(public_nodes),
                 edge_count=len(public_edges),
                 episode_count=len(episodes),
