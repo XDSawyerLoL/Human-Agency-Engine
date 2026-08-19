@@ -40,6 +40,9 @@ def test_internal_adapter_sync_preserves_disabled_state_but_admin_route_can_chan
         assert disabled.status_code == 200, disabled.text
         assert disabled.json()["enabled"] is False
 
+        # The protected admin request used another DB session; expire the local
+        # identity map so this simulates the next adapter cycle reading committed state.
+        db.expire_all()
         internal_sync = service.upsert_source(HorizonSourceUpsert(**_payload(key, enabled=True)))
         assert internal_sync.enabled is False
 
