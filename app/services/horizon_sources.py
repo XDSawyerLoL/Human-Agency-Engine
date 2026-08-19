@@ -65,20 +65,20 @@ BUILTIN_SOURCES = (
         },
     ),
     HorizonSourceUpsert(
-        source_key="rte-eco2mix-national-cons-def",
-        name="RTE eco2mix national consolidated and definitive",
+        source_key="rte-eco2mix-regional-cons-def",
+        name="RTE eco2mix regional consolidated and definitive",
         source_class="official_statistical",
-        adapter_kind="odre_eco2mix_national_v2",
+        adapter_kind="odre_eco2mix_regional_v2",
         domains=["electricity", "consumption", "behavioral_outcomes", "historical_archive"],
         geography=["FR"],
-        base_locator="https://odre.opendatasoft.com/api/explore/v2.1/catalog/datasets/eco2mix-national-cons-def/records",
+        base_locator="https://odre.opendatasoft.com/api/explore/v2.1/catalog/datasets/eco2mix-regional-cons-def/records",
         trust_weight=0.94,
         refresh_seconds=86400,
         requires_credentials=False,
         metadata_json={
-            "role": "official_historical_electricity_consumption_outcome_stream",
-            "dataset_id": "eco2mix-national-cons-def",
-            "temporal_depth_from": "2012-01-01",
+            "role": "official_historical_regional_electricity_consumption_outcome_stream",
+            "dataset_id": "eco2mix-regional-cons-def",
+            "temporal_depth_from": "2013-01-01",
             "signal_scope": ["cooling_load_pressure"],
         },
     ),
@@ -233,11 +233,17 @@ class HorizonSourceService:
         official_primary = [item for item in sources if item.source_class == "official_primary"]
         distinct_sources = len({item.id for item in sources})
         distinct_classes = len({item.source_class for item in sources})
-        ready = bool(official_primary) or (
-            distinct_sources >= 2
-            and distinct_classes >= 2
-            and float(candidate.corroboration_score) >= 0.55
-        )
+        forecast_only = bool((candidate.normalized_facts or {}).get("forecast_only"))
+        if forecast_only:
+            ready = bool(official_primary)
+            rule = "forecast-only candidate requires official_primary evidence before event promotion"
+        else:
+            ready = bool(official_primary) or (
+                distinct_sources >= 2
+                and distinct_classes >= 2
+                and float(candidate.corroboration_score) >= 0.55
+            )
+            rule = "official_primary OR >=2 sources across >=2 classes with diagnostic score >=0.55"
         return {
             "ready": ready,
             "official_primary_present": bool(official_primary),
@@ -245,7 +251,8 @@ class HorizonSourceService:
             "distinct_source_classes": distinct_classes,
             "corroboration_score": candidate.corroboration_score,
             "corroboration_score_is_probability": False,
-            "rule": "official_primary OR >=2 sources across >=2 classes with diagnostic score >=0.55",
+            "forecast_only_candidate": forecast_only,
+            "rule": rule,
         }
 
     def promote_candidate(self, candidate: HorizonEventCandidate) -> HorizonGlobalEvent:
