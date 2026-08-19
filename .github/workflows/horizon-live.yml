@@ -27,6 +27,14 @@ jobs:
             exit 0
           fi
 
+          echo "Syncing versioned Human Response Library."
+          curl --fail-with-body --silent --show-error \
+            --retry 2 \
+            --max-time 60 \
+            -X POST "${ENGINE_URL%/}/v1/horizon/response-library/builtins/sync" \
+            -H "X-API-Key: ${ENGINE_API_KEY}"
+
+          echo
           curl --fail-with-body --silent --show-error \
             --retry 2 \
             --retry-all-errors \
