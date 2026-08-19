@@ -5,10 +5,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..horizon_backfill_schemas import HorizonMeteoFranceArchiveBackfillRequest
+from ..horizon_backfill_schemas import (
+    HorizonMeteoFranceArchiveBackfillRequest,
+    HorizonRteCoolingLoadBackfillRequest,
+)
 from ..security import require_api_key
 from ..services.horizon_backfill import HorizonHistoricalBackfillService
 from ..services.horizon_coverage import HorizonHistoricalCoverageService
+from ..services.horizon_rte import HorizonRteCoolingLoadBackfillService
 
 router = APIRouter(prefix="/horizon/backfill", dependencies=[Depends(require_api_key)])
 
@@ -24,6 +28,19 @@ def backfill_meteofrance_vigilance(
         raise HTTPException(400, str(exc)) from exc
     except httpx.HTTPError as exc:
         raise HTTPException(502, f"Météo-France archive fetch failed: {exc}") from exc
+
+
+@router.post("/rte/cooling-load")
+def backfill_rte_cooling_load(
+    payload: HorizonRteCoolingLoadBackfillRequest,
+    db: Session = Depends(get_db),
+):
+    try:
+        return HorizonRteCoolingLoadBackfillService(db).backfill(payload)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(502, f"RTE eco2mix archive fetch failed: {exc}") from exc
 
 
 @router.get("/runs")
