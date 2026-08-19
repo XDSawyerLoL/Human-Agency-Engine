@@ -93,7 +93,7 @@ def _meteoalarm_candidate(db, *, tag: str, at: datetime):
 def test_event_graph_clusters_cross_source_same_episode_and_attached_signal_without_promoting_candidate():
     db = SessionLocal()
     tag = uuid4().hex[:10]
-    base = datetime(2026, 8, 20, 6, 0, 0)
+    base = datetime(2031, 1, 1, 6, 0, 0)
     try:
         HorizonSourceService(db).sync_builtin_sources()
         official = _event(
@@ -158,7 +158,7 @@ def test_event_graph_clusters_cross_source_same_episode_and_attached_signal_with
 def test_plausible_dependency_never_merges_two_episodes_or_asserts_causality():
     db = SessionLocal()
     tag = uuid4().hex[:10]
-    base = datetime(2026, 8, 20, 7, 0, 0)
+    base = datetime(2032, 1, 1, 7, 0, 0)
     try:
         flood = _event(
             db,
@@ -208,7 +208,7 @@ def test_plausible_dependency_never_merges_two_episodes_or_asserts_causality():
 def test_event_graph_is_evidence_idempotent_and_respects_cutoff_for_future_signal():
     db = SessionLocal()
     tag = uuid4().hex[:10]
-    base = datetime(2026, 8, 20, 8, 0, 0)
+    base = datetime(2033, 1, 1, 8, 0, 0)
     try:
         event = _event(
             db,
