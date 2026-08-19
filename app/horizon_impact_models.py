@@ -19,7 +19,7 @@ class HorizonPersonalImpactAssessment(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     event_id: Mapped[int] = mapped_column(ForeignKey("horizon_global_events.id", ondelete="CASCADE"), index=True)
     pattern_id: Mapped[int] = mapped_column(ForeignKey("horizon_behavior_patterns.id", ondelete="CASCADE"), index=True)
-    forecast_id: Mapped[int] = mapped_column(ForeignKey("horizon_forecasts.id", ondelete="CASCADE"), index=True)
+    forecast_id: Mapped[int | None] = mapped_column(ForeignKey("horizon_forecasts.id", ondelete="SET NULL"), nullable=True, index=True)
     cascade_id: Mapped[int] = mapped_column(ForeignKey("horizon_behavior_cascades.id", ondelete="CASCADE"), index=True)
     mode: Mapped[str] = mapped_column(String(24), default="live", index=True)
     as_of: Mapped[datetime] = mapped_column(DateTime, index=True)
