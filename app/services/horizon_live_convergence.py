@@ -9,12 +9,17 @@ from ..horizon_convergence_schemas import HorizonLiveConvergencePollRequest
 from ..horizon_fuel_schemas import HorizonFuelNormalizeRequest
 from ..horizon_live_schemas import HorizonGdeltPollRequest
 from ..horizon_models import HorizonGlobalEvent
+from ..horizon_provisional_schemas import HorizonProvisionalRefreshRequest
 from ..horizon_windy_schemas import HorizonWindyPollRequest
 from .horizon_convergence import HorizonConvergenceService
 from .horizon_fuel import HorizonFuelService
+from .horizon_gdacs import HorizonGdacsService
+from .horizon_global_alert_normalizer import HorizonGlobalAlertNormalizer
 from .horizon_live import HorizonLiveService
+from .horizon_meteoalarm import HorizonMeteoAlarmService
 from .horizon_meteofrance import HorizonMeteoFranceService
 from .horizon_normalizer import HorizonMeteoFranceNormalizer
+from .horizon_provisional import HorizonProvisionalService
 from .horizon_rte_realtime import HorizonRteRealtimeService
 from .horizon_sncf import HorizonSncfService
 from .horizon_vigicrues import HorizonVigicruesService
@@ -23,7 +28,7 @@ from .horizon_windy import HorizonWindyService
 
 
 class HorizonLiveConvergenceService:
-    ENGINE_VERSION = "horizon-live-convergence-fabric-v0.1"
+    ENGINE_VERSION = "horizon-live-convergence-fabric-v0.2"
 
     def __init__(self, db: Session):
         self.db = db
@@ -45,6 +50,15 @@ class HorizonLiveConvergenceService:
                 lambda: HorizonLiveService(self.db).poll_gdelt(HorizonGdeltPollRequest()),
             ))
 
+        if request.include_gdacs:
+            def poll_gdacs():
+                raw = HorizonGdacsService(self.db).poll(request.gdacs)
+                normalized = HorizonGlobalAlertNormalizer(self.db).normalize_latest_gdacs(
+                    max_observations=min(5000, request.gdacs.page_size * request.gdacs.max_pages)
+                )
+                return {"poll": raw, "normalize": normalized}
+            results.append(self._safe_call("gdacs-official", poll_gdacs))
+
         if request.include_meteofrance:
             if settings.meteofrance_application_id:
                 def poll_meteo():
@@ -59,6 +73,18 @@ class HorizonLiveConvergenceService:
                     "skipped": True,
                     "reason": "METEOFRANCE_APPLICATION_ID is not configured",
                 })
+
+        if request.include_meteoalarm:
+            def poll_meteoalarm():
+                raw = HorizonMeteoAlarmService(self.db).poll(request.meteoalarm)
+                normalized = HorizonGlobalAlertNormalizer(self.db).normalize_latest_meteoalarm(
+                    max_observations=min(
+                        5000,
+                        max(1, len(request.meteoalarm.countries)) * request.meteoalarm.max_entries_per_country,
+                    )
+                )
+                return {"poll": raw, "normalize": normalized}
+            results.append(self._safe_call("meteoalarm-atom", poll_meteoalarm))
 
         if request.include_fuel:
             def poll_fuel():
@@ -109,6 +135,15 @@ class HorizonLiveConvergenceService:
                     "reason": "WINDY_POINT_FORECAST_API_KEY is not configured",
                 })
 
+        provisional = None
+        if request.refresh_provisional_candidates:
+            provisional = self._safe_call(
+                "provisional-candidate-refresh",
+                lambda: HorizonProvisionalService(self.db).refresh(
+                    HorizonProvisionalRefreshRequest(max_candidates=1000)
+                ),
+            )
+
         weather_chain = self._safe_call(
             "weather-chain-reconciliation",
             lambda: HorizonWeatherChainService(self.db).reconcile(max_forecasts=5000, max_chains=5000),
@@ -145,6 +180,7 @@ class HorizonLiveConvergenceService:
             "sources_succeeded": successful,
             "sources_failed": failed,
             "sources_skipped_for_configuration": skipped,
+            "provisional_refresh": provisional,
             "weather_chain": weather_chain,
             "convergence_snapshots": snapshots,
             "convergence_snapshot_errors": snapshot_errors,
@@ -152,6 +188,9 @@ class HorizonLiveConvergenceService:
             "critical_semantics": {
                 "source_failure_isolated": True,
                 "source_count_is_not_truth_vote": True,
+                "aggregators_can_share_independence_family_with_origin": True,
+                "gdacs_adapter_directly_confirms_event": False,
+                "meteoalarm_adapter_directly_confirms_event": False,
                 "convergence_score_is_probability": False,
                 "gated_sources_are_not_faked": True,
                 "numeric_probabilities_enabled": False,
