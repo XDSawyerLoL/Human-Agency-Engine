@@ -1,0 +1,33 @@
+name: HORIZON Live Sensors
+
+on:
+  schedule:
+    - cron: '3,18,33,48 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: horizon-live-sensors
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    env:
+      ENGINE_URL: ${{ secrets.ENGINE_URL }}
+      ENGINE_API_KEY: ${{ secrets.ENGINE_API_KEY }}
+    steps:
+      - name: Trigger HORIZON live source sync
+        shell: bash
+        run: |
+          if [ -z "$ENGINE_URL" ] || [ -z "$ENGINE_API_KEY" ]; then
+            echo "HORIZON live sync not configured yet; skipping cleanly."
+            exit 0
+          fi
+          curl --fail-with-body --silent --show-error \
+            --retry 2 \
+            --max-time 120 \
+            -X POST "${ENGINE_URL%/}/v1/horizon/live/sync" \
+            -H "X-API-Key: ${ENGINE_API_KEY}"
