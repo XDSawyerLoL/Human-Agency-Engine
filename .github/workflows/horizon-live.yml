@@ -63,6 +63,26 @@ jobs:
             -H "X-API-Key: ${ENGINE_API_KEY}"
 
           echo
+          echo "Polling official French fuel rupture feed."
+          curl --fail-with-body --silent --show-error \
+            --retry 2 \
+            --retry-all-errors \
+            --max-time 180 \
+            -X POST "${ENGINE_URL%/}/v1/horizon/live/fuel-ruptures/poll" \
+            -H "X-API-Key: ${ENGINE_API_KEY}"
+
+          echo
+          echo "Normalizing material fuel shortages into personally scoped events and stock signals."
+          curl --fail-with-body --silent --show-error \
+            --retry 2 \
+            --retry-all-errors \
+            --max-time 120 \
+            -X POST "${ENGINE_URL%/}/v1/horizon/normalize/fuel-ruptures/latest" \
+            -H "X-API-Key: ${ENGINE_API_KEY}" \
+            -H "Content-Type: application/json" \
+            --data '{}'
+
+          echo
           echo "Refreshing normalized GDELT media-attention acceleration signals."
           curl --fail-with-body --silent --show-error \
             --retry 2 \
