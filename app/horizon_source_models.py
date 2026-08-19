@@ -63,6 +63,8 @@ class HorizonEventCandidate(Base):
     geography: Mapped[list] = mapped_column(JSON, default=list)
     corroborating_observation_ids: Mapped[list] = mapped_column(JSON, default=list)
     source_classes: Mapped[list] = mapped_column(JSON, default=list)
+    normalized_facts: Mapped[dict] = mapped_column(JSON, default=dict)
+    normalizer_version: Mapped[str] = mapped_column(String(96), default="")
     corroboration_score: Mapped[float] = mapped_column(Float, default=0.0)
     promotion_status: Mapped[str] = mapped_column(String(32), default="candidate", index=True)
     promoted_event_id: Mapped[int | None] = mapped_column(ForeignKey("horizon_global_events.id", ondelete="SET NULL"), nullable=True, index=True)

@@ -44,3 +44,12 @@ jobs:
             --max-time 120 \
             -X POST "${ENGINE_URL%/}/v1/horizon/live/meteofrance/poll" \
             -H "X-API-Key: ${ENGINE_API_KEY}"
+
+          echo
+          echo "Normalizing latest official weather alerts into personally scoped HORIZON events."
+          curl --fail-with-body --silent --show-error \
+            --retry 2 \
+            --retry-all-errors \
+            --max-time 120 \
+            -X POST "${ENGINE_URL%/}/v1/horizon/normalize/meteofrance/latest" \
+            -H "X-API-Key: ${ENGINE_API_KEY}"

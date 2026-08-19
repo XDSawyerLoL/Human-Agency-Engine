@@ -160,6 +160,8 @@ class HorizonSourceService:
             "title": payload.title.strip().lower(),
             "geography": sorted(str(item).upper() for item in payload.geography),
             "observation_hashes": observation_hashes,
+            "normalized_facts": payload.normalized_facts,
+            "normalizer_version": payload.normalizer_version,
         })
         existing = self.db.query(HorizonEventCandidate).filter(
             HorizonEventCandidate.candidate_key == candidate_key
@@ -173,6 +175,8 @@ class HorizonSourceService:
             geography=payload.geography,
             corroborating_observation_ids=sorted(item.id for item in observations),
             source_classes=sorted({item.source_class for item in sources}),
+            normalized_facts=payload.normalized_facts,
+            normalizer_version=payload.normalizer_version,
             corroboration_score=_candidate_score(sources),
             promotion_status="candidate",
             first_observed_at=first,
@@ -233,11 +237,16 @@ class HorizonSourceService:
         event_key = f"src-{candidate.candidate_key[:32]}"
         raw_facts = {
             "canonical_facts": primary.canonical_facts,
+            "normalized_facts": candidate.normalized_facts,
+            "normalizer_version": candidate.normalizer_version,
             "corroboration": readiness,
             "observation_ids": sorted(ids),
             "source_keys": sorted({sources_by_id[item.source_id].source_key for item in observations}),
             "source_classes": candidate.source_classes,
         }
+        personal_scope = (candidate.normalized_facts or {}).get("personal_scope")
+        if isinstance(personal_scope, dict) and personal_scope:
+            raw_facts["personal_scope"] = personal_scope
         row = HorizonGlobalEvent(
             event_key=event_key,
             event_type=candidate.event_type,

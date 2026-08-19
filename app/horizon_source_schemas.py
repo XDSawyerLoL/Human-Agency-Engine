@@ -54,3 +54,5 @@ class HorizonCandidateBuild(BaseModel):
     event_type: str = Field(min_length=2, max_length=96)
     title: str = Field(min_length=3, max_length=255)
     geography: list[str] = Field(default_factory=list)
+    normalized_facts: dict = Field(default_factory=dict)
+    normalizer_version: str = Field(default="", max_length=96)

@@ -11,6 +11,7 @@ from ..horizon_models import HorizonBehaviorPattern, HorizonForecast, HorizonGlo
 from ..models import User
 from .horizon import HorizonService
 from .horizon_cascade import HorizonCascadeService
+from .horizon_scope import evaluate_personal_scope
 from .policy import sha256_dict
 
 
@@ -35,7 +36,7 @@ def _attention_band(score: float) -> str:
 
 
 class HorizonImpactService:
-    ENGINE_VERSION = "horizon-personal-impact-gate-v0.1"
+    ENGINE_VERSION = "horizon-personal-impact-gate-v0.2-scope"
 
     def __init__(self, db: Session):
         self.db = db
@@ -104,9 +105,26 @@ class HorizonImpactService:
         horizon = HorizonService(self.db)
         exposure = horizon._personal_exposure(user, event, as_of)
 
+        personal_scope = (event.raw_facts or {}).get("personal_scope")
+        scope = evaluate_personal_scope(exposure.get("state_snapshot", {}), personal_scope)
+        base_exposure_score = _clamp(float(exposure["score"]))
+        if scope["configured"]:
+            if scope["status"] == "matched":
+                scoped_exposure_score = _clamp(0.55 + 0.45 * base_exposure_score)
+            elif scope["status"] == "mismatched":
+                scoped_exposure_score = min(base_exposure_score, 0.05)
+            else:
+                scoped_exposure_score = min(base_exposure_score, 0.25)
+            exposure["unscoped_score"] = round(base_exposure_score, 4)
+            exposure["score"] = round(scoped_exposure_score, 4)
+            exposure["personal_scope"] = scope
+        else:
+            scoped_exposure_score = base_exposure_score
+            exposure["personal_scope"] = scope
+
         source_quality = _clamp(event.source_reliability)
         pattern_quality = _clamp(pattern.confidence)
-        exposure_score = _clamp(float(exposure["score"]))
+        exposure_score = _clamp(scoped_exposure_score)
         propagation = _clamp(cascade.propagation_score)
         acceleration = _clamp(cascade.acceleration_score)
 
@@ -124,6 +142,14 @@ class HorizonImpactService:
             + 0.23 * urgency_score
             + 0.15 * acceleration
         )
+
+        # Explicit personal scope is a hard relevance gate. A known mismatch must
+        # never leak a high-severity regional alert to the wrong human. Missing
+        # personal state may justify a watch/data-acquisition prompt, never urgency.
+        if scope["configured"] and scope["status"] == "mismatched":
+            attention_score = 0.0
+        elif scope["configured"] and scope["status"] == "unknown":
+            attention_score = min(attention_score, 0.49)
         band = _attention_band(attention_score)
 
         forecast = self.db.query(HorizonForecast).filter(
@@ -180,15 +206,20 @@ class HorizonImpactService:
             "formal_probability_enabled": False,
             "action_prescribed": False,
             "should_surface": band != "silent",
+            "personal_scope_status": scope["status"],
+            "personal_scope_configured": scope["configured"],
+            "missing_personal_state_for_scope": scope["configured"] and scope["status"] == "unknown",
             "why": [
                 {"component": "event_source_quality", "score": round(source_quality, 4)},
                 {"component": "historical_pattern_support", "score": round(pattern_quality, 4)},
                 {"component": "personal_exposure", "score": round(exposure_score, 4)},
+                {"component": "personal_scope", "score": round(float(scope["score"]), 4)},
                 {"component": "collective_cascade_progress", "score": round(propagation, 4)},
                 {"component": "collective_cascade_acceleration", "score": round(acceleration, 4)},
             ],
             "human_readable": (
                 f"The event is personally relevant at attention band '{band}'. "
+                f"Personal scope is '{scope['status']}'. "
                 f"Collective behavior is currently '{cascade.current_stage}', "
                 f"with next plausible transition '{cascade.next_stage or 'none'}'."
             ),
