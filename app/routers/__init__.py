@@ -14,3 +14,4 @@ from . import settlement as _settlement  # noqa: F401,E402
 from . import settlement_permit as _settlement_permit  # noqa: F401,E402
 from . import vault as _vault  # noqa: F401,E402
 from . import horizon as _horizon  # noqa: F401,E402
+from . import horizon_live as _horizon_live  # noqa: F401,E402
