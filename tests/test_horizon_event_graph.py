@@ -158,6 +158,7 @@ def test_event_graph_clusters_cross_source_same_episode_and_attached_signal_with
         assert candidate.promotion_status == "candidate"
         assert graph["critical_semantics"]["unconfirmed_candidates_remain_unconfirmed"] is True
         assert graph["critical_semantics"]["same_episode_score_is_probability"] is False
+        assert graph["selection_policy"]["fixed_budget_prefers_most_recent_evidence"] is True
     finally:
         db.close()
 
@@ -279,7 +280,8 @@ def test_event_graph_routes_are_mounted_and_pairwise_budget_is_bounded():
                 max_signals=10,
             )
         )
-        assert direct["engine_version"] == "horizon-event-graph-v0.1"
+        assert direct["engine_version"] == "horizon-event-graph-v0.2"
+        assert direct["graph_snapshot"]["critical_semantics"]["all_internal_graph_clocks_are_utc_naive"] is True
     finally:
         db.close()
 
@@ -288,7 +290,7 @@ def test_event_graph_routes_are_mounted_and_pairwise_budget_is_bounded():
         json={"lookback_hours": 24, "max_events": 10, "max_candidates": 10, "max_signals": 10},
     )
     assert response.status_code == 200, response.text
-    assert response.json()["engine_version"] == "horizon-event-graph-v0.1"
+    assert response.json()["engine_version"] == "horizon-event-graph-v0.2"
 
     invalid = client.post(
         "/v1/horizon/event-graph/build",
