@@ -92,3 +92,13 @@ jobs:
             -H "X-API-Key: ${ENGINE_API_KEY}" \
             -H "Content-Type: application/json" \
             --data '{}'
+
+          echo
+          echo "Re-evaluating only materially changed HORIZON human trajectories."
+          curl --fail-with-body --silent --show-error \
+            --retry 2 \
+            --max-time 240 \
+            -X POST "${ENGINE_URL%/}/v1/horizon/reevaluate/run" \
+            -H "X-API-Key: ${ENGINE_API_KEY}" \
+            -H "Content-Type: application/json" \
+            --data '{"max_events":100,"max_users":5000,"material_score_delta":0.12}'
