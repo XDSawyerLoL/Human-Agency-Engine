@@ -36,3 +36,4 @@ from . import horizon_backfill as _horizon_backfill  # noqa: F401,E402
 from . import horizon_weather_chain as _horizon_weather_chain  # noqa: F401,E402
 from . import horizon_global_alerts as _horizon_global_alerts  # noqa: F401,E402
 from . import horizon_convergence as _horizon_convergence  # noqa: F401,E402
+from . import horizon_event_graph as _horizon_event_graph  # noqa: F401,E402
