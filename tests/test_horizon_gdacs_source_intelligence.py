@@ -48,7 +48,7 @@ def test_gdacs_writes_raw_snapshot_only_preserves_provider_time_and_normalizes_u
     mock = httpx.Client(transport=httpx.MockTransport(handler))
     request = HorizonGdacsPollRequest(
         event_types=["EQ"],
-        alert_levels=["orange"],
+        alert_levels=["orange", "red"],
         lookback_days=4,
         page_size=100,
         max_pages=2,
