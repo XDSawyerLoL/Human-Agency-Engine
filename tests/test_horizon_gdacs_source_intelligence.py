@@ -99,10 +99,13 @@ def test_gdacs_writes_raw_snapshot_only_preserves_provider_time_and_normalizes_u
             observed_at=datetime(2026, 8, 19, 8, 10, tzinfo=timezone.utc),
         )
         assert updated["new_observations"] == 1
-        snapshots = db.query(HorizonRawObservation).filter(
-            HorizonRawObservation.source_id == source.id,
-            HorizonRawObservation.canonical_facts["event_id"].as_string() == f"eq-{tag}",
+        source_rows = db.query(HorizonRawObservation).filter(
+            HorizonRawObservation.source_id == source.id
         ).all()
+        snapshots = [
+            row for row in source_rows
+            if row.canonical_facts.get("event_id") == f"eq-{tag}"
+        ]
         assert len(snapshots) == 2
         assert sorted(row.canonical_facts["alert_level"] for row in snapshots) == ["orange", "red"]
     finally:
