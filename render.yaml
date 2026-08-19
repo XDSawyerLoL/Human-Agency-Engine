@@ -23,6 +23,12 @@ services:
         value: "60"
       - key: GOOGLE_MAX_GMAIL_MESSAGES
         value: "250"
+      - key: HORIZON_LIVE_SYNC_ENABLED
+        value: "true"
+      - key: HORIZON_HTTP_TIMEOUT_SECONDS
+        value: "20"
+      - key: HORIZON_METEOALARM_COUNTRIES
+        value: "france"
 
 databases:
   - name: human-agency-db
