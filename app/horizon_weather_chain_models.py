@@ -12,19 +12,13 @@ class HorizonWeatherImpactChain(Base):
     __tablename__ = "horizon_weather_impact_chains"
     __table_args__ = (
         UniqueConstraint("chain_key", name="uq_horizon_weather_impact_chain_key"),
-        UniqueConstraint("provisional_forecast_id", name="uq_horizon_weather_impact_chain_forecast"),
+        UniqueConstraint("windy_candidate_id", name="uq_horizon_weather_impact_chain_candidate"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     chain_key: Mapped[str] = mapped_column(String(96), unique=True, index=True)
-    provisional_forecast_id: Mapped[int] = mapped_column(
-        ForeignKey("horizon_provisional_forecasts.id", ondelete="CASCADE"), unique=True, index=True
-    )
-    provisional_resolution_id: Mapped[int] = mapped_column(
-        ForeignKey("horizon_provisional_resolutions.id", ondelete="CASCADE"), index=True
-    )
     windy_candidate_id: Mapped[int] = mapped_column(
-        ForeignKey("horizon_event_candidates.id", ondelete="CASCADE"), index=True
+        ForeignKey("horizon_event_candidates.id", ondelete="CASCADE"), unique=True, index=True
     )
     confirmed_event_id: Mapped[int] = mapped_column(
         ForeignKey("horizon_global_events.id", ondelete="CASCADE"), index=True
