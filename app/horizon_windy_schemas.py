@@ -18,6 +18,8 @@ class HorizonWindyPollRequest(BaseModel):
         max_length=9,
     )
     horizon_hours: int = Field(default=168, ge=6, le=240)
+    heat_watch_threshold_c: float = Field(default=32.0, ge=25.0, le=45.0)
+    max_heat_model_spread_c: float = Field(default=5.0, ge=1.0, le=15.0)
 
     @model_validator(mode="after")
     def validate_contract(self):
@@ -29,4 +31,6 @@ class HorizonWindyPollRequest(BaseModel):
             raise ValueError(f"unsupported Windy parameter(s): {', '.join(unsupported_parameters)}")
         if len(set(self.models)) != len(self.models):
             raise ValueError("Windy models must be unique")
+        if "temp" not in self.parameters:
+            raise ValueError("HORIZON Windy consensus currently requires the temp parameter")
         return self
