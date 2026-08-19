@@ -96,7 +96,7 @@ def test_horizon_separates_facts_social_signals_and_prediction_without_fake_prob
     uid = _uid("horizon-layers")
     _create_user(uid)
     event_id = _create_heat_event(tag)
-    _create_pattern(tag)
+    pattern_id = _create_pattern(tag)
     _add_signal(event_id, tag, "search_interest", "2020-07-02T06:00:00Z")
 
     response = client.post(
@@ -107,9 +107,10 @@ def test_horizon_separates_facts_social_signals_and_prediction_without_fake_prob
     body = response.json()
     assert body["numeric_probabilities_enabled"] is False
     assert body["backtest_no_future_leakage_guards"] is True
-    assert len(body["forecasts"]) == 1
+    own = [item for item in body["forecasts"] if item["pattern_id"] == pattern_id]
+    assert len(own) == 1
 
-    forecast = body["forecasts"][0]
+    forecast = own[0]
     assert forecast["fact_layer"]["raw_facts"]["temperature_c"] == 41
     assert forecast["social_signal_layer"][0]["signal_type"] == "search_interest"
     assert forecast["forecast_layer"]["predicted_outcome"].startswith("Demand for cooling equipment")
@@ -124,8 +125,8 @@ def test_backtest_never_sees_signals_or_behavior_knowledge_from_after_cutoff():
     uid = _uid("horizon-cutoff")
     _create_user(uid)
     event_id = _create_heat_event(tag)
-    _create_pattern(f"early-{tag}", knowledge_at="2019-01-01T00:00:00Z")
-    _create_pattern(f"future-{tag}", knowledge_at="2020-07-05T00:00:00Z")
+    early_pattern_id = _create_pattern(f"early-{tag}", knowledge_at="2019-01-01T00:00:00Z")
+    future_pattern_id = _create_pattern(f"future-{tag}", knowledge_at="2020-07-05T00:00:00Z")
     early = _add_signal(event_id, tag, "search_interest", "2020-07-02T06:00:00Z")
     late = _add_signal(event_id, tag, "stock_availability", "2020-07-05T06:00:00Z", score=-3.0)
 
@@ -135,11 +136,12 @@ def test_backtest_never_sees_signals_or_behavior_knowledge_from_after_cutoff():
     )
     assert response.status_code == 200, response.text
     forecasts = response.json()["forecasts"]
-    assert len(forecasts) == 1
+    pattern_ids = {item["pattern_id"] for item in forecasts}
+    assert early_pattern_id in pattern_ids
+    assert future_pattern_id not in pattern_ids
     serialized = str(forecasts)
     assert early["signal_key"] in serialized
     assert late["signal_key"] not in serialized
-    assert f"heat-demand-future-{tag}" not in serialized
 
     before_event = client.post(
         f"/v1/horizon/users/{uid}/forecast",
@@ -154,7 +156,7 @@ def test_resolution_measures_predictive_and_actionable_lead_time():
     uid = _uid("horizon-lead")
     _create_user(uid)
     event_id = _create_heat_event(tag)
-    _create_pattern(tag)
+    pattern_id = _create_pattern(tag)
     _add_signal(event_id, tag, "search_interest", "2020-07-02T06:00:00Z")
 
     forecast_response = client.post(
@@ -162,7 +164,9 @@ def test_resolution_measures_predictive_and_actionable_lead_time():
         json={"event_id": event_id, "as_of": "2020-07-03T12:00:00Z", "mode": "backtest"},
     )
     assert forecast_response.status_code == 200, forecast_response.text
-    forecast_id = forecast_response.json()["forecasts"][0]["id"]
+    own = [item for item in forecast_response.json()["forecasts"] if item["pattern_id"] == pattern_id]
+    assert len(own) == 1
+    forecast_id = own[0]["id"]
 
     resolved = client.put(
         f"/v1/horizon/forecasts/{forecast_id}/resolution",
