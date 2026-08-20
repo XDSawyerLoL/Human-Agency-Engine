@@ -40,7 +40,7 @@ def _meteoalarm_candidate(db, *, tag: str, at: datetime):
     service = HorizonSourceService(db)
     source = service.upsert_source(
         HorizonSourceUpsert(
-            source_key="meteoalarm:france",
+            source_key="graph-fixture-meteoalarm-france",
             name="MeteoAlarm France event graph fixture",
             source_class="official_aggregator",
             adapter_kind="meteoalarm_atom_warning_feed",
