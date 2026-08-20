@@ -26,6 +26,11 @@ x-horizon-environment: &horizon-environment
   HORIZON_COLLECTOR_METEOALARM_ALL_EUROPE: ${HORIZON_COLLECTOR_METEOALARM_ALL_EUROPE:-false}
   HORIZON_COLLECTOR_RTE_REGION_CODES: ${HORIZON_COLLECTOR_RTE_REGION_CODES:-}
   HORIZON_COLLECTOR_WINDY_POINTS_JSON: ${HORIZON_COLLECTOR_WINDY_POINTS_JSON:-[]}
+  HORIZON_CORPUS_WORKER_ENABLED: ${HORIZON_CORPUS_WORKER_ENABLED:-true}
+  HORIZON_CORPUS_WORKER_INTERVAL_SECONDS: ${HORIZON_CORPUS_WORKER_INTERVAL_SECONDS:-21600}
+  HORIZON_CORPUS_WORKER_LEASE_SECONDS: ${HORIZON_CORPUS_WORKER_LEASE_SECONDS:-7200}
+  HORIZON_CORPUS_WORKER_MAX_RUNS_PER_CYCLE: ${HORIZON_CORPUS_WORKER_MAX_RUNS_PER_CYCLE:-1}
+  HORIZON_CORPUS_WORKER_SLICES_PER_RUN: ${HORIZON_CORPUS_WORKER_SLICES_PER_RUN:-1}
 
 services:
   db:
@@ -83,6 +88,21 @@ services:
     environment:
       <<: *horizon-environment
     command: ["python", "scripts/horizon_collector.py"]
+    stop_grace_period: 30s
+    networks:
+      - horizon_private
+
+  corpus-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.horizon
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      <<: *horizon-environment
+    command: ["python", "scripts/horizon_corpus_worker.py"]
     stop_grace_period: 30s
     networks:
       - horizon_private
