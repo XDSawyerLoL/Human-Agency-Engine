@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
 
+HORIZON_CORPUS_STRATEGIES = ("heat-mf-rte-v1", "cold-mf-rte-v1")
+
+
 class HorizonCalibrationCorpusBuildRequest(BaseModel):
+    strategy: Literal["heat-mf-rte-v1", "cold-mf-rte-v1"] = "heat-mf-rte-v1"
     start_at: datetime
     end_at: datetime
     slice_days: int = Field(default=30, ge=7, le=60)
@@ -20,6 +25,7 @@ class HorizonCalibrationCorpusBuildRequest(BaseModel):
     rte_baseline_lookback_days: int = Field(default=28, ge=14, le=84)
     rte_minimum_lift_ratio: float = Field(default=0.03, ge=0.005, le=0.25)
     rte_minimum_afternoon_points: int = Field(default=12, ge=8, le=20)
+    rte_minimum_daily_points: int = Field(default=40, ge=24, le=50)
     rte_max_records_per_slice: int = Field(default=50000, ge=1000, le=100000)
 
     backtest_max_events: int = Field(default=500, ge=1, le=1000)
