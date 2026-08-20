@@ -43,3 +43,57 @@ jobs:
         run: |
           rm -f test.db
           pytest -q
+
+  deploy-hostinger:
+    name: deploy-hostinger
+    needs: test
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.HOSTINGER_VM_ID != '' }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: horizon-hostinger-production
+      cancel-in-progress: false
+    steps:
+      - name: Checkout exact tested revision
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Deploy exact tested revision to Hostinger VPS
+        uses: hostinger/deploy-action@v1
+        with:
+          api-key: ${{ secrets.HOSTINGER_API_KEY }}
+          virtual-machine: ${{ vars.HOSTINGER_VM_ID }}
+          project-name: horizon
+          docker-compose-path: docker-compose.hostinger.yml
+          environment-variables: |
+            HORIZON_POSTGRES_PASSWORD=${{ secrets.HORIZON_POSTGRES_PASSWORD }}
+            HORIZON_API_KEY=${{ secrets.HORIZON_API_KEY }}
+            HORIZON_TOKEN_ENCRYPTION_KEY=${{ secrets.HORIZON_TOKEN_ENCRYPTION_KEY }}
+            METEOFRANCE_APPLICATION_ID=${{ secrets.METEOFRANCE_APPLICATION_ID }}
+            WINDY_POINT_FORECAST_API_KEY=${{ secrets.WINDY_POINT_FORECAST_API_KEY }}
+            HORIZON_COLLECTOR_WINDY_POINTS_JSON=${{ secrets.HORIZON_COLLECTOR_WINDY_POINTS_JSON }}
+            HORIZON_BIND_ADDRESS=${{ vars.HORIZON_BIND_ADDRESS || '127.0.0.1' }}
+            HORIZON_PORT=${{ vars.HORIZON_PORT || '8000' }}
+            HORIZON_COLLECTOR_ENABLED=${{ vars.HORIZON_COLLECTOR_ENABLED || 'true' }}
+            HORIZON_COLLECTOR_TICK_SECONDS=${{ vars.HORIZON_COLLECTOR_TICK_SECONDS || '30' }}
+            HORIZON_COLLECTOR_LEASE_SECONDS=${{ vars.HORIZON_COLLECTOR_LEASE_SECONDS || '900' }}
+            HORIZON_COLLECTOR_MAX_SOURCES_PER_CYCLE=${{ vars.HORIZON_COLLECTOR_MAX_SOURCES_PER_CYCLE || '10' }}
+            HORIZON_COLLECTOR_SNCF_SECONDS=${{ vars.HORIZON_COLLECTOR_SNCF_SECONDS || '300' }}
+            HORIZON_COLLECTOR_VIGICRUES_SECONDS=${{ vars.HORIZON_COLLECTOR_VIGICRUES_SECONDS || '600' }}
+            HORIZON_COLLECTOR_METEOFRANCE_SECONDS=${{ vars.HORIZON_COLLECTOR_METEOFRANCE_SECONDS || '600' }}
+            HORIZON_COLLECTOR_METEOALARM_SECONDS=${{ vars.HORIZON_COLLECTOR_METEOALARM_SECONDS || '600' }}
+            HORIZON_COLLECTOR_GDELT_SECONDS=${{ vars.HORIZON_COLLECTOR_GDELT_SECONDS || '900' }}
+            HORIZON_COLLECTOR_GDACS_SECONDS=${{ vars.HORIZON_COLLECTOR_GDACS_SECONDS || '900' }}
+            HORIZON_COLLECTOR_FUEL_SECONDS=${{ vars.HORIZON_COLLECTOR_FUEL_SECONDS || '900' }}
+            HORIZON_COLLECTOR_RTE_SECONDS=${{ vars.HORIZON_COLLECTOR_RTE_SECONDS || '900' }}
+            HORIZON_COLLECTOR_WINDY_SECONDS=${{ vars.HORIZON_COLLECTOR_WINDY_SECONDS || '1800' }}
+            HORIZON_COLLECTOR_SYNTHESIS_SECONDS=${{ vars.HORIZON_COLLECTOR_SYNTHESIS_SECONDS || '900' }}
+            HORIZON_COLLECTOR_MAX_ACTIVE_EVENTS=${{ vars.HORIZON_COLLECTOR_MAX_ACTIVE_EVENTS || '200' }}
+            HORIZON_COLLECTOR_EVENT_GRAPH_LOOKBACK_HOURS=${{ vars.HORIZON_COLLECTOR_EVENT_GRAPH_LOOKBACK_HOURS || '336' }}
+            HORIZON_COLLECTOR_METEOALARM_ALL_EUROPE=${{ vars.HORIZON_COLLECTOR_METEOALARM_ALL_EUROPE || 'false' }}
+            HORIZON_COLLECTOR_RTE_REGION_CODES=${{ vars.HORIZON_COLLECTOR_RTE_REGION_CODES }}
+            HORIZON_CORPUS_WORKER_ENABLED=${{ vars.HORIZON_CORPUS_WORKER_ENABLED || 'true' }}
+            HORIZON_CORPUS_WORKER_INTERVAL_SECONDS=${{ vars.HORIZON_CORPUS_WORKER_INTERVAL_SECONDS || '21600' }}
+            HORIZON_CORPUS_WORKER_LEASE_SECONDS=${{ vars.HORIZON_CORPUS_WORKER_LEASE_SECONDS || '7200' }}
+            HORIZON_CORPUS_WORKER_MAX_RUNS_PER_CYCLE=${{ vars.HORIZON_CORPUS_WORKER_MAX_RUNS_PER_CYCLE || '1' }}
+            HORIZON_CORPUS_WORKER_SLICES_PER_RUN=${{ vars.HORIZON_CORPUS_WORKER_SLICES_PER_RUN || '1' }}
