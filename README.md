@@ -1,31 +1,107 @@
-# Human Agency Engine
+# HORIZON Predictive Intelligence
 
-Backend for a proactive, user-aligned personal agency system.
+HORIZON is a personal world-anticipation engine. It watches multiple real-world domains, separates facts from hypotheses, models plausible collective responses, checks personal exposure, creates auditable forecasts, then measures whether they materialized and how much lead time was achieved.
 
-The engine does not optimize engagement. Its purpose is to detect useful interventions before the user has to formulate the request, while preserving user control.
+Weather is one evidence domain among many; it is not the product boundary.
 
-## Core loop
+## Predictive invariant
 
-`SELF -> INTENT -> SIGNAL -> OPPORTUNITY -> CARE -> OUTCOME -> LEARNING`
+`FACT -> SOCIAL SIGNALS -> BEHAVIORAL HYPOTHESIS -> PERSONAL EXPOSURE -> FORECAST -> RESOLUTION -> LEAD TIME`
 
-## What is real in v0.3
+The implementation is deliberately conservative:
 
-- Persistent users, intentions, signals, opportunities and outcomes
-- Read-only Google connector (Gmail metadata/snippets + primary Calendar events)
-- OAuth 2.0 with encrypted connector tokens
-- Idempotent external-signal ingestion
-- Intent matching and proactive gating
-- Opportunity engine with counterfactual framing
-- CARE checks
-- Manual and scheduled cycle runner
-- SQLite for local development; PostgreSQL supported through `DATABASE_URL`
-- Versioned Alembic schema migrations
-- Docker migration-first startup
-- Render infrastructure blueprint for Frankfurt
+- raw observations are not silently upgraded into facts;
+- repeated articles from one media source family cannot confirm an event by repetition;
+- source-count and convergence scores are not probabilities;
+- provider failures are operational failures, not negative real-world evidence;
+- incomplete historical outcome coverage cannot authorize a false/miss label;
+- backtests are point-in-time and reject future leakage;
+- numeric forecast probabilities stay disabled until empirical calibration gates are actually satisfied.
 
-The Google connector intentionally does **not** send email, modify calendar events or purchase anything. It uses read-only scopes and only reads the minimum useful Gmail fields: subject, sender, date, labels and snippet.
+## Current world domains
 
-## Setup
+HORIZON's architecture covers:
+
+- weather and climate
+- natural hazards
+- transport and mobility
+- supply chains and fuel
+- energy
+- media and collective attention
+- geopolitics and security
+- economy and labor
+- public health
+- cyber and technology
+- regulation and policy
+- financial stress
+- personal context and exposure
+
+`GET /v1/horizon/world/coverage` reports the current maturity of each domain. This keeps product development honest: a domain that only has broad discovery remains visibly `discovery_only`; it is not presented as calibrated prediction.
+
+See `docs/ARCHITECTURE_HORIZON.md` for the domain contract.
+
+## What is running today
+
+The HORIZON stack already includes:
+
+- versioned source registry and immutable raw observations
+- broad GDELT multi-domain discovery with episode clustering
+- official/operational adapters including SNCF, Vigicrues, Météo-France, MeteoAlarm, GDACS, French fuel and RTE
+- Windy as a live forecast precursor only
+- multi-source independence families and convergence snapshots
+- Event Graph with explicit evidence, same-episode and plausible-dependency edges
+- versioned Human Response Library
+- personal relevance/exposure gate
+- provisional and confirmed forecast ledgers
+- materialization and expiry resolution
+- predictive lead-time measurement
+- point-in-time Historical Backtest Factory
+- empirical calibration readiness gates
+- resumable heat/cold historical calibration corpus
+- permanent live collector
+- separate low-rate historical corpus worker
+
+The repository also contains older Human Agency Engine modules. They remain available for development/history, but the **production HORIZON service uses `app.horizon_api:app`** and intentionally does not mount legacy settlement, delegation, market, allocation or execution routes.
+
+## Production on Hostinger
+
+Production is a four-service Docker Compose stack:
+
+1. PostgreSQL 17
+2. dedicated HORIZON FastAPI API
+3. permanent live collector
+4. historical corpus worker
+
+The database is private to the Docker network. The API binds to VPS loopback by default and should be exposed through a TLS reverse proxy.
+
+Automatic deployment is CI-gated in `.github/workflows/ci.yml`:
+
+`push main -> compile -> migrations -> Compose validation -> full pytest -> deploy same github.sha to Hostinger`
+
+The separate `Redeploy HORIZON to Hostinger` workflow is manual-only.
+
+Full setup, required GitHub secrets/variables and reverse-proxy guidance:
+
+`docs/HOSTINGER_HORIZON.md`
+
+## Required deployment secrets
+
+Store these in GitHub Actions secrets, never in the repository:
+
+- `HOSTINGER_API_KEY`
+- `HORIZON_POSTGRES_PASSWORD`
+- `HORIZON_API_KEY`
+- `HORIZON_TOKEN_ENCRYPTION_KEY`
+
+The required GitHub Actions variable is:
+
+- `HOSTINGER_VM_ID`
+
+Optional provider credentials and collector/corpus-worker overrides are documented in `.env.hostinger.example` and `docs/HOSTINGER_HORIZON.md`.
+
+If `HOSTINGER_VM_ID` is absent, tests still run and the production deploy job is skipped cleanly.
+
+## Local development
 
 ```bash
 python -m venv .venv
@@ -37,110 +113,41 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Copy `.env.example` to `.env`.
-
-Generate an encryption key:
-
-```bash
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-```
-
-Set `TOKEN_ENCRYPTION_KEY`.
-
-For Google integration, create a Google Cloud OAuth Web client, enable Gmail API and Google Calendar API, and set:
-
-```env
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-GOOGLE_REDIRECT_URI=http://localhost:8000/v1/connectors/google/callback
-```
-
-Run:
-
-```bash
-uvicorn app.main:app --reload
-```
-
-API docs:
-
-`http://localhost:8000/docs`
-
-## Database migrations
-
-Create or upgrade a database with:
+Run migrations:
 
 ```bash
 alembic upgrade head
 ```
 
-The Docker image runs this automatically before starting the API. CI also upgrades a fresh database before running application tests.
-
-## Connect a Google account
-
-1. Create/update a user.
-2. `POST /v1/users/{external_id}/connectors/google/start`
-3. Open the returned `authorization_url`.
-4. Google redirects to `/v1/connectors/google/callback`.
-5. Run a sync with `POST /v1/users/{external_id}/connectors/google/sync`.
-
-The connector requests:
-
-- `gmail.readonly`
-- `calendar.readonly`
-
-On Render, `GOOGLE_REDIRECT_URI` is derived automatically from `RENDER_EXTERNAL_HOSTNAME` when no explicit override is set.
-
-## Continuous cycle
-
-A production scheduler can execute:
+Run the dedicated HORIZON API:
 
 ```bash
-python scripts/run_cycle.py
+uvicorn app.horizon_api:app --reload
 ```
 
-The cycle:
+Then open:
 
-1. syncs enabled read-only connectors,
-2. ingests only unseen external items,
-3. runs the opportunity engine,
-4. leaves all resulting actions for human review.
+- `http://127.0.0.1:8000/health`
+- `http://127.0.0.1:8000/ready`
+- `http://127.0.0.1:8000/docs`
 
-The repository also contains `.github/workflows/agency-cycle.yml`. It triggers `/v1/cycle/run` hourly once these GitHub repository secrets exist:
+Protected endpoints require the configured `X-API-Key` outside the development `change-me` configuration.
 
-- `ENGINE_URL` — deployed API base URL, e.g. `https://...onrender.com`
-- `ENGINE_API_KEY` — same value as the deployed service's `API_KEY`
+## Validation
 
-If these secrets are absent, the scheduled workflow exits successfully without doing anything.
+The repository CI runs:
 
-## Render deployment
+```bash
+python -m compileall -q app scripts migrations
+alembic upgrade head
+docker compose -f docker-compose.hostinger.yml config
+pytest -q
+```
 
-`render.yaml` defines the initial live-test infrastructure:
+A production merge is not considered deployable until all four checks pass.
 
-- Docker web service in Frankfurt
-- Render Postgres in Frankfurt
-- CI-gated auto-deploys
-- generated API key
-- generated token-encryption key
-- database accessible only through Render networking
+## Current calibration boundary
 
-The Blueprint intentionally uses free web/database plans for the first live validation. Render's free Postgres is not a permanent production datastore and must be upgraded or moved before relying on it long term.
+HORIZON has historically calibratable trigger/outcome mechanisms for regional extreme heat and extreme cold using official Météo-France archives and historical RTE load outcomes. Those mechanisms are useful calibration laboratories, not the scope of the product.
 
-After the Blueprint creates the service:
-
-1. copy the Render `API_KEY` value into the GitHub secret `ENGINE_API_KEY`;
-2. set `ENGINE_URL` to the service's HTTPS URL;
-3. add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to the Render web service when the OAuth client is ready;
-4. register the callback shown by the service (`https://<host>/v1/connectors/google/callback`) in Google Cloud.
-
-Never commit OAuth client secrets, API keys or encryption keys.
-
-## Current proactive rules
-
-The first real rules are intentionally conservative:
-
-- A time-sensitive email is surfaced only when it also matches an active intention.
-- A calendar event is surfaced only when it is within 14 days and matches an active intention.
-- Existing financial and price-drop signal types remain supported.
-- Every Google-derived action is read-only and marked CARE-approved only for review.
-
-False positives are more damaging than silence at this stage. Future model-based reasoning should sit behind the same gating and CARE contracts rather than bypassing them.
+Broader domains are being expanded by adding independent factual/operational sources and timestamped outcome streams rather than merely adding more news feeds. The goal is to measure whether multi-domain convergence actually improves precision and useful lead time.
