@@ -1,139 +1,168 @@
 # HORIZON on Hostinger VPS
 
-HORIZON is deployed as a dedicated FastAPI service, a permanent world-intelligence collector and PostgreSQL. The production API launches `app.horizon_api:app`, not the historical `app.main:app`, so commerce, delegation, settlement and other non-HORIZON surfaces are not exposed by this deployment.
+HORIZON production is a dedicated domain-agnostic personal world-intelligence service. Weather is one evidence domain among many. The production API launches `app.horizon_api:app`, not the historical `app.main:app`, so commerce, delegation, settlement, allocation and execution surfaces are not exposed by this deployment.
 
-## Architecture
+## Production architecture
 
-- `api`: dedicated HORIZON FastAPI container
-- `collector`: permanent HORIZON ingestion/synthesis worker
-- `db`: PostgreSQL 17 with a persistent Docker volume
-- database port: internal Docker network only
-- API: binds to `127.0.0.1:8000` by default on the VPS
-- schema upgrades: Alembic runs before Uvicorn starts
-- collector startup: waits for the API readiness check, so migrations are complete before collection begins
-- liveness: `GET /health`
-- readiness: `GET /ready` verifies the database
-- collector observability: `GET /v1/horizon/collector/status`
-- deployment: GitHub Actions runs only after the repository CI succeeds on `main`
+The Hostinger Compose stack contains four long-running services:
 
-The collector is the primary live engine. The old 15-minute GitHub radar has been reduced to an hourly watchdog. It may request a due cycle, but PostgreSQL lease ownership keeps it in standby while the Hostinger worker is healthy.
+1. `db` — PostgreSQL 17 with the persistent `horizon_postgres_data` volume.
+2. `api` — dedicated HORIZON FastAPI API. Alembic upgrades run before Uvicorn starts.
+3. `collector` — permanent current-world ingestion/synthesis worker with a PostgreSQL leader lease and per-source cadence/backoff.
+4. `corpus-worker` — deliberately slower historical evidence worker that resumes calibration corpus slices without delaying live collection.
 
-## Collector behavior
+The database has no host port mapping. The API binds to `127.0.0.1:8000` by default and should normally sit behind a TLS reverse proxy.
 
-The collector keeps persistent state for each source:
+Operational endpoints:
 
-- next due time
-- last attempt
-- last successful observation
-- consecutive failures
-- bounded exponential retry backoff
-- last result/error
+- `GET /health` — service capability/liveness summary
+- `GET /ready` — database-backed readiness
+- `GET /v1/horizon/collector/status` — live collector state
+- `GET /v1/horizon/world/coverage` — maturity inventory across weather, hazards, mobility, supply/fuel, energy, media, geopolitics, economy/labor, health, cyber/technology, regulation/policy, financial stress and personal context
 
-Collection cadence is source-specific. Default production values are intentionally more frequent for transport/flood alerts and less aggressive for Windy. Cadence is an operational scheduling choice and is never treated as evidence strength or probability.
+Numeric forecast probabilities remain disabled independently of deployment status.
 
-A database lease allows one active collector leader. If another worker or the GitHub watchdog tries to collect while the lease is valid, it returns `standby`. If the leader disappears, the lease expires and another worker can resume due work.
+## GitHub -> Hostinger deployment invariant
 
-Every non-idle collection cycle is written to an immutable operational ledger with due sources, source outcomes, post-processing result and duration. This provides the audit trail needed to distinguish provider failure from absence of evidence.
+Automatic production deployment now happens **inside the same `CI` workflow that tested the commit**:
 
-The synthesis cadence also runs the internal predictive pipeline: Human Response Library sync, GDELT emerging-event clustering, provisional reconciliation, media-attention refresh, warning refresh, materialization scan, expiry scan, personal reevaluation, convergence snapshots and Event Graph refresh. Numeric forecast probabilities remain disabled.
+1. a commit lands on `main`;
+2. `test` checks out that commit and runs Python compilation, a fresh Alembic upgrade, Hostinger Compose validation and the complete pytest suite;
+3. `deploy-hostinger` has `needs: test`, so it cannot run unless that exact test job succeeds;
+4. the deploy job checks out `${{ github.sha }}` from the same workflow context;
+5. `hostinger/deploy-action@v1` deploys `docker-compose.hostinger.yml` for that same repository SHA.
+
+This avoids a separate `workflow_run` context where the checked-out revision and the action's own GitHub SHA could diverge.
+
+`.github/workflows/deploy-hostinger.yml` is now **manual-only** (`workflow_dispatch`). Use it for an intentional redeploy of the selected revision, not as a second automatic deployment path.
+
+Both deployment paths share the concurrency group `horizon-hostinger-production`, preventing two production deployments from racing each other.
+
+If repository variable `HOSTINGER_VM_ID` is absent, the automatic deploy job is skipped cleanly. CI still runs normally.
 
 ## Hostinger prerequisite
 
-Use a Hostinger VPS with the Docker template / Docker Manager. The normal Web/Cloud hosting product is not the target for this Python service.
+Use a Hostinger VPS capable of running Docker/Compose. Normal shared Web/Cloud hosting is not the target for this Python/PostgreSQL worker stack.
+
+Create or identify the VPS first, then obtain its numeric VM ID and a Hostinger API key. Keep credentials out of commits, issues and chat messages.
 
 ## GitHub Actions configuration
 
-Repository → Settings → Secrets and variables → Actions.
+Open the repository on GitHub, then:
 
-### Secrets
+`Settings -> Secrets and variables -> Actions`
 
-- `HOSTINGER_API_KEY`: generated in Hostinger hPanel API settings
-- `HORIZON_POSTGRES_PASSWORD`: long URL-safe random password; hex is a simple safe choice
-- `HORIZON_API_KEY`: random secret of at least 32 characters
-- `HORIZON_TOKEN_ENCRYPTION_KEY`: application encryption secret
-- `METEOFRANCE_APPLICATION_ID`: optional until that provider is enabled in production
-- `WINDY_POINT_FORECAST_API_KEY`: optional until Windy production evidence is enabled
-- `HORIZON_COLLECTOR_WINDY_POINTS_JSON`: optional JSON array of Windy observation points
+### Required GitHub secrets
 
-Never commit any of these values.
+- `HOSTINGER_API_KEY` — Hostinger API key used by the deploy action
+- `HORIZON_POSTGRES_PASSWORD` — long URL-safe random PostgreSQL password
+- `HORIZON_API_KEY` — HORIZON API key, at least 32 characters
+- `HORIZON_TOKEN_ENCRYPTION_KEY` — application encryption secret required by production runtime validation
 
-### Variables
+### Optional provider secrets
 
-Required for deployment:
+- `METEOFRANCE_APPLICATION_ID`
+- `WINDY_POINT_FORECAST_API_KEY`
+- `HORIZON_COLLECTOR_WINDY_POINTS_JSON` — one-line JSON array of configured Windy points
 
-- `HOSTINGER_VM_ID`: Hostinger VPS numeric virtual-machine ID
-- `HORIZON_BIND_ADDRESS`: normally `127.0.0.1`
-- `HORIZON_PORT`: normally `8000`
+A missing optional provider secret must leave that evidence path unavailable; HORIZON must never replace it with fabricated observations.
 
-Optional collector overrides:
+### Required GitHub variable
 
-- `HORIZON_COLLECTOR_ENABLED`
-- `HORIZON_COLLECTOR_TICK_SECONDS`
-- `HORIZON_COLLECTOR_LEASE_SECONDS`
-- `HORIZON_COLLECTOR_SNCF_SECONDS`
-- `HORIZON_COLLECTOR_VIGICRUES_SECONDS`
-- `HORIZON_COLLECTOR_METEOFRANCE_SECONDS`
-- `HORIZON_COLLECTOR_METEOALARM_SECONDS`
-- `HORIZON_COLLECTOR_GDELT_SECONDS`
-- `HORIZON_COLLECTOR_GDACS_SECONDS`
-- `HORIZON_COLLECTOR_FUEL_SECONDS`
-- `HORIZON_COLLECTOR_RTE_SECONDS`
-- `HORIZON_COLLECTOR_WINDY_SECONDS`
-- `HORIZON_COLLECTOR_SYNTHESIS_SECONDS`
-- `HORIZON_COLLECTOR_METEOALARM_ALL_EUROPE`
-- `HORIZON_COLLECTOR_RTE_REGION_CODES`
+- `HOSTINGER_VM_ID` — numeric Hostinger VPS virtual-machine ID
 
-Empty optional variables fall back to the defaults in `docker-compose.hostinger.yml`.
+### Useful GitHub variables
 
-The deploy job is skipped while `HOSTINGER_VM_ID` is absent. This lets the repository merge deployment support before the VPS credentials are configured.
+The workflow has safe defaults, so these are optional overrides:
 
-## Deployment flow
+- `HORIZON_BIND_ADDRESS` — default `127.0.0.1`
+- `HORIZON_PORT` — default `8000`
+- `HORIZON_COLLECTOR_ENABLED` — default `true`
+- `HORIZON_COLLECTOR_TICK_SECONDS` — default `30`
+- `HORIZON_COLLECTOR_LEASE_SECONDS` — default `900`
+- `HORIZON_COLLECTOR_MAX_SOURCES_PER_CYCLE` — default `10`
+- `HORIZON_COLLECTOR_SNCF_SECONDS` — default `300`
+- `HORIZON_COLLECTOR_VIGICRUES_SECONDS` — default `600`
+- `HORIZON_COLLECTOR_METEOFRANCE_SECONDS` — default `600`
+- `HORIZON_COLLECTOR_METEOALARM_SECONDS` — default `600`
+- `HORIZON_COLLECTOR_GDELT_SECONDS` — default `900`
+- `HORIZON_COLLECTOR_GDACS_SECONDS` — default `900`
+- `HORIZON_COLLECTOR_FUEL_SECONDS` — default `900`
+- `HORIZON_COLLECTOR_RTE_SECONDS` — default `900`
+- `HORIZON_COLLECTOR_WINDY_SECONDS` — default `1800`
+- `HORIZON_COLLECTOR_SYNTHESIS_SECONDS` — default `900`
+- `HORIZON_COLLECTOR_MAX_ACTIVE_EVENTS` — default `200`
+- `HORIZON_COLLECTOR_EVENT_GRAPH_LOOKBACK_HOURS` — default `336`
+- `HORIZON_COLLECTOR_METEOALARM_ALL_EUROPE` — default `false`
+- `HORIZON_COLLECTOR_RTE_REGION_CODES` — optional comma-separated region codes
+- `HORIZON_CORPUS_WORKER_ENABLED` — default `true`
+- `HORIZON_CORPUS_WORKER_INTERVAL_SECONDS` — default `21600`
+- `HORIZON_CORPUS_WORKER_LEASE_SECONDS` — default `7200`
+- `HORIZON_CORPUS_WORKER_MAX_RUNS_PER_CYCLE` — default `1`
+- `HORIZON_CORPUS_WORKER_SLICES_PER_RUN` — default `1`
 
-1. A change is merged into `main`.
-2. The existing `CI` workflow compiles Python, validates all Alembic migrations, validates the Hostinger Compose file and runs the complete test suite.
-3. Only if CI succeeds, `Deploy HORIZON to Hostinger` checks out that exact validated commit.
-4. `hostinger/deploy-action@v1` sends `docker-compose.hostinger.yml` and the configured environment variables to the VPS.
-5. PostgreSQL starts and becomes healthy.
-6. The API container applies migrations and starts only after PostgreSQL is healthy.
-7. `/ready` must return HTTP 200 before the API container becomes healthy.
-8. The collector starts and begins source-specific due scheduling.
+The same names are documented in `.env.hostinger.example`.
 
-A manual `workflow_dispatch` is also available for an intentional redeploy.
+## First deployment
 
-## First public endpoint
+Once the VPS, `HOSTINGER_VM_ID` and the four required secrets exist, no manual code upload is needed.
 
-The safe default is loopback-only. Put a reverse proxy in front of HORIZON and route a dedicated hostname such as `horizon.example.com` to `http://127.0.0.1:8000`.
+Merge a green PR into `main`. The `CI` workflow will run. On success, its `deploy-hostinger` job will submit the exact tested SHA to Hostinger. In Hostinger, the stack then starts in dependency order:
 
-Hostinger Docker Manager supports reverse-proxy setups such as Traefik. If the VPS already runs other applications, reuse its existing reverse proxy instead of competing for ports 80/443.
+`PostgreSQL healthy -> API migrations/start -> /ready healthy -> collector + corpus-worker`
 
-DNS:
+If the deploy job is skipped, check `HOSTINGER_VM_ID` first. If it starts but fails during authentication/deployment, check the Hostinger API key and VPS ID in GitHub settings rather than pasting them into logs or chat.
 
-1. Create an A record for the chosen HORIZON hostname pointing to the VPS public IP.
-2. Configure the reverse proxy with TLS/Let's Encrypt.
-3. Proxy to `127.0.0.1:8000`.
-4. Verify `https://<hostname>/health` and `https://<hostname>/ready`.
+## Public hostname and TLS
 
-For a temporary direct-IP test only, set `HORIZON_BIND_ADDRESS=0.0.0.0` and restrict the VPS firewall to trusted IPs. Return to loopback once the reverse proxy is configured.
+The safe production default is loopback-only. Configure a reverse proxy on the VPS and route a dedicated hostname such as `horizon.example.com` to:
+
+`http://127.0.0.1:8000`
+
+Then:
+
+1. point an A/AAAA record for the hostname to the VPS;
+2. terminate TLS with the VPS reverse proxy (for example Traefik, Caddy or Nginx); 
+3. proxy to HORIZON on loopback;
+4. verify `/health`, `/ready` and `/v1/horizon/world/coverage` over HTTPS.
+
+For a temporary direct-IP test only, `HORIZON_BIND_ADDRESS=0.0.0.0` can expose port 8000, but restrict it with the VPS firewall and return to loopback behind TLS for normal operation.
+
+## Collector and historical-worker semantics
+
+The permanent collector persists, per source:
+
+- next due time
+- last attempt and success
+- consecutive failures
+- bounded retry backoff
+- last result/error
+
+A database lease allows only one active live collector leader. Provider errors are operational failures and never become negative world evidence.
+
+The synthesis cadence runs response-library sync, broad GDELT episode discovery, provisional reconciliation, media attention, warning refresh, materialization/expiry, personal reevaluation, convergence snapshots and Event Graph refresh.
+
+The `corpus-worker` has a separate lease and much slower cadence. It resumes bounded historical slices for empirical calibration. Historical acquisition failure is not a prediction miss, and incomplete outcome coverage cannot authorize a negative label.
 
 ## Security invariants
 
-- PostgreSQL has no host port mapping.
-- Protected HORIZON endpoints retain the `X-API-Key` check.
-- `/health` and `/ready` reveal only service/database availability.
-- the dedicated production app must not expose settlement, delegation, market, allocation or execution endpoints.
-- provider credentials and database credentials live only in secret stores.
-- source failures are isolated and retained as operational failures; they are not converted into negative real-world evidence.
-- do not enable numeric forecast probabilities merely because the service is deployed; HORIZON calibration readiness gates remain authoritative.
+- PostgreSQL remains private to the Docker network.
+- protected HORIZON endpoints require `X-API-Key`.
+- the production app does not mount settlement, delegation, market, allocation or execution endpoints.
+- secrets remain in GitHub/Hostinger secret stores.
+- broad media discovery creates hypotheses, not confirmed facts.
+- source count and convergence diagnostics are not probabilities.
+- deployment never enables numeric forecast probabilities.
 
 ## Data durability
 
-`horizon_postgres_data` is a named Docker volume. Container replacement therefore does not erase PostgreSQL data. VPS snapshots/backups are still required; the Docker volume is persistence, not a backup strategy.
+The named Docker volume provides persistence across container replacement, but it is **not a backup**. Add off-VPS backups before relying on HORIZON operationally. A production-hardening step should schedule encrypted `pg_dump` exports to storage outside the VPS and periodically test restoration.
 
-Before any major schema or infrastructure migration, create a VPS/database backup. A later production-hardening step should add scheduled `pg_dump` exports to storage outside the VPS.
+Before major schema or infrastructure changes, create a VPS/database backup.
 
-## Local validation of the production compose file
+## Local production-Compose validation
 
-With safe test secrets present in the shell:
+With non-production test values:
 
 ```bash
 HORIZON_POSTGRES_PASSWORD=test0123456789abcdef0123456789abcdef \
@@ -142,4 +171,4 @@ HORIZON_TOKEN_ENCRYPTION_KEY=test-encryption-key \
 docker compose -f docker-compose.hostinger.yml config
 ```
 
-Do not paste production values into terminals, issues, pull requests or chat messages.
+Never paste real production secrets into terminals, issues, pull requests or chat messages.
