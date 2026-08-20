@@ -94,11 +94,17 @@ TOKEN_STOPWORDS = {
     "the", "and", "for", "with", "from", "into", "after", "over", "amid", "across", "new", "major",
     "de", "des", "du", "la", "le", "les", "une", "un", "dans", "avec", "pour", "sur", "apres", "après",
     "reports", "report", "reported", "raises", "concerns", "fears", "threatens", "expands", "intensifies",
+    "announces", "announced", "another", "affect", "affects", "affected", "continue", "continues", "continued",
 }
 GENERIC_EPISODE_TOKENS = {
+    # Event-category words explain *what kind* of story this is, but are too generic
+    # to prove that two stories describe the same real-world episode.
     "shortage", "shortages", "supply", "disruption", "outage", "strike", "warning", "emergency", "crisis",
     "attack", "incident", "closure", "layoff", "layoffs", "regulation", "change", "market", "stress", "extreme",
     "heat", "heatwave", "flood", "flooding", "wildfire", "earthquake", "cyclone", "hurricane", "drought",
+    # Newsroom/business boilerplate must never become an episode identity anchor.
+    "mass", "unit", "units", "company", "companies", "group", "groups", "operation", "operations", "restructuring",
+    "round", "jobs", "job", "cuts", "cut", "services", "service",
 }
 TOKEN_ALIASES = {
     "heatwave": "heat",
