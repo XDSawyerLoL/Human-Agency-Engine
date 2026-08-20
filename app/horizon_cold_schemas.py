@@ -25,6 +25,18 @@ class HorizonMeteoFranceColdArchiveBackfillRequest(BaseModel):
         return self
 
 
+class HorizonColdRegionalAggregateRequest(BaseModel):
+    start_at: datetime
+    end_at: datetime
+    merge_gap_hours: int = Field(default=24, ge=0, le=72)
+
+    @model_validator(mode="after")
+    def validate_window(self):
+        if self.end_at <= self.start_at:
+            raise ValueError("end_at must be after start_at")
+        return self
+
+
 class HorizonRteHeatingLoadBackfillRequest(BaseModel):
     start_at: datetime
     end_at: datetime
