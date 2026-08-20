@@ -39,3 +39,4 @@ from . import horizon_convergence as _horizon_convergence  # noqa: F401,E402
 from . import horizon_event_graph as _horizon_event_graph  # noqa: F401,E402
 from . import horizon_collector as _horizon_collector  # noqa: F401,E402
 from . import horizon_corpus as _horizon_corpus  # noqa: F401,E402
+from . import horizon_cold as _horizon_cold  # noqa: F401,E402
