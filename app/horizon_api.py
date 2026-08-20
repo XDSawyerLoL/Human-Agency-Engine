@@ -19,6 +19,7 @@ from .routers.horizon_backfill import router as horizon_backfill_router
 from .routers.horizon_backtest import router as horizon_backtest_router
 from .routers.horizon_calibration import router as horizon_calibration_router
 from .routers.horizon_cascade import router as horizon_cascade_router
+from .routers.horizon_collector import router as horizon_collector_router
 from .routers.horizon_convergence import router as horizon_convergence_router
 from .routers.horizon_emerging import router as horizon_emerging_router
 from .routers.horizon_event_graph import router as horizon_event_graph_router
@@ -45,11 +46,11 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="HORIZON Predictive Intelligence API",
-    version="1.0.0",
+    version="1.1.0",
     description=(
         "Dedicated HORIZON surface: source intelligence, convergence, event graph, "
-        "forecasting, historical replay and calibration. Legacy commerce/delegation "
-        "routes are intentionally not mounted."
+        "forecasting, historical replay, calibration and permanent collection. "
+        "Legacy commerce/delegation routes are intentionally not mounted."
     ),
 )
 
@@ -77,6 +78,7 @@ HORIZON_ROUTERS = (
     horizon_global_alerts_router,
     horizon_convergence_router,
     horizon_event_graph_router,
+    horizon_collector_router,
 )
 
 for router in HORIZON_ROUTERS:
@@ -101,6 +103,7 @@ def health():
     return {
         "status": "ok",
         "service": "horizon-predictive-intelligence",
+        "permanent_collector_supported": True,
         "legacy_action_surface_exposed": False,
     }
 

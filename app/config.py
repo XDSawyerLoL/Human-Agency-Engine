@@ -23,6 +23,28 @@ class Settings(BaseSettings):
     # modified/shuffled data and must never be treated as production evidence.
     windy_point_forecast_api_key: str = ""
 
+    # Permanent HORIZON world-intelligence collector. Cadences are deliberately
+    # operational schedules, never evidence weights or probabilities.
+    horizon_collector_enabled: bool = True
+    horizon_collector_tick_seconds: int = 30
+    horizon_collector_lease_seconds: int = 900
+    horizon_collector_max_sources_per_cycle: int = 10
+    horizon_collector_sncf_seconds: int = 300
+    horizon_collector_vigicrues_seconds: int = 600
+    horizon_collector_meteofrance_seconds: int = 600
+    horizon_collector_meteoalarm_seconds: int = 600
+    horizon_collector_gdelt_seconds: int = 900
+    horizon_collector_gdacs_seconds: int = 900
+    horizon_collector_fuel_seconds: int = 900
+    horizon_collector_rte_seconds: int = 900
+    horizon_collector_windy_seconds: int = 1800
+    horizon_collector_synthesis_seconds: int = 900
+    horizon_collector_max_active_events: int = 200
+    horizon_collector_event_graph_lookback_hours: int = 336
+    horizon_collector_meteoalarm_all_europe: bool = False
+    horizon_collector_rte_region_codes: str = ""
+    horizon_collector_windy_points_json: str = "[]"
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     def model_post_init(self, __context: Any) -> None:
@@ -59,6 +81,27 @@ class Settings(BaseSettings):
             errors.append(
                 "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be configured together"
             )
+
+        if self.horizon_collector_tick_seconds < 5:
+            errors.append("HORIZON_COLLECTOR_TICK_SECONDS must be at least 5")
+        if self.horizon_collector_lease_seconds < self.horizon_collector_tick_seconds * 3:
+            errors.append("HORIZON_COLLECTOR_LEASE_SECONDS must be at least 3x the collector tick")
+        if not 1 <= self.horizon_collector_max_sources_per_cycle <= 10:
+            errors.append("HORIZON_COLLECTOR_MAX_SOURCES_PER_CYCLE must be between 1 and 10")
+        cadence_values = (
+            self.horizon_collector_sncf_seconds,
+            self.horizon_collector_vigicrues_seconds,
+            self.horizon_collector_meteofrance_seconds,
+            self.horizon_collector_meteoalarm_seconds,
+            self.horizon_collector_gdelt_seconds,
+            self.horizon_collector_gdacs_seconds,
+            self.horizon_collector_fuel_seconds,
+            self.horizon_collector_rte_seconds,
+            self.horizon_collector_windy_seconds,
+            self.horizon_collector_synthesis_seconds,
+        )
+        if any(value < 60 for value in cadence_values):
+            errors.append("HORIZON collector source cadences must be at least 60 seconds")
 
         if self.is_production:
             if self.api_key == "change-me" or len(self.api_key) < 32:
