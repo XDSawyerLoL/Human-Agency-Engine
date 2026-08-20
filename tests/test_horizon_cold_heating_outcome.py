@@ -235,8 +235,16 @@ def test_rte_heating_load_creates_covered_outcome_and_backtest_success():
 
 
 def test_cold_routes_are_mounted_on_dedicated_horizon_api():
-    paths = {getattr(route, "path", "") for route in horizon_app.routes}
-    assert "/v1/horizon/cold/backfill/meteofrance" in paths
-    assert "/v1/horizon/cold/backfill/rte/heating-load" in paths
-    assert "/v1/horizon/cold/regions/aggregate" in paths
-    assert "/v1/horizon/cold/response-pattern/sync" in paths
+    assert horizon_client.post(
+        "/v1/horizon/cold/backfill/meteofrance", json={}
+    ).status_code == 422
+    assert horizon_client.post(
+        "/v1/horizon/cold/backfill/rte/heating-load", json={}
+    ).status_code == 422
+    assert horizon_client.post(
+        "/v1/horizon/cold/regions/aggregate", json={}
+    ).status_code == 422
+
+    sync = horizon_client.post("/v1/horizon/cold/response-pattern/sync")
+    assert sync.status_code == 200, sync.text
+    assert sync.json()["pattern_key"] == "builtin-extreme-cold-regional-heating-load-v1"
