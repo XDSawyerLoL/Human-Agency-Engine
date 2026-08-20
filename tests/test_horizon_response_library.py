@@ -25,17 +25,18 @@ def test_builtin_human_response_library_is_versioned_idempotent_and_not_fake_cal
     first = client.post("/v1/horizon/response-library/builtins/sync")
     assert first.status_code == 200, first.text
     body = first.json()
-    assert body["library_version"] == "human-response-library-v0.1"
+    assert body["library_version"] == "human-response-library-v0.3-world"
     assert body["formal_probabilities"] is False
     assert body["horizon_support_counts_are_real_labels_only"] is True
-    assert len(body["patterns"]) == 3
+    assert len(body["patterns"]) == 4
 
     by_key = {item["pattern_key"]: item for item in body["patterns"]}
     heat = by_key["builtin-extreme-heat-cooling-demand-v1"]
     supply = by_key["builtin-supply-risk-precautionary-buying-v1"]
     regional_load = by_key["builtin-extreme-heat-regional-cooling-load-v1"]
+    transport = by_key["builtin-transit-disruption-mode-substitution-v1"]
 
-    for item in (heat, supply, regional_load):
+    for item in (heat, supply, regional_load, transport):
         assert item["support_count"] == 0
         assert item["contradiction_count"] == 0
         assert item["confidence_is_probability"] is False
@@ -45,17 +46,13 @@ def test_builtin_human_response_library_is_versioned_idempotent_and_not_fake_cal
         assert item["provenance"]["evidence"]
         assert item["provenance"]["limitations"]
 
-    assert heat["provenance"]["stage_signal_types"]["1"] == [
-        "search_interest",
-        "cooling_search_interest",
-    ]
-    assert supply["provenance"]["stage_signal_types"]["1"] == [
-        "scarcity_search",
-        "scarcity_mentions",
-        "queue_reports",
-    ]
+    assert heat["provenance"]["stage_signal_types"]["1"] == ["search_interest", "cooling_search_interest"]
+    assert supply["provenance"]["stage_signal_types"]["1"] == ["scarcity_search", "scarcity_mentions", "queue_reports"]
     assert regional_load["event_types"] == ["extreme_heat_region"]
     assert regional_load["provenance"]["materialization_signal_types"] == ["cooling_load_pressure"]
+    assert "rail_transport_disruption" in transport["event_types"]
+    assert transport["provenance"]["evidence"][0]["doi"] == "10.1257/aer.104.9.2763"
+    assert "road_congestion" in transport["provenance"]["stage_signal_types"]["3"]
 
     second = client.post("/v1/horizon/response-library/builtins/sync")
     assert second.status_code == 200, second.text
@@ -68,8 +65,7 @@ def test_backtest_cannot_use_response_prior_before_its_public_knowledge_date():
     synced = client.post("/v1/horizon/response-library/builtins/sync")
     assert synced.status_code == 200
     supply_pattern = next(
-        item
-        for item in synced.json()["patterns"]
+        item for item in synced.json()["patterns"]
         if item["pattern_key"] == "builtin-supply-risk-precautionary-buying-v1"
     )
 
@@ -108,11 +104,7 @@ def test_backtest_cannot_use_response_prior_before_its_public_knowledge_date():
         json={"event_id": event_id, "as_of": "2022-06-01T00:00:00Z", "mode": "backtest"},
     )
     assert available.status_code == 200, available.text
-    own = [
-        item
-        for item in available.json()["forecasts"]
-        if item["pattern_id"] == supply_pattern["id"]
-    ]
+    own = [item for item in available.json()["forecasts"] if item["pattern_id"] == supply_pattern["id"]]
     assert len(own) == 1
     assert own[0]["forecast_layer"]["predictive_score_is_probability"] is False
     assert own[0]["forecast_layer"]["probability_interval"]["basis"] == "not_calibrated"
@@ -122,8 +114,7 @@ def test_heat_response_pattern_advances_only_with_live_stage_evidence():
     synced = client.post("/v1/horizon/response-library/builtins/sync")
     assert synced.status_code == 200
     heat_pattern = next(
-        item
-        for item in synced.json()["patterns"]
+        item for item in synced.json()["patterns"]
         if item["pattern_key"] == "builtin-extreme-heat-cooling-demand-v1"
     )
 
@@ -149,12 +140,7 @@ def test_heat_response_pattern_advances_only_with_live_stage_evidence():
 
     initial = client.post(
         "/v1/horizon/cascades/project",
-        json={
-            "event_id": event_id,
-            "pattern_id": heat_pattern["id"],
-            "as_of": "2026-08-19T07:00:00Z",
-            "mode": "backtest",
-        },
+        json={"event_id": event_id, "pattern_id": heat_pattern["id"], "as_of": "2026-08-19T07:00:00Z", "mode": "backtest"},
     )
     assert initial.status_code == 200, initial.text
     assert initial.json()["current_stage"] == "pre-cascade / latent"
@@ -179,12 +165,7 @@ def test_heat_response_pattern_advances_only_with_live_stage_evidence():
 
     advanced = client.post(
         "/v1/horizon/cascades/project",
-        json={
-            "event_id": event_id,
-            "pattern_id": heat_pattern["id"],
-            "as_of": "2026-08-19T09:00:00Z",
-            "mode": "backtest",
-        },
+        json={"event_id": event_id, "pattern_id": heat_pattern["id"], "as_of": "2026-08-19T09:00:00Z", "mode": "backtest"},
     )
     assert advanced.status_code == 200, advanced.text
     body = advanced.json()
