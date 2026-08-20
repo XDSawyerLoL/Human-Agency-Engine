@@ -14,7 +14,9 @@ from .horizon_sources import HorizonSourceService
 
 GDELT_DOC_ENDPOINT = "https://api.gdeltproject.org/api/v2/doc/doc"
 
-# Broad high-impact watch families. These are discovery queries, not truth rules.
+# Broad high-impact watch families. These are discovery queries, never truth rules.
+# A returned article remains one raw media observation until another evidence class
+# corroborates the underlying claim.
 GDELT_QUERY_PACK = {
     "supply": '(shortage OR shortages OR rationing OR "supply disruption" OR blockade OR "fuel shortage")',
     "weather_disaster": '(heatwave OR wildfire OR flooding OR earthquake OR cyclone OR hurricane OR drought)',
@@ -22,6 +24,10 @@ GDELT_QUERY_PACK = {
     "infrastructure": '(blackout OR outage OR "power cut" OR "internet outage" OR "transport strike" OR "rail strike")',
     "economy_labor": '(layoffs OR bankruptcy OR insolvency OR "factory closure" OR "mass layoffs")',
     "public_health": '("disease outbreak" OR epidemic OR pandemic OR "public health emergency")',
+    "regulation_policy": '("new regulation" OR "regulatory change" OR "export ban" OR tariff OR tariffs OR "trade restriction")',
+    "cyber_technology": '("cyber attack" OR cyberattack OR ransomware OR "data breach" OR "cloud outage" OR "service outage")',
+    "financial_stress": '("bank run" OR "bank failure" OR "liquidity crisis" OR "credit crunch" OR "debt default" OR "market stress")',
+    "energy_markets": '("gas supply" OR "oil supply" OR "energy shortage" OR "power shortage" OR "energy crisis" OR "energy price spike")',
 }
 
 
@@ -121,10 +127,8 @@ class HorizonLiveService:
                         continue
                     external_key = _external_key(url)
 
-                    # A live poll has a new observation timestamp every run, but an
-                    # already-seen article is the same immutable raw observation.
-                    # Resolve it before reconstructing the payload so recurring polls
-                    # are idempotent without weakening the source ledger's collision rule.
+                    # Recurring polls must not create a second immutable observation
+                    # merely because the retrieval clock changed.
                     existing = self.db.query(HorizonRawObservation).filter(
                         HorizonRawObservation.source_id == source.id,
                         HorizonRawObservation.external_key == external_key,
@@ -141,8 +145,8 @@ class HorizonLiveService:
                         title=title,
                         summary="",
                         source_url=url,
-                        # GDELT's sourcecountry describes the publisher, not necessarily
-                        # where the reported event occurred. Do not mislabel it as event geography.
+                        # Publisher country is not event geography. Geography remains
+                        # unknown until an event normalizer has defensible evidence.
                         geography=[],
                         canonical_facts={
                             "watch_family": family,

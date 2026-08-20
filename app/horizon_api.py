@@ -11,9 +11,8 @@ from .models import Intent, StateFact, User
 from .schemas import IntentCreate, StateFactCreate, UserUpsert
 from .security import require_api_key
 
-# Import HORIZON routers explicitly. Importing the package also builds the legacy
-# aggregate router for the historical application, but this dedicated app never
-# mounts that aggregate router. Only the router objects listed here are exposed.
+# Import HORIZON routers explicitly. The historical application still contains
+# agency/action surfaces, but the production HORIZON app never mounts them.
 from .routers.horizon import router as horizon_router
 from .routers.horizon_backfill import router as horizon_backfill_router
 from .routers.horizon_backtest import router as horizon_backtest_router
@@ -40,6 +39,7 @@ from .routers.horizon_response_library import router as horizon_response_library
 from .routers.horizon_sources import router as horizon_sources_router
 from .routers.horizon_weather_chain import router as horizon_weather_chain_router
 from .routers.horizon_windy import router as horizon_windy_router
+from .routers.horizon_world import router as horizon_world_router
 from .config import settings
 
 
@@ -48,12 +48,12 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="HORIZON Predictive Intelligence API",
-    version="1.3.0",
+    version="1.4.0",
     description=(
-        "Dedicated HORIZON surface: source intelligence, convergence, event graph, "
-        "forecasting, historical replay, calibration corpus building, permanent collection "
-        "and cold/heat regional behavioral-outcome measurement. "
-        "Legacy commerce/delegation routes are intentionally not mounted."
+        "Dedicated domain-agnostic HORIZON surface for personal world anticipation: "
+        "multi-domain discovery, source intelligence, convergence, Event Graph, collective behavior, "
+        "personal exposure, forecasting, historical replay, empirical calibration and permanent collection. "
+        "Weather is one evidence domain among many. Legacy commerce/delegation/action routes are intentionally not mounted."
     ),
 )
 
@@ -84,6 +84,7 @@ HORIZON_ROUTERS = (
     horizon_collector_router,
     horizon_corpus_router,
     horizon_cold_router,
+    horizon_world_router,
 )
 
 for router in HORIZON_ROUTERS:
@@ -108,9 +109,15 @@ def health():
     return {
         "status": "ok",
         "service": "horizon-predictive-intelligence",
+        "product_scope": "domain_agnostic_personal_world_anticipation",
+        "world_coverage_inventory_supported": True,
+        "multi_domain_discovery_supported": True,
         "permanent_collector_supported": True,
         "calibration_corpus_builder_supported": True,
+        "heat_cooling_outcome_supported": True,
         "cold_heating_outcome_supported": True,
+        "weather_is_product_boundary": False,
+        "numeric_probabilities_enabled": False,
         "legacy_action_surface_exposed": False,
     }
 

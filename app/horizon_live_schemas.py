@@ -10,6 +10,10 @@ GDELT_QUERY_FAMILIES = {
     "infrastructure",
     "economy_labor",
     "public_health",
+    "regulation_policy",
+    "cyber_technology",
+    "financial_stress",
+    "energy_markets",
 }
 
 
