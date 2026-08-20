@@ -7,12 +7,11 @@ from sqlalchemy.orm import Session
 from ..horizon_models import HorizonBehaviorPattern
 
 
-LIBRARY_VERSION = "human-response-library-v0.1"
+LIBRARY_VERSION = "human-response-library-v0.3-world"
 
-# These are deliberately conservative priors. They are hypotheses backed by
-# external research and business observations, not calibrated probabilities.
-# support_count / contradiction_count stay at zero until HORIZON's own
-# historical backtests create labels.
+# Conservative priors: behavioral hypotheses, not calibrated probabilities.
+# support_count / contradiction_count stay zero until HORIZON's own point-in-time
+# outcome evaluation creates labels.
 BUILTIN_PATTERNS = (
     {
         "pattern_key": "builtin-extreme-heat-cooling-demand-v1",
@@ -37,7 +36,7 @@ BUILTIN_PATTERNS = (
         "contradiction_count": 0,
         "knowledge_available_at": datetime(2022, 10, 1, 0, 0, 0),
         "provenance": {
-            "library_version": LIBRARY_VERSION,
+            "library_version": "human-response-library-v0.1",
             "status": "provisional_prior",
             "formal_probability": False,
             "calibrated_on_horizon_outcomes": False,
@@ -75,11 +74,7 @@ BUILTIN_PATTERNS = (
     {
         "pattern_key": "builtin-supply-risk-precautionary-buying-v1",
         "name": "Supply disruption risk → precautionary buying cascade",
-        "event_types": [
-            "supply_disruption",
-            "fuel_supply_disruption",
-            "critical_goods_disruption",
-        ],
+        "event_types": ["supply_disruption", "fuel_supply_disruption", "critical_goods_disruption"],
         "required_signal_types": [],
         "predicted_response": (
             "A credible supply-disruption threat can increase perceived scarcity and social learning, "
@@ -99,7 +94,7 @@ BUILTIN_PATTERNS = (
         "contradiction_count": 0,
         "knowledge_available_at": datetime(2022, 5, 1, 0, 0, 0),
         "provenance": {
-            "library_version": LIBRARY_VERSION,
+            "library_version": "human-response-library-v0.1",
             "status": "provisional_prior",
             "formal_probability": False,
             "calibrated_on_horizon_outcomes": False,
@@ -195,6 +190,59 @@ BUILTIN_PATTERNS = (
             ],
         },
     },
+    {
+        "pattern_key": "builtin-transit-disruption-mode-substitution-v1",
+        "name": "Public-transport disruption → mode substitution and road congestion",
+        "event_types": ["rail_transport_disruption", "transport_disruption"],
+        "required_signal_types": [],
+        "predicted_response": (
+            "A substantial public-transport disruption can push some travelers toward substitute routes and modes, "
+            "which may increase road congestion, crowd alternative services and lengthen door-to-door travel times."
+        ),
+        "mechanism_chain": [
+            "public-transport capacity loss",
+            "traveler route and mode substitution",
+            "alternative-network demand pressure",
+            "road or substitute-service congestion",
+            "observable travel-time deterioration",
+        ],
+        "expected_lag_hours_low": 0,
+        "expected_lag_hours_high": 24,
+        "confidence": 0.56,
+        "support_count": 0,
+        "contradiction_count": 0,
+        "knowledge_available_at": datetime(2014, 9, 1, 0, 0, 0),
+        "provenance": {
+            "library_version": LIBRARY_VERSION,
+            "status": "provisional_prior",
+            "formal_probability": False,
+            "calibrated_on_horizon_outcomes": False,
+            "stage_signal_types": {
+                "0": ["transport_service_loss", "rail_service_disruption"],
+                "1": ["route_search_shift", "mode_substitution"],
+                "2": ["road_demand_pressure", "alternative_service_demand"],
+                "3": ["road_congestion", "crowding", "queue_density"],
+                "4": ["travel_time_deterioration", "delay_pressure"],
+            },
+            "evidence": [
+                {
+                    "kind": "peer_reviewed_causal_study",
+                    "source": "American Economic Review",
+                    "title": "Subways, Strikes, and Slowdowns: The Impacts of Public Transit on Traffic Congestion",
+                    "author": "Michael L. Anderson",
+                    "published": "2014-09",
+                    "doi": "10.1257/aer.104.9.2763",
+                    "locator": "https://www.aeaweb.org/articles?id=10.1257/aer.104.9.2763",
+                    "note": "During the 2003 Los Angeles transit strike, average highway delay increased 47 percent; the estimate is context-specific evidence for mode-substitution pressure, not a universal effect size.",
+                }
+            ],
+            "limitations": [
+                "The causal estimate comes from one metropolitan transport strike and must not be transported as a universal 47 percent forecast.",
+                "Network topology, car ownership, remote-work options, time of day and substitute capacity materially change the response.",
+                "HORIZON must observe independent congestion, crowding or travel-time evidence before marking downstream stages reached.",
+            ],
+        },
+    },
 )
 
 
@@ -205,23 +253,16 @@ class HorizonResponseLibraryService:
     def sync_builtins(self) -> list[HorizonBehaviorPattern]:
         rows: list[HorizonBehaviorPattern] = []
         for spec in BUILTIN_PATTERNS:
-            row = (
-                self.db.query(HorizonBehaviorPattern)
-                .filter(HorizonBehaviorPattern.pattern_key == spec["pattern_key"])
-                .one_or_none()
-            )
+            row = self.db.query(HorizonBehaviorPattern).filter(
+                HorizonBehaviorPattern.pattern_key == spec["pattern_key"]
+            ).one_or_none()
             if row is None:
                 row = HorizonBehaviorPattern(**spec, status="active")
                 self.db.add(row)
             else:
-                # A versioned built-in pattern is immutable. Changing the science or
-                # mechanism requires a new pattern_key/version rather than rewriting
-                # what an old backtest was allowed to know.
-                expected = {
-                    key: value
-                    for key, value in spec.items()
-                    if key not in {"knowledge_available_at"}
-                }
+                # Versioned built-ins are immutable. New science/mechanisms require
+                # a new pattern key so old backtests retain their historical knowledge set.
+                expected = {key: value for key, value in spec.items() if key not in {"knowledge_available_at"}}
                 actual = {
                     "pattern_key": row.pattern_key,
                     "name": row.name,
@@ -237,9 +278,7 @@ class HorizonResponseLibraryService:
                     "provenance": row.provenance,
                 }
                 if actual != expected or row.knowledge_available_at != spec["knowledge_available_at"]:
-                    raise ValueError(
-                        f"built-in behavior pattern {row.pattern_key} differs from immutable library version"
-                    )
+                    raise ValueError(f"built-in behavior pattern {row.pattern_key} differs from immutable library version")
             rows.append(row)
         self.db.commit()
         for row in rows:
