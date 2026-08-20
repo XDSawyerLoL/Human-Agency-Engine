@@ -1,0 +1,58 @@
+name: horizon
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: horizon
+      POSTGRES_USER: horizon
+      POSTGRES_PASSWORD: ${HORIZON_POSTGRES_PASSWORD:?HORIZON_POSTGRES_PASSWORD is required}
+    volumes:
+      - horizon_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U horizon -d horizon"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - horizon_private
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.horizon
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql://horizon:${HORIZON_POSTGRES_PASSWORD:?HORIZON_POSTGRES_PASSWORD is required}@db:5432/horizon
+      API_KEY: ${HORIZON_API_KEY:?HORIZON_API_KEY is required}
+      TOKEN_ENCRYPTION_KEY: ${HORIZON_TOKEN_ENCRYPTION_KEY:?HORIZON_TOKEN_ENCRYPTION_KEY is required}
+      METEOFRANCE_APPLICATION_ID: ${METEOFRANCE_APPLICATION_ID:-}
+      WINDY_POINT_FORECAST_API_KEY: ${WINDY_POINT_FORECAST_API_KEY:-}
+      PORT: 8000
+    ports:
+      - "${HORIZON_BIND_ADDRESS:-127.0.0.1}:${HORIZON_PORT:-8000}:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=5).read()"
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - horizon_private
+
+volumes:
+  horizon_postgres_data:
+
+networks:
+  horizon_private:
+    driver: bridge
