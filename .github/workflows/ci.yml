@@ -29,6 +29,12 @@ jobs:
           rm -f migration-test.db
           alembic upgrade head
           alembic current
+      - name: Validate Hostinger compose
+        env:
+          HORIZON_POSTGRES_PASSWORD: test0123456789abcdef0123456789abcdef
+          HORIZON_API_KEY: test-api-key-0123456789abcdef0123456789abcdef
+          HORIZON_TOKEN_ENCRYPTION_KEY: test-encryption-key
+        run: docker compose -f docker-compose.hostinger.yml config >/dev/null
       - name: Run tests
         env:
           PYTHONPATH: .
