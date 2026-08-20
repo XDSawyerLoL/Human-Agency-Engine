@@ -11,6 +11,10 @@ from ..horizon_backfill_schemas import (
 )
 from ..horizon_backtest_models import HorizonHistoricalBacktestRun
 from ..horizon_backtest_schemas import HorizonHistoricalBacktestRequest
+from ..horizon_cold_schemas import (
+    HorizonMeteoFranceColdArchiveBackfillRequest,
+    HorizonRteHeatingLoadBackfillRequest,
+)
 from ..horizon_corpus_models import HorizonCalibrationCorpusRun, HorizonCalibrationCorpusSlice
 from ..horizon_corpus_schemas import HorizonCalibrationCorpusBuildRequest
 from ..horizon_models import HorizonForecastResolution
@@ -18,7 +22,9 @@ from ..models import User
 from .horizon_backfill import HorizonHistoricalBackfillService, METEOFRANCE_ARCHIVE_AVAILABLE_FROM
 from .horizon_backtest_coverage import HorizonCoverageAwareHistoricalBacktestFactory
 from .horizon_calibration import HorizonEmpiricalCalibrationService
+from .horizon_cold_backfill import HorizonColdHistoricalBackfillService
 from .horizon_rte import HorizonRteCoolingLoadBackfillService
+from .horizon_rte_heating import HorizonRteHeatingLoadBackfillService
 from .policy import sha256_dict
 
 
@@ -29,11 +35,47 @@ def _utc_naive(value: datetime) -> datetime:
 
 
 class HorizonCalibrationCorpusService:
-    ENGINE_VERSION = "horizon-calibration-corpus-builder-v0.1"
-    CORPUS_SPEC_VERSION = "heat-mf-rte-v1"
+    ENGINE_VERSION = "horizon-calibration-corpus-builder-v0.2"
+    DEFAULT_STRATEGY = "heat-mf-rte-v1"
+    STRATEGIES = {
+        "heat-mf-rte-v1": {
+            "event_family": "extreme_heat_region",
+            "phenomenon_id": "6",
+            "phenomenon_name": "heat",
+            "materialization_signal": "cooling_load_pressure",
+            "meteo_engine": HorizonHistoricalBackfillService.ENGINE_VERSION,
+            "rte_engine": HorizonRteCoolingLoadBackfillService.ENGINE_VERSION,
+            "rte_metric": "regional_afternoon_load_vs_recent_weekday_class_median",
+            "rte_point_field": "rte_minimum_afternoon_points",
+            "regional_result_key": "regional_heat_events_considered",
+        },
+        "cold-mf-rte-v1": {
+            "event_family": "extreme_cold_region",
+            "phenomenon_id": "7",
+            "phenomenon_name": "cold",
+            "materialization_signal": "heating_load_pressure",
+            "meteo_engine": HorizonColdHistoricalBackfillService.ENGINE_VERSION,
+            "rte_engine": HorizonRteHeatingLoadBackfillService.ENGINE_VERSION,
+            "rte_metric": "regional_daily_load_vs_recent_weekday_class_median",
+            "rte_point_field": "rte_minimum_daily_points",
+            "regional_result_key": "regional_cold_events_considered",
+        },
+    }
 
     def __init__(self, db: Session):
         self.db = db
+
+    @classmethod
+    def _strategy(cls, strategy: str) -> dict:
+        config = cls.STRATEGIES.get(strategy)
+        if config is None:
+            raise ValueError(f"unsupported calibration corpus strategy: {strategy}")
+        return config
+
+    @classmethod
+    def _run_strategy(cls, run: HorizonCalibrationCorpusRun) -> str:
+        snapshot = run.request_snapshot or {}
+        return str(snapshot.get("strategy") or cls.DEFAULT_STRATEGY)
 
     @staticmethod
     def _slice_plan(start_at: datetime, end_at: datetime, slice_days: int, grace_days: int) -> list[dict]:
@@ -55,20 +97,26 @@ class HorizonCalibrationCorpusService:
 
     @classmethod
     def _precommitted_spec(cls, request: HorizonCalibrationCorpusBuildRequest) -> dict:
+        strategy = cls._strategy(request.strategy)
+        point_field = strategy["rte_point_field"]
         return {
-            "corpus_spec_version": cls.CORPUS_SPEC_VERSION,
-            "event_family": "extreme_heat_region",
+            "corpus_spec_version": request.strategy,
+            "strategy": request.strategy,
+            "event_family": strategy["event_family"],
+            "phenomenon_id": strategy["phenomenon_id"],
             "trigger_archive": "meteofrance-vigilance-archive",
             "outcome_stream": "rte-eco2mix-regional-cons-def",
-            "materialization_signal": "cooling_load_pressure",
-            "meteofrance_engine": HorizonHistoricalBackfillService.ENGINE_VERSION,
-            "rte_engine": HorizonRteCoolingLoadBackfillService.ENGINE_VERSION,
+            "materialization_signal": strategy["materialization_signal"],
+            "meteofrance_engine": strategy["meteo_engine"],
+            "rte_engine": strategy["rte_engine"],
+            "rte_metric": strategy["rte_metric"],
             "backtest_engine": HorizonCoverageAwareHistoricalBacktestFactory.ENGINE_VERSION,
             "meteo_min_color_id": request.meteo_min_color_id,
             "meteo_merge_gap_hours": request.meteo_merge_gap_hours,
             "rte_baseline_lookback_days": request.rte_baseline_lookback_days,
             "rte_minimum_lift_ratio": request.rte_minimum_lift_ratio,
-            "rte_minimum_afternoon_points": request.rte_minimum_afternoon_points,
+            "rte_minimum_points_field": point_field,
+            "rte_minimum_points": int(getattr(request, point_field)),
             "outcome_grace_days": request.outcome_grace_days,
             "thresholds_precommitted_before_outcome_scoring": True,
             "thresholds_tuned_from_this_corpus": False,
@@ -82,6 +130,7 @@ class HorizonCalibrationCorpusService:
         corpus_key = sha256_dict({
             "engine": self.ENGINE_VERSION,
             "user_id": user.id,
+            "strategy": request.strategy,
             "start_at": start_at.isoformat(),
             "end_at": end_at.isoformat(),
             "request": stable_request,
@@ -137,6 +186,60 @@ class HorizonCalibrationCorpusService:
         self.db.refresh(run)
         return run
 
+    def _run_heat_slice(
+        self,
+        row: HorizonCalibrationCorpusSlice,
+        request: HorizonCalibrationCorpusBuildRequest,
+    ) -> tuple[dict, dict, str]:
+        meteo = HorizonHistoricalBackfillService(self.db).backfill_meteofrance_vigilance(
+            HorizonMeteoFranceArchiveBackfillRequest(
+                start_at=row.start_at,
+                end_at=row.end_at,
+                departments=request.departments,
+                min_color_id=request.meteo_min_color_id,
+                max_snapshots=request.meteo_max_snapshots_per_slice,
+                merge_gap_hours=request.meteo_merge_gap_hours,
+            )
+        )
+        rte = HorizonRteCoolingLoadBackfillService(self.db).backfill(
+            HorizonRteCoolingLoadBackfillRequest(
+                start_at=row.start_at,
+                end_at=row.evaluation_as_of,
+                baseline_lookback_days=request.rte_baseline_lookback_days,
+                minimum_lift_ratio=request.rte_minimum_lift_ratio,
+                minimum_afternoon_points=request.rte_minimum_afternoon_points,
+                max_records=request.rte_max_records_per_slice,
+            )
+        )
+        return meteo, rte, "extreme_heat_region"
+
+    def _run_cold_slice(
+        self,
+        row: HorizonCalibrationCorpusSlice,
+        request: HorizonCalibrationCorpusBuildRequest,
+    ) -> tuple[dict, dict, str]:
+        meteo = HorizonColdHistoricalBackfillService(self.db).backfill(
+            HorizonMeteoFranceColdArchiveBackfillRequest(
+                start_at=row.start_at,
+                end_at=row.end_at,
+                departments=request.departments,
+                min_color_id=request.meteo_min_color_id,
+                max_snapshots=request.meteo_max_snapshots_per_slice,
+                merge_gap_hours=request.meteo_merge_gap_hours,
+            )
+        )
+        rte = HorizonRteHeatingLoadBackfillService(self.db).backfill(
+            HorizonRteHeatingLoadBackfillRequest(
+                start_at=row.start_at,
+                end_at=row.evaluation_as_of,
+                baseline_lookback_days=request.rte_baseline_lookback_days,
+                minimum_lift_ratio=request.rte_minimum_lift_ratio,
+                minimum_daily_points=request.rte_minimum_daily_points,
+                max_records=request.rte_max_records_per_slice,
+            )
+        )
+        return meteo, rte, "extreme_cold_region"
+
     def _run_slice(
         self,
         user: User,
@@ -150,30 +253,14 @@ class HorizonCalibrationCorpusService:
         row.error = ""
         self.db.commit()
         try:
-            meteo = HorizonHistoricalBackfillService(self.db).backfill_meteofrance_vigilance(
-                HorizonMeteoFranceArchiveBackfillRequest(
-                    start_at=row.start_at,
-                    end_at=row.end_at,
-                    departments=request.departments,
-                    min_color_id=request.meteo_min_color_id,
-                    max_snapshots=request.meteo_max_snapshots_per_slice,
-                    merge_gap_hours=request.meteo_merge_gap_hours,
-                )
-            )
-            row.meteo_result = meteo
-            row.updated_at = datetime.utcnow()
-            self.db.commit()
+            if request.strategy == "heat-mf-rte-v1":
+                meteo, rte, event_type = self._run_heat_slice(row, request)
+            elif request.strategy == "cold-mf-rte-v1":
+                meteo, rte, event_type = self._run_cold_slice(row, request)
+            else:
+                raise ValueError(f"unsupported calibration corpus strategy: {request.strategy}")
 
-            rte = HorizonRteCoolingLoadBackfillService(self.db).backfill(
-                HorizonRteCoolingLoadBackfillRequest(
-                    start_at=row.start_at,
-                    end_at=row.evaluation_as_of,
-                    baseline_lookback_days=request.rte_baseline_lookback_days,
-                    minimum_lift_ratio=request.rte_minimum_lift_ratio,
-                    minimum_afternoon_points=request.rte_minimum_afternoon_points,
-                    max_records=request.rte_max_records_per_slice,
-                )
-            )
+            row.meteo_result = meteo
             row.rte_result = rte
             row.updated_at = datetime.utcnow()
             self.db.commit()
@@ -184,7 +271,7 @@ class HorizonCalibrationCorpusService:
                     start_at=row.start_at,
                     end_at=row.end_at,
                     evaluation_as_of=row.evaluation_as_of,
-                    event_types=["extreme_heat_region"],
+                    event_types=[event_type],
                     max_events=request.backtest_max_events,
                     max_cases=request.backtest_max_cases,
                 ),
@@ -245,6 +332,8 @@ class HorizonCalibrationCorpusService:
         return round(values[low] * (1.0 - weight) + values[high] * weight, 3)
 
     def _summary(self, user: User, run: HorizonCalibrationCorpusRun) -> dict:
+        strategy_name = self._run_strategy(run)
+        strategy = self._strategy(strategy_name)
         slices = self.db.query(HorizonCalibrationCorpusSlice).filter(
             HorizonCalibrationCorpusSlice.run_id == run.id
         ).order_by(HorizonCalibrationCorpusSlice.slice_index.asc()).all()
@@ -263,7 +352,7 @@ class HorizonCalibrationCorpusService:
             backtest = item.backtest_result or {}
             events_promoted += int(meteo.get("events_promoted") or 0)
             events_replayed += int(meteo.get("events_replayed") or 0)
-            regional_events += int(rte.get("regional_heat_events_considered") or 0)
+            regional_events += int(rte.get(strategy["regional_result_key"]) or 0)
             for region in rte.get("regions") or []:
                 if region.get("coverage_complete"):
                     complete_regions += 1
@@ -284,9 +373,22 @@ class HorizonCalibrationCorpusService:
         )
         evidence = calibration["global_binary_evidence"]
         thresholds = calibration["eligibility_thresholds"]
+        regional_specific_key = f"regional_{strategy['phenomenon_name']}_events_considered"
+        evidence_yield = {
+            "meteofrance_events_promoted": events_promoted,
+            "meteofrance_events_replayed": events_replayed,
+            "regional_events_considered": regional_events,
+            regional_specific_key: regional_events,
+            "rte_region_windows_complete": complete_regions,
+            "rte_region_windows_partial": partial_regions,
+            "forecastable_cases": selected_cases,
+            "outcomes": outcomes,
+            "skipped": skipped,
+        }
         return {
             "engine": self.ENGINE_VERSION,
-            "corpus_spec_version": self.CORPUS_SPEC_VERSION,
+            "strategy": strategy_name,
+            "corpus_spec_version": strategy_name,
             "run_id": run.id,
             "corpus_key": run.corpus_key,
             "window": {
@@ -295,16 +397,7 @@ class HorizonCalibrationCorpusService:
                 "outcome_grace_days": run.outcome_grace_days,
             },
             "slices": {"total": len(slices), **counts},
-            "evidence_yield": {
-                "meteofrance_events_promoted": events_promoted,
-                "meteofrance_events_replayed": events_replayed,
-                "regional_heat_events_considered": regional_events,
-                "rte_region_windows_complete": complete_regions,
-                "rte_region_windows_partial": partial_regions,
-                "forecastable_cases": selected_cases,
-                "outcomes": outcomes,
-                "skipped": skipped,
-            },
+            "evidence_yield": evidence_yield,
             "lead_time_distribution_hours": {
                 "count": len(lead_times),
                 "min": round(min(lead_times), 3) if lead_times else None,
@@ -324,6 +417,8 @@ class HorizonCalibrationCorpusService:
             "critical_semantics": {
                 "thresholds_precommitted_before_scoring": True,
                 "corpus_builder_tunes_thresholds_from_results": False,
+                "strategy_is_part_of_corpus_identity": True,
+                "cross_strategy_threshold_reuse": False,
                 "failed_slice_is_negative_evidence": False,
                 "partial_coverage_authorizes_negative_label": False,
                 "windy_historical_forecasts_fabricated": False,
@@ -335,6 +430,7 @@ class HorizonCalibrationCorpusService:
         start_at = _utc_naive(request.start_at)
         end_at = _utc_naive(request.end_at)
         now = datetime.utcnow()
+        self._strategy(request.strategy)
         if start_at < METEOFRANCE_ARCHIVE_AVAILABLE_FROM:
             raise ValueError("calibration corpus starts at Météo-France archive availability: 2022-11-28")
         if end_at + timedelta(days=request.outcome_grace_days) > now + timedelta(minutes=5):
@@ -390,6 +486,7 @@ class HorizonCalibrationCorpusService:
             "run_id": row.id,
             "corpus_key": row.corpus_key,
             "engine": row.engine_version,
+            "strategy": self._run_strategy(row),
             "status": row.status,
             "start_at": row.requested_start_at,
             "end_at": row.requested_end_at,
