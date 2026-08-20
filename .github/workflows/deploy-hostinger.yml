@@ -1,0 +1,38 @@
+name: Deploy HORIZON to Hostinger
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  deploy-after-ci:
+    if: >-
+      ${{
+        (github.event_name == 'workflow_dispatch' ||
+         (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')) &&
+        vars.HOSTINGER_VM_ID != ''
+      }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout validated revision
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Deploy HORIZON stack to Hostinger VPS
+        uses: hostinger/deploy-action@v1
+        with:
+          api-key: ${{ secrets.HOSTINGER_API_KEY }}
+          virtual-machine: ${{ vars.HOSTINGER_VM_ID }}
+          project-name: horizon
+          docker-compose-path: docker-compose.hostinger.yml
+          environment-variables: |
+            HORIZON_POSTGRES_PASSWORD=${{ secrets.HORIZON_POSTGRES_PASSWORD }}
+            HORIZON_API_KEY=${{ secrets.HORIZON_API_KEY }}
+            HORIZON_TOKEN_ENCRYPTION_KEY=${{ secrets.HORIZON_TOKEN_ENCRYPTION_KEY }}
+            METEOFRANCE_APPLICATION_ID=${{ secrets.METEOFRANCE_APPLICATION_ID }}
+            WINDY_POINT_FORECAST_API_KEY=${{ secrets.WINDY_POINT_FORECAST_API_KEY }}
+            HORIZON_BIND_ADDRESS=${{ vars.HORIZON_BIND_ADDRESS }}
+            HORIZON_PORT=${{ vars.HORIZON_PORT }}
