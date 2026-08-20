@@ -43,14 +43,12 @@ class HorizonCalibrationCorpusService:
         while cursor <= end_at:
             nominal_end = cursor + timedelta(days=slice_days) - timedelta(microseconds=1)
             slice_end = min(end_at, nominal_end)
-            plan.append(
-                {
-                    "slice_index": index,
-                    "start_at": cursor,
-                    "end_at": slice_end,
-                    "evaluation_as_of": slice_end + timedelta(days=grace_days),
-                }
-            )
+            plan.append({
+                "slice_index": index,
+                "start_at": cursor,
+                "end_at": slice_end,
+                "evaluation_as_of": slice_end + timedelta(days=grace_days),
+            })
             cursor = slice_end + timedelta(microseconds=1)
             index += 1
         return plan
@@ -63,6 +61,9 @@ class HorizonCalibrationCorpusService:
             "trigger_archive": "meteofrance-vigilance-archive",
             "outcome_stream": "rte-eco2mix-regional-cons-def",
             "materialization_signal": "cooling_load_pressure",
+            "meteofrance_engine": HorizonHistoricalBackfillService.ENGINE_VERSION,
+            "rte_engine": HorizonRteCoolingLoadBackfillService.ENGINE_VERSION,
+            "backtest_engine": HorizonCoverageAwareHistoricalBacktestFactory.ENGINE_VERSION,
             "meteo_min_color_id": request.meteo_min_color_id,
             "meteo_merge_gap_hours": request.meteo_merge_gap_hours,
             "rte_baseline_lookback_days": request.rte_baseline_lookback_days,
@@ -77,22 +78,22 @@ class HorizonCalibrationCorpusService:
         start_at = _utc_naive(request.start_at)
         end_at = _utc_naive(request.end_at)
         spec = self._precommitted_spec(request)
-        corpus_key = sha256_dict(
-            {
-                "engine": self.ENGINE_VERSION,
-                "user_id": user.id,
-                "start_at": start_at.isoformat(),
-                "end_at": end_at.isoformat(),
-                "request": request.model_dump(mode="json", exclude={"max_slices_per_call"}),
-                "precommitted_spec": spec,
-            }
-        )
+        stable_request = request.model_dump(mode="json", exclude={"max_slices_per_call"})
+        corpus_key = sha256_dict({
+            "engine": self.ENGINE_VERSION,
+            "user_id": user.id,
+            "start_at": start_at.isoformat(),
+            "end_at": end_at.isoformat(),
+            "request": stable_request,
+            "precommitted_spec": spec,
+        })
         existing = self.db.query(HorizonCalibrationCorpusRun).filter(
             HorizonCalibrationCorpusRun.corpus_key == corpus_key
         ).one_or_none()
         if existing is not None:
             return existing
 
+        now = datetime.utcnow()
         run = HorizonCalibrationCorpusRun(
             corpus_key=corpus_key,
             user_id=user.id,
@@ -101,46 +102,37 @@ class HorizonCalibrationCorpusService:
             requested_end_at=end_at,
             slice_days=request.slice_days,
             outcome_grace_days=request.outcome_grace_days,
-            request_snapshot={
-                **request.model_dump(mode="json", exclude={"max_slices_per_call"}),
-                "precommitted_spec": spec,
-            },
+            request_snapshot={**stable_request, "precommitted_spec": spec},
             summary_snapshot={},
             status="running",
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=now,
+            updated_at=now,
         )
         self.db.add(run)
         self.db.flush()
-
         for item in self._slice_plan(start_at, end_at, request.slice_days, request.outcome_grace_days):
-            slice_key = sha256_dict(
-                {
+            self.db.add(HorizonCalibrationCorpusSlice(
+                slice_key=sha256_dict({
                     "corpus_key": corpus_key,
                     "slice_index": item["slice_index"],
                     "start_at": item["start_at"].isoformat(),
                     "end_at": item["end_at"].isoformat(),
                     "evaluation_as_of": item["evaluation_as_of"].isoformat(),
-                }
-            )
-            self.db.add(
-                HorizonCalibrationCorpusSlice(
-                    slice_key=slice_key,
-                    run_id=run.id,
-                    slice_index=item["slice_index"],
-                    start_at=item["start_at"],
-                    end_at=item["end_at"],
-                    evaluation_as_of=item["evaluation_as_of"],
-                    status="pending",
-                    attempt_count=0,
-                    meteo_result={},
-                    rte_result={},
-                    backtest_result={},
-                    error="",
-                    created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow(),
-                )
-            )
+                }),
+                run_id=run.id,
+                slice_index=item["slice_index"],
+                start_at=item["start_at"],
+                end_at=item["end_at"],
+                evaluation_as_of=item["evaluation_as_of"],
+                status="pending",
+                attempt_count=0,
+                meteo_result={},
+                rte_result={},
+                backtest_result={},
+                error="",
+                created_at=now,
+                updated_at=now,
+            ))
         self.db.commit()
         self.db.refresh(run)
         return run
@@ -157,9 +149,8 @@ class HorizonCalibrationCorpusService:
         row.updated_at = datetime.utcnow()
         row.error = ""
         self.db.commit()
-
         try:
-            meteo = HorizonHistoricalBackfillService(self.db).backfill(
+            meteo = HorizonHistoricalBackfillService(self.db).backfill_meteofrance_vigilance(
                 HorizonMeteoFranceArchiveBackfillRequest(
                     start_at=row.start_at,
                     end_at=row.end_at,
@@ -257,14 +248,9 @@ class HorizonCalibrationCorpusService:
         slices = self.db.query(HorizonCalibrationCorpusSlice).filter(
             HorizonCalibrationCorpusSlice.run_id == run.id
         ).order_by(HorizonCalibrationCorpusSlice.slice_index.asc()).all()
-
         counts = {"pending": 0, "running": 0, "completed": 0, "failed": 0}
-        events_promoted = 0
-        events_replayed = 0
-        regional_events = 0
-        complete_regions = 0
-        partial_regions = 0
-        selected_cases = 0
+        events_promoted = events_replayed = regional_events = 0
+        complete_regions = partial_regions = selected_cases = 0
         outcomes = {"confirmed": 0, "partial": 0, "false": 0, "inconclusive": 0, "unresolved": 0}
         skipped: dict[str, int] = {}
 
@@ -358,10 +344,7 @@ class HorizonCalibrationCorpusService:
         slices = self.db.query(HorizonCalibrationCorpusSlice).filter(
             HorizonCalibrationCorpusSlice.run_id == run.id,
             HorizonCalibrationCorpusSlice.status != "completed",
-        ).order_by(
-            HorizonCalibrationCorpusSlice.slice_index.asc()
-        ).limit(request.max_slices_per_call).all()
-
+        ).order_by(HorizonCalibrationCorpusSlice.slice_index.asc()).limit(request.max_slices_per_call).all()
         processed = 0
         for row in slices:
             self._run_slice(user, row, request)
@@ -372,9 +355,7 @@ class HorizonCalibrationCorpusService:
         ).all()
         if all(item.status == "completed" for item in all_slices):
             run.status = "completed"
-        elif any(item.status == "completed" for item in all_slices):
-            run.status = "partial"
-        elif any(item.status == "failed" for item in all_slices):
+        elif any(item.status in {"completed", "failed"} for item in all_slices):
             run.status = "partial"
         else:
             run.status = "running"
@@ -397,8 +378,7 @@ class HorizonCalibrationCorpusService:
         ).one_or_none()
         if run is None:
             raise ValueError("calibration corpus run not found")
-        summary = self._summary(user, run)
-        return {**summary, "status": run.status}
+        return {**self._summary(user, run), "status": run.status}
 
     def list_runs(self, user: User, limit: int = 50) -> list[dict]:
         rows = self.db.query(HorizonCalibrationCorpusRun).filter(
@@ -406,19 +386,16 @@ class HorizonCalibrationCorpusService:
         ).order_by(
             HorizonCalibrationCorpusRun.updated_at.desc(), HorizonCalibrationCorpusRun.id.desc()
         ).limit(limit).all()
-        return [
-            {
-                "run_id": row.id,
-                "corpus_key": row.corpus_key,
-                "engine": row.engine_version,
-                "status": row.status,
-                "start_at": row.requested_start_at,
-                "end_at": row.requested_end_at,
-                "slice_days": row.slice_days,
-                "outcome_grace_days": row.outcome_grace_days,
-                "summary": row.summary_snapshot,
-                "created_at": row.created_at,
-                "updated_at": row.updated_at,
-            }
-            for row in rows
-        ]
+        return [{
+            "run_id": row.id,
+            "corpus_key": row.corpus_key,
+            "engine": row.engine_version,
+            "status": row.status,
+            "start_at": row.requested_start_at,
+            "end_at": row.requested_end_at,
+            "slice_days": row.slice_days,
+            "outcome_grace_days": row.outcome_grace_days,
+            "summary": row.summary_snapshot,
+            "created_at": row.created_at,
+            "updated_at": row.updated_at,
+        } for row in rows]
