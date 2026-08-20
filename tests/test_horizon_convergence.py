@@ -225,6 +225,7 @@ def test_live_convergence_route_can_run_with_network_sources_disabled():
             "windy_points": [],
             "refresh_provisional_candidates": False,
             "snapshot_recent_active_events": False,
+            "build_event_graph": False,
         },
     )
     assert response.status_code == 200, response.text

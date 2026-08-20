@@ -6,12 +6,14 @@ from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..horizon_convergence_schemas import HorizonLiveConvergencePollRequest
+from ..horizon_event_graph_schemas import HorizonEventGraphBuildRequest
 from ..horizon_fuel_schemas import HorizonFuelNormalizeRequest
 from ..horizon_live_schemas import HorizonGdeltPollRequest
 from ..horizon_models import HorizonGlobalEvent
 from ..horizon_provisional_schemas import HorizonProvisionalRefreshRequest
 from ..horizon_windy_schemas import HorizonWindyPollRequest
 from .horizon_convergence import HorizonConvergenceService
+from .horizon_event_graph import HorizonEventGraphService
 from .horizon_fuel import HorizonFuelService
 from .horizon_gdacs import HorizonGdacsService
 from .horizon_global_alert_normalizer import HorizonGlobalAlertNormalizer
@@ -28,7 +30,7 @@ from .horizon_windy import HorizonWindyService
 
 
 class HorizonLiveConvergenceService:
-    ENGINE_VERSION = "horizon-live-convergence-fabric-v0.2"
+    ENGINE_VERSION = "horizon-live-convergence-fabric-v0.3"
 
     def __init__(self, db: Session):
         self.db = db
@@ -170,6 +172,21 @@ class HorizonLiveConvergenceService:
                 except ValueError as exc:
                     snapshot_errors.append({"event_id": event.id, "error": str(exc)[:300]})
 
+        event_graph = None
+        if request.build_event_graph:
+            event_graph = self._safe_call(
+                "cross-source-event-graph",
+                lambda: HorizonEventGraphService(self.db).build(
+                    HorizonEventGraphBuildRequest(
+                        as_of=now,
+                        lookback_hours=request.event_graph_lookback_hours,
+                        max_events=500,
+                        max_candidates=500,
+                        max_signals=2000,
+                    )
+                ),
+            )
+
         successful = sum(1 for item in results if item.get("ok") is True)
         failed = sum(1 for item in results if item.get("ok") is False and not item.get("skipped"))
         skipped = sum(1 for item in results if item.get("skipped"))
@@ -184,6 +201,7 @@ class HorizonLiveConvergenceService:
             "weather_chain": weather_chain,
             "convergence_snapshots": snapshots,
             "convergence_snapshot_errors": snapshot_errors,
+            "event_graph": event_graph,
             "capability_matrix": HorizonConvergenceService.capability_matrix(),
             "critical_semantics": {
                 "source_failure_isolated": True,
@@ -192,6 +210,7 @@ class HorizonLiveConvergenceService:
                 "gdacs_adapter_directly_confirms_event": False,
                 "meteoalarm_adapter_directly_confirms_event": False,
                 "convergence_score_is_probability": False,
+                "event_graph_dependency_is_causal_proof": False,
                 "gated_sources_are_not_faked": True,
                 "numeric_probabilities_enabled": False,
             },
