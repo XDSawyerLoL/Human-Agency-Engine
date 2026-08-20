@@ -45,6 +45,14 @@ class Settings(BaseSettings):
     horizon_collector_rte_region_codes: str = ""
     horizon_collector_windy_points_json: str = "[]"
 
+    # Historical corpus work is intentionally separated from the live collector.
+    # Default: at most one pending corpus, one slice, every six hours.
+    horizon_corpus_worker_enabled: bool = True
+    horizon_corpus_worker_interval_seconds: int = 21600
+    horizon_corpus_worker_lease_seconds: int = 7200
+    horizon_corpus_worker_max_runs_per_cycle: int = 1
+    horizon_corpus_worker_slices_per_run: int = 1
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     def model_post_init(self, __context: Any) -> None:
@@ -102,6 +110,15 @@ class Settings(BaseSettings):
         )
         if any(value < 60 for value in cadence_values):
             errors.append("HORIZON collector source cadences must be at least 60 seconds")
+
+        if self.horizon_corpus_worker_interval_seconds < 900:
+            errors.append("HORIZON_CORPUS_WORKER_INTERVAL_SECONDS must be at least 900")
+        if self.horizon_corpus_worker_lease_seconds < 900:
+            errors.append("HORIZON_CORPUS_WORKER_LEASE_SECONDS must be at least 900")
+        if not 1 <= self.horizon_corpus_worker_max_runs_per_cycle <= 5:
+            errors.append("HORIZON_CORPUS_WORKER_MAX_RUNS_PER_CYCLE must be between 1 and 5")
+        if not 1 <= self.horizon_corpus_worker_slices_per_run <= 3:
+            errors.append("HORIZON_CORPUS_WORKER_SLICES_PER_RUN must be between 1 and 3")
 
         if self.is_production:
             if self.api_key == "change-me" or len(self.api_key) < 32:
