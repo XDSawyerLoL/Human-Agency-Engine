@@ -42,6 +42,11 @@ CLASSIFICATION_RULES: dict[str, tuple[tuple[str, tuple[str, ...]], ...]] = {
         ("industrial_closure", ("factory closure", "plant closure", "site closure")),
         ("corporate_distress", ("bankruptcy", "insolvency", "insolvent", "administration")),
     ),
+    "social_collective": (
+        ("strike_action", ("general strike", "nationwide strike", "workers strike", "worker strike")),
+        ("mass_protest", ("mass protest", "large protest", "demonstration", "demonstrations", "protests")),
+        ("civil_unrest", ("civil unrest", "riot", "riots", "clashes with police", "violent unrest")),
+    ),
     "public_health": (
         ("public_health_outbreak", ("disease outbreak", "outbreak", "epidemic", "pandemic", "public health emergency")),
     ),
@@ -80,6 +85,9 @@ EVENT_TITLES = {
     "mass_layoff": "Emerging mass-layoff episode",
     "industrial_closure": "Emerging industrial-closure episode",
     "corporate_distress": "Emerging corporate-distress episode",
+    "strike_action": "Emerging strike-action episode",
+    "mass_protest": "Emerging mass-protest episode",
+    "civil_unrest": "Emerging civil-unrest episode",
     "public_health_outbreak": "Emerging public-health outbreak episode",
     "trade_policy_change": "Emerging trade-policy change episode",
     "regulatory_change": "Emerging regulatory-change episode",
@@ -104,7 +112,7 @@ GENERIC_EPISODE_TOKENS = {
     "heat", "heatwave", "flood", "flooding", "wildfire", "earthquake", "cyclone", "hurricane", "drought",
     # Newsroom/business boilerplate must never become an episode identity anchor.
     "mass", "unit", "units", "company", "companies", "group", "groups", "operation", "operations", "restructuring",
-    "round", "jobs", "job", "cuts", "cut", "services", "service",
+    "round", "jobs", "job", "cuts", "cut", "services", "service", "protest", "protests", "demonstration", "demonstrations", "riot", "riots",
 }
 TOKEN_ALIASES = {
     "heatwave": "heat",
