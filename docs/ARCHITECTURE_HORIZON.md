@@ -70,3 +70,14 @@ Current historically replayable mechanisms are regional extreme heat → cooling
 
 This registry is intentionally conservative: missing replay capability is represented as missing capability, never inferred from plausibility or source count.
 
+### Fuel supply: replay pair before calibration
+
+HORIZON has two independently sourced historical sides for an experimental fuel mechanism:
+
+- **trigger precursor:** GDELT 1.0 daily Event files, restricted to France, root events, CAMEO `143*` (strike/boycott) and `144*` (physical obstruction/blockade), then filtered by a fixed v1 fuel/refinery metadata vocabulary;
+- **outcome:** the French government's annual fuel-price archives, replaying temporary station stockout pressure.
+
+The trigger is intentionally named `fuel_supply_disruption_report_cluster`. It asserts that contemporaneous media reports matching the fixed filter existed; it **does not** assert that the underlying disruption itself was confirmed. Distinct source domains are a clustering criterion, never a truth vote.
+
+Both streams now preserve point-in-time timestamps, but the pair is not automatically admitted into empirical probability calibration. The trigger operationalization was authored after some historical fuel crises were already known, so retrospective exploration can be used to debug and estimate usefulness, but it cannot unlock numeric probabilities. A versioned precommit/holdout boundary is required before this mechanism becomes calibration-eligible.
+
