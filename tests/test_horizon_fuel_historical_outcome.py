@@ -67,6 +67,7 @@ def test_official_annual_fuel_archive_builds_coverage_aware_historical_outcome_s
     try:
         request = HorizonFuelHistoricalBackfillRequest(
             year=2025,
+            departments=["92"],
             min_reporting_stations=5,
             min_temporary_ruptures=3,
             min_rupture_rate=0.10,
@@ -76,6 +77,7 @@ def test_official_annual_fuel_archive_builds_coverage_aware_historical_outcome_s
         assert first["qualifying_pressure_days"] == 2
         assert first["observations_created"] == 2
         assert first["signal_coverage_complete"] is True
+        assert first["explicit_scope_verified"] is True
         assert first["critical_semantics"]["outcome_replay_only"] is True
         assert first["critical_semantics"]["historical_trigger_replay_provided"] is False
         assert first["critical_semantics"]["daily_metric_is_instantaneous_stockout_rate"] is False
@@ -134,6 +136,7 @@ def test_fuel_historical_backfill_route_is_mounted_without_network(monkeypatch):
         "/v1/horizon/backfill/fuel-ruptures",
         json={
             "year": 2025,
+            "departments": ["92"],
             "min_reporting_stations": 5,
             "min_temporary_ruptures": 3,
             "min_rupture_rate": 0.1,
