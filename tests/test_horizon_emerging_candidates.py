@@ -135,6 +135,11 @@ def test_world_discovery_classifies_economy_conflict_health_cyber_policy_finance
                 "Acme layoffs expand after weak demand",
                 "Acme announces another round of layoffs",
             ]),
+            "social_collective": ("mass_protest", [
+                "Aurora mass protest fills central district",
+                "Aurora demonstrations expand across downtown",
+                "Aurora protests draw another large crowd",
+            ]),
             "conflict_security": ("economic_sanctions", [
                 "Orion sanctions package announced by allies",
                 "New sanctions target Orion exports",
