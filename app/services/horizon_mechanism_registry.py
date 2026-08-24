@@ -99,6 +99,37 @@ MECHANISM_CONTRACTS = (
         },
     },
     {
+        "mechanism_key": "fuel-disruption-report-cluster-to-stockout-v1",
+        "domains": ["supply_fuel", "media_attention"],
+        "pattern_key": None,
+        "event_types": ["fuel_supply_disruption_report_cluster"],
+        "outcome_signal_types": ["fuel_stockout_pressure"],
+        "corpus_strategies": [],
+        "trigger_replay": {
+            "status": "implemented",
+            "source_family": "gdelt1-fuel-supply-trigger-replay",
+            "point_in_time": True,
+            "coverage_semantics": "complete_relative_to_daily_gdelt_source_and_fixed_filter_not_real_world_ground_truth",
+            "provenance": {
+                "source": "GDELT 1.0 Event Database daily files",
+                "cameo_event_prefixes": ["143", "144"],
+                "sourceurl_required_from": "2013-04-01",
+                "note": "The trigger is a contemporaneous media-report precursor. It does not confirm the underlying disruption.",
+            },
+        },
+        "outcome_replay": {
+            "status": "implemented",
+            "source_family": "fr-fuel-ruptures-annual-archive",
+            "point_in_time": True,
+            "coverage_semantics": "official_fuel_stockout_outcome_replay",
+        },
+        "precommit": {
+            "status": "required",
+            "retrospective_exploration_unlocks_probability_calibration": False,
+            "reason": "The operational trigger filter was authored after some historical crises were already known.",
+        },
+    },
+    {
         "mechanism_key": "transit-disruption-to-mode-substitution-v1",
         "domains": ["transport_mobility"],
         "pattern_key": "builtin-transit-disruption-mode-substitution-v1",
@@ -161,8 +192,9 @@ class HorizonMechanismRegistryService:
         mechanisms = []
         state_counts: dict[str, int] = defaultdict(int)
         for contract in MECHANISM_CONTRACTS:
-            pattern_key = str(contract["pattern_key"])
-            pattern = patterns.get(pattern_key)
+            raw_pattern_key = contract.get("pattern_key")
+            pattern_key = None if raw_pattern_key is None else str(raw_pattern_key)
+            pattern = None if pattern_key is None else patterns.get(pattern_key)
             strategy_keys = [str(item) for item in contract.get("corpus_strategies") or []]
             strategies_configured = bool(strategy_keys) and all(
                 item in available_strategies for item in strategy_keys
@@ -173,6 +205,12 @@ class HorizonMechanismRegistryService:
                 readiness = "historically_calibratable"
             elif historical_declared and strategies_configured:
                 readiness = "historical_pipeline_present_pattern_unsynced"
+            elif (
+                (contract.get("trigger_replay") or {}).get("status") == "implemented"
+                and (contract.get("outcome_replay") or {}).get("status") == "implemented"
+                and not strategy_keys
+            ):
+                readiness = "replay_pair_ready_for_precommit"
             elif (
                 (contract.get("outcome_replay") or {}).get("status") == "implemented"
                 and (contract.get("trigger_replay") or {}).get("status") != "implemented"
