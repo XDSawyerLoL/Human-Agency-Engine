@@ -8,7 +8,7 @@ from ..horizon_models import HorizonBehaviorPattern
 from .horizon_cold_response import COLD_PATTERN
 
 
-LIBRARY_VERSION = "human-response-library-v0.4-mechanism-registry"
+LIBRARY_VERSION = "human-response-library-v0.5-multidomain"
 
 # Conservative priors: behavioral hypotheses, not calibrated probabilities.
 # support_count / contradiction_count stay zero until HORIZON's own point-in-time
@@ -241,6 +241,166 @@ BUILTIN_PATTERNS = (
                 "The causal estimate comes from one metropolitan transport strike and must not be transported as a universal 47 percent forecast.",
                 "Network topology, car ownership, remote-work options, time of day and substitute capacity materially change the response.",
                 "HORIZON must observe independent congestion, crowding or travel-time evidence before marking downstream stages reached.",
+            ],
+        },
+    },
+    {
+        "pattern_key": "builtin-mass-layoff-local-labor-pressure-v1",
+        "name": "Mass layoff / industrial closure → local labor-market pressure",
+        "event_types": ["mass_layoff", "industrial_closure"],
+        "required_signal_types": [],
+        "predicted_response": (
+            "A large layoff or industrial-site closure can rapidly increase job-search activity and "
+            "the local supply of workers with similar skills, raising competition for nearby roles "
+            "and demand for placement, retraining and income-support services."
+        ),
+        "mechanism_chain": [
+            "employment shock becomes salient",
+            "affected workers begin job search",
+            "local labor supply rises in overlapping occupations",
+            "competition for similar vacancies increases",
+            "placement and retraining demand rises",
+        ],
+        "expected_lag_hours_low": 0,
+        "expected_lag_hours_high": 720,
+        "confidence": 0.54,
+        "support_count": 0,
+        "contradiction_count": 0,
+        "knowledge_available_at": datetime(2011, 1, 1, 0, 0, 0),
+        "provenance": {
+            "library_version": LIBRARY_VERSION,
+            "status": "provisional_prior",
+            "formal_probability": False,
+            "calibrated_on_horizon_outcomes": False,
+            "stage_signal_types": {
+                "0": ["layoff_attention", "closure_attention"],
+                "1": ["job_search_interest", "job_search_activity"],
+                "2": ["job_applications", "labor_supply_pressure"],
+                "3": ["vacancy_competition", "placement_delay"],
+                "4": ["retraining_demand", "income_support_demand"],
+            },
+            "evidence": [
+                {
+                    "kind": "labor_economics",
+                    "title": "Recessions and the Costs of Job Loss",
+                    "authors": "Steven J. Davis and Till von Wachter",
+                    "published": "2011",
+                    "note": (
+                        "Displaced workers can experience persistent employment and earnings losses; "
+                        "HORIZON uses this only as evidence that large displacement shocks create real "
+                        "labor-market adjustment pressure, not as a local effect-size estimate."
+                    ),
+                }
+            ],
+            "limitations": [
+                "A company announcement does not prove how many workers will actually enter the local job market.",
+                "Remote work, severance, commuting, occupational mix and local vacancy demand can materially change the response.",
+                "HORIZON has no complete historical job-search or vacancy outcome stream for this mechanism yet.",
+            ],
+        },
+    },
+    {
+        "pattern_key": "builtin-sanctions-trade-friction-price-pressure-v1",
+        "name": "Sanctions / trade restriction → supply and price pressure",
+        "event_types": ["economic_sanctions", "trade_policy_change", "energy_supply_disruption"],
+        "required_signal_types": [],
+        "predicted_response": (
+            "A material sanction, tariff or trade restriction can increase import friction and "
+            "rerouting costs, reduce accessible supply in exposed sectors and create downstream "
+            "price or availability pressure."
+        ),
+        "mechanism_chain": [
+            "trade restriction becomes credible",
+            "import or settlement friction rises",
+            "firms reroute or substitute supply",
+            "accessible supply or margins compress",
+            "sector price or availability pressure becomes visible",
+        ],
+        "expected_lag_hours_low": 0,
+        "expected_lag_hours_high": 720,
+        "confidence": 0.55,
+        "support_count": 0,
+        "contradiction_count": 0,
+        "knowledge_available_at": datetime(2019, 11, 1, 0, 0, 0),
+        "provenance": {
+            "library_version": LIBRARY_VERSION,
+            "status": "provisional_prior",
+            "formal_probability": False,
+            "calibrated_on_horizon_outcomes": False,
+            "stage_signal_types": {
+                "0": ["sanctions_attention", "trade_policy_attention"],
+                "1": ["import_friction", "shipping_rerouting", "settlement_friction"],
+                "2": ["supplier_substitution", "inventory_pressure"],
+                "3": ["wholesale_price_pressure", "availability_pressure"],
+                "4": ["consumer_price_pressure", "shortage_reports"],
+            },
+            "evidence": [
+                {
+                    "kind": "peer_reviewed_trade_economics",
+                    "title": "The Impact of the 2018 Tariffs on Prices and Welfare",
+                    "authors": "Mary Amiti, Stephen J. Redding and David E. Weinstein",
+                    "published": "2019",
+                    "doi": "10.1257/jep.33.4.187",
+                    "note": (
+                        "The study documents substantial tariff pass-through in the 2018 US episode. "
+                        "HORIZON treats it as mechanism evidence, not as a universal price-impact estimate."
+                    ),
+                }
+            ],
+            "limitations": [
+                "Sanctions, tariffs and export controls differ substantially in scope and enforcement.",
+                "Exchange rates, inventories, substitution and government intervention can absorb or amplify price effects.",
+                "HORIZON must observe independent supply or price outcomes before claiming downstream materialization.",
+            ],
+        },
+    },
+    {
+        "pattern_key": "builtin-civil-unrest-mobility-disruption-v1",
+        "name": "Collective unrest / strike action → local mobility and activity disruption",
+        "event_types": ["civil_unrest", "mass_protest", "strike_action"],
+        "required_signal_types": [],
+        "predicted_response": (
+            "Large collective action can lead authorities, operators, workers and travelers to alter "
+            "routes, schedules or opening decisions, creating localized mobility and activity disruption."
+        ),
+        "mechanism_chain": [
+            "collective action becomes salient",
+            "participants and operators change behavior",
+            "access or service capacity becomes uncertain",
+            "route and schedule substitution increases",
+            "localized mobility or activity disruption becomes visible",
+        ],
+        "expected_lag_hours_low": 0,
+        "expected_lag_hours_high": 48,
+        "confidence": 0.50,
+        "support_count": 0,
+        "contradiction_count": 0,
+        "knowledge_available_at": datetime(2014, 1, 1, 0, 0, 0),
+        "provenance": {
+            "library_version": LIBRARY_VERSION,
+            "status": "provisional_prior",
+            "formal_probability": False,
+            "calibrated_on_horizon_outcomes": False,
+            "stage_signal_types": {
+                "0": ["protest_attention", "strike_attention", "civil_unrest_attention"],
+                "1": ["operator_schedule_change", "route_avoidance"],
+                "2": ["service_capacity_pressure", "access_restriction"],
+                "3": ["crowding", "road_congestion", "business_closure_reports"],
+                "4": ["travel_time_deterioration", "activity_disruption"],
+            },
+            "evidence": [
+                {
+                    "kind": "mechanism_definition",
+                    "note": (
+                        "The hypothesis is deliberately narrow: strikes, blockades and large gatherings "
+                        "can alter access or service capacity. It does not assume that every protest causes disruption."
+                    ),
+                }
+            ],
+            "limitations": [
+                "Peaceful demonstrations may have little or no measurable disruption.",
+                "Location, route, duration, policing, transport redundancy and remote-work options strongly affect outcomes.",
+                "The current evidence path is discovery-first and is not historically calibrated.",
             ],
         },
     },
