@@ -48,7 +48,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="HORIZON Predictive Intelligence API",
-    version="1.5.0",
+    version="1.6.0",
     description=(
         "Dedicated domain-agnostic HORIZON surface for personal world anticipation: "
         "multi-domain discovery, source intelligence, convergence, Event Graph, collective behavior, "
@@ -116,6 +116,7 @@ def health():
         "permanent_collector_supported": True,
         "calibration_corpus_builder_supported": True,
         "heat_cooling_outcome_supported": True,
+        "fuel_historical_outcome_supported": True,
         "cold_heating_outcome_supported": True,
         "weather_is_product_boundary": False,
         "numeric_probabilities_enabled": False,

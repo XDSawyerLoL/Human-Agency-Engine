@@ -78,7 +78,7 @@ MECHANISM_CONTRACTS = (
         "domains": ["supply_fuel"],
         "pattern_key": "builtin-supply-risk-precautionary-buying-v1",
         "event_types": ["supply_disruption", "fuel_supply_disruption", "critical_goods_disruption"],
-        "outcome_signal_types": ["precautionary_buying", "inventory_pressure", "shortage_reports", "stockout_reports"],
+        "outcome_signal_types": ["precautionary_buying", "inventory_pressure", "shortage_reports", "stockout_reports", "fuel_stockout_pressure"],
         "corpus_strategies": [],
         "trigger_replay": {
             "status": "missing",
@@ -87,14 +87,14 @@ MECHANISM_CONTRACTS = (
             "coverage_semantics": "no_implemented_historical_trigger_replay",
         },
         "outcome_replay": {
-            "status": "candidate_unwired",
-            "source_family": "fr-government-fuel-annual-stock",
+            "status": "implemented",
+            "source_family": "fr-fuel-ruptures-annual-archive",
             "point_in_time": True,
-            "coverage_semantics": "provider_annual_stock_candidate_not_implemented",
+            "coverage_semantics": "complete_negative_coverage_only_for_explicit_verified_department_scope",
             "provenance": {
                 "source": "Prix des carburants - données publiques",
                 "locator": "https://www.prix-carburants.gouv.fr/rubrique/opendata/",
-                "note": "Government open data exposes stock ruptures and annual stocks; HORIZON has not yet implemented a coverage-aware historical adapter.",
+                "note": "Government annual archives expose temporary rupture intervals from 2007; HORIZON replays a conservative daily pressure metric and excludes definitive non-distribution.",
             },
         },
     },
@@ -173,6 +173,11 @@ class HorizonMechanismRegistryService:
                 readiness = "historically_calibratable"
             elif historical_declared and strategies_configured:
                 readiness = "historical_pipeline_present_pattern_unsynced"
+            elif (
+                (contract.get("outcome_replay") or {}).get("status") == "implemented"
+                and (contract.get("trigger_replay") or {}).get("status") != "implemented"
+            ):
+                readiness = "outcome_replay_only"
             elif (contract.get("outcome_replay") or {}).get("status") == "candidate_unwired":
                 readiness = "outcome_archive_candidate"
             else:

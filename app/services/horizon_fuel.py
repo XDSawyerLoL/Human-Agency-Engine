@@ -392,7 +392,7 @@ class HorizonFuelService:
                             f"Ruptures temporaires de {fuel_name} — département {department} "
                             f"({temporary}/{stations})"
                         ),
-                        geography=["FR"],
+                        geography=["FR", f"DEP:{department}"],
                         normalized_facts=normalized_facts,
                         normalizer_version=self.ENGINE_VERSION,
                     )

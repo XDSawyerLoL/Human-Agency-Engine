@@ -66,7 +66,7 @@ The registry is available at:
 
 `GET /v1/horizon/world/mechanisms`
 
-Current historically replayable mechanisms are regional extreme heat → cooling-load pressure and regional extreme cold → heating-load pressure. Transport mode substitution remains a behavioral hypothesis until independent historical disruption and congestion streams are implemented. Fuel/supply precautionary buying has an official government stockout archive candidate, but HORIZON does not call it calibratable until a valid point-in-time trigger replay also exists.
+Current historically replayable mechanisms are regional extreme heat → cooling-load pressure and regional extreme cold → heating-load pressure. Transport mode substitution remains a behavioral hypothesis until independent historical disruption and congestion streams are implemented. Fuel/supply precautionary buying now has a coverage-aware historical outcome replay from the official French annual fuel archives (available from 2007). It remains `outcome_replay_only`: HORIZON does not call it calibratable until an independent point-in-time historical trigger replay also exists. Complete negative coverage is only authorized for explicitly requested and verified department scopes.
 
 This registry is intentionally conservative: missing replay capability is represented as missing capability, never inferred from plausibility or source count.
 

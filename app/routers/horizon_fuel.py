@@ -4,9 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..horizon_fuel_schemas import HorizonFuelNormalizeRequest
+from ..horizon_fuel_schemas import HorizonFuelHistoricalBackfillRequest, HorizonFuelNormalizeRequest
 from ..security import require_api_key
 from ..services.horizon_fuel import HorizonFuelService
+from ..services.horizon_fuel_history import HorizonFuelHistoricalBackfillService
 
 router = APIRouter(prefix="/horizon", dependencies=[Depends(require_api_key)])
 
@@ -30,6 +31,19 @@ def normalize_latest_fuel_ruptures(
         return HorizonFuelService(db).normalize_latest(payload)
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
+
+
+@router.post("/backfill/fuel-ruptures")
+def backfill_historical_fuel_ruptures(
+    payload: HorizonFuelHistoricalBackfillRequest,
+    db: Session = Depends(get_db),
+):
+    try:
+        return HorizonFuelHistoricalBackfillService(db).backfill(payload)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(502, str(exc)) from exc
 
 
 from .agency import router as agency_router  # noqa: E402
