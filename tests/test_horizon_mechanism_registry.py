@@ -35,8 +35,10 @@ def test_mechanism_registry_separates_plausible_behavior_from_historical_calibra
         assert heat["trigger_replay"]["point_in_time"] is True
         assert heat["outcome_replay"]["point_in_time"] is True
 
-        assert supply["calibration_readiness"] == "outcome_archive_candidate"
-        assert supply["outcome_replay"]["status"] == "candidate_unwired"
+        assert supply["calibration_readiness"] == "outcome_replay_only"
+        assert supply["outcome_replay"]["status"] == "implemented"
+        assert supply["outcome_replay"]["point_in_time"] is True
+        assert "fuel_stockout_pressure" in supply["outcome_signal_types"]
         assert supply["trigger_replay"]["status"] == "missing"
 
         assert transport["calibration_readiness"] == "behavior_hypothesis_only"
