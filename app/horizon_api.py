@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -40,6 +43,7 @@ from .routers.horizon_sources import router as horizon_sources_router
 from .routers.horizon_weather_chain import router as horizon_weather_chain_router
 from .routers.horizon_windy import router as horizon_windy_router
 from .routers.horizon_world import router as horizon_world_router
+from .routers.horizon_briefing import router as horizon_briefing_router
 from .config import settings
 
 
@@ -48,7 +52,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="HORIZON Predictive Intelligence API",
-    version="1.7.0",
+    version="1.8.0",
     description=(
         "Dedicated domain-agnostic HORIZON surface for personal world anticipation: "
         "multi-domain discovery, source intelligence, convergence, Event Graph, collective behavior, "
@@ -85,10 +89,19 @@ HORIZON_ROUTERS = (
     horizon_corpus_router,
     horizon_cold_router,
     horizon_world_router,
+    horizon_briefing_router,
 )
 
 for router in HORIZON_ROUTERS:
     app.include_router(router, prefix="/v1")
+
+WEB_ROOT = Path(__file__).resolve().parent / "web" / "horizon"
+app.mount("/ui", StaticFiles(directory=str(WEB_ROOT), html=True), name="horizon-ui")
+
+
+@app.get("/", include_in_schema=False)
+def horizon_web_root():
+    return RedirectResponse(url="/ui/")
 
 
 def _utc_naive(value: datetime) -> datetime:
@@ -113,6 +126,8 @@ def health():
         "world_coverage_inventory_supported": True,
         "mechanism_registry_supported": True,
         "multi_domain_discovery_supported": True,
+        "social_collective_domain_supported": True,
+        "web_cockpit_supported": True,
         "permanent_collector_supported": True,
         "calibration_corpus_builder_supported": True,
         "heat_cooling_outcome_supported": True,

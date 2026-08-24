@@ -23,6 +23,7 @@ GDELT_QUERY_PACK = {
     "conflict_security": '("military strike" OR "missile attack" OR invasion OR sanctions OR coup OR "state of emergency")',
     "infrastructure": '(blackout OR outage OR "power cut" OR "internet outage" OR "transport strike" OR "rail strike")',
     "economy_labor": '(layoffs OR bankruptcy OR insolvency OR "factory closure" OR "mass layoffs")',
+    "social_collective": '(protest OR protests OR demonstration OR demonstrations OR riot OR riots OR "general strike" OR "mass protest" OR "civil unrest")',
     "public_health": '("disease outbreak" OR epidemic OR pandemic OR "public health emergency")',
     "regulation_policy": '("new regulation" OR "regulatory change" OR "export ban" OR tariff OR tariffs OR "trade restriction")',
     "cyber_technology": '("cyber attack" OR cyberattack OR ransomware OR "data breach" OR "cloud outage" OR "service outage")',

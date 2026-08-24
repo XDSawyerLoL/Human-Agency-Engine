@@ -25,10 +25,10 @@ def test_builtin_human_response_library_is_versioned_idempotent_and_not_fake_cal
     first = client.post("/v1/horizon/response-library/builtins/sync")
     assert first.status_code == 200, first.text
     body = first.json()
-    assert body["library_version"] == "human-response-library-v0.4-mechanism-registry"
+    assert body["library_version"] == "human-response-library-v0.5-multidomain"
     assert body["formal_probabilities"] is False
     assert body["horizon_support_counts_are_real_labels_only"] is True
-    assert len(body["patterns"]) == 5
+    assert len(body["patterns"]) == 8
 
     by_key = {item["pattern_key"]: item for item in body["patterns"]}
     heat = by_key["builtin-extreme-heat-cooling-demand-v1"]
@@ -36,8 +36,11 @@ def test_builtin_human_response_library_is_versioned_idempotent_and_not_fake_cal
     regional_load = by_key["builtin-extreme-heat-regional-cooling-load-v1"]
     transport = by_key["builtin-transit-disruption-mode-substitution-v1"]
     cold = by_key["builtin-extreme-cold-regional-heating-load-v1"]
+    labor = by_key["builtin-mass-layoff-local-labor-pressure-v1"]
+    sanctions = by_key["builtin-sanctions-trade-friction-price-pressure-v1"]
+    social = by_key["builtin-civil-unrest-mobility-disruption-v1"]
 
-    for item in (heat, supply, regional_load, transport, cold):
+    for item in (heat, supply, regional_load, transport, cold, labor, sanctions, social):
         assert item["support_count"] == 0
         assert item["contradiction_count"] == 0
         assert item["confidence_is_probability"] is False
@@ -56,6 +59,12 @@ def test_builtin_human_response_library_is_versioned_idempotent_and_not_fake_cal
     assert "road_congestion" in transport["provenance"]["stage_signal_types"]["3"]
     assert cold["event_types"] == ["extreme_cold_region"]
     assert cold["provenance"]["materialization_signal_types"] == ["heating_load_pressure"]
+    assert "mass_layoff" in labor["event_types"]
+    assert "job_search_activity" in labor["provenance"]["stage_signal_types"]["1"]
+    assert "economic_sanctions" in sanctions["event_types"]
+    assert "consumer_price_pressure" in sanctions["provenance"]["stage_signal_types"]["4"]
+    assert "civil_unrest" in social["event_types"]
+    assert "activity_disruption" in social["provenance"]["stage_signal_types"]["4"]
 
     second = client.post("/v1/horizon/response-library/builtins/sync")
     assert second.status_code == 200, second.text

@@ -21,11 +21,14 @@ def test_world_coverage_makes_domain_imbalance_explicit_and_never_reports_probab
         assert result["product_scope"] == "domain_agnostic_personal_world_anticipation"
         assert by_domain["weather_climate"]["current_maturity"] == "historically_calibratable"
         assert by_domain["economy_labor"]["current_maturity"] == "discovery_only"
+        assert by_domain["social_collective_behavior"]["current_maturity"] == "discovery_only"
         assert by_domain["geopolitics_security"]["current_maturity"] == "discovery_only"
         assert by_domain["cyber_technology"]["current_maturity"] == "discovery_only"
         assert by_domain["personal_context"]["current_maturity"] == "personalized"
         assert "builtin-transit-disruption-mode-substitution-v1" in by_domain["transport_mobility"]["behavior_pattern_keys"]
         assert "transit-disruption-to-mode-substitution-v1" in by_domain["transport_mobility"]["mechanism_keys"]
+        assert "mass-layoff-to-local-labor-pressure-v1" in by_domain["economy_labor"]["mechanism_keys"]
+        assert "civil-unrest-to-local-activity-disruption-v1" in by_domain["social_collective_behavior"]["mechanism_keys"]
         assert "regional-heat-to-cooling-load-v1" in by_domain["weather_climate"]["historically_calibratable_mechanism_keys"]
         assert result["mechanism_registry"]["engine"] == "horizon-mechanism-registry-v0.1"
         assert set(result["mechanism_registry"]["historically_calibratable_event_types"]) == {"extreme_heat_region", "extreme_cold_region"}
@@ -40,12 +43,14 @@ def test_world_coverage_is_mounted_on_dedicated_horizon_api():
     response = client.get("/v1/horizon/world/coverage")
     assert response.status_code == 200, response.text
     body = response.json()
-    assert body["engine"] == "horizon-world-coverage-v0.2-mechanisms"
-    assert len(body["domains"]) >= 12
+    assert body["engine"] == "horizon-world-coverage-v0.3-social"
+    assert len(body["domains"]) >= 14
 
     health = client.get("/health")
     assert health.status_code == 200
     assert health.json()["world_coverage_inventory_supported"] is True
     assert health.json()["mechanism_registry_supported"] is True
     assert health.json()["multi_domain_discovery_supported"] is True
+    assert health.json()["social_collective_domain_supported"] is True
+    assert health.json()["web_cockpit_supported"] is True
     assert health.json()["weather_is_product_boundary"] is False
