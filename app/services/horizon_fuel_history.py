@@ -361,8 +361,12 @@ class HorizonFuelHistoricalBackfillService:
         now = datetime.now(timezone.utc)
         completed_year = request.year < current_year
         coverage_end = year_end if completed_year else min(now, year_end)
-        coverage_complete = completed_year and not truncated
-        department_tokens = [f"DEP:{item}" for item in aggregate["departments"]]
+        requested_departments = set(request.departments)
+        observed_departments = set(aggregate["departments"])
+        explicit_scope_verified = bool(requested_departments) and requested_departments.issubset(observed_departments)
+        coverage_complete = completed_year and not truncated and explicit_scope_verified
+        coverage_departments = sorted(requested_departments or observed_departments)
+        department_tokens = [f"DEP:{item}" for item in coverage_departments]
         coverage = HorizonHistoricalCoverageService(self.db).record_interval(
             source,
             coverage_kind="signal",
@@ -379,6 +383,10 @@ class HorizonFuelHistoricalBackfillService:
                 "archive_hash": archive_hash,
                 "archive_available_from": ANNUAL_ARCHIVE_AVAILABLE_FROM,
                 "completed_calendar_year": completed_year,
+                "explicit_department_scope_required_for_complete_negative_coverage": True,
+                "explicit_scope_verified": explicit_scope_verified,
+                "requested_departments": sorted(requested_departments),
+                "observed_departments": sorted(observed_departments),
                 "qualifying_daily_rows": len(qualifying),
                 "selected_daily_rows": len(selected),
                 "truncated_by_max_observations": truncated,
@@ -407,6 +415,7 @@ class HorizonFuelHistoricalBackfillService:
             "truncated_by_max_observations": truncated,
             "signal_coverage_interval_id": coverage.id,
             "signal_coverage_complete": coverage.completeness == "complete",
+            "explicit_scope_verified": explicit_scope_verified,
             "metric_semantics": aggregate["metric_semantics"],
             "critical_semantics": {
                 "outcome_replay_only": True,
@@ -414,6 +423,7 @@ class HorizonFuelHistoricalBackfillService:
                 "daily_metric_is_instantaneous_stockout_rate": False,
                 "definitive_non_distribution_excluded": True,
                 "complete_coverage_required_for_negative_label": True,
+                "explicit_department_scope_required_for_complete_negative_coverage": True,
                 "provider_failure_is_negative_evidence": False,
                 "numeric_probabilities_enabled": False,
             },
