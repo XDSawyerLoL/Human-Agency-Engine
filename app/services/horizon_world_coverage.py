@@ -13,6 +13,8 @@ DOMAIN_CONTRACTS = (
     {"domain": "weather_climate", "label": "Weather & climate", "target_maturity": "historically_calibratable", "event_types": ["extreme_heat", "extreme_heat_region", "extreme_cold", "extreme_cold_region", "drought"], "source_domains": ["weather", "forecast_models"]},
     {"domain": "natural_hazards", "label": "Natural hazards", "target_maturity": "live_multi_source", "event_types": ["flood", "river_flood_risk", "wildfire", "earthquake", "tropical_cyclone", "volcano"], "source_domains": ["disasters", "civil_protection"]},
     {"domain": "transport_mobility", "label": "Transport & mobility", "target_maturity": "historically_calibratable", "event_types": ["rail_transport_disruption", "transport_disruption"], "source_domains": ["transport", "rail"]},
+    {"domain": "social_collective_behavior", "label": "Social & collective behavior", "target_maturity": "live_multi_source", "event_types": ["civil_unrest", "mass_protest", "strike_action"], "source_domains": ["world_events", "news_attention", "social"]},
+
     {"domain": "supply_fuel", "label": "Supply chains & fuel", "target_maturity": "historically_calibratable", "event_types": ["supply_disruption", "fuel_supply_disruption", "critical_goods_disruption"], "source_domains": ["fuel", "supply", "retail"]},
     {"domain": "energy", "label": "Energy", "target_maturity": "historically_calibratable", "event_types": ["energy_supply_disruption", "energy_market_stress", "power_grid_disruption"], "source_domains": ["electricity", "energy"]},
     {"domain": "media_attention", "label": "Media & collective attention", "target_maturity": "live_multi_source", "event_types": [], "source_domains": ["news_attention", "world_events"]},
@@ -36,14 +38,14 @@ DISCOVERY_EVENT_TYPES = {
     "supply_disruption", "extreme_heat", "wildfire", "flood", "earthquake", "tropical_cyclone", "drought",
     "economic_sanctions", "political_instability", "geopolitical_conflict", "rail_transport_disruption",
     "internet_service_outage", "power_grid_disruption", "critical_infrastructure_outage", "mass_layoff",
-    "industrial_closure", "corporate_distress", "public_health_outbreak", "trade_policy_change",
+    "industrial_closure", "corporate_distress", "civil_unrest", "mass_protest", "strike_action", "public_health_outbreak", "trade_policy_change",
     "regulatory_change", "cyber_incident", "technology_service_outage", "financial_stress",
     "energy_supply_disruption", "energy_market_stress",
 }
 
 
 class HorizonWorldCoverageService:
-    ENGINE_VERSION = "horizon-world-coverage-v0.2-mechanisms"
+    ENGINE_VERSION = "horizon-world-coverage-v0.3-social"
 
     def __init__(self, db: Session):
         self.db = db
