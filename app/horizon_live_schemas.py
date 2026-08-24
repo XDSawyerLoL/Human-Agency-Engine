@@ -9,6 +9,7 @@ GDELT_QUERY_FAMILIES = {
     "conflict_security",
     "infrastructure",
     "economy_labor",
+    "social_collective",
     "public_health",
     "regulation_policy",
     "cyber_technology",
