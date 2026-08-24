@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..security import require_api_key
 from ..services.horizon_world_coverage import HorizonWorldCoverageService
+from ..services.horizon_mechanism_registry import HorizonMechanismRegistryService
 
 
 router = APIRouter(prefix="/horizon/world", dependencies=[Depends(require_api_key)])
@@ -14,3 +15,8 @@ router = APIRouter(prefix="/horizon/world", dependencies=[Depends(require_api_ke
 @router.get("/coverage")
 def world_coverage(db: Session = Depends(get_db)):
     return HorizonWorldCoverageService(db).snapshot()
+
+
+@router.get("/mechanisms")
+def world_mechanisms(db: Session = Depends(get_db)):
+    return HorizonMechanismRegistryService(db).snapshot()

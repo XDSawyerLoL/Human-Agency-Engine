@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from ..horizon_models import HorizonBehaviorPattern
 from ..horizon_source_models import HorizonSource
+from .horizon_mechanism_registry import HorizonMechanismRegistryService, historically_calibratable_event_types
 
 
 DOMAIN_CONTRACTS = (
@@ -24,7 +25,7 @@ DOMAIN_CONTRACTS = (
     {"domain": "personal_context", "label": "Personal context & exposure", "target_maturity": "personalized", "event_types": [], "source_domains": []},
 )
 
-HISTORICALLY_CALIBRATABLE_EVENT_TYPES = {"extreme_heat_region", "extreme_cold_region"}
+HISTORICALLY_CALIBRATABLE_EVENT_TYPES = historically_calibratable_event_types()
 
 LIVE_CONFIRMED_EVENT_TYPES = {
     "extreme_heat", "extreme_cold", "flood", "river_flood_risk", "wildfire", "earthquake",
@@ -42,7 +43,7 @@ DISCOVERY_EVENT_TYPES = {
 
 
 class HorizonWorldCoverageService:
-    ENGINE_VERSION = "horizon-world-coverage-v0.1"
+    ENGINE_VERSION = "horizon-world-coverage-v0.2-mechanisms"
 
     def __init__(self, db: Session):
         self.db = db
@@ -87,12 +88,28 @@ class HorizonWorldCoverageService:
             for event_type in pattern.event_types or []:
                 pattern_by_event[str(event_type)].add(pattern.pattern_key)
 
+        mechanism_snapshot = HorizonMechanismRegistryService(self.db).snapshot()
+        mechanism_by_event: dict[str, list[dict]] = defaultdict(list)
+        for mechanism in mechanism_snapshot["mechanisms"]:
+            for event_type in mechanism.get("event_types") or []:
+                mechanism_by_event[str(event_type)].append(mechanism)
+
         rows = []
         maturity_counts: dict[str, int] = defaultdict(int)
         for contract in DOMAIN_CONTRACTS:
             event_types = set(contract["event_types"])
             source_keys = sorted({source_key for domain in contract["source_domains"] for source_key in source_domains.get(domain, set())})
             pattern_keys = sorted({pattern_key for event_type in event_types for pattern_key in pattern_by_event.get(event_type, set())})
+            domain_mechanisms = {
+                item["mechanism_key"]: item
+                for event_type in event_types
+                for item in mechanism_by_event.get(event_type, [])
+            }
+            mechanism_keys = sorted(domain_mechanisms)
+            calibration_mechanism_keys = sorted(
+                key for key, item in domain_mechanisms.items()
+                if item.get("calibration_readiness") == "historically_calibratable"
+            )
             if contract["domain"] == "personal_context":
                 maturity = "personalized"
                 reasons = ["state facts, intents and personal-scope relevance gate are implemented"]
@@ -104,6 +121,8 @@ class HorizonWorldCoverageService:
                 "current_maturity": maturity,
                 "registered_source_keys": source_keys,
                 "behavior_pattern_keys": pattern_keys,
+                "mechanism_keys": mechanism_keys,
+                "historically_calibratable_mechanism_keys": calibration_mechanism_keys,
                 "reasons": reasons,
             })
 
@@ -112,9 +131,14 @@ class HorizonWorldCoverageService:
             "product_scope": "domain_agnostic_personal_world_anticipation",
             "domains": rows,
             "maturity_counts": dict(sorted(maturity_counts.items())),
+            "mechanism_registry": {
+                "engine": mechanism_snapshot["engine"],
+                "readiness_counts": mechanism_snapshot["readiness_counts"],
+                "historically_calibratable_event_types": mechanism_snapshot["historically_calibratable_event_types"],
+            },
             "development_priority": [
-                "add independent factual/operational sources outside weather",
-                "add timestamped outcome streams with completeness semantics",
+                "wire historical trigger replay for the strongest non-weather mechanism candidates",
+                "add timestamped outcome streams with explicit completeness semantics",
                 "calibrate behavior mechanisms independently by domain",
                 "retain personal exposure as the final relevance gate",
             ],

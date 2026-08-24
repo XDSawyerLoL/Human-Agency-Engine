@@ -25,18 +25,19 @@ def test_builtin_human_response_library_is_versioned_idempotent_and_not_fake_cal
     first = client.post("/v1/horizon/response-library/builtins/sync")
     assert first.status_code == 200, first.text
     body = first.json()
-    assert body["library_version"] == "human-response-library-v0.3-world"
+    assert body["library_version"] == "human-response-library-v0.4-mechanism-registry"
     assert body["formal_probabilities"] is False
     assert body["horizon_support_counts_are_real_labels_only"] is True
-    assert len(body["patterns"]) == 4
+    assert len(body["patterns"]) == 5
 
     by_key = {item["pattern_key"]: item for item in body["patterns"]}
     heat = by_key["builtin-extreme-heat-cooling-demand-v1"]
     supply = by_key["builtin-supply-risk-precautionary-buying-v1"]
     regional_load = by_key["builtin-extreme-heat-regional-cooling-load-v1"]
     transport = by_key["builtin-transit-disruption-mode-substitution-v1"]
+    cold = by_key["builtin-extreme-cold-regional-heating-load-v1"]
 
-    for item in (heat, supply, regional_load, transport):
+    for item in (heat, supply, regional_load, transport, cold):
         assert item["support_count"] == 0
         assert item["contradiction_count"] == 0
         assert item["confidence_is_probability"] is False
@@ -53,6 +54,8 @@ def test_builtin_human_response_library_is_versioned_idempotent_and_not_fake_cal
     assert "rail_transport_disruption" in transport["event_types"]
     assert transport["provenance"]["evidence"][0]["doi"] == "10.1257/aer.104.9.2763"
     assert "road_congestion" in transport["provenance"]["stage_signal_types"]["3"]
+    assert cold["event_types"] == ["extreme_cold_region"]
+    assert cold["provenance"]["materialization_signal_types"] == ["heating_load_pressure"]
 
     second = client.post("/v1/horizon/response-library/builtins/sync")
     assert second.status_code == 200, second.text
