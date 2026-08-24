@@ -172,3 +172,17 @@ docker compose -f docker-compose.hostinger.yml config
 ```
 
 Never paste real production secrets into terminals, issues, pull requests or chat messages.
+
+## Web interface
+
+The production API image also contains the HORIZON web cockpit.
+
+After the reverse proxy/TLS entry points at the HORIZON API service:
+
+- `https://<horizon-domain>/` opens the cockpit (redirects to `/ui/`);
+- `https://<horizon-domain>/ui/` serves the responsive static interface;
+- `https://<horizon-domain>/health` and `/ready` remain operational probes;
+- `https://<horizon-domain>/docs` exposes FastAPI documentation.
+
+The cockpit asks for the HORIZON API key and keeps it in browser `sessionStorage` only. It sends the key as `X-API-Key` to the same-origin API. This is an operator interface, not yet an end-user account/authentication system.
+
