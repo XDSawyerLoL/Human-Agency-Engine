@@ -5,9 +5,10 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from ..horizon_models import HorizonBehaviorPattern
+from .horizon_cold_response import COLD_PATTERN
 
 
-LIBRARY_VERSION = "human-response-library-v0.3-world"
+LIBRARY_VERSION = "human-response-library-v0.4-mechanism-registry"
 
 # Conservative priors: behavioral hypotheses, not calibrated probabilities.
 # support_count / contradiction_count stay zero until HORIZON's own point-in-time
@@ -243,6 +244,7 @@ BUILTIN_PATTERNS = (
             ],
         },
     },
+    COLD_PATTERN,
 )
 
 
