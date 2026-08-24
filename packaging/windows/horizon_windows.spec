@@ -5,6 +5,12 @@ from PyInstaller.utils.hooks import collect_submodules
 hiddenimports = (
     collect_submodules("app")
     + collect_submodules("uvicorn")
+    + collect_submodules("fastapi")
+    + collect_submodules("starlette")
+    + collect_submodules("pydantic")
+    + collect_submodules("pydantic_settings")
+    + collect_submodules("sqlalchemy")
+    + collect_submodules("alembic")
     + [
         "sqlalchemy.dialects.sqlite",
         "sqlalchemy.dialects.sqlite.pysqlite",
