@@ -21,6 +21,11 @@ def _bundle_root() -> Path:
 
 
 def _data_root() -> Path:
+    override = os.getenv("HORIZON_DESKTOP_DATA_DIR_OVERRIDE", "").strip()
+    if override:
+        path = Path(override)
+        path.mkdir(parents=True, exist_ok=True)
+        return path
     base = Path(os.getenv("LOCALAPPDATA") or Path.home() / "AppData" / "Local")
     path = base / APP_NAME
     path.mkdir(parents=True, exist_ok=True)
@@ -230,9 +235,39 @@ def _monitor_window(stop_event: threading.Event, process: subprocess.Popen | Non
         stop_event.wait(2)
 
 
+def _self_test(data_root: Path) -> int:
+    _configure_environment(data_root)
+    _run_migrations()
+    _ensure_desktop_user()
+
+    from fastapi.testclient import TestClient
+    from app.horizon_api import app
+
+    api = TestClient(app)
+    health = api.get("/health")
+    ready = api.get("/ready")
+    briefing = api.get("/v1/horizon/world/briefing", params={"external_id": DESKTOP_USER})
+    if health.status_code != 200:
+        raise RuntimeError(f"health failed: {health.status_code}")
+    if ready.status_code != 200:
+        raise RuntimeError(f"ready failed: {ready.status_code}")
+    if briefing.status_code != 200:
+        raise RuntimeError(f"briefing failed: {briefing.status_code}")
+    if not health.json().get("windows_desktop_runtime_supported"):
+        raise RuntimeError("desktop capability flag missing")
+    return 0
+
+
 def main() -> int:
     data_root = _data_root()
     _configure_environment(data_root)
+
+    if "--self-test" in sys.argv:
+        try:
+            return _self_test(data_root)
+        except Exception as exc:
+            print(f"HORIZON self-test failed: {exc}", file=sys.stderr)
+            return 90
 
     try:
         _run_migrations()
