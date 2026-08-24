@@ -11,6 +11,9 @@ hiddenimports = (
     + collect_submodules("pydantic_settings")
     + collect_submodules("sqlalchemy")
     + collect_submodules("alembic")
+    + collect_submodules("cryptography")
+    + collect_submodules("httpx")
+    + collect_submodules("httpcore")
     + [
         "sqlalchemy.dialects.sqlite",
         "sqlalchemy.dialects.sqlite.pysqlite",
