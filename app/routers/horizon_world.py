@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..db import get_db
@@ -29,4 +29,9 @@ def backfill_fuel_supply_trigger(
     payload: HorizonGdeltFuelSupplyTriggerBackfillRequest,
     db: Session = Depends(get_db),
 ):
-    return HorizonGdeltFuelSupplyTriggerBackfillService(db).backfill(payload)
+    try:
+        return HorizonGdeltFuelSupplyTriggerBackfillService(db).backfill(payload)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(502, str(exc)) from exc
