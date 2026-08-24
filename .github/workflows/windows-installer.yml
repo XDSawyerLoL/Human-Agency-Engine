@@ -51,10 +51,13 @@ jobs:
           $testData = Join-Path $env:RUNNER_TEMP 'horizon-self-test'
           New-Item -ItemType Directory -Force -Path $testData | Out-Null
           $env:HORIZON_DESKTOP_DATA_DIR_OVERRIDE = $testData
-          & '.\dist\HORIZON\HORIZON.exe' --self-test
-          if ($LASTEXITCODE -ne 0) {
-            throw "Packaged HORIZON self-test failed with exit code $LASTEXITCODE"
+          $process = Start-Process -FilePath '.\dist\HORIZON\HORIZON.exe' -ArgumentList '--self-test' -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+            $result = Join-Path $testData 'self-test-result.txt'
+            if (Test-Path $result) { Get-Content $result }
+            throw "Packaged HORIZON self-test failed with exit code $($process.ExitCode)"
           }
+          Get-Content (Join-Path $testData 'self-test-result.txt')
 
       - name: Install Inno Setup
         shell: pwsh
