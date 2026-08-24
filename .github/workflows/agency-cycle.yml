@@ -1,16 +1,10 @@
-name: Agency Cycle
+name: Legacy Agency Cycle (manual only)
 
 on:
-  schedule:
-    - cron: '17 * * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
-
-concurrency:
-  group: human-agency-cycle
-  cancel-in-progress: false
 
 jobs:
   trigger:
@@ -23,7 +17,7 @@ jobs:
         shell: bash
         run: |
           if [ -z "$ENGINE_URL" ] || [ -z "$ENGINE_API_KEY" ]; then
-            echo "Agency cycle not configured yet; skipping cleanly."
+            echo "Legacy Agency endpoint not configured; nothing to run."
             exit 0
           fi
           curl --fail-with-body --silent --show-error \
