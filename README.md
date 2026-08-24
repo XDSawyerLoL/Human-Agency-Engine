@@ -63,6 +63,25 @@ The HORIZON stack already includes:
 
 The repository also contains older Human Agency Engine modules. They remain available for development/history, but the **production HORIZON service uses `app.horizon_api:app`** and intentionally does not mount legacy settlement, delegation, market, allocation or execution routes.
 
+## Zero-cost GitHub-only runtime
+
+Until a permanent server is available, HORIZON can run directly from this public GitHub repository through `.github/workflows/horizon-live.yml`.
+
+When `ENGINE_URL` and `ENGINE_API_KEY` are absent, the workflow automatically uses **GitHub-only fallback mode**:
+
+- one scheduled collection cycle runs every hour at minute 23;
+- the previous SQLite state is restored from the latest Actions artifact;
+- Alembic migrations are applied before collection;
+- the updated state is uploaded as `horizon-github-state`;
+- the predecessor artifact is deleted only after the new state is safely uploaded;
+- only public world-intelligence data belongs in this fallback state.
+
+This provides recurring collection and short-term continuity at zero infrastructure cost, but it is not an always-on API and GitHub scheduling is not guaranteed to be exact.
+
+When a permanent HORIZON endpoint is later configured, the same workflow automatically switches back to remote-watchdog mode. No architecture rewrite is required.
+
+See `docs/GITHUB_ONLY_HORIZON.md` for the runtime and privacy contract.
+
 ## Production on Hostinger
 
 Production is a four-service Docker Compose stack:
