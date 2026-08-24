@@ -47,3 +47,26 @@ HORIZON is designed to cover, independently of UI or provider:
 GDELT and other broad discovery systems create hypotheses, not confirmed facts. Repetition inside one source family cannot promote a hypothesis by itself. Downstream Event Graph edges describe plausible dependencies and never assert causality.
 
 Numeric probability emission stays disabled until empirical calibration gates are satisfied with point-in-time, coverage-aware outcome labels.
+
+## Mechanism Registry
+
+HORIZON keeps an explicit mechanism registry separate from broad event discovery.
+
+A behavior pattern is **not** calibration proof. Each mechanism contract declares:
+
+- trigger event types;
+- outcome signal types;
+- point-in-time trigger replay status;
+- point-in-time outcome replay status;
+- completeness semantics;
+- calibration corpus strategy, when one exists;
+- whether the mechanism is historically calibratable, only a behavioral hypothesis, or merely has a candidate archive not wired yet.
+
+The registry is available at:
+
+`GET /v1/horizon/world/mechanisms`
+
+Current historically replayable mechanisms are regional extreme heat → cooling-load pressure and regional extreme cold → heating-load pressure. Transport mode substitution remains a behavioral hypothesis until independent historical disruption and congestion streams are implemented. Fuel/supply precautionary buying has an official government stockout archive candidate, but HORIZON does not call it calibratable until a valid point-in-time trigger replay also exists.
+
+This registry is intentionally conservative: missing replay capability is represented as missing capability, never inferred from plausibility or source count.
+
