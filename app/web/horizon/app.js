@@ -1,6 +1,7 @@
+const desktopMode = new URLSearchParams(window.location.search).get("desktop") === "1";
 const state = {
   apiKey: sessionStorage.getItem("horizon_api_key") || "",
-  externalId: sessionStorage.getItem("horizon_external_id") || "",
+  externalId: sessionStorage.getItem("horizon_external_id") || (desktopMode ? "desktop-local" : ""),
   briefing: null,
   category: "all",
 };
@@ -229,7 +230,7 @@ async function loadBriefing() {
     const params = new URLSearchParams();
     if (state.externalId) params.set("external_id", state.externalId);
     state.briefing = await apiFetch(`/v1/horizon/world/briefing?${params}`);
-    setConnection(true, "Connecté");
+    setConnection(true, desktopMode ? "Local" : "Connecté");
     render();
     q("#settingsError").textContent = "";
   } catch (error) {
@@ -265,7 +266,18 @@ qa(".category-tab").forEach((button) => {
   });
 });
 
-if (state.apiKey) {
+async function desktopHeartbeat() {
+  if (!desktopMode) return;
+  try {
+    await fetch("/desktop/heartbeat", { method: "POST", cache: "no-store" });
+  } catch (_) {}
+}
+
+if (desktopMode) {
+  desktopHeartbeat();
+  setInterval(desktopHeartbeat, 10000);
+  loadBriefing();
+} else if (state.apiKey) {
   loadBriefing();
 } else {
   openSettings();

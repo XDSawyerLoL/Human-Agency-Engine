@@ -1,0 +1,82 @@
+name: Windows Installer
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'desktop/**'
+      - 'migrations/**'
+      - 'packaging/windows/**'
+      - 'requirements*.txt'
+      - '.github/workflows/windows-installer.yml'
+  workflow_dispatch:
+  push:
+    tags:
+      - 'horizon-desktop-v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Windows build dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-windows.txt
+
+      - name: Compile Python
+        shell: pwsh
+        run: python -m compileall -q app desktop migrations
+
+      - name: Build HORIZON desktop
+        shell: pwsh
+        run: pyinstaller --noconfirm --clean packaging/windows/horizon_windows.spec
+
+      - name: Smoke-test packaged executable
+        shell: pwsh
+        run: |
+          $testData = Join-Path $env:RUNNER_TEMP 'horizon-self-test'
+          New-Item -ItemType Directory -Force -Path $testData | Out-Null
+          $env:HORIZON_DESKTOP_DATA_DIR_OVERRIDE = $testData
+          $process = Start-Process -FilePath '.\dist\HORIZON\HORIZON.exe' -ArgumentList '--self-test' -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+            $result = Join-Path $testData 'self-test-result.txt'
+            if (Test-Path $result) { Get-Content $result }
+            throw "Packaged HORIZON self-test failed with exit code $($process.ExitCode)"
+          }
+          Get-Content (Join-Path $testData 'self-test-result.txt')
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path installer-output | Out-Null
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" 'packaging\windows\HORIZON.iss'
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup failed with exit code $LASTEXITCODE"
+          }
+          Get-Item '.\installer-output\HORIZON-Windows-Setup.exe' | Format-List Name,Length,LastWriteTime
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: HORIZON-Windows-Installer
+          path: installer-output/HORIZON-Windows-Setup.exe
+          if-no-files-found: error
+          retention-days: 30
