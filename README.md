@@ -170,3 +170,17 @@ A production merge is not considered deployable until all four checks pass.
 HORIZON has historically calibratable trigger/outcome mechanisms for regional extreme heat and extreme cold using official Météo-France archives and historical RTE load outcomes. Those mechanisms are useful calibration laboratories, not the scope of the product.
 
 Broader domains are being expanded by adding independent factual/operational sources and timestamped outcome streams rather than merely adding more news feeds. The goal is to measure whether multi-domain convergence actually improves precision and useful lead time.
+
+## Web cockpit
+
+HORIZON now ships its own responsive web interface from the same FastAPI/Hostinger deployment.
+
+- `/` redirects to `/ui/`
+- `/ui/` is the HORIZON predictive cockpit
+- `/v1/horizon/world/briefing` powers the unified world view
+- `/docs` remains the technical API documentation
+
+The cockpit groups weather, natural hazards, social/collective behavior, economy/labor, supply/fuel, energy, geopolitics, public health, cyber/technology, regulation and financial stress on the same epistemic surface. Confirmed events, emerging hypotheses and forecasts are visually separated. Diagnostic scores are never rendered as calibrated probabilities.
+
+The web assets are copied into the existing HORIZON Docker image; no Node build, Vercel deployment or additional paid hosting layer is required.
+
