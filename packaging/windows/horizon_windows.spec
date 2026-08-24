@@ -12,14 +12,14 @@ hiddenimports = (
 )
 
 datas = [
-    ("app/web/horizon", "app/web/horizon"),
-    ("migrations", "migrations"),
-    ("alembic.ini", "."),
+    ("../../app/web/horizon", "app/web/horizon"),
+    ("../../migrations", "migrations"),
+    ("../../alembic.ini", "."),
 ]
 
 a = Analysis(
-    ["desktop/horizon_windows.py"],
-    pathex=["."],
+    ["../../desktop/horizon_windows.py"],
+    pathex=["../.."],
     binaries=[],
     datas=datas,
     hiddenimports=hiddenimports,
