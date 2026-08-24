@@ -28,6 +28,9 @@ def test_mechanism_registry_separates_plausible_behavior_from_historical_calibra
         supply = by_key["supply-risk-to-precautionary-buying-v1"]
         transport = by_key["transit-disruption-to-mode-substitution-v1"]
         fuel_precursor = by_key["fuel-disruption-report-cluster-to-stockout-v1"]
+        labor = by_key["mass-layoff-to-local-labor-pressure-v1"]
+        sanctions = by_key["sanctions-to-supply-price-pressure-v1"]
+        social = by_key["civil-unrest-to-local-activity-disruption-v1"]
 
         assert heat["calibration_readiness"] == "historically_calibratable"
         assert cold["calibration_readiness"] == "historically_calibratable"
@@ -53,6 +56,13 @@ def test_mechanism_registry_separates_plausible_behavior_from_historical_calibra
         assert fuel_precursor["outcome_replay"]["status"] == "implemented"
         assert fuel_precursor["precommit"]["status"] == "required"
         assert fuel_precursor["precommit"]["retrospective_exploration_unlocks_probability_calibration"] is False
+
+        for mechanism in (labor, sanctions, social):
+            assert mechanism["calibration_readiness"] == "behavior_hypothesis_only"
+            assert mechanism["pattern_registered"] is True
+            assert mechanism["trigger_replay"]["status"] == "missing"
+            assert mechanism["outcome_replay"]["status"] == "missing"
+            assert mechanism["diagnostic_confidence_is_probability"] is False
 
         assert set(result["historically_calibratable_event_types"]) == {
             "extreme_heat_region",
@@ -83,7 +93,7 @@ def test_mechanism_registry_endpoint_is_mounted_on_dedicated_horizon_api():
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["engine"] == "horizon-mechanism-registry-v0.1"
-    assert len(body["mechanisms"]) >= 6
+    assert len(body["mechanisms"]) >= 9
     assert body["critical_semantics"]["point_in_time_replay_required"] is True
 
     health = client.get("/health")
