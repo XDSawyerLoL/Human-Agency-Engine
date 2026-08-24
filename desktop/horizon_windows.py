@@ -263,10 +263,13 @@ def main() -> int:
     _configure_environment(data_root)
 
     if "--self-test" in sys.argv:
+        result_file = data_root / "self-test-result.txt"
         try:
-            return _self_test(data_root)
+            code = _self_test(data_root)
+            result_file.write_text("OK\n", encoding="utf-8")
+            return code
         except Exception as exc:
-            print(f"HORIZON self-test failed: {exc}", file=sys.stderr)
+            result_file.write_text(f"FAILED: {type(exc).__name__}: {exc}\n", encoding="utf-8")
             return 90
 
     try:
