@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#071019">
+  <title>HORIZON — Predictive Intelligence</title>
+  <link rel="stylesheet" href="/ui/styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div>
+        <div class="brand-name">HORIZON</div>
+        <div class="brand-sub">Predictive Intelligence</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div id="connectionBadge" class="connection-badge offline"><i></i><span>Non connecté</span></div>
+      <button id="settingsButton" class="icon-button" type="button" aria-label="Connexion et réglages">⚙</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">WORLD ANTICIPATION ENGINE</p>
+        <h1>Voir ce qui arrive<br><span>avant que ce soit évident.</span></h1>
+        <p class="hero-copy">Météo, tensions sociales, économie, énergie, géopolitique et infrastructures sur une seule surface de prévision.</p>
+      </div>
+      <div class="hero-status">
+        <div class="pulse-ring"><div class="pulse-core"></div></div>
+        <div>
+          <strong id="globalStatus">En attente</strong>
+          <span id="globalStatusDetail">Connectez HORIZON pour charger les signaux.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="metric-grid">
+      <article class="metric-card">
+        <span class="metric-label">ÉVÉNEMENTS</span>
+        <strong id="metricEvents">—</strong>
+        <small>confirmés / dérivés</small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">HYPOTHÈSES</span>
+        <strong id="metricHypotheses">—</strong>
+        <small>signaux émergents</small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">PRÉVISIONS</span>
+        <strong id="metricForecasts">—</strong>
+        <small>personnelles actives</small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">DOMAINES</span>
+        <strong id="metricDomains">—</strong>
+        <small>surveillés</small>
+      </article>
+    </section>
+
+    <section class="section-block">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">RADAR GLOBAL</p>
+          <h2>Ce que HORIZON surveille</h2>
+        </div>
+        <button id="refreshButton" class="primary-button" type="button"><span>↻</span> Actualiser</button>
+      </div>
+
+      <div class="category-tabs" role="tablist" aria-label="Filtrer par domaine">
+        <button class="category-tab active" data-category="all" type="button">Tous</button>
+        <button class="category-tab" data-category="weather" type="button">Météo</button>
+        <button class="category-tab" data-category="social" type="button">Social</button>
+        <button class="category-tab" data-category="economy" type="button">Économie</button>
+        <button class="category-tab" data-category="geopolitics" type="button">Géopolitique</button>
+        <button class="category-tab" data-category="infrastructure" type="button">Infra</button>
+      </div>
+
+      <div id="domainGrid" class="domain-grid empty-grid">
+        <div class="empty-state">Aucune donnée chargée.</div>
+      </div>
+    </section>
+
+    <section class="two-column">
+      <div class="section-block panel">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">PULSE</p>
+            <h2>Événements & signaux</h2>
+          </div>
+          <span id="feedCount" class="count-pill">0</span>
+        </div>
+        <div id="feedList" class="feed-list">
+          <div class="empty-state">Le flux apparaîtra ici.</div>
+        </div>
+      </div>
+
+      <div class="section-block panel">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">YOU</p>
+            <h2>Prévisions personnelles</h2>
+          </div>
+          <span class="shield-note">≠ probabilité</span>
+        </div>
+        <div id="forecastList" class="forecast-list">
+          <div class="empty-state">Renseignez votre identifiant HORIZON pour voir les prévisions personnalisées.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">EPISTEMIC STATUS</p>
+          <h2>Ce que le moteur sait vraiment</h2>
+        </div>
+      </div>
+      <div class="truth-grid">
+        <article>
+          <span class="truth-index">01</span>
+          <strong>Fait confirmé</strong>
+          <p>Un événement étayé par une source factuelle ou opérationnelle.</p>
+        </article>
+        <article>
+          <span class="truth-index">02</span>
+          <strong>Hypothèse émergente</strong>
+          <p>Des signaux convergent, mais l’événement n’est pas encore confirmé.</p>
+        </article>
+        <article>
+          <span class="truth-index">03</span>
+          <strong>Prévision</strong>
+          <p>Une conséquence plausible est projetée via un mécanisme explicite.</p>
+        </article>
+        <article>
+          <span class="truth-index">04</span>
+          <strong>Calibration</strong>
+          <p>Les probabilités numériques restent désactivées tant que les preuves empiriques sont insuffisantes.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <aside id="settingsPanel" class="settings-panel" aria-hidden="true">
+    <div class="settings-backdrop" data-close-settings></div>
+    <div class="settings-card">
+      <div class="settings-head">
+        <div>
+          <p class="eyebrow">CONNEXION</p>
+          <h2>Accès HORIZON</h2>
+        </div>
+        <button class="icon-button" data-close-settings type="button">✕</button>
+      </div>
+      <label>
+        <span>Clé API</span>
+        <input id="apiKeyInput" type="password" autocomplete="off" placeholder="X-API-Key">
+        <small>Conservée uniquement dans cet onglet.</small>
+      </label>
+      <label>
+        <span>Identifiant utilisateur</span>
+        <input id="externalIdInput" type="text" autocomplete="off" placeholder="ex. horizon-user">
+        <small>Optionnel. Nécessaire pour les prévisions personnelles.</small>
+      </label>
+      <button id="connectButton" class="primary-button wide" type="button">Charger HORIZON</button>
+      <p id="settingsError" class="settings-error"></p>
+    </div>
+  </aside>
+
+  <template id="domainTemplate">
+    <article class="domain-card">
+      <div class="domain-card-head">
+        <span class="domain-icon"></span>
+        <span class="maturity-badge"></span>
+      </div>
+      <h3></h3>
+      <div class="domain-stats">
+        <span><strong class="domain-events"></strong> événements</span>
+        <span><strong class="domain-hypotheses"></strong> hypothèses</span>
+      </div>
+      <div class="maturity-track"><span></span></div>
+      <div class="domain-foot">
+        <span class="domain-sources"></span>
+        <span class="domain-mechanisms"></span>
+      </div>
+    </article>
+  </template>
+
+  <script src="/ui/app.js" defer></script>
+</body>
+</html>
