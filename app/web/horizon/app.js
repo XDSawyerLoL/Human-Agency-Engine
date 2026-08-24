@@ -147,9 +147,14 @@ function renderFeed() {
     const confirmed = item.kind === "confirmed_event";
     const statusClass = confirmed ? "status-confirmed" : "status-hypothesis";
     const statusText = confirmed ? "Confirmé" : "Hypothèse";
+    const provisional = !confirmed && item.provisional_forecasts?.length
+      ? item.provisional_forecasts[0]
+      : null;
     const detail = confirmed
       ? (item.summary || `Source : ${item.source || "—"}`)
-      : "Épisode détecté par convergence de signaux, non encore confirmé.";
+      : provisional
+        ? `Hypothèse prédictive : ${provisional.predicted_response}`
+        : "Épisode détecté par convergence de signaux, non encore confirmé.";
     return `
       <article class="feed-item">
         <div class="feed-top">
@@ -162,6 +167,7 @@ function renderFeed() {
           <span>${escapeHtml(item.event_type)}</span>
           <span>vu il y a ${relativeTime(item.observed_at)}</span>
           <span>${escapeHtml(item.maturity)}</span>
+          ${provisional ? `<span>${escapeHtml(provisional.hypothesis_band)} · score diagnostic ${Math.round(provisional.provisional_score * 100)}/100</span>` : ""}
         </div>
       </article>`;
   }).join("");
