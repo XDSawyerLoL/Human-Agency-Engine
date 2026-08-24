@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+import os
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
@@ -104,6 +105,16 @@ def horizon_web_root():
     return RedirectResponse(url="/ui/")
 
 
+@app.post("/desktop/heartbeat", include_in_schema=False)
+def horizon_desktop_heartbeat():
+    if os.getenv("HORIZON_DESKTOP_MODE", "").strip().lower() not in {"1", "true", "yes"}:
+        raise HTTPException(404, "desktop runtime not enabled")
+    from .desktop_runtime import touch_heartbeat
+
+    touch_heartbeat()
+    return {"status": "ok", "runtime": "windows_desktop"}
+
+
 def _utc_naive(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value
@@ -128,6 +139,7 @@ def health():
         "multi_domain_discovery_supported": True,
         "social_collective_domain_supported": True,
         "web_cockpit_supported": True,
+        "windows_desktop_runtime_supported": True,
         "permanent_collector_supported": True,
         "calibration_corpus_builder_supported": True,
         "heat_cooling_outcome_supported": True,
