@@ -1,0 +1,28 @@
+{
+  "schema": "evidence-public-snapshot-v1",
+  "engine": "evidence-human-signal-public-v1",
+  "generated_at": null,
+  "runtime_mode": "warming-up",
+  "status": "warming_up",
+  "summary": {
+    "evidence_items_considered": 0,
+    "opportunities_returned": 0,
+    "strong_signals": 0,
+    "emerging_signals": 0,
+    "solution_scans_attempted": 0,
+    "diagnostic_scores_are_probabilities": false,
+    "solution_absence_verified": false,
+    "novelty_verified": false
+  },
+  "opportunities": [],
+  "critical_semantics": {
+    "public_world_evidence_only": true,
+    "personal_data_included": false,
+    "api_key_included": false,
+    "diagnostic_score_is_probability": false,
+    "anomaly_index_is_probability": false,
+    "no_match_means_global_novelty": false,
+    "solution_scan_scope_is_limited": true,
+    "human_validation_required_before_build": true
+  }
+}
