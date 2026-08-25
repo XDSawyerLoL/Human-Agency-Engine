@@ -10,12 +10,29 @@ from typing import Any
 import httpx
 
 from app.db import SessionLocal
+from app.horizon_event_graph_schemas import HorizonEventGraphBuildRequest
+from app.services.evidence_forecast_engine import EvidenceForecastEngine
 from app.services.horizon_briefing import HorizonWorldBriefingService
-from app.services.human_signal_engine import HumanSignalEngine
-from app.services.solution_scan import SolutionScanService
+from app.services.horizon_event_graph import HorizonEventGraphService
 
 
 DEFAULT_OUTPUT = Path("evidence-live.json")
+
+
+def _clean_driver(item: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "type": item.get("type"),
+        "label": item.get("label"),
+        "event_type": item.get("event_type"),
+        "support_score": item.get("support_score"),
+        "support_score_is_probability": False,
+        "relation": item.get("relation"),
+        "causal_proof": False if item.get("type") == "precursor_dependency" else item.get("causal_proof"),
+        "source_classes": list(item.get("source_classes") or []),
+        "fact_status": item.get("fact_status"),
+        "first_observed_at": item.get("first_observed_at"),
+        "last_observed_at": item.get("last_observed_at"),
+    }
 
 
 def _clean_evidence(item: dict[str, Any]) -> dict[str, Any]:
@@ -23,107 +40,54 @@ def _clean_evidence(item: dict[str, Any]) -> dict[str, Any]:
         "kind": item.get("kind"),
         "title": item.get("title"),
         "fact_status": item.get("fact_status"),
-        "source": item.get("source"),
         "source_classes": list(item.get("source_classes") or []),
-        "source_url": item.get("source_url"),
         "observed_at": item.get("observed_at"),
+        "first_observed_at": item.get("first_observed_at"),
+        "corroboration_score": item.get("corroboration_score"),
+        "corroboration_score_is_probability": False,
     }
 
 
-def _clean_match(item: dict[str, Any]) -> dict[str, Any]:
+def sanitize_forecast(item: dict[str, Any]) -> dict[str, Any]:
+    probability = dict(item.get("probability") or {})
     return {
-        "ecosystem": item.get("ecosystem"),
-        "title": item.get("title"),
-        "url": item.get("url"),
-        "published_at": item.get("published_at"),
-        "relevance_score": item.get("relevance_score"),
-        "relevance_score_is_probability": False,
-        "matched_terms": list(item.get("matched_terms") or []),
-        "is_relevant": bool(item.get("is_relevant")),
+        "scenario_key": item.get("scenario_key"),
+        "candidate_id": item.get("candidate_id"),
+        "domain": item.get("domain"),
+        "domain_label": item.get("domain_label"),
+        "event_type": item.get("event_type"),
+        "headline": item.get("headline"),
+        "outcome": item.get("outcome"),
+        "fact_status": item.get("fact_status"),
+        "trajectory": item.get("trajectory"),
+        "probability": {
+            "type": probability.get("type"),
+            "estimate": probability.get("estimate"),
+            "percent": probability.get("percent"),
+            "interval_low": probability.get("interval_low"),
+            "interval_mid": probability.get("interval_mid"),
+            "interval_high": probability.get("interval_high"),
+            "interval_percent": list(probability.get("interval_percent") or []),
+            "method": probability.get("method"),
+            "calibration_status": probability.get("calibration_status"),
+            "empirically_calibrated": bool(probability.get("empirically_calibrated")),
+            "can_be_read_as_empirical_frequency": False,
+            "evidence_quality": probability.get("evidence_quality"),
+        },
+        "time_window": dict(item.get("time_window") or {}),
+        "why_now": item.get("why_now"),
+        "causal_chain": list(item.get("causal_chain") or []),
+        "drivers": [_clean_driver(driver) for driver in item.get("drivers") or []][:8],
+        "watch_next": list(item.get("watch_next") or [])[:6],
+        "probability_up_if": list(item.get("probability_up_if") or [])[:6],
+        "probability_down_if": list(item.get("probability_down_if") or [])[:6],
+        "falsification": item.get("falsification"),
+        "evidence": [_clean_evidence(evidence) for evidence in item.get("evidence") or []][:8],
+        "model_components": dict(item.get("model_components") or {}),
     }
 
 
-def sanitize_solution_scan(scan: dict[str, Any]) -> dict[str, Any]:
-    assessment = scan.get("assessment") or {}
-    return {
-        "status": "scanned",
-        "assessment": {
-            "successful_source_count": assessment.get("successful_source_count"),
-            "minimum_sources_for_gap_assessment": assessment.get("minimum_sources_for_gap_assessment"),
-            "coverage_sufficient_for_gap_assessment": assessment.get("coverage_sufficient_for_gap_assessment"),
-            "relevant_match_count": assessment.get("relevant_match_count"),
-            "ecosystems_with_relevant_matches": list(
-                assessment.get("ecosystems_with_relevant_matches") or []
-            ),
-            "gap_status": assessment.get("gap_status"),
-            "explanation": assessment.get("explanation"),
-            "global_novelty_verified": False,
-            "existing_solution_effectiveness_verified": False,
-        },
-        "sources": [
-            {
-                "source": source.get("source"),
-                "label": source.get("label"),
-                "status": source.get("status"),
-                "result_count": source.get("result_count"),
-            }
-            for source in scan.get("sources") or []
-        ],
-        "matches": [
-            _clean_match(item)
-            for item in scan.get("matches") or []
-            if item.get("is_relevant")
-        ][:8],
-    }
-
-
-def sanitize_opportunity(
-    opportunity: dict[str, Any],
-    *,
-    solution_scan: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    signal = opportunity.get("signal_strength") or {}
-    return {
-        "problem_key": opportunity.get("problem_key"),
-        "domain": opportunity.get("domain"),
-        "domain_label": opportunity.get("domain_label"),
-        "event_type": opportunity.get("event_type"),
-        "problem_statement": opportunity.get("problem_statement"),
-        "signal_strength": {
-            "label": signal.get("label"),
-            "diagnostic_score": signal.get("diagnostic_score"),
-            "diagnostic_score_is_probability": False,
-            "confirmed_evidence_count": signal.get("confirmed_evidence_count"),
-            "emerging_hypothesis_count": signal.get("emerging_hypothesis_count"),
-            "independent_source_keys": list(signal.get("independent_source_keys") or []),
-            "source_diversity_count": signal.get("source_diversity_count"),
-            "persistence_hours": signal.get("persistence_hours"),
-            "domain_maturity": signal.get("domain_maturity"),
-            "max_corroboration_score": signal.get("max_corroboration_score"),
-            "corroboration_score_is_probability": False,
-        },
-        "unresolvedness": {
-            "status": (opportunity.get("unresolvedness") or {}).get("status"),
-            "claim": (opportunity.get("unresolvedness") or {}).get("claim"),
-            "solution_absence_verified": False,
-        },
-        "novelty": {
-            "status": (opportunity.get("novelty") or {}).get("status"),
-            "globally_unique_claim": False,
-            "reason": (opportunity.get("novelty") or {}).get("reason"),
-        },
-        "candidate_action": dict(opportunity.get("candidate_action") or {}),
-        "validation": dict(opportunity.get("validation") or {}),
-        "evidence": [_clean_evidence(item) for item in opportunity.get("evidence") or []][:8],
-        "solution_scan": (
-            sanitize_solution_scan(solution_scan)
-            if solution_scan is not None
-            else {"status": "not_scanned_in_this_cycle"}
-        ),
-    }
-
-
-def _local_opportunities(limit: int) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def _local_forecasts(limit: int) -> dict[str, Any]:
     db = SessionLocal()
     try:
         briefing = HorizonWorldBriefingService(db).snapshot(
@@ -132,33 +96,33 @@ def _local_opportunities(limit: int) -> tuple[dict[str, Any], list[dict[str, Any
             candidate_limit=200,
             forecast_limit=1,
         )
-        result = HumanSignalEngine().analyze(briefing, limit=limit)
-        return result, list(result.get("opportunities") or [])
+        graph_result = HorizonEventGraphService(db).build(
+            HorizonEventGraphBuildRequest(
+                lookback_hours=336,
+                max_events=200,
+                max_candidates=200,
+                max_signals=1200,
+            )
+        )
+        return EvidenceForecastEngine().forecast(
+            briefing,
+            graph=graph_result.get("graph_snapshot") or {},
+            limit=limit,
+        )
     finally:
         db.close()
 
 
-def _remote_opportunities(
-    engine_url: str,
-    api_key: str,
-    limit: int,
-) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    with httpx.Client(timeout=30, follow_redirects=True) as client:
+def _remote_forecasts(engine_url: str, api_key: str, limit: int) -> dict[str, Any]:
+    with httpx.Client(timeout=45, follow_redirects=True) as client:
         response = client.get(
-            f"{engine_url.rstrip('/')}/v1/horizon/world/human-signals/opportunities",
-            params={"limit": limit, "event_limit": 200, "candidate_limit": 200},
-            headers={"X-API-Key": api_key},
-        )
-        response.raise_for_status()
-        result = response.json()
-        return result, list(result.get("opportunities") or [])
-
-
-def _remote_scan(engine_url: str, api_key: str, problem_key: str) -> dict[str, Any]:
-    with httpx.Client(timeout=40, follow_redirects=True) as client:
-        response = client.get(
-            f"{engine_url.rstrip('/')}/v1/horizon/world/human-signals/solution-scan",
-            params={"problem_key": problem_key, "max_results_per_source": 8},
+            f"{engine_url.rstrip('/')}/v1/horizon/world/human-signals/forecasts",
+            params={
+                "limit": limit,
+                "event_limit": 200,
+                "candidate_limit": 200,
+                "lookback_hours": 336,
+            },
             headers={"X-API-Key": api_key},
         )
         response.raise_for_status()
@@ -167,88 +131,76 @@ def _remote_scan(engine_url: str, api_key: str, problem_key: str) -> dict[str, A
 
 def build_snapshot(
     *,
-    opportunity_limit: int = 10,
-    solution_scan_top: int = 3,
+    forecast_limit: int = 10,
     engine_url: str | None = None,
     api_key: str | None = None,
 ) -> dict[str, Any]:
     remote = bool(engine_url and api_key)
     if remote:
-        result, opportunities = _remote_opportunities(engine_url or "", api_key or "", opportunity_limit)
+        result = _remote_forecasts(engine_url or "", api_key or "", forecast_limit)
     else:
-        result, opportunities = _local_opportunities(opportunity_limit)
+        result = _local_forecasts(forecast_limit)
 
-    public_opportunities: list[dict[str, Any]] = []
-    scan_service = SolutionScanService(timeout_seconds=8.0) if not remote else None
-    scans_attempted = 0
-
-    for index, opportunity in enumerate(opportunities):
-        scan: dict[str, Any] | None = None
-        should_scan = index < max(0, solution_scan_top)
-        if should_scan and opportunity.get("problem_key"):
-            scans_attempted += 1
-            try:
-                if remote:
-                    scan = _remote_scan(
-                        engine_url or "",
-                        api_key or "",
-                        str(opportunity["problem_key"]),
-                    )
-                else:
-                    scan = scan_service.scan(  # type: ignore[union-attr]
-                        opportunity,
-                        max_results_per_source=8,
-                    )
-            except Exception:
-                scan = None
-        public_opportunities.append(
-            sanitize_opportunity(opportunity, solution_scan=scan)
-        )
-
+    public_forecasts = [
+        sanitize_forecast(item)
+        for item in result.get("forecasts") or []
+    ]
     summary = dict(result.get("summary") or {})
+    source_families = {
+        source
+        for forecast in public_forecasts
+        for driver in forecast.get("drivers") or []
+        for source in driver.get("source_classes") or []
+    }
+
     return {
-        "schema": "evidence-public-snapshot-v1",
-        "engine": "evidence-human-signal-public-v1",
+        "schema": "evidence-public-snapshot-v2",
+        "engine": "evidence-predictive-public-v0.1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "runtime_mode": "remote-horizon" if remote else "github-only-horizon",
         "status": "live",
         "summary": {
             "evidence_items_considered": summary.get("evidence_items_considered", 0),
-            "opportunities_returned": len(public_opportunities),
-            "strong_signals": summary.get("strong_signals", 0),
-            "emerging_signals": summary.get("emerging_signals", 0),
-            "solution_scans_attempted": scans_attempted,
-            "diagnostic_scores_are_probabilities": False,
-            "solution_absence_verified": False,
-            "novelty_verified": False,
+            "emerging_signals_considered": summary.get("emerging_signals_considered", 0),
+            "predictions_returned": len(public_forecasts),
+            "model_probability_estimates": summary.get("model_probability_estimates", len(public_forecasts)),
+            "empirically_calibrated_predictions": summary.get("empirically_calibrated_predictions", 0),
+            "dependency_edges_considered": summary.get("dependency_edges_considered", 0),
+            "source_families": len(source_families),
+            "numeric_model_estimates_enabled": True,
+            "empirical_probability_calibration_enabled": False,
         },
-        "opportunities": public_opportunities,
+        "forecasts": public_forecasts,
         "critical_semantics": {
             "public_world_evidence_only": True,
             "personal_data_included": False,
             "api_key_included": False,
-            "diagnostic_score_is_probability": False,
-            "anomaly_index_is_probability": False,
-            "no_match_means_global_novelty": False,
-            "solution_scan_scope_is_limited": True,
-            "human_validation_required_before_build": True,
+            "model_probability_is_certainty": False,
+            "model_probability_is_empirical_frequency": False,
+            "empirical_probability_calibration_enabled": False,
+            "unconfirmed_candidates_remain_unconfirmed": True,
+            "dependency_edge_is_causal_proof": False,
+            "forecasts_are_time_bounded": True,
+            "every_forecast_has_falsification_rule": True,
         },
     }
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Publish a sanitized Évidence snapshot")
+    parser = argparse.ArgumentParser(description="Publish a sanitized predictive Évidence snapshot")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
-    parser.add_argument("--opportunity-limit", type=int, default=10)
-    parser.add_argument("--solution-scan-top", type=int, default=3)
+    parser.add_argument("--forecast-limit", type=int, default=None)
+    # Legacy flags remain accepted so older workflow invocations do not break mid-deploy.
+    parser.add_argument("--opportunity-limit", type=int, default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--solution-scan-top", type=int, default=None, help=argparse.SUPPRESS)
     args = parser.parse_args()
 
+    requested_limit = args.forecast_limit or args.opportunity_limit or 10
     output = Path(args.output)
     engine_url = os.getenv("ENGINE_URL") or None
     api_key = os.getenv("ENGINE_API_KEY") or None
     snapshot = build_snapshot(
-        opportunity_limit=max(1, min(args.opportunity_limit, 20)),
-        solution_scan_top=max(0, min(args.solution_scan_top, 5)),
+        forecast_limit=max(1, min(requested_limit, 20)),
         engine_url=engine_url,
         api_key=api_key,
     )
@@ -259,8 +211,8 @@ def main() -> None:
                 "output": str(output),
                 "status": snapshot["status"],
                 "runtime_mode": snapshot["runtime_mode"],
-                "opportunities": len(snapshot["opportunities"]),
-                "scans": snapshot["summary"]["solution_scans_attempted"],
+                "forecasts": len(snapshot["forecasts"]),
+                "calibrated": snapshot["summary"]["empirically_calibrated_predictions"],
             },
             ensure_ascii=False,
         )
