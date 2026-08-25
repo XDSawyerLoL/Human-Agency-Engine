@@ -23,7 +23,6 @@
   };
 
   const $ = (selector) => document.querySelector(selector);
-  const $$ = (selector) => [...document.querySelectorAll(selector)];
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;",
   })[c]);
@@ -66,6 +65,12 @@
       : "ESTIMATION MODÈLE · NON CALIBRÉE";
   }
 
+  function forecastOriginLabel(forecast) {
+    return forecast?.fact_status === "forecast_from_confirmed_event"
+      ? "PRÉCURSEUR CONFIRMÉ"
+      : "SIGNAL ÉMERGENT";
+  }
+
   function formatRelative(dateValue) {
     if (!dateValue) return "date inconnue";
     const date = new Date(dateValue);
@@ -103,10 +108,11 @@
     const drivers = forecast?.drivers || [];
     if (!drivers.length) return "Aucun précurseur supplémentaire n’est publié dans ce snapshot.";
     const precursorCount = drivers.filter((d) => d.type === "precursor_dependency").length;
-    const signal = drivers.find((d) => d.type === "emerging_signal");
-    const support = Math.round((Number(signal?.support_score) || 0) * 100);
-    const families = signal?.source_classes?.length || 0;
-    return `${families} famille${families === 1 ? "" : "s"} de sources · corroboration ${support}/100 · ${precursorCount} précurseur${precursorCount === 1 ? "" : "s"} plausible${precursorCount === 1 ? "" : "s"}.`;
+    const primary = drivers.find((d) => d.type === "emerging_signal" || d.type === "confirmed_precursor");
+    const support = Math.round((Number(primary?.support_score) || 0) * 100);
+    const families = primary?.source_classes?.length || 0;
+    const label = primary?.type === "confirmed_precursor" ? "fiabilité source" : "corroboration";
+    return `${forecastOriginLabel(forecast)} · ${families} famille${families === 1 ? "" : "s"} de sources · ${label} ${support}/100 · ${precursorCount} dépendance${precursorCount === 1 ? "" : "s"} amont plausible${precursorCount === 1 ? "" : "s"}.`;
   }
 
   function terminalLine(kind, message, time = new Date()) {
@@ -133,7 +139,7 @@
       const [low, high] = probabilityInterval(forecast);
       terminalLine(
         "signal",
-        `${forecast.headline || forecast.event_type || "scénario"} → ${p}% [${low}–${high}] · ${forecast?.time_window?.human || "fenêtre inconnue"}.`,
+        `${forecastOriginLabel(forecast)} · ${forecast.headline || forecast.event_type || "scénario"} → ${p}% [${low}–${high}] · ${forecast?.time_window?.human || "fenêtre inconnue"}.`,
         generated,
       );
     });
@@ -149,7 +155,7 @@
     return `
       <article class="top-card" data-scenario="${esc(forecast.scenario_key || "")}">
         <div>
-          <span class="top-card-rank">FORECAST F-01 · ${esc(domainLabels[forecast.domain] || forecast.domain_label || forecast.domain || "domaine")}</span>
+          <span class="top-card-rank">FORECAST F-01 · ${esc(forecastOriginLabel(forecast))} · ${esc(domainLabels[forecast.domain] || forecast.domain_label || forecast.domain || "domaine")}</span>
           <h3>${esc(forecast.headline || forecast.outcome || "Scénario en formation")}</h3>
           <p class="reason">${esc(forecast.why_now || "Aucune explication publiée.")}</p>
           <div class="top-card-action">
@@ -167,18 +173,9 @@
         </div>
       </article>
       <div class="anomaly-grid" style="margin-top:16px">
-        <article class="anomaly-card">
-          <p class="anomaly-domain">CHAÎNE PROJETÉE</p>
-          ${renderChain(forecast)}
-        </article>
-        <article class="anomaly-card">
-          <p class="anomaly-domain">LE SCÉNARIO MONTE SI…</p>
-          ${renderList(forecast.probability_up_if, "Aucun déclencheur haussier publié.")}
-        </article>
-        <article class="anomaly-card">
-          <p class="anomaly-domain">LE SCÉNARIO BAISSE SI…</p>
-          ${renderList(forecast.probability_down_if, "Aucun déclencheur baissier publié.")}
-        </article>
+        <article class="anomaly-card"><p class="anomaly-domain">CHAÎNE PROJETÉE</p>${renderChain(forecast)}</article>
+        <article class="anomaly-card"><p class="anomaly-domain">LE SCÉNARIO MONTE SI…</p>${renderList(forecast.probability_up_if, "Aucun déclencheur haussier publié.")}</article>
+        <article class="anomaly-card"><p class="anomaly-domain">LE SCÉNARIO BAISSE SI…</p>${renderList(forecast.probability_down_if, "Aucun déclencheur baissier publié.")}</article>
       </div>`;
   }
 
@@ -192,11 +189,8 @@
       const cls = probabilityClass(p);
       return `
         <article class="anomaly-card" data-scenario="${esc(forecast.scenario_key || "")}">
-          <div class="anomaly-card-head">
-            <span class="anomaly-rank">F-${String(index + 2).padStart(2, "0")}</span>
-            <span class="gap-badge ${cls}">${esc(trajectoryLabel(forecast.trajectory))}</span>
-          </div>
-          <p class="anomaly-domain">${esc(domainLabels[forecast.domain] || forecast.domain_label || forecast.domain || "Domaine")}</p>
+          <div class="anomaly-card-head"><span class="anomaly-rank">F-${String(index + 2).padStart(2, "0")}</span><span class="gap-badge ${cls}">${esc(trajectoryLabel(forecast.trajectory))}</span></div>
+          <p class="anomaly-domain">${esc(forecastOriginLabel(forecast))} · ${esc(domainLabels[forecast.domain] || forecast.domain_label || forecast.domain || "Domaine")}</p>
           <h3>${esc(forecast.headline || forecast.outcome || "Scénario")}</h3>
           <div class="mini-score"><strong>${p}%</strong><div><span style="width:${p}%"></span></div></div>
           <div class="proof-row">
@@ -204,11 +198,7 @@
             <div><strong>${Number(components.source_diversity || 0)}</strong><span>sources</span></div>
             <div><strong>${Math.round(Number(components.persistence_hours || 0))} h</strong><span>persistance</span></div>
           </div>
-          <div class="card-action">
-            <small>FENÊTRE</small>
-            <strong>${esc(forecast?.time_window?.human || "indéterminée")}</strong>
-            <p>${esc(calibrationLabel(forecast))}</p>
-          </div>
+          <div class="card-action"><small>FENÊTRE</small><strong>${esc(forecast?.time_window?.human || "indéterminée")}</strong><p>${esc(calibrationLabel(forecast))}</p></div>
           <details>
             <summary>Pourquoi maintenant + comment l’invalider ↘</summary>
             <div class="detail-grid">
@@ -223,8 +213,7 @@
   }
 
   function renderSnapshot(snapshot) {
-    const forecasts = [...(snapshot?.forecasts || [])]
-      .sort((a, b) => probabilityPercent(b) - probabilityPercent(a));
+    const forecasts = [...(snapshot?.forecasts || [])].sort((a, b) => probabilityPercent(b) - probabilityPercent(a));
 
     $("#heroAnomalyCount").textContent = forecasts.length;
     $("#metricEvidence").textContent = snapshot?.summary?.evidence_items_considered ?? "—";
@@ -243,9 +232,12 @@
     }
 
     const fieldEmpty = $("#fieldEmpty");
-    if (fieldEmpty) fieldEmpty.hidden = forecasts.length > 0;
+    if (fieldEmpty) {
+      fieldEmpty.hidden = forecasts.length > 0;
+      fieldEmpty.classList.toggle("hidden", forecasts.length > 0);
+    }
     $("#queueStatusText").textContent = forecasts.length ? `${forecasts.length} ACTIVE${forecasts.length > 1 ? "S" : ""}` : "NO FORECAST";
-    $("#queueStatusDot")?.classList.toggle("active", forecasts.length > 0);
+    $("#queueStatusDot")?.classList.toggle("live", forecasts.length > 0);
 
     const top = $("#topAnomaly");
     if (top) {
@@ -264,13 +256,7 @@
       if (!response.ok) throw new Error(`snapshot HTTP ${response.status}`);
       const snapshot = await response.json();
       if (!String(snapshot?.schema || "").startsWith("evidence-public-snapshot-v2")) {
-        renderSnapshot({
-          status: "migrating",
-          generated_at: null,
-          runtime_mode: "predictive-migration",
-          summary: {},
-          forecasts: [],
-        });
+        renderSnapshot({ status: "migrating", generated_at: null, runtime_mode: "predictive-migration", summary: {}, forecasts: [] });
         terminalLine("warn", "Le flux public disponible est encore au format diagnostic v1 ; attente d’un snapshot prédictif v2.");
         return;
       }
@@ -292,10 +278,10 @@
       const run = data?.workflow_runs?.[0];
       if (!run) throw new Error("aucune exécution");
       const good = run.status === "in_progress" || run.conclusion === "success";
-      badge.dataset.state = good ? "live" : "warn";
+      badge.dataset.state = good ? "success" : "failure";
       text.textContent = run.status === "in_progress" ? "cycle en cours" : `${run.conclusion || run.status} · ${formatRelative(run.updated_at)}`;
     } catch (_) {
-      badge.dataset.state = "warn";
+      badge.dataset.state = "failure";
       text.textContent = "heartbeat non vérifié";
     }
   }
@@ -424,9 +410,7 @@
       const y = event.clientY - rect.top;
       selected = nodes.find((n) => Math.hypot(n.x - x, n.y - y) <= n.r * 1.7) || null;
       canvas.style.cursor = selected ? "pointer" : "default";
-      $("#selectedNodeLabel").textContent = selected
-        ? `${selected.forecast.event_type || "scénario"} · ${selected.p}%`
-        : "—";
+      $("#selectedNodeLabel").textContent = selected ? `${selected.forecast.event_type || "scénario"} · ${selected.p}%` : "—";
     };
     canvas.onpointerleave = () => {
       selected = null;
@@ -434,7 +418,8 @@
     };
     canvas.onclick = () => {
       if (!selected) return;
-      const target = document.querySelector(`[data-scenario="${CSS.escape(selected.forecast.scenario_key || "")}"]`);
+      const scenario = selected.forecast.scenario_key || "";
+      const target = [...document.querySelectorAll("[data-scenario]")].find((el) => el.dataset.scenario === scenario);
       target?.scrollIntoView({ behavior: "smooth", block: "center" });
     };
 
@@ -445,9 +430,7 @@
 
   function startUtcClock() {
     const el = $("#utcClock");
-    const tick = () => {
-      if (el) el.textContent = new Date().toLocaleTimeString("fr-FR", { timeZone: "UTC", hour12: false });
-    };
+    const tick = () => { if (el) el.textContent = new Date().toLocaleTimeString("fr-FR", { timeZone: "UTC", hour12: false }); };
     tick(); setInterval(tick, 1000);
   }
 
