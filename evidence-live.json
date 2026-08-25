@@ -1,14 +1,14 @@
 {
   "schema": "evidence-public-snapshot-v1",
   "engine": "evidence-human-signal-public-v1",
-  "generated_at": "2026-08-25T19:54:37.993226+00:00",
+  "generated_at": "2026-08-25T20:56:36.552740+00:00",
   "runtime_mode": "github-only-horizon",
   "status": "live",
   "summary": {
     "evidence_items_considered": 400,
-    "opportunities_returned": 5,
+    "opportunities_returned": 4,
     "strong_signals": 2,
-    "emerging_signals": 3,
+    "emerging_signals": 2,
     "solution_scans_attempted": 3,
     "diagnostic_scores_are_probabilities": false,
     "solution_absence_verified": false,
@@ -20,12 +20,12 @@
       "domain": "supply_fuel",
       "domain_label": "Supply chains & fuel",
       "event_type": "fuel_supply_disruption",
-      "problem_statement": "Repeated or independently supported signals around ‘Ruptures temporaires de SP98 — département 95 (20/105)’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘Ruptures temporaires de SP98 — département 95 (19/105)’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
         "label": "strong_signal",
         "diagnostic_score": 100,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 147,
+        "confirmed_evidence_count": 191,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "fr-fuel-ruptures-live"
@@ -62,12 +62,12 @@
       "evidence": [
         {
           "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP98 — département 95 (20/105)",
+          "title": "Ruptures temporaires de SP98 — département 95 (19/105)",
           "fact_status": "confirmed_or_derived_event",
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T19:05:50.777201"
+          "observed_at": "2026-08-25T20:52:20.298143"
         },
         {
           "kind": "confirmed_event",
@@ -76,7 +76,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T19:05:50.777201"
+          "observed_at": "2026-08-25T20:52:20.298143"
         },
         {
           "kind": "confirmed_event",
@@ -85,16 +85,16 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T19:05:50.777201"
+          "observed_at": "2026-08-25T20:52:20.298143"
         },
         {
           "kind": "confirmed_event",
-          "title": "Ruptures temporaires de E85 — département 95 (8/57)",
+          "title": "Ruptures temporaires de E85 — département 95 (7/57)",
           "fact_status": "confirmed_or_derived_event",
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T19:05:50.777201"
+          "observed_at": "2026-08-25T20:52:20.298143"
         },
         {
           "kind": "confirmed_event",
@@ -103,7 +103,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T19:05:50.777201"
+          "observed_at": "2026-08-25T20:52:20.298143"
         },
         {
           "kind": "confirmed_event",
@@ -112,7 +112,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T19:05:50.777201"
+          "observed_at": "2026-08-25T20:52:20.298143"
         },
         {
           "kind": "confirmed_event",
@@ -121,7 +121,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T19:05:50.777201"
+          "observed_at": "2026-08-25T20:52:20.298143"
         },
         {
           "kind": "confirmed_event",
@@ -130,7 +130,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T19:05:50.777201"
+          "observed_at": "2026-08-25T20:52:20.298143"
         }
       ],
       "solution_scan": {
@@ -278,18 +278,18 @@
       "domain": "transport_mobility",
       "domain_label": "Transport & mobility",
       "event_type": "rail_transport_disruption",
-      "problem_statement": "Repeated or independently supported signals around ‘ICV Retard859805’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘Lille Tourcoing et Lille Hazebrouck Perturbation publiée à 19:16’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
         "label": "strong_signal",
         "diagnostic_score": 100,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 53,
+        "confirmed_evidence_count": 9,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "sncf-service-alerts"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 7.4,
+        "persistence_hours": 12.3,
         "domain_maturity": "live_single_source",
         "max_corroboration_score": 0.0,
         "corroboration_score_is_probability": false
@@ -320,66 +320,57 @@
       "evidence": [
         {
           "kind": "confirmed_event",
-          "title": "ICV Retard859805",
+          "title": "Lille Tourcoing et Lille Hazebrouck Perturbation publiée à 19:16",
           "fact_status": "confirmed_or_derived_event",
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:50:40.544610"
+          "observed_at": "2026-08-25T20:52:37.338929"
         },
         {
           "kind": "confirmed_event",
-          "title": "Wagen nicht am Bahnsteig am Bahnhof Courville",
+          "title": "BESUCHERZAHLEN3",
           "fact_status": "confirmed_or_derived_event",
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:50:40.544610"
+          "observed_at": "2026-08-25T20:52:37.338929"
         },
         {
           "kind": "confirmed_event",
-          "title": "Verkehrsbeeinträchtigungenseit 20: 31 Uhr",
+          "title": "Weitere Informationen:",
           "fact_status": "confirmed_or_derived_event",
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:50:40.544610"
+          "observed_at": "2026-08-25T20:52:37.338929"
         },
         {
           "kind": "confirmed_event",
-          "title": "Indisponibilité d'un matériel : Votre TER du 26/08 sera supprimé.",
+          "title": "Solution de substitution proposée",
           "fact_status": "confirmed_or_derived_event",
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:50:40.544610"
+          "observed_at": "2026-08-25T20:52:37.338929"
         },
         {
           "kind": "confirmed_event",
-          "title": "Der Zug wird gelöscht",
+          "title": "Conditions météorologiques : Votre TER du 26/08 sera supprimé.",
           "fact_status": "confirmed_or_derived_event",
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:50:40.544610"
+          "observed_at": "2026-08-25T20:52:37.338929"
         },
         {
           "kind": "confirmed_event",
-          "title": "Großer Andrang",
+          "title": ":Änderung der Verkaufsbedingungen",
           "fact_status": "confirmed_or_derived_event",
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:50:40.544610"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Verkehr sbeeinträchtigungen",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:50:40.544610"
+          "observed_at": "2026-08-25T20:52:37.338929"
         },
         {
           "kind": "confirmed_event",
@@ -388,7 +379,16 @@
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:50:40.544610"
+          "observed_at": "2026-08-25T20:52:37.338929"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Ihr Zug hat Verspätung.",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T20:52:37.338929"
         }
       ],
       "solution_scan": {
@@ -424,7 +424,7 @@
             "source": "hackernews",
             "label": "Startup / technology community",
             "status": "ok",
-            "result_count": 0
+            "result_count": 1
           },
           {
             "source": "gdelt",
@@ -533,18 +533,18 @@
       "domain": "natural_hazards",
       "domain_label": "Natural hazards",
       "event_type": "wildfire",
-      "problem_statement": "Repeated or independently supported signals around ‘Forest fires in United States’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘Forest fires in Angola’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
         "label": "emerging_signal",
         "diagnostic_score": 59,
         "diagnostic_score_is_probability": false,
         "confirmed_evidence_count": 0,
-        "emerging_hypothesis_count": 183,
+        "emerging_hypothesis_count": 194,
         "independent_source_keys": [
           "official_multilateral"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 5.8,
+        "persistence_hours": 3.0,
         "domain_maturity": "live_multi_source",
         "max_corroboration_score": 0.6733,
         "corroboration_score_is_probability": false
@@ -575,17 +575,6 @@
       "evidence": [
         {
           "kind": "emerging_hypothesis",
-          "title": "Forest fires in United States",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T19:05:27.495623"
-        },
-        {
-          "kind": "emerging_hypothesis",
           "title": "Forest fires in Angola",
           "fact_status": "unconfirmed_emerging_event",
           "source": null,
@@ -593,73 +582,84 @@
             "official_multilateral"
           ],
           "source_url": null,
-          "observed_at": "2026-08-25T19:05:27.495623"
+          "observed_at": "2026-08-25T20:52:03.483953"
         },
         {
           "kind": "emerging_hypothesis",
-          "title": "Forest fires in The Democratic Republic of Congo, Zambia",
+          "title": "Forest fires in Brazil",
           "fact_status": "unconfirmed_emerging_event",
           "source": null,
           "source_classes": [
             "official_multilateral"
           ],
           "source_url": null,
-          "observed_at": "2026-08-25T19:05:27.495623"
+          "observed_at": "2026-08-25T20:52:03.483953"
         },
         {
           "kind": "emerging_hypothesis",
-          "title": "Forest fires in Namibia",
+          "title": "Forest fires in Indonesia",
           "fact_status": "unconfirmed_emerging_event",
           "source": null,
           "source_classes": [
             "official_multilateral"
           ],
           "source_url": null,
-          "observed_at": "2026-08-25T19:05:27.495623"
+          "observed_at": "2026-08-25T20:52:03.483953"
         },
         {
           "kind": "emerging_hypothesis",
-          "title": "Forest fires in United States",
+          "title": "Forest fires in Brazil",
           "fact_status": "unconfirmed_emerging_event",
           "source": null,
           "source_classes": [
             "official_multilateral"
           ],
           "source_url": null,
-          "observed_at": "2026-08-25T19:05:27.495623"
+          "observed_at": "2026-08-25T20:52:03.483953"
         },
         {
           "kind": "emerging_hypothesis",
-          "title": "Forest fires in Angola",
+          "title": "Forest fires in The Democratic Republic of Congo",
           "fact_status": "unconfirmed_emerging_event",
           "source": null,
           "source_classes": [
             "official_multilateral"
           ],
           "source_url": null,
-          "observed_at": "2026-08-25T19:05:27.495623"
+          "observed_at": "2026-08-25T20:52:03.483953"
         },
         {
           "kind": "emerging_hypothesis",
-          "title": "Forest fires in Angola",
+          "title": "Forest fires in Indonesia",
           "fact_status": "unconfirmed_emerging_event",
           "source": null,
           "source_classes": [
             "official_multilateral"
           ],
           "source_url": null,
-          "observed_at": "2026-08-25T19:05:27.495623"
+          "observed_at": "2026-08-25T20:52:03.483953"
         },
         {
           "kind": "emerging_hypothesis",
-          "title": "Forest fires in Canada",
+          "title": "Forest fires in Indonesia",
           "fact_status": "unconfirmed_emerging_event",
           "source": null,
           "source_classes": [
             "official_multilateral"
           ],
           "source_url": null,
-          "observed_at": "2026-08-25T19:05:27.495623"
+          "observed_at": "2026-08-25T20:52:03.483953"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Forest fires in Mozambique",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-25T20:52:03.483953"
         }
       ],
       "solution_scan": {
@@ -810,18 +810,18 @@
       "domain": "natural_hazards",
       "domain_label": "Natural hazards",
       "event_type": "tropical_cyclone",
-      "problem_statement": "Repeated or independently supported signals around ‘Tropical Cyclone SAUDEL-26’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘Tropical Cyclone LALA-26’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
         "label": "emerging_signal",
         "diagnostic_score": 59,
         "diagnostic_score_is_probability": false,
         "confirmed_evidence_count": 0,
-        "emerging_hypothesis_count": 12,
+        "emerging_hypothesis_count": 6,
         "independent_source_keys": [
           "official_multilateral"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 3.9,
+        "persistence_hours": 1.8,
         "domain_maturity": "live_multi_source",
         "max_corroboration_score": 0.6733,
         "corroboration_score_is_probability": false
@@ -845,11 +845,55 @@
       "validation": {
         "hypothesis": "People exposed to repeated tropical cyclone signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
         "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
-        "reject_if": "Reject the opportunity if 10 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
+        "reject_if": "Reject the opportunity if 8 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
         "domain": "natural_hazards",
-        "episode_target": 10
+        "episode_target": 8
       },
       "evidence": [
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Tropical Cyclone LALA-26",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-25T20:52:03.483953"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Tropical Cyclone SAUDEL-26",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-25T20:52:03.483953"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Tropical Cyclone NARRA-26",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-25T20:52:03.483953"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Tropical Cyclone JULIO-26",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-25T20:52:03.483953"
+        },
         {
           "kind": "emerging_hypothesis",
           "title": "Tropical Cyclone SAUDEL-26",
@@ -871,177 +915,6 @@
           ],
           "source_url": null,
           "observed_at": "2026-08-25T19:05:27.495623"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone SAUDEL-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T17:50:55.902338"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone ISELLE-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T17:50:55.902338"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone LALA-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T17:50:55.902338"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone ATSANI-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T15:10:42.061005"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone TWO-C-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T15:10:42.061005"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone LALA-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T15:10:42.061005"
-        }
-      ],
-      "solution_scan": {
-        "status": "not_scanned_in_this_cycle"
-      }
-    },
-    {
-      "problem_key": "natural_hazards:earthquake",
-      "domain": "natural_hazards",
-      "domain_label": "Natural hazards",
-      "event_type": "earthquake",
-      "problem_statement": "Repeated or independently supported signals around ‘Earthquake in Indonesia’ may indicate a recurring human decision, coordination or access problem worth testing.",
-      "signal_strength": {
-        "label": "emerging_signal",
-        "diagnostic_score": 59,
-        "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 0,
-        "emerging_hypothesis_count": 5,
-        "independent_source_keys": [
-          "official_multilateral"
-        ],
-        "source_diversity_count": 1,
-        "persistence_hours": 2.7,
-        "domain_maturity": "live_multi_source",
-        "max_corroboration_score": 0.6733,
-        "corroboration_score_is_probability": false
-      },
-      "unresolvedness": {
-        "status": "needs_solution_scan",
-        "claim": "The engine has evidence of the underlying signal, but it has not yet established that existing solutions fail or that the problem is globally unresolved.",
-        "solution_absence_verified": false
-      },
-      "novelty": {
-        "status": "not_assessed",
-        "globally_unique_claim": false,
-        "reason": "Novelty requires a separate scan of products, public services, research, patents and community work; absence cannot be inferred from the news or event stream."
-      },
-      "candidate_action": {
-        "type": "tool_or_workflow_experiment",
-        "tool_archetype": "local exposure and continuity assistant",
-        "mechanism": "Combine verified hazard signals with exposure, fallback routes and a time-bounded action plan.",
-        "first_build": "Prototype a narrow local exposure and continuity assistant for the earthquake case. It must consume verified HORIZON evidence, expose uncertainty, and produce one measurable next action rather than another feed of alerts."
-      },
-      "validation": {
-        "hypothesis": "People exposed to repeated earthquake signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
-        "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
-        "reject_if": "Reject the opportunity if 7 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
-        "domain": "natural_hazards",
-        "episode_target": 7
-      },
-      "evidence": [
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Earthquake in Indonesia",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T17:50:55.902338"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Earthquake in Tonga Islands Region",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T17:50:55.902338"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Earthquake in Vanuatu Islands Region",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T17:50:55.902338"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Earthquake in Indonesia",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T15:10:42.061005"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Earthquake in Indonesia",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T15:10:42.061005"
         }
       ],
       "solution_scan": {
