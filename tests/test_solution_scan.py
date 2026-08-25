@@ -32,10 +32,28 @@ def test_solution_scan_can_only_claim_candidate_gap_in_scanned_sources():
     )
 
     assert result["successful_source_count"] == 3
+    assert result["coverage_sufficient_for_gap_assessment"] is True
     assert result["relevant_match_count"] == 0
     assert result["gap_status"] == "candidate_gap_in_scanned_sources"
     assert result["global_novelty_verified"] is False
     assert result["existing_solution_effectiveness_verified"] is False
+
+
+def test_solution_scan_refuses_gap_claim_when_source_coverage_is_too_low():
+    result = SolutionScanService.assess(
+        "rail transport disruption",
+        [
+            _source("github"),
+            _source("openalex", status="error"),
+            _source("hackernews", status="error"),
+            _source("gdelt"),
+        ],
+    )
+
+    assert result["successful_source_count"] == 2
+    assert result["coverage_sufficient_for_gap_assessment"] is False
+    assert result["gap_status"] == "insufficient_source_coverage"
+    assert result["global_novelty_verified"] is False
 
 
 def test_solution_scan_detects_related_work_without_calling_it_effective():
