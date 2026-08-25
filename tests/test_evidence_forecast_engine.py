@@ -46,6 +46,40 @@ def _candidate(
     }
 
 
+def _confirmed_event(*, event_id: int, occurred_at: str, high_hours: int = 48) -> dict:
+    return {
+        "kind": "confirmed_event",
+        "id": event_id,
+        "event_type": "rail_transport_disruption",
+        "title": "Perturbation ferroviaire confirmée",
+        "domain": "transport_mobility",
+        "domain_label": "Transport & mobilité",
+        "fact_status": "confirmed_or_derived_event",
+        "source": "sncf",
+        "source_reliability": 0.91,
+        "observed_at": occurred_at,
+        "occurred_at": occurred_at,
+        "predictive_patterns": [
+            {
+                "pattern_key": "confirmed-transport-cascade",
+                "pattern_name": "Transport cascade",
+                "predicted_response": "hausse de la congestion routière et des reports vers des modes alternatifs",
+                "mechanism_chain": [
+                    "perte de capacité ferroviaire",
+                    "substitution de mode",
+                    "pression sur le réseau routier",
+                ],
+                "pattern_confidence": 0.72,
+                "relative_lag_hours": {"low": 0, "high": high_hours},
+                "support_count": 0,
+                "contradiction_count": 0,
+                "formal_probability": False,
+                "calibrated_on_horizon_outcomes": False,
+            }
+        ],
+    }
+
+
 def test_evidence_forecast_engine_ranks_stronger_convergence_higher():
     briefing = {
         "engine": "test-briefing",
@@ -193,3 +227,38 @@ def test_graph_dependency_is_exposed_as_driver_not_causal_proof():
     assert precursor["causal_proof"] is False
     assert precursor["support_score_is_probability"] is False
     assert forecast["model_components"]["graph_dependency_support"] == 0.79
+
+
+def test_confirmed_event_continues_prediction_with_absolute_window():
+    briefing = {
+        "engine": "test-briefing",
+        "events": [_confirmed_event(event_id=30, occurred_at="2026-08-25T12:00:00+00:00")],
+        "hypotheses": [],
+    }
+
+    result = EvidenceForecastEngine().forecast(briefing, graph={}, limit=5)
+    forecast = result["forecasts"][0]
+
+    assert forecast["event_id"] == 30
+    assert forecast["candidate_id"] is None
+    assert forecast["fact_status"] == "forecast_from_confirmed_event"
+    assert forecast["time_window"]["kind"] == "absolute_after_confirmed_precursor"
+    assert forecast["time_window"]["absolute_dates_claimed"] is True
+    assert forecast["time_window"]["expired"] is False
+    assert forecast["model_components"]["precursor_confirmed"] is True
+    assert forecast["probability"]["empirically_calibrated"] is False
+    assert result["summary"]["confirmed_precursor_predictions"] == 1
+
+
+def test_expired_confirmed_event_is_not_published_as_active_prediction():
+    briefing = {
+        "engine": "test-briefing",
+        "events": [_confirmed_event(event_id=31, occurred_at="2020-01-01T00:00:00+00:00", high_hours=24)],
+        "hypotheses": [],
+    }
+
+    result = EvidenceForecastEngine().forecast(briefing, graph={}, limit=5)
+
+    assert result["forecasts"] == []
+    assert result["summary"]["predictions_returned"] == 0
+    assert result["critical_semantics"]["expired_confirmed_scenarios_are_published_as_active"] is False
