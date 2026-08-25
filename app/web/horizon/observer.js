@@ -3,7 +3,10 @@ async function observerApi(path, options = {}) {
   if (state.apiKey) headers["X-API-Key"] = state.apiKey;
   if (options.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
   const response = await fetch(path, { ...options, headers, cache: "no-store" });
-  if (!response.ok) throw new Error(`HORIZON observer (${response.status})`);
+  if (!response.ok) {
+    if (response.status === 401) throw new Error("Clé API requise pour modifier le warehouse.");
+    throw new Error(`HORIZON observer (${response.status})`);
+  }
   return response.json();
 }
 
@@ -87,17 +90,40 @@ function renderKnowledgeResults(payload) {
     </article>`).join("");
 }
 
+function renderWarehouseStatus(payload) {
+  if (!payload) return;
+  q("#warehouseDocuments").textContent = payload.documents ?? 0;
+  q("#warehouseEffects").textContent = payload.effects?.total ?? 0;
+  q("#warehouseAccepted").textContent = payload.effects?.accepted ?? 0;
+  q("#warehouseCandidates").textContent = payload.effects?.candidate ?? 0;
+  const sources = payload.sources?.length ? payload.sources.join(" · ") : "aucune source indexée";
+  const mechanisms = payload.mechanisms?.length ? payload.mechanisms.join(" · ") : "aucun effet structuré";
+  q("#warehouseStatus").textContent = `${sources} — ${mechanisms}. Les documents trouvés ne modifient jamais seuls les prédictions.`;
+}
+
+async function loadWarehouseStatus() {
+  try {
+    const payload = await observerApi("/v1/horizon/behavioral-warehouse/status");
+    renderWarehouseStatus(payload);
+  } catch (error) {
+    q("#warehouseStatus").textContent = error.message;
+  }
+}
+
 async function loadObserverSurfaces() {
   try {
-    const [sources, cameras] = await Promise.all([
+    const [sources, cameras, warehouse] = await Promise.all([
       observerApi("/v1/horizon/behavioral-knowledge/sources"),
       observerApi("/v1/horizon/public-scenes/cameras"),
+      observerApi("/v1/horizon/behavioral-warehouse/status"),
     ]);
     renderKnowledgeSources(sources);
     renderCameras(cameras);
+    renderWarehouseStatus(warehouse);
   } catch (error) {
     q("#behaviorSourceGrid").innerHTML = `<div class="observer-error">${escapeHtml(error.message)}</div>`;
     q("#cameraGrid").innerHTML = `<div class="observer-error">${escapeHtml(error.message)}</div>`;
+    q("#warehouseStatus").textContent = error.message;
   }
 }
 
@@ -126,7 +152,64 @@ async function searchBehavioralKnowledge() {
   }
 }
 
+async function harvestCurrentTopic() {
+  const input = q("#behaviorQueryInput");
+  const button = q("#warehouseHarvestButton");
+  const query = input.value.trim();
+  if (query.length < 3) {
+    q("#warehouseStatus").textContent = "Entrez d'abord un sujet de recherche à indexer.";
+    return;
+  }
+  button.disabled = true;
+  q("#warehouseStatus").textContent = "Indexation et déduplication des références…";
+  try {
+    const result = await observerApi("/v1/horizon/behavioral-warehouse/harvest", {
+      method: "POST",
+      body: JSON.stringify({
+        query,
+        sources: ["openalex", "pubmed"],
+        limit_per_source: 20,
+        open_access_only: false,
+      }),
+    });
+    q("#warehouseStatus").textContent = `${result.documents_created} nouveaux documents · ${result.documents_updated} références déjà connues actualisées.`;
+    await loadWarehouseStatus();
+  } catch (error) {
+    q("#warehouseStatus").textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function bootstrapWarehouse() {
+  const button = q("#warehouseBootstrapButton");
+  button.disabled = true;
+  q("#warehouseStatus").textContent = "Construction du corpus comportemental transversal…";
+  try {
+    const result = await observerApi("/v1/horizon/behavioral-warehouse/bootstrap", {
+      method: "POST",
+      body: JSON.stringify({
+        mechanisms: ["incentive", "habit", "social", "stress", "intention_action", "collective_dynamics"],
+        scenario: "human behavior decision response adaptation",
+        population: "general population",
+        max_queries: 12,
+        limit_per_source: 8,
+        publication_year_from: 1980,
+        open_access_only: false,
+      }),
+    });
+    q("#warehouseStatus").textContent = `${result.queries_executed} requêtes · ${result.documents_created} nouveaux documents · ${result.documents_updated} actualisés.`;
+    await loadWarehouseStatus();
+  } catch (error) {
+    q("#warehouseStatus").textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
 q("#behaviorQueryButton")?.addEventListener("click", searchBehavioralKnowledge);
+q("#warehouseHarvestButton")?.addEventListener("click", harvestCurrentTopic);
+q("#warehouseBootstrapButton")?.addEventListener("click", bootstrapWarehouse);
 q("#behaviorQueryInput")?.addEventListener("keydown", (event) => {
   if (event.key === "Enter") searchBehavioralKnowledge();
 });
