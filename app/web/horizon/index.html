@@ -168,14 +168,33 @@
       <div id="behaviorSourceGrid" class="source-grid">
         <div class="empty-state">Chargement des sources scientifiques…</div>
       </div>
+
+      <div class="warehouse-panel">
+        <div class="warehouse-head">
+          <div>
+            <p class="eyebrow">EVIDENCE WAREHOUSE</p>
+            <h3>Ce qui est réellement mémorisé et validé</h3>
+          </div>
+          <button id="warehouseBootstrapButton" class="secondary-button" type="button">Construire le corpus de base</button>
+        </div>
+        <div class="warehouse-metrics">
+          <article><span>Documents</span><strong id="warehouseDocuments">—</strong></article>
+          <article><span>Effets extraits</span><strong id="warehouseEffects">—</strong></article>
+          <article><span>Acceptés</span><strong id="warehouseAccepted">—</strong></article>
+          <article><span>À revoir</span><strong id="warehouseCandidates">—</strong></article>
+        </div>
+        <div id="warehouseStatus" class="warehouse-status">Le warehouse attend sa première ingestion.</div>
+      </div>
+
       <div class="observer-toolbar" style="margin-top:18px">
         <input id="behaviorQueryInput" class="observer-input" type="search" placeholder="ex. peur, rareté et comportement d'achat sous incertitude">
         <button id="behaviorQueryButton" class="primary-button" type="button">Rechercher</button>
+        <button id="warehouseHarvestButton" class="secondary-button" type="button">Indexer ce sujet</button>
       </div>
       <div id="behaviorKnowledgeResults" class="knowledge-results">
         <div class="empty-state">Interrogez la littérature pour afficher les travaux pertinents.</div>
       </div>
-      <p class="observer-note">Une publication trouvée n’est pas automatiquement une règle comportementale. Les prochaines étapes extraient population, contexte, intervention, résultat, taille d’effet, réplication et incertitude avant de modifier les coefficients du Human Dynamics Engine.</p>
+      <p class="observer-note">Une publication trouvée n’est pas automatiquement une règle comportementale. Le warehouse conserve les documents comme pistes, puis sépare extraction, revue et calibration. Seuls les effets acceptés deviennent éligibles pour l’apprentissage.</p>
     </section>
 
     <section class="section-block">
