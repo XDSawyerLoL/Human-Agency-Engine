@@ -20,6 +20,7 @@ from .security import require_api_key
 from .routers.horizon import router as horizon_router
 from .routers.horizon_backfill import router as horizon_backfill_router
 from .routers.horizon_backtest import router as horizon_backtest_router
+from .routers.horizon_behavioral_knowledge import router as horizon_behavioral_knowledge_router
 from .routers.horizon_calibration import router as horizon_calibration_router
 from .routers.horizon_cascade import router as horizon_cascade_router
 from .routers.horizon_cold import router as horizon_cold_router
@@ -41,6 +42,7 @@ from .routers.horizon_normalizer import router as horizon_normalizer_router
 from .routers.horizon_provisional import router as horizon_provisional_router
 from .routers.horizon_reevaluation import router as horizon_reevaluation_router
 from .routers.horizon_response_library import router as horizon_response_library_router
+from .routers.horizon_scene_analyzer import router as horizon_scene_analyzer_router
 from .routers.horizon_sources import router as horizon_sources_router
 from .routers.horizon_weather_chain import router as horizon_weather_chain_router
 from .routers.horizon_windy import router as horizon_windy_router
@@ -54,13 +56,13 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="HORIZON Predictive Intelligence API",
-    version="1.9.0",
+    version="2.0.0",
     description=(
-        "Dedicated domain-agnostic HORIZON surface for personal world anticipation: "
-        "multi-domain discovery, source intelligence, convergence, Event Graph, collective behavior, "
-        "human-dynamics scenario modeling, personal exposure, forecasting, historical replay, empirical "
-        "calibration and permanent collection. Weather is one evidence domain among many. Legacy "
-        "commerce/delegation/action routes are intentionally not mounted."
+        "Dedicated domain-agnostic HORIZON surface for personal world anticipation: multi-domain discovery, "
+        "source intelligence, convergence, Event Graph, collective behavior, behavioral research retrieval, "
+        "privacy-preserving public-scene analytics, human-dynamics scenario modeling, personal exposure, "
+        "forecasting, historical replay, empirical calibration and permanent collection. Weather is one "
+        "evidence domain among many. Legacy commerce/delegation/action routes are intentionally not mounted."
     ),
 )
 
@@ -91,6 +93,8 @@ HORIZON_ROUTERS = (
     horizon_collector_router,
     horizon_corpus_router,
     horizon_cold_router,
+    horizon_behavioral_knowledge_router,
+    horizon_scene_analyzer_router,
     horizon_human_dynamics_router,
     horizon_world_router,
     horizon_briefing_router,
@@ -141,6 +145,11 @@ def health():
         "mechanism_registry_supported": True,
         "multi_domain_discovery_supported": True,
         "social_collective_domain_supported": True,
+        "behavioral_knowledge_retrieval_supported": True,
+        "behavioral_knowledge_sources": ["openalex", "pubmed", "osf_catalog", "wvs_catalog", "ess_catalog"],
+        "public_scene_analyzer_supported": True,
+        "public_scene_identity_recognition_supported": False,
+        "public_scene_emotion_inference_supported": False,
         "human_dynamics_engine_supported": True,
         "human_dynamics_model_estimates_enabled": True,
         "human_dynamics_empirically_calibrated": False,
