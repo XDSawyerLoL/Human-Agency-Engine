@@ -41,6 +41,7 @@ from app import horizon_convergence_models  # noqa: F401
 from app import horizon_event_graph_models  # noqa: F401
 from app import horizon_collector_models  # noqa: F401
 from app import horizon_corpus_models  # noqa: F401
+from app import horizon_behavioral_warehouse_models  # noqa: F401
 
 config = context.config
 DATABASE_URL = settings.sqlalchemy_database_url
