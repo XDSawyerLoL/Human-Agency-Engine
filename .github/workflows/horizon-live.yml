@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   actions: write
 
 concurrency:
@@ -58,18 +58,15 @@ jobs:
             --data '{"owner_id":"github-watchdog","force_sources":[]}'
 
       - name: Checkout HORIZON
-        if: steps.mode.outputs.mode == 'github-only'
         uses: actions/checkout@v7
 
       - name: Set up Python
-        if: steps.mode.outputs.mode == 'github-only'
         uses: actions/setup-python@v7
         with:
           python-version: '3.12'
           cache: 'pip'
 
       - name: Install HORIZON dependencies
-        if: steps.mode.outputs.mode == 'github-only'
         run: pip install -r requirements.txt
 
       - name: Restore previous GitHub-only state
@@ -117,6 +114,43 @@ jobs:
           HORIZON_COLLECTOR_WINDY_POINTS_JSON: '[]'
         run: python scripts/horizon_github_cycle.py
 
+      - name: Build sanitized Évidence public snapshot
+        env:
+          PYTHONPATH: .
+          DATABASE_URL: sqlite:///./horizon-github.db
+          API_KEY: change-me
+          ENGINE_URL: ${{ secrets.ENGINE_URL }}
+          ENGINE_API_KEY: ${{ secrets.ENGINE_API_KEY }}
+        run: |
+          python scripts/evidence_public_snapshot.py \
+            --output evidence-live.json \
+            --opportunity-limit 10 \
+            --solution-scan-top 3
+          test -s evidence-live.json
+
+      - name: Publish Évidence public live feed
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          api_path="repos/${GITHUB_REPOSITORY}/contents/evidence-live.json"
+          file_sha="$(gh api "${api_path}?ref=evidence-live-data" --jq '.sha' 2>/dev/null || true)"
+          payload="$(base64 -w 0 evidence-live.json)"
+
+          args=(
+            --method PUT
+            "$api_path"
+            -f message="Update Évidence live snapshot"
+            -f content="$payload"
+            -f branch="evidence-live-data"
+          )
+          if [ -n "$file_sha" ]; then
+            args+=( -f sha="$file_sha" )
+          fi
+          gh api "${args[@]}" >/dev/null
+          echo "Published sanitized live snapshot to evidence-live-data."
+
       - name: Validate SQLite state
         if: steps.mode.outputs.mode == 'github-only'
         shell: bash
@@ -133,6 +167,7 @@ jobs:
           path: |
             horizon-github.db
             horizon-github-status.json
+            evidence-live.json
           if-no-files-found: error
           retention-days: 7
           compression-level: 6
