@@ -17,6 +17,7 @@ from app.services.horizon_event_graph import HorizonEventGraphService
 
 
 DEFAULT_OUTPUT = Path("evidence-live.json")
+MAX_HISTORY_POINTS = 48
 
 
 def _clean_driver(item: dict[str, Any]) -> dict[str, Any]:
@@ -53,6 +54,7 @@ def sanitize_forecast(item: dict[str, Any]) -> dict[str, Any]:
     return {
         "scenario_key": item.get("scenario_key"),
         "candidate_id": item.get("candidate_id"),
+        "event_id": item.get("event_id"),
         "domain": item.get("domain"),
         "domain_label": item.get("domain_label"),
         "event_type": item.get("event_type"),
@@ -85,6 +87,89 @@ def sanitize_forecast(item: dict[str, Any]) -> dict[str, Any]:
         "evidence": [_clean_evidence(evidence) for evidence in item.get("evidence") or []][:8],
         "model_components": dict(item.get("model_components") or {}),
     }
+
+
+def _load_snapshot(path: Path | None) -> dict[str, Any]:
+    if path is None or not path.exists() or not path.is_file():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    return payload
+
+
+def _history_point(forecast: dict[str, Any], generated_at: str) -> dict[str, Any]:
+    probability = forecast.get("probability") or {}
+    return {
+        "at": generated_at,
+        "percent": probability.get("percent"),
+        "interval_percent": list(probability.get("interval_percent") or []),
+        "fact_status": forecast.get("fact_status"),
+    }
+
+
+def _attach_probability_history(
+    forecasts: list[dict[str, Any]],
+    *,
+    previous_snapshot: dict[str, Any],
+    generated_at: str,
+) -> None:
+    previous_generated_at = previous_snapshot.get("generated_at")
+    previous_by_key = {
+        str(item.get("scenario_key")): item
+        for item in previous_snapshot.get("forecasts") or []
+        if item.get("scenario_key")
+    }
+
+    for forecast in forecasts:
+        key = str(forecast.get("scenario_key") or "")
+        previous = previous_by_key.get(key)
+        history: list[dict[str, Any]] = []
+        previous_percent: int | float | None = None
+
+        if previous:
+            raw_history = previous.get("probability_history") or []
+            for point in raw_history:
+                if isinstance(point, dict) and point.get("at") and point.get("percent") is not None:
+                    history.append({
+                        "at": point.get("at"),
+                        "percent": point.get("percent"),
+                        "interval_percent": list(point.get("interval_percent") or []),
+                        "fact_status": point.get("fact_status"),
+                    })
+            previous_probability = previous.get("probability") or {}
+            previous_percent = previous_probability.get("percent")
+            if not history and previous_generated_at and previous_percent is not None:
+                history.append({
+                    "at": previous_generated_at,
+                    "percent": previous_percent,
+                    "interval_percent": list(previous_probability.get("interval_percent") or []),
+                    "fact_status": previous.get("fact_status"),
+                })
+
+        current_point = _history_point(forecast, generated_at)
+        if current_point.get("percent") is not None:
+            history.append(current_point)
+        history = history[-MAX_HISTORY_POINTS:]
+        forecast["probability_history"] = history
+
+        current_percent = (forecast.get("probability") or {}).get("percent")
+        if current_percent is None or previous_percent is None:
+            delta = None
+            direction = "new"
+        else:
+            delta = round(float(current_percent) - float(previous_percent), 1)
+            if delta > 1:
+                direction = "rising"
+            elif delta < -1:
+                direction = "falling"
+            else:
+                direction = "stable"
+        forecast["probability_delta_points"] = delta
+        forecast["probability_direction"] = direction
 
 
 def _local_forecasts(limit: int) -> dict[str, Any]:
@@ -134,6 +219,7 @@ def build_snapshot(
     forecast_limit: int = 10,
     engine_url: str | None = None,
     api_key: str | None = None,
+    previous_snapshot: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     remote = bool(engine_url and api_key)
     if remote:
@@ -141,10 +227,13 @@ def build_snapshot(
     else:
         result = _local_forecasts(forecast_limit)
 
-    public_forecasts = [
-        sanitize_forecast(item)
-        for item in result.get("forecasts") or []
-    ]
+    generated_at = datetime.now(timezone.utc).isoformat()
+    public_forecasts = [sanitize_forecast(item) for item in result.get("forecasts") or []]
+    _attach_probability_history(
+        public_forecasts,
+        previous_snapshot=previous_snapshot or {},
+        generated_at=generated_at,
+    )
     summary = dict(result.get("summary") or {})
     source_families = {
         source
@@ -155,18 +244,23 @@ def build_snapshot(
 
     return {
         "schema": "evidence-public-snapshot-v2",
-        "engine": "evidence-predictive-public-v0.1",
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "engine": "evidence-predictive-public-v0.2",
+        "generated_at": generated_at,
         "runtime_mode": "remote-horizon" if remote else "github-only-horizon",
         "status": "live",
         "summary": {
             "evidence_items_considered": summary.get("evidence_items_considered", 0),
+            "confirmed_events_considered": summary.get("confirmed_events_considered", 0),
             "emerging_signals_considered": summary.get("emerging_signals_considered", 0),
             "predictions_returned": len(public_forecasts),
+            "confirmed_precursor_predictions": summary.get("confirmed_precursor_predictions", 0),
+            "emerging_precursor_predictions": summary.get("emerging_precursor_predictions", 0),
             "model_probability_estimates": summary.get("model_probability_estimates", len(public_forecasts)),
             "empirically_calibrated_predictions": summary.get("empirically_calibrated_predictions", 0),
             "dependency_edges_considered": summary.get("dependency_edges_considered", 0),
             "source_families": len(source_families),
+            "probability_history_enabled": True,
+            "probability_history_max_points": MAX_HISTORY_POINTS,
             "numeric_model_estimates_enabled": True,
             "empirical_probability_calibration_enabled": False,
         },
@@ -179,9 +273,11 @@ def build_snapshot(
             "model_probability_is_empirical_frequency": False,
             "empirical_probability_calibration_enabled": False,
             "unconfirmed_candidates_remain_unconfirmed": True,
+            "confirmed_precursor_confirms_outcome": False,
             "dependency_edge_is_causal_proof": False,
             "forecasts_are_time_bounded": True,
             "every_forecast_has_falsification_rule": True,
+            "probability_history_is_model_repricing_history": True,
         },
     }
 
@@ -189,6 +285,7 @@ def build_snapshot(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Publish a sanitized predictive Évidence snapshot")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    parser.add_argument("--previous", default=None)
     parser.add_argument("--forecast-limit", type=int, default=None)
     # Legacy flags remain accepted so older workflow invocations do not break mid-deploy.
     parser.add_argument("--opportunity-limit", type=int, default=None, help=argparse.SUPPRESS)
@@ -197,12 +294,15 @@ def main() -> None:
 
     requested_limit = args.forecast_limit or args.opportunity_limit or 10
     output = Path(args.output)
+    previous_path = Path(args.previous) if args.previous else (output if output.exists() else None)
+    previous_snapshot = _load_snapshot(previous_path)
     engine_url = os.getenv("ENGINE_URL") or None
     api_key = os.getenv("ENGINE_API_KEY") or None
     snapshot = build_snapshot(
         forecast_limit=max(1, min(requested_limit, 20)),
         engine_url=engine_url,
         api_key=api_key,
+        previous_snapshot=previous_snapshot,
     )
     output.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
     print(
@@ -212,6 +312,7 @@ def main() -> None:
                 "status": snapshot["status"],
                 "runtime_mode": snapshot["runtime_mode"],
                 "forecasts": len(snapshot["forecasts"]),
+                "history_enabled": snapshot["summary"]["probability_history_enabled"],
                 "calibrated": snapshot["summary"]["empirically_calibrated_predictions"],
             },
             ensure_ascii=False,
