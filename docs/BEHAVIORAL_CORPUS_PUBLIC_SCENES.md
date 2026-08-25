@@ -26,7 +26,7 @@ The adapter retrieves metadata, abstracts when available, open-access status, to
 Environment variable:
 
 ```text
-OPENALEX_API_KEY=<optional/free key depending on service policy>
+OPENALEX_API_KEY=<optional key>
 ```
 
 #### PubMed / NCBI Entrez
@@ -135,7 +135,7 @@ HORIZON Public Scene Analyzer does not support:
 
 HORIZON only displays cameras explicitly configured as authorized for display. Camera discovery is not an internet-wide CCTV scanner.
 
-Configure a JSON list in:
+Manual sources can be configured in:
 
 ```text
 HORIZON_PUBLIC_CAMERAS_JSON
@@ -157,6 +157,7 @@ Example:
     "longitude": 2.0,
     "display_authorized": true,
     "analysis_authorized": false,
+    "attribution": "Provider attribution",
     "terms_reference": "https://provider.example/terms"
   }
 ]
@@ -164,23 +165,33 @@ Example:
 
 A stream may be display-authorized but not analysis-authorized. HORIZON keeps those two permissions separate.
 
-### Windy Webcams
+### Windy Webcams — active keyed adapter
 
-The cockpit is prepared for a future keyed Windy Webcams adapter. Windy exposes public webcam metadata, previews and timelapses through its Webcams API and supports link/embed use on its free tier subject to its terms.
+HORIZON can now query Windy Webcams API V3 directly for public webcam metadata, preview images and embeddable players.
 
-Reserved environment variable:
+Configure:
 
 ```text
 HORIZON_WINDY_WEBCAMS_API_KEY=<key>
+HORIZON_PUBLIC_CAMERA_COUNTRY=FR
 ```
 
-The adapter should refresh tokenized preview URLs at page load rather than persist short-lived URLs.
+The API route also accepts optional `country`, `nearby_lat`, `nearby_lon`, `radius_km` and `limit` filters:
+
+```text
+GET /v1/horizon/public-scenes/cameras?country=FR&limit=12
+GET /v1/horizon/public-scenes/cameras?nearby_lat=48.8566&nearby_lon=2.3522&radius_km=30
+```
+
+Windy preview URLs are tokenized and short-lived, so the adapter refreshes the catalogue on each cockpit load rather than persisting image URLs. Windy cameras are always registered as `display_authorized=true` and `analysis_authorized=false` by default: permission to display/link/embed is not silently interpreted as permission to run HORIZON's vision analytics over the stream.
+
+The cockpit preserves the required provider attribution and links images back to the Windy webcam detail page.
 
 ---
 
 ## Vision edge adapter — next step
 
-The backend V0.1 analyzes anonymous detections, not raw video. The next component should run close to the camera or in the browser/edge process:
+The backend V0.2 analyzes anonymous detections, not raw video. The next component should run close to a camera for which analysis is independently authorized:
 
 ```text
 authorized camera frame
