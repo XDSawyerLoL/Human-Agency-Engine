@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/horizon-live.yml'
       - 'scripts/evidence_public_snapshot.py'
+      - 'app/services/evidence_forecast_engine.py'
       - 'app/services/human_signal_engine.py'
       - 'app/services/solution_scan.py'
       - 'app/services/horizon_*.py'
@@ -122,7 +123,7 @@ jobs:
           HORIZON_COLLECTOR_WINDY_POINTS_JSON: '[]'
         run: python scripts/horizon_github_cycle.py
 
-      - name: Build sanitized Évidence public snapshot
+      - name: Build sanitized Évidence predictive snapshot
         env:
           PYTHONPATH: .
           DATABASE_URL: sqlite:///./horizon-github.db
@@ -132,8 +133,7 @@ jobs:
         run: |
           python scripts/evidence_public_snapshot.py \
             --output evidence-live.json \
-            --opportunity-limit 10 \
-            --solution-scan-top 3
+            --forecast-limit 10
           test -s evidence-live.json
 
       - name: Publish Évidence public live feed
@@ -149,7 +149,7 @@ jobs:
           args=(
             --method PUT
             "$api_path"
-            -f message="Update Évidence live snapshot"
+            -f message="Update Évidence predictive live snapshot"
             -f content="$payload"
             -f branch="evidence-live-data"
           )
@@ -157,7 +157,7 @@ jobs:
             args+=( -f sha="$file_sha" )
           fi
           gh api "${args[@]}" >/dev/null
-          echo "Published sanitized live snapshot to evidence-live-data."
+          echo "Published sanitized predictive snapshot to evidence-live-data."
 
       - name: Validate SQLite state
         if: steps.mode.outputs.mode == 'github-only'
