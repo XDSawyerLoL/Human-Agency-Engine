@@ -1,7 +1,7 @@
 {
   "schema": "evidence-public-snapshot-v1",
   "engine": "evidence-human-signal-public-v1",
-  "generated_at": "2026-08-25T16:09:37.846584+00:00",
+  "generated_at": "2026-08-25T17:05:30.215067+00:00",
   "runtime_mode": "github-only-horizon",
   "status": "live",
   "summary": {
@@ -25,7 +25,7 @@
         "label": "strong_signal",
         "diagnostic_score": 100,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 163,
+        "confirmed_evidence_count": 156,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "fr-fuel-ruptures-live"
@@ -67,7 +67,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T16:06:21.131254"
+          "observed_at": "2026-08-25T17:01:52.955435"
         },
         {
           "kind": "confirmed_event",
@@ -76,7 +76,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T16:06:21.131254"
+          "observed_at": "2026-08-25T17:01:52.955435"
         },
         {
           "kind": "confirmed_event",
@@ -85,7 +85,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T16:06:21.131254"
+          "observed_at": "2026-08-25T17:01:52.955435"
         },
         {
           "kind": "confirmed_event",
@@ -94,7 +94,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T16:06:21.131254"
+          "observed_at": "2026-08-25T17:01:52.955435"
         },
         {
           "kind": "confirmed_event",
@@ -103,7 +103,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T16:06:21.131254"
+          "observed_at": "2026-08-25T17:01:52.955435"
         },
         {
           "kind": "confirmed_event",
@@ -112,7 +112,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T16:06:21.131254"
+          "observed_at": "2026-08-25T17:01:52.955435"
         },
         {
           "kind": "confirmed_event",
@@ -121,7 +121,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T16:06:21.131254"
+          "observed_at": "2026-08-25T17:01:52.955435"
         },
         {
           "kind": "confirmed_event",
@@ -130,7 +130,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T16:06:21.131254"
+          "observed_at": "2026-08-25T17:01:52.955435"
         }
       ],
       "solution_scan": {
@@ -283,13 +283,13 @@
         "label": "strong_signal",
         "diagnostic_score": 100,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 37,
+        "confirmed_evidence_count": 44,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "sncf-service-alerts"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 0.9,
+        "persistence_hours": 1.0,
         "domain_maturity": "live_single_source",
         "max_corroboration_score": 0.0,
         "corroboration_score_is_probability": false
@@ -325,7 +325,16 @@
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T16:06:28.161002"
+          "observed_at": "2026-08-25T17:02:36.024094"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Ihr Zug hat Verspätung.",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T17:02:36.024094"
         },
         {
           "kind": "confirmed_event",
@@ -334,7 +343,43 @@
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T16:06:28.161002"
+          "observed_at": "2026-08-25T17:02:36.024094"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Unfall mit Personenschadenin Monaco: Der Vorfall wurde um 18:45 Uhr beendet",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T17:02:36.024094"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Conditions météorologiques : Votre TER du 26/08 sera supprimé.",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T17:02:36.024094"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Ihr Zug hat Verspätung.",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T17:02:36.024094"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "🟢Dienstag, 25. August, um18:40 Uhr: Der Zwischenfall zwischen Strasbourg und Sélestat ist beendet.\n\n⌛Bis 20:30 Uhr ist weiterhin mit Verspätungen zu rechnen.\n\n📲Infos auf Ihren üblichen Kanälen.",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T17:02:36.024094"
         },
         {
           "kind": "confirmed_event",
@@ -343,52 +388,7 @@
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T16:06:28.161002"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "ICV Retard857109",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T16:06:28.161002"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T16:06:28.161002"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Lorraine ➡️ Reprise progressive de la circulation.",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T16:06:28.161002"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Witterungsbedingungenin Arles: Der Vorfall war um 17: 30 Uhr beendet.",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T16:06:28.161002"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T16:06:28.161002"
+          "observed_at": "2026-08-25T17:02:36.024094"
         }
       ],
       "solution_scan": {
