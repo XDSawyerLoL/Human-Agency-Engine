@@ -27,6 +27,10 @@ def world_briefing(
     )
 
 
+from .horizon_human_signals import router as human_signal_router  # noqa: E402
+
+router.include_router(human_signal_router)
+
 from .agency import router as agency_router  # noqa: E402
 
 agency_router.include_router(router)
