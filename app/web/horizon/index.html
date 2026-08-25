@@ -7,6 +7,7 @@
   <title>ÉVIDENCE — Human Signal Engine</title>
   <link rel="stylesheet" href="/ui/styles.css">
   <link rel="stylesheet" href="/ui/evidence.css">
+  <link rel="stylesheet" href="/ui/observer.css">
 </head>
 <body>
   <div class="ambient ambient-a"></div>
@@ -134,6 +135,50 @@
     </section>
 
     <section class="section-block">
+      <div class="section-heading evidence-heading">
+        <div class="evidence-heading-copy">
+          <p class="eyebrow">PUBLIC REALITY LAB</p>
+          <h2>Observer les comportements du monde réel</h2>
+          <p class="observer-intro">Webcams publiques explicitement autorisées à l’intégration et métriques de scène anonymes : densité, flux, immobilité, regroupement, temps de présence et motifs de congestion. Aucun visage, aucune identité et aucune inférence d’émotion.</p>
+        </div>
+        <div class="opportunity-summary">
+          <strong id="cameraCount">0</strong>
+          <span>caméras autorisées</span>
+        </div>
+      </div>
+      <div id="cameraGrid" class="camera-grid">
+        <div class="empty-state">Chargement du registre de webcams publiques…</div>
+      </div>
+      <div class="privacy-strip">
+        <span>pas de reconnaissance faciale</span>
+        <span>pas de ré-identification</span>
+        <span>pas d’émotion faciale</span>
+        <span>agrégats de scène seulement</span>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-heading evidence-heading">
+        <div class="evidence-heading-copy">
+          <p class="eyebrow">BEHAVIORAL LIBRARY</p>
+          <h2>Archives scientifiques du comportement humain</h2>
+          <p class="observer-intro">HORIZON interroge les archives scientifiques au lieu de transformer une intuition en vérité. La première couche active couvre OpenAlex et PubMed ; OSF, WVS et ESS sont catalogués pour ingestion contrôlée selon leurs licences.</p>
+        </div>
+      </div>
+      <div id="behaviorSourceGrid" class="source-grid">
+        <div class="empty-state">Chargement des sources scientifiques…</div>
+      </div>
+      <div class="observer-toolbar" style="margin-top:18px">
+        <input id="behaviorQueryInput" class="observer-input" type="search" placeholder="ex. peur, rareté et comportement d'achat sous incertitude">
+        <button id="behaviorQueryButton" class="primary-button" type="button">Rechercher</button>
+      </div>
+      <div id="behaviorKnowledgeResults" class="knowledge-results">
+        <div class="empty-state">Interrogez la littérature pour afficher les travaux pertinents.</div>
+      </div>
+      <p class="observer-note">Une publication trouvée n’est pas automatiquement une règle comportementale. Les prochaines étapes extraient population, contexte, intervention, résultat, taille d’effet, réplication et incertitude avant de modifier les coefficients du Human Dynamics Engine.</p>
+    </section>
+
+    <section class="section-block">
       <div class="section-heading">
         <div>
           <p class="eyebrow">EPISTEMIC STATUS</p>
@@ -211,5 +256,6 @@
 
   <script src="/ui/app.js" defer></script>
   <script src="/ui/evidence.js" defer></script>
+  <script src="/ui/observer.js" defer></script>
 </body>
 </html>
