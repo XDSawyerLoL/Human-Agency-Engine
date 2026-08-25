@@ -8,7 +8,7 @@ from pydantic import ValidationError
 from app.horizon_behavioral_knowledge_schemas import BehavioralKnowledgeSearchRequest
 from app.horizon_scene_schemas import SceneDetection, SceneObservation
 from app.services.horizon_behavioral_knowledge import BehavioralKnowledgeService
-from app.services.horizon_scene_analyzer import PublicSceneAnalyzer
+from app.services.horizon_scene_analyzer import PublicSceneAnalyzer, _windy_camera
 
 
 def test_behavioral_source_catalog_separates_runtime_and_licensed_archives():
@@ -104,6 +104,7 @@ def test_scene_schema_forbids_biometric_fields():
 
 
 def test_camera_registry_only_returns_explicitly_authorized_entries(monkeypatch):
+    monkeypatch.delenv("HORIZON_WINDY_WEBCAMS_API_KEY", raising=False)
     monkeypatch.setenv(
         "HORIZON_PUBLIC_CAMERAS_JSON",
         """[
@@ -133,3 +134,38 @@ def test_camera_registry_only_returns_explicitly_authorized_entries(monkeypatch)
 
     assert registry["configured_camera_count"] == 1
     assert registry["cameras"][0]["camera_id"] == "allowed"
+
+
+def test_windy_camera_mapping_never_grants_analysis_permission():
+    camera = _windy_camera(
+        {
+            "webcamId": 1358084658,
+            "status": "active",
+            "title": "Public square",
+            "images": {
+                "current": {
+                    "preview": "https://images.windy.example/tokenized-preview.jpg"
+                }
+            },
+            "location": {
+                "city": "Paris",
+                "region": "Île-de-France",
+                "country": "France",
+                "latitude": 48.8566,
+                "longitude": 2.3522,
+            },
+            "player": {
+                "live": "https://webcams.windy.example/embed/live/1358084658"
+            },
+            "urls": {
+                "detail": "https://www.windy.com/webcams/1358084658"
+            },
+        }
+    )
+
+    assert camera is not None
+    assert camera.camera_id == "windy:1358084658"
+    assert camera.display_authorized is True
+    assert camera.analysis_authorized is False
+    assert camera.attribution == "Webcams provided by Windy.com"
+    assert camera.preview_url.endswith("tokenized-preview.jpg")
