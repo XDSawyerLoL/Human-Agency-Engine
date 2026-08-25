@@ -1,7 +1,7 @@
 {
   "schema": "evidence-public-snapshot-v1",
   "engine": "evidence-human-signal-public-v1",
-  "generated_at": "2026-08-25T13:23:13.185241+00:00",
+  "generated_at": "2026-08-25T14:14:22.449978+00:00",
   "runtime_mode": "github-only-horizon",
   "status": "live",
   "summary": {
@@ -20,12 +20,12 @@
       "domain": "supply_fuel",
       "domain_label": "Supply chains & fuel",
       "event_type": "fuel_supply_disruption",
-      "problem_statement": "Repeated or independently supported signals around ‘Ruptures temporaires de SP98 — département 95 (20/103)’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘Ruptures temporaires de SP98 — département 95 (20/104)’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
         "label": "strong_signal",
         "diagnostic_score": 100,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 156,
+        "confirmed_evidence_count": 167,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "fr-fuel-ruptures-live"
@@ -62,12 +62,12 @@
       "evidence": [
         {
           "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP98 — département 95 (20/103)",
+          "title": "Ruptures temporaires de SP98 — département 95 (20/104)",
           "fact_status": "confirmed_or_derived_event",
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T13:16:25.224502"
+          "observed_at": "2026-08-25T14:11:32.384957"
         },
         {
           "kind": "confirmed_event",
@@ -76,7 +76,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T13:16:25.224502"
+          "observed_at": "2026-08-25T14:11:32.384957"
         },
         {
           "kind": "confirmed_event",
@@ -85,34 +85,34 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T13:16:25.224502"
+          "observed_at": "2026-08-25T14:11:32.384957"
         },
         {
           "kind": "confirmed_event",
-          "title": "Ruptures temporaires de E85 — département 95 (7/54)",
+          "title": "Ruptures temporaires de E85 — département 95 (7/55)",
           "fact_status": "confirmed_or_derived_event",
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T13:16:25.224502"
+          "observed_at": "2026-08-25T14:11:32.384957"
         },
         {
           "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP98 — département 94 (13/76)",
+          "title": "Ruptures temporaires de SP98 — département 94 (11/75)",
           "fact_status": "confirmed_or_derived_event",
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T13:16:25.224502"
+          "observed_at": "2026-08-25T14:11:32.384957"
         },
         {
           "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP95 — département 94 (6/17)",
+          "title": "Ruptures temporaires de SP95 — département 94 (7/18)",
           "fact_status": "confirmed_or_derived_event",
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T13:16:25.224502"
+          "observed_at": "2026-08-25T14:11:32.384957"
         },
         {
           "kind": "confirmed_event",
@@ -121,7 +121,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T13:16:25.224502"
+          "observed_at": "2026-08-25T14:11:32.384957"
         },
         {
           "kind": "confirmed_event",
@@ -130,7 +130,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T13:16:25.224502"
+          "observed_at": "2026-08-25T14:11:32.384957"
         }
       ],
       "solution_scan": {
@@ -278,18 +278,18 @@
       "domain": "transport_mobility",
       "domain_label": "Transport & mobility",
       "event_type": "rail_transport_disruption",
-      "problem_statement": "Repeated or independently supported signals around ‘Weitere Informationen:’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘Perturbation - Retard’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
         "label": "strong_signal",
         "diagnostic_score": 100,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 44,
+        "confirmed_evidence_count": 33,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "sncf-service-alerts"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 2.0,
+        "persistence_hours": 0.9,
         "domain_maturity": "live_single_source",
         "max_corroboration_score": 0.0,
         "corroboration_score_is_probability": false
@@ -320,21 +320,66 @@
       "evidence": [
         {
           "kind": "confirmed_event",
+          "title": "Perturbation - Retard",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T14:11:39.122190"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Perturbation publiée à 15:52",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T14:11:39.122190"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Episode orageux",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T14:11:39.122190"
+        },
+        {
+          "kind": "confirmed_event",
           "title": "Weitere Informationen:",
           "fact_status": "confirmed_or_derived_event",
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T13:16:31.624575"
+          "observed_at": "2026-08-25T14:11:39.122190"
         },
         {
           "kind": "confirmed_event",
-          "title": "Ihr Zug hat Verspätung",
+          "title": "Ihr Zug hat Verspätung.",
           "fact_status": "confirmed_or_derived_event",
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T13:16:31.624575"
+          "observed_at": "2026-08-25T14:11:39.122190"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Fin d'incident",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T14:11:39.122190"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Motif de la suppression",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T14:11:39.122190"
         },
         {
           "kind": "confirmed_event",
@@ -343,52 +388,7 @@
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T13:16:31.624575"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Verkehr sbehinderungen",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T13:16:31.624575"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Perturbation publiée à 15:11",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T13:16:31.624575"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T13:16:31.624575"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Wagen nicht am Bahnsteig am Bahnhof Courville",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T13:16:31.624575"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "AFFLUENCE3",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T13:16:31.624575"
+          "observed_at": "2026-08-25T14:11:39.122190"
         }
       ],
       "solution_scan": {
@@ -424,7 +424,7 @@
             "source": "hackernews",
             "label": "Startup / technology community",
             "status": "ok",
-            "result_count": 1
+            "result_count": 0
           },
           {
             "source": "gdelt",
