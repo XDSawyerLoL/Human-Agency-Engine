@@ -1,14 +1,14 @@
 {
   "schema": "evidence-public-snapshot-v1",
   "engine": "evidence-human-signal-public-v1",
-  "generated_at": "2026-08-25T21:54:58.679975+00:00",
+  "generated_at": "2026-08-25T22:55:56.862466+00:00",
   "runtime_mode": "github-only-horizon",
   "status": "live",
   "summary": {
     "evidence_items_considered": 400,
     "opportunities_returned": 5,
-    "strong_signals": 1,
-    "emerging_signals": 3,
+    "strong_signals": 2,
+    "emerging_signals": 2,
     "solution_scans_attempted": 3,
     "diagnostic_scores_are_probabilities": false,
     "solution_absence_verified": false,
@@ -25,7 +25,7 @@
         "label": "strong_signal",
         "diagnostic_score": 100,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 198,
+        "confirmed_evidence_count": 181,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "fr-fuel-ruptures-live"
@@ -67,7 +67,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T21:50:44.923475"
+          "observed_at": "2026-08-25T22:50:17.845032"
         },
         {
           "kind": "confirmed_event",
@@ -76,7 +76,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T21:50:44.923475"
+          "observed_at": "2026-08-25T22:50:17.845032"
         },
         {
           "kind": "confirmed_event",
@@ -85,7 +85,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T21:50:44.923475"
+          "observed_at": "2026-08-25T22:50:17.845032"
         },
         {
           "kind": "confirmed_event",
@@ -94,16 +94,16 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T21:50:44.923475"
+          "observed_at": "2026-08-25T22:50:17.845032"
         },
         {
           "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP98 — département 94 (13/76)",
+          "title": "Ruptures temporaires de SP98 — département 94 (13/77)",
           "fact_status": "confirmed_or_derived_event",
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T21:50:44.923475"
+          "observed_at": "2026-08-25T22:50:17.845032"
         },
         {
           "kind": "confirmed_event",
@@ -112,7 +112,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T21:50:44.923475"
+          "observed_at": "2026-08-25T22:50:17.845032"
         },
         {
           "kind": "confirmed_event",
@@ -121,7 +121,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T21:50:44.923475"
+          "observed_at": "2026-08-25T22:50:17.845032"
         },
         {
           "kind": "confirmed_event",
@@ -130,7 +130,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T21:50:44.923475"
+          "observed_at": "2026-08-25T22:50:17.845032"
         }
       ],
       "solution_scan": {
@@ -278,18 +278,18 @@
       "domain": "transport_mobility",
       "domain_label": "Transport & mobility",
       "event_type": "rail_transport_disruption",
-      "problem_statement": "Repeated or independently supported signals around ‘Weitere Informationen:’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘Conditions météorologiques : Votre TER du 26/08 sera supprimé.’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
-        "label": "emerging_signal",
-        "diagnostic_score": 61,
+        "label": "strong_signal",
+        "diagnostic_score": 100,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 2,
+        "confirmed_evidence_count": 19,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "sncf-service-alerts"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 9.8,
+        "persistence_hours": 13.0,
         "domain_maturity": "live_single_source",
         "max_corroboration_score": 0.0,
         "corroboration_score_is_probability": false
@@ -313,11 +313,65 @@
       "validation": {
         "hypothesis": "People exposed to repeated rail transport disruption signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
         "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
-        "reject_if": "Reject the opportunity if 4 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
+        "reject_if": "Reject the opportunity if 10 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
         "domain": "transport_mobility",
-        "episode_target": 4
+        "episode_target": 10
       },
       "evidence": [
+        {
+          "kind": "confirmed_event",
+          "title": "Conditions météorologiques : Votre TER du 26/08 sera supprimé.",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T22:50:43.052263"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Voitures hors quai:",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T22:50:43.052263"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Voitures hors quai:",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T22:50:43.052263"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Zwischenfall bei der Zugvorbereitung",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T22:50:43.052263"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Défaillance de matériel : Votre TER du 26/08 sera supprimé.",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T22:50:43.052263"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Indisponibilité d'un matériel : Votre TER du 26/08 sera supprimé.",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T22:50:43.052263"
+        },
         {
           "kind": "confirmed_event",
           "title": "Weitere Informationen:",
@@ -325,16 +379,16 @@
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T21:51:06.991144"
+          "observed_at": "2026-08-25T22:50:43.052263"
         },
         {
           "kind": "confirmed_event",
-          "title": "Verkehrsbeeinträchtigungenseit 22: 35 Uhr",
+          "title": "Indisponibilité d'un matériel : Votre TER du 26/08 sera supprimé.",
           "fact_status": "confirmed_or_derived_event",
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T21:51:06.991144"
+          "observed_at": "2026-08-25T22:50:43.052263"
         }
       ],
       "solution_scan": {
@@ -370,7 +424,7 @@
             "source": "hackernews",
             "label": "Startup / technology community",
             "status": "ok",
-            "result_count": 1
+            "result_count": 0
           },
           {
             "source": "gdelt",
@@ -485,12 +539,12 @@
         "diagnostic_score": 59,
         "diagnostic_score_is_probability": false,
         "confirmed_evidence_count": 0,
-        "emerging_hypothesis_count": 188,
+        "emerging_hypothesis_count": 186,
         "independent_source_keys": [
           "official_multilateral"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 4.0,
+        "persistence_hours": 5.0,
         "domain_maturity": "live_multi_source",
         "max_corroboration_score": 0.6733,
         "corroboration_score_is_probability": false
@@ -519,6 +573,17 @@
         "episode_target": 10
       },
       "evidence": [
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Forest fires in Serbia",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-25T22:50:08.282476"
+        },
         {
           "kind": "emerging_hypothesis",
           "title": "Forest fires in Serbia",
@@ -577,17 +642,6 @@
         {
           "kind": "emerging_hypothesis",
           "title": "Forest fires in The Democratic Republic of Congo",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T20:52:03.483953"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Forest fires in Indonesia",
           "fact_status": "unconfirmed_emerging_event",
           "source": null,
           "source_classes": [
@@ -762,12 +816,12 @@
         "diagnostic_score": 59,
         "diagnostic_score_is_probability": false,
         "confirmed_evidence_count": 0,
-        "emerging_hypothesis_count": 10,
+        "emerging_hypothesis_count": 12,
         "independent_source_keys": [
           "official_multilateral"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 2.8,
+        "persistence_hours": 3.7,
         "domain_maturity": "live_multi_source",
         "max_corroboration_score": 0.6733,
         "corroboration_score_is_probability": false
@@ -796,6 +850,28 @@
         "episode_target": 10
       },
       "evidence": [
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Tropical Cyclone SAUDEL-26",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-25T22:50:08.282476"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Tropical Cyclone ISELLE-26",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-25T22:50:08.282476"
+        },
         {
           "kind": "emerging_hypothesis",
           "title": "Tropical Cyclone SAUDEL-26",
@@ -854,28 +930,6 @@
         {
           "kind": "emerging_hypothesis",
           "title": "Tropical Cyclone SAUDEL-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T20:52:03.483953"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone NARRA-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T20:52:03.483953"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone JULIO-26",
           "fact_status": "unconfirmed_emerging_event",
           "source": null,
           "source_classes": [
