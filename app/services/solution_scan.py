@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
 from typing import Any, Callable
 
@@ -33,7 +34,7 @@ def _query_for(opportunity: dict[str, Any]) -> str:
     if event_type:
         return event_type
     statement = str(opportunity.get("problem_statement") or "").strip()
-    return " ".join(list(_tokens(statement))[:6]) or "unresolved problem"
+    return " ".join(sorted(_tokens(statement))[:6]) or "unresolved problem"
 
 
 def _relevance(query: str, title: str, summary: str = "") -> tuple[int, list[str]]:
@@ -163,10 +164,10 @@ class SolutionScanService:
             "https://api.gdeltproject.org/api/v2/doc/doc",
             params={
                 "query": query,
-                "mode": "ArtList",
+                "mode": "artlist",
                 "maxrecords": min(limit, 50),
                 "format": "json",
-                "timespan": "5y",
+                "timespan": "1y",
             },
             headers={"User-Agent": "Evidence-Human-Signal-Engine"},
         )
@@ -271,6 +272,36 @@ class SolutionScanService:
             "matches": matches[:32],
         }
 
+    def _scan_one(
+        self,
+        source_key: str,
+        scanner: Callable[[httpx.Client, str, int], list[dict[str, Any]]],
+        query: str,
+        limit: int,
+    ) -> dict[str, Any]:
+        try:
+            with self.client_factory(
+                timeout=httpx.Timeout(self.timeout_seconds),
+                follow_redirects=True,
+            ) as client:
+                items = scanner(client, query, limit)
+            return {
+                "source": source_key,
+                "label": _SOURCE_LABELS[source_key],
+                "status": "ok",
+                "result_count": len(items),
+                "items": items,
+            }
+        except Exception as exc:
+            return {
+                "source": source_key,
+                "label": _SOURCE_LABELS[source_key],
+                "status": "error",
+                "result_count": 0,
+                "items": [],
+                "error": _truncate(exc, 180),
+            }
+
     def scan(
         self,
         opportunity: dict[str, Any],
@@ -285,32 +316,21 @@ class SolutionScanService:
             ("hackernews", self._hackernews),
             ("gdelt", self._gdelt),
         )
-        source_payloads: list[dict[str, Any]] = []
+        ordered_payloads: list[dict[str, Any] | None] = [None] * len(scanners)
 
-        with self.client_factory(
-            timeout=httpx.Timeout(self.timeout_seconds),
-            follow_redirects=True,
-        ) as client:
-            for source_key, scanner in scanners:
-                try:
-                    items = scanner(client, query, limit)
-                    source_payloads.append({
-                        "source": source_key,
-                        "label": _SOURCE_LABELS[source_key],
-                        "status": "ok",
-                        "result_count": len(items),
-                        "items": items,
-                    })
-                except Exception as exc:
-                    source_payloads.append({
-                        "source": source_key,
-                        "label": _SOURCE_LABELS[source_key],
-                        "status": "error",
-                        "result_count": 0,
-                        "items": [],
-                        "error": _truncate(exc, 180),
-                    })
+        with ThreadPoolExecutor(max_workers=len(scanners), thread_name_prefix="evidence-scan") as pool:
+            futures = {
+                pool.submit(self._scan_one, source_key, scanner, query, limit): index
+                for index, (source_key, scanner) in enumerate(scanners)
+            }
+            for future in as_completed(futures):
+                ordered_payloads[futures[future]] = future.result()
 
+        source_payloads = [
+            payload
+            for payload in ordered_payloads
+            if payload is not None
+        ]
         assessment = self.assess(query, source_payloads)
         return {
             "engine": self.ENGINE_VERSION,
