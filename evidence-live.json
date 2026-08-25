@@ -1,7 +1,7 @@
 {
   "schema": "evidence-public-snapshot-v1",
   "engine": "evidence-human-signal-public-v1",
-  "generated_at": "2026-08-25T19:09:18.333993+00:00",
+  "generated_at": "2026-08-25T19:54:37.993226+00:00",
   "runtime_mode": "github-only-horizon",
   "status": "live",
   "summary": {
@@ -25,7 +25,7 @@
         "label": "strong_signal",
         "diagnostic_score": 100,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 160,
+        "confirmed_evidence_count": 147,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "fr-fuel-ruptures-live"
@@ -278,18 +278,18 @@
       "domain": "transport_mobility",
       "domain_label": "Transport & mobility",
       "event_type": "rail_transport_disruption",
-      "problem_statement": "Repeated or independently supported signals around ‘Weitere Informationen:’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘ICV Retard859805’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
         "label": "strong_signal",
         "diagnostic_score": 100,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 40,
+        "confirmed_evidence_count": 53,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "sncf-service-alerts"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 1.2,
+        "persistence_hours": 7.4,
         "domain_maturity": "live_single_source",
         "max_corroboration_score": 0.0,
         "corroboration_score_is_probability": false
@@ -320,12 +320,66 @@
       "evidence": [
         {
           "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
+          "title": "ICV Retard859805",
           "fact_status": "confirmed_or_derived_event",
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:05:58.341072"
+          "observed_at": "2026-08-25T19:50:40.544610"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Wagen nicht am Bahnsteig am Bahnhof Courville",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T19:50:40.544610"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Verkehrsbeeinträchtigungenseit 20: 31 Uhr",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T19:50:40.544610"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Indisponibilité d'un matériel : Votre TER du 26/08 sera supprimé.",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T19:50:40.544610"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Der Zug wird gelöscht",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T19:50:40.544610"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Großer Andrang",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T19:50:40.544610"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Verkehr sbeeinträchtigungen",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T19:50:40.544610"
         },
         {
           "kind": "confirmed_event",
@@ -334,61 +388,7 @@
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:05:58.341072"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:05:58.341072"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:05:58.341072"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:05:58.341072"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:05:58.341072"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:05:58.341072"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T19:05:58.341072"
+          "observed_at": "2026-08-25T19:50:40.544610"
         }
       ],
       "solution_scan": {
@@ -424,7 +424,7 @@
             "source": "hackernews",
             "label": "Startup / technology community",
             "status": "ok",
-            "result_count": 1
+            "result_count": 0
           },
           {
             "source": "gdelt",
