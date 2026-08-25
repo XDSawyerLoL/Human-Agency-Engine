@@ -48,6 +48,25 @@
     ];
   }
 
+  function probabilityTrail(forecast) {
+    const history = (forecast?.probability_history || [])
+      .map((point) => Number(point?.percent))
+      .filter((value) => Number.isFinite(value))
+      .slice(-6);
+    if (!history.length) return `${probabilityPercent(forecast)}%`;
+    return `${history.map((value) => `${Math.round(value)}`).join(" → ")}%`;
+  }
+
+  function probabilityDeltaLabel(forecast) {
+    const delta = Number(forecast?.probability_delta_points);
+    const direction = forecast?.probability_direction;
+    if (!Number.isFinite(delta) || direction === "new") return "NOUVEAU SCÉNARIO";
+    const sign = delta > 0 ? "+" : "";
+    if (direction === "rising") return `HAUSSE ${sign}${delta.toFixed(1)} pt`;
+    if (direction === "falling") return `BAISSE ${delta.toFixed(1)} pt`;
+    return `STABLE ${sign}${delta.toFixed(1)} pt`;
+  }
+
   function probabilityClass(percent) {
     if (percent >= 70) return "gap";
     if (percent >= 50) return "sparse";
@@ -139,11 +158,12 @@
       const [low, high] = probabilityInterval(forecast);
       terminalLine(
         "signal",
-        `${forecastOriginLabel(forecast)} · ${forecast.headline || forecast.event_type || "scénario"} → ${p}% [${low}–${high}] · ${forecast?.time_window?.human || "fenêtre inconnue"}.`,
+        `${forecastOriginLabel(forecast)} · ${forecast.headline || forecast.event_type || "scénario"} → ${p}% [${low}–${high}] · ${probabilityDeltaLabel(forecast)} · ${forecast?.time_window?.human || "fenêtre inconnue"}.`,
         generated,
       );
     });
     terminalLine("warn", "Les pourcentages actuels sont des estimations de modèle, pas encore des fréquences historiques calibrées.", generated);
+    terminalLine("warn", "La trajectoire 41 → 52 → 64 représente le repricing successif du modèle à chaque cycle, pas une fréquence observée.", generated);
     terminalLine("warn", "Une dépendance du graphe augmente un scénario mais ne constitue pas une preuve de causalité.", generated);
     terminalLine("warn", "Une fenêtre expirée sans matérialisation doit compter comme un échec de prévision.", generated);
   }
@@ -168,6 +188,8 @@
           <div class="anomaly-score">${p}<small>%</small></div>
           <span class="score-label">ESTIMATION ACTUELLE</span>
           <span class="score-note">Intervalle ${low}–${high} %</span>
+          <span class="score-note" style="margin-top:8px">Δ ${esc(probabilityDeltaLabel(forecast))}</span>
+          <span class="score-note" style="margin-top:5px">TRAJECTOIRE · ${esc(probabilityTrail(forecast))}</span>
           <span class="gap-badge ${cls}" style="margin-top:14px;max-width:max-content">${esc(trajectoryLabel(forecast.trajectory))}</span>
           <span class="score-note" style="margin-top:10px">${esc(calibrationLabel(forecast))}</span>
         </div>
@@ -198,7 +220,11 @@
             <div><strong>${Number(components.source_diversity || 0)}</strong><span>sources</span></div>
             <div><strong>${Math.round(Number(components.persistence_hours || 0))} h</strong><span>persistance</span></div>
           </div>
-          <div class="card-action"><small>FENÊTRE</small><strong>${esc(forecast?.time_window?.human || "indéterminée")}</strong><p>${esc(calibrationLabel(forecast))}</p></div>
+          <div class="card-action">
+            <small>FENÊTRE</small><strong>${esc(forecast?.time_window?.human || "indéterminée")}</strong>
+            <p>${esc(probabilityDeltaLabel(forecast))} · ${esc(probabilityTrail(forecast))}</p>
+            <p>${esc(calibrationLabel(forecast))}</p>
+          </div>
           <details>
             <summary>Pourquoi maintenant + comment l’invalider ↘</summary>
             <div class="detail-grid">
