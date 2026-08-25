@@ -31,6 +31,7 @@ from .routers.horizon_event_graph import router as horizon_event_graph_router
 from .routers.horizon_expiry import router as horizon_expiry_router
 from .routers.horizon_fuel import router as horizon_fuel_router
 from .routers.horizon_global_alerts import router as horizon_global_alerts_router
+from .routers.horizon_human_dynamics import router as horizon_human_dynamics_router
 from .routers.horizon_impact import router as horizon_impact_router
 from .routers.horizon_live import router as horizon_live_router
 from .routers.horizon_materialization import router as horizon_materialization_router
@@ -53,12 +54,13 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="HORIZON Predictive Intelligence API",
-    version="1.8.0",
+    version="1.9.0",
     description=(
         "Dedicated domain-agnostic HORIZON surface for personal world anticipation: "
         "multi-domain discovery, source intelligence, convergence, Event Graph, collective behavior, "
-        "personal exposure, forecasting, historical replay, empirical calibration and permanent collection. "
-        "Weather is one evidence domain among many. Legacy commerce/delegation/action routes are intentionally not mounted."
+        "human-dynamics scenario modeling, personal exposure, forecasting, historical replay, empirical "
+        "calibration and permanent collection. Weather is one evidence domain among many. Legacy "
+        "commerce/delegation/action routes are intentionally not mounted."
     ),
 )
 
@@ -89,6 +91,7 @@ HORIZON_ROUTERS = (
     horizon_collector_router,
     horizon_corpus_router,
     horizon_cold_router,
+    horizon_human_dynamics_router,
     horizon_world_router,
     horizon_briefing_router,
 )
@@ -138,6 +141,10 @@ def health():
         "mechanism_registry_supported": True,
         "multi_domain_discovery_supported": True,
         "social_collective_domain_supported": True,
+        "human_dynamics_engine_supported": True,
+        "human_dynamics_model_estimates_enabled": True,
+        "human_dynamics_empirically_calibrated": False,
+        "counterfactual_behavior_comparison_supported": True,
         "web_cockpit_supported": True,
         "windows_desktop_runtime_supported": True,
         "permanent_collector_supported": True,
