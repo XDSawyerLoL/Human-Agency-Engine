@@ -1,7 +1,7 @@
 {
   "schema": "evidence-public-snapshot-v1",
   "engine": "evidence-human-signal-public-v1",
-  "generated_at": "2026-08-25T15:14:49.807202+00:00",
+  "generated_at": "2026-08-25T16:09:37.846584+00:00",
   "runtime_mode": "github-only-horizon",
   "status": "live",
   "summary": {
@@ -20,12 +20,12 @@
       "domain": "supply_fuel",
       "domain_label": "Supply chains & fuel",
       "event_type": "fuel_supply_disruption",
-      "problem_statement": "Repeated or independently supported signals around ‘Ruptures temporaires de SP98 — département 95 (20/104)’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘Ruptures temporaires de SP98 — département 95 (20/105)’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
         "label": "strong_signal",
         "diagnostic_score": 100,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 125,
+        "confirmed_evidence_count": 163,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "fr-fuel-ruptures-live"
@@ -62,12 +62,12 @@
       "evidence": [
         {
           "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP98 — département 95 (20/104)",
+          "title": "Ruptures temporaires de SP98 — département 95 (20/105)",
           "fact_status": "confirmed_or_derived_event",
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T14:11:32.384957"
+          "observed_at": "2026-08-25T16:06:21.131254"
         },
         {
           "kind": "confirmed_event",
@@ -76,7 +76,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T14:11:32.384957"
+          "observed_at": "2026-08-25T16:06:21.131254"
         },
         {
           "kind": "confirmed_event",
@@ -85,25 +85,25 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T14:11:32.384957"
+          "observed_at": "2026-08-25T16:06:21.131254"
         },
         {
           "kind": "confirmed_event",
-          "title": "Ruptures temporaires de E85 — département 95 (7/55)",
+          "title": "Ruptures temporaires de E85 — département 95 (7/57)",
           "fact_status": "confirmed_or_derived_event",
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T14:11:32.384957"
+          "observed_at": "2026-08-25T16:06:21.131254"
         },
         {
           "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP98 — département 94 (11/75)",
+          "title": "Ruptures temporaires de SP98 — département 94 (12/75)",
           "fact_status": "confirmed_or_derived_event",
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T14:11:32.384957"
+          "observed_at": "2026-08-25T16:06:21.131254"
         },
         {
           "kind": "confirmed_event",
@@ -112,7 +112,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T14:11:32.384957"
+          "observed_at": "2026-08-25T16:06:21.131254"
         },
         {
           "kind": "confirmed_event",
@@ -121,7 +121,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T14:11:32.384957"
+          "observed_at": "2026-08-25T16:06:21.131254"
         },
         {
           "kind": "confirmed_event",
@@ -130,7 +130,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T14:11:32.384957"
+          "observed_at": "2026-08-25T16:06:21.131254"
         }
       ],
       "solution_scan": {
@@ -278,18 +278,18 @@
       "domain": "transport_mobility",
       "domain_label": "Transport & mobility",
       "event_type": "rail_transport_disruption",
-      "problem_statement": "Repeated or independently supported signals around ‘Witterungsbedingungen in Arles’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘Weitere Informationen:’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
         "label": "strong_signal",
         "diagnostic_score": 100,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 75,
+        "confirmed_evidence_count": 37,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "sncf-service-alerts"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 1.9,
+        "persistence_hours": 0.9,
         "domain_maturity": "live_single_source",
         "max_corroboration_score": 0.0,
         "corroboration_score_is_probability": false
@@ -320,12 +320,12 @@
       "evidence": [
         {
           "kind": "confirmed_event",
-          "title": "Witterungsbedingungen in Arles",
+          "title": "Weitere Informationen:",
           "fact_status": "confirmed_or_derived_event",
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T15:10:59.482834"
+          "observed_at": "2026-08-25T16:06:28.161002"
         },
         {
           "kind": "confirmed_event",
@@ -334,7 +334,7 @@
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T15:10:59.482834"
+          "observed_at": "2026-08-25T16:06:28.161002"
         },
         {
           "kind": "confirmed_event",
@@ -343,34 +343,16 @@
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T15:10:59.482834"
+          "observed_at": "2026-08-25T16:06:28.161002"
         },
         {
           "kind": "confirmed_event",
-          "title": "Ihr Zug hat Verspätung",
+          "title": "ICV Retard857109",
           "fact_status": "confirmed_or_derived_event",
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T15:10:59.482834"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Wagen nicht am Bahnsteig am Bahnhof Courville",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T15:10:59.482834"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "25/08 Pont l'Eveque, Présence de personnes sur les voies",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T15:10:59.482834"
+          "observed_at": "2026-08-25T16:06:28.161002"
         },
         {
           "kind": "confirmed_event",
@@ -379,7 +361,25 @@
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T15:10:59.482834"
+          "observed_at": "2026-08-25T16:06:28.161002"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Lorraine ➡️ Reprise progressive de la circulation.",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T16:06:28.161002"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Witterungsbedingungenin Arles: Der Vorfall war um 17: 30 Uhr beendet.",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-25T16:06:28.161002"
         },
         {
           "kind": "confirmed_event",
@@ -388,7 +388,7 @@
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T15:10:59.482834"
+          "observed_at": "2026-08-25T16:06:28.161002"
         }
       ],
       "solution_scan": {
