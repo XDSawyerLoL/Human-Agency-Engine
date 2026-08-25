@@ -28,7 +28,7 @@ function cameraVisual(camera) {
     return `<iframe src="${escapeHtml(camera.embed_url)}" title="${escapeHtml(camera.label)}" loading="lazy" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>`;
   }
   if (camera.preview_url) {
-    return `<img src="${escapeHtml(camera.preview_url)}" alt="${escapeHtml(camera.label)}" loading="lazy">`;
+    return `<a href="${escapeHtml(camera.public_page_url)}" target="_blank" rel="noopener noreferrer"><img src="${escapeHtml(camera.preview_url)}" alt="${escapeHtml(camera.label)}" loading="lazy"></a>`;
   }
   return '<div class="camera-placeholder">Flux public déclaré sans aperçu intégrable.</div>';
 }
@@ -38,10 +38,13 @@ function renderCameras(payload) {
   const cameras = payload?.cameras || [];
   q("#cameraCount").textContent = cameras.length;
   if (!cameras.length) {
+    const windyConfigured = payload?.configuration?.windy_webcams_adapter_enabled;
     root.innerHTML = `
       <div class="empty-state">
-        Aucune webcam autorisée n'est configurée. HORIZON n'explore pas des flux CCTV au hasard :
-        il affiche uniquement les sources déclarées comme intégrables par leur fournisseur.
+        ${windyConfigured
+          ? "Aucune webcam publique n'a été retournée pour ce filtre."
+          : "Aucune webcam autorisée n'est configurée. Ajoutez une source autorisée ou une clé Windy Webcams pour alimenter le Public Reality Lab."}
+        HORIZON n'explore pas des flux CCTV au hasard : il affiche uniquement les sources prévues pour une diffusion publique.
       </div>`;
     return;
   }
@@ -55,6 +58,7 @@ function renderCameras(payload) {
         </div>
         <h3>${escapeHtml(camera.label)}</h3>
         <div class="camera-meta"><span>${escapeHtml(camera.location_label)}</span></div>
+        ${camera.attribution ? `<div class="camera-meta"><span>${escapeHtml(camera.attribution)}</span></div>` : ""}
         <a class="camera-link" href="${escapeHtml(camera.public_page_url)}" target="_blank" rel="noopener noreferrer">Source officielle ↗</a>
       </div>
     </article>`).join("");
