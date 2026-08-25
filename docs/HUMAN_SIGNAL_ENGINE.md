@@ -56,10 +56,13 @@ The first Solution Scan implementation queries four independent ecosystems in pa
 
 The scan returns `relevance_score` values for ranking only. They are not probabilities and they do not measure solution quality.
 
+A gap assessment requires at least **three successfully scanned ecosystems**. If fewer than three respond and there is not already strong positive evidence of existing work, the result is `insufficient_source_coverage` and Évidence refuses to infer underexploration.
+
 Current gap statuses:
 
+- `insufficient_source_coverage`: too few independent ecosystems responded for a credible gap assessment;
 - `candidate_gap_in_scanned_sources`: at least three ecosystems responded and no sufficiently relevant work was found;
-- `underexplored_in_scanned_sources`: related work is sparse;
+- `underexplored_in_scanned_sources`: related work is sparse despite sufficient source coverage;
 - `related_work_found`: multiple relevant traces exist, but end-to-end effectiveness is unknown;
 - `substantial_existing_work_found`: related work appears across several ecosystems, suggesting that the useful opportunity is more likely an integration gap, workflow gap or underserved segment than a blank space.
 
