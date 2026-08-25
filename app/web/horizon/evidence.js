@@ -25,6 +25,7 @@
   };
 
   const scanLabel = {
+    insufficient_source_coverage: "Couverture insuffisante",
     candidate_gap_in_scanned_sources: "Lacune candidate",
     underexplored_in_scanned_sources: "Zone sous-explorée",
     related_work_found: "Travail connexe trouvé",
@@ -74,7 +75,7 @@
     const sourceRows = body?.sources || [];
     const sourceOk = Number(assessment.successful_source_count || 0);
     const matchCount = Number(assessment.relevant_match_count || 0);
-    const statusKey = assessment.gap_status || "underexplored_in_scanned_sources";
+    const statusKey = assessment.gap_status || "insufficient_source_coverage";
     const errors = sourceRows.filter((source) => source.status !== "ok").length;
     const ecosystems = (assessment.ecosystems_with_relevant_matches || []).join(" · ");
 
