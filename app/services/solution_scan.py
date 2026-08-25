@@ -12,13 +12,13 @@ _GENERIC_TOKENS = {
     "event", "events", "issue", "issues", "problem", "problems", "human", "signal", "signals",
     "change", "changes", "system", "systems", "service", "services",
 }
-
 _SOURCE_LABELS = {
     "github": "Open-source / developer projects",
     "openalex": "Academic research",
     "hackernews": "Startup / technology community",
     "gdelt": "Public web & media coverage",
 }
+_MIN_SOURCES_FOR_GAP = 3
 
 
 def _tokens(value: str) -> set[str]:
@@ -46,25 +46,19 @@ def _relevance(query: str, title: str, summary: str = "") -> tuple[int, list[str
     matched = sorted(query_tokens & hay_tokens)
     overlap = len(matched) / max(1, len(query_tokens))
     phrase_bonus = 0.18 if query.lower() in haystack else 0.0
-    title_tokens = _tokens(title)
-    title_overlap = len(query_tokens & title_tokens) / max(1, len(query_tokens))
+    title_overlap = len(query_tokens & _tokens(title)) / max(1, len(query_tokens))
     score = min(100, round((overlap * 0.67 + title_overlap * 0.15 + phrase_bonus) * 100))
     return score, matched
 
 
 def _truncate(value: Any, limit: int = 500) -> str:
-    text = re.sub(r"\s+", " ", str(value or "")).strip()
-    return text[:limit]
+    return re.sub(r"\s+", " ", str(value or "")).strip()[:limit]
 
 
 class SolutionScanService:
-    """Free, multi-ecosystem scan for existing work related to an Évidence problem signal.
+    """Gather evidence about existing work without pretending to prove global novelty."""
 
-    This service is an evidence-gathering layer, not a global novelty oracle.
-    Search absence is explicitly scoped to the sources that successfully responded.
-    """
-
-    ENGINE_VERSION = "evidence-solution-scan-v0.1"
+    ENGINE_VERSION = "evidence-solution-scan-v0.2"
 
     def __init__(
         self,
@@ -85,9 +79,8 @@ class SolutionScanService:
             },
         )
         response.raise_for_status()
-        rows = []
-        for item in (response.json().get("items") or [])[:limit]:
-            rows.append({
+        return [
+            {
                 "ecosystem": "github",
                 "title": item.get("full_name") or item.get("name"),
                 "summary": _truncate(item.get("description")),
@@ -98,8 +91,9 @@ class SolutionScanService:
                     "stars": item.get("stargazers_count"),
                     "language": item.get("language"),
                 },
-            })
-        return rows
+            }
+            for item in (response.json().get("items") or [])[:limit]
+        ]
 
     def _openalex(self, client: httpx.Client, query: str, limit: int) -> list[dict[str, Any]]:
         response = client.get(
@@ -112,7 +106,6 @@ class SolutionScanService:
         for item in (response.json().get("results") or [])[:limit]:
             primary_location = item.get("primary_location") or {}
             source = primary_location.get("source") or {}
-            url = item.get("doi") or primary_location.get("landing_page_url") or item.get("id")
             rows.append({
                 "ecosystem": "openalex",
                 "title": item.get("display_name"),
@@ -122,7 +115,7 @@ class SolutionScanService:
                         for concept in (item.get("concepts") or [])[:8]
                     )
                 ),
-                "url": url,
+                "url": item.get("doi") or primary_location.get("landing_page_url") or item.get("id"),
                 "published_at": item.get("publication_date") or item.get("publication_year"),
                 "metadata": {
                     "cited_by_count": item.get("cited_by_count"),
@@ -142,14 +135,13 @@ class SolutionScanService:
         rows = []
         for item in (response.json().get("hits") or [])[:limit]:
             object_id = item.get("objectID")
-            url = item.get("url") or (
-                f"https://news.ycombinator.com/item?id={object_id}" if object_id else None
-            )
             rows.append({
                 "ecosystem": "hackernews",
                 "title": item.get("title") or item.get("story_title"),
                 "summary": "",
-                "url": url,
+                "url": item.get("url") or (
+                    f"https://news.ycombinator.com/item?id={object_id}" if object_id else None
+                ),
                 "published_at": item.get("created_at"),
                 "metadata": {
                     "points": item.get("points"),
@@ -172,9 +164,8 @@ class SolutionScanService:
             headers={"User-Agent": "Evidence-Human-Signal-Engine"},
         )
         response.raise_for_status()
-        payload = response.json()
         rows = []
-        for item in (payload.get("articles") or [])[:limit]:
+        for item in (response.json().get("articles") or [])[:limit]:
             rows.append({
                 "ecosystem": "gdelt",
                 "title": item.get("title"),
@@ -182,11 +173,7 @@ class SolutionScanService:
                     " ".join(
                         filter(
                             None,
-                            [
-                                item.get("domain"),
-                                item.get("sourcecountry"),
-                                item.get("language"),
-                            ],
+                            [item.get("domain"), item.get("sourcecountry"), item.get("language")],
                         )
                     )
                 ),
@@ -201,10 +188,7 @@ class SolutionScanService:
         return rows
 
     @staticmethod
-    def assess(
-        query: str,
-        source_payloads: list[dict[str, Any]],
-    ) -> dict[str, Any]:
+    def assess(query: str, source_payloads: list[dict[str, Any]]) -> dict[str, Any]:
         matches: list[dict[str, Any]] = []
         successful_sources = 0
 
@@ -235,18 +219,13 @@ class SolutionScanService:
         )
         relevant = [item for item in matches if item["is_relevant"]]
         ecosystems = sorted({item["ecosystem"] for item in relevant})
+        coverage_ok = successful_sources >= _MIN_SOURCES_FOR_GAP
 
-        if successful_sources >= 3 and not relevant:
-            gap_status = "candidate_gap_in_scanned_sources"
-            explanation = (
-                "No sufficiently relevant existing work was found across at least three scanned ecosystems. "
-                "This is a candidate gap only within the scanned sources, not proof of global novelty."
-            )
-        elif len(relevant) >= 8 and len(ecosystems) >= 3:
+        if len(relevant) >= 8 and len(ecosystems) >= 3:
             gap_status = "substantial_existing_work_found"
             explanation = (
-                "Related work appears across several independent ecosystems. The useful opportunity, if any, "
-                "is more likely to be a missing integration, workflow or underserved user segment than a blank space."
+                "Related work appears across several independent ecosystems. The opportunity is more likely an "
+                "integration, workflow or underserved-segment gap than a blank space."
             )
         elif len(relevant) >= 2:
             gap_status = "related_work_found"
@@ -254,15 +233,29 @@ class SolutionScanService:
                 "Existing work is visible, but this scan does not establish whether it solves the observed human "
                 "friction end-to-end. Compare mechanisms and user outcomes before rejecting the opportunity."
             )
+        elif not coverage_ok:
+            gap_status = "insufficient_source_coverage"
+            explanation = (
+                "Too few independent ecosystems responded to make a credible gap assessment. Retry later; no "
+                "underexploration or novelty inference should be made from this scan."
+            )
+        elif not relevant:
+            gap_status = "candidate_gap_in_scanned_sources"
+            explanation = (
+                "No sufficiently relevant existing work was found across at least three scanned ecosystems. "
+                "This is a candidate gap only within the scanned sources, not proof of global novelty."
+            )
         else:
             gap_status = "underexplored_in_scanned_sources"
             explanation = (
-                "Only sparse related work was found. The area is underexplored in the scanned sources, "
-                "but broader product, public-service and patent checks are still required."
+                "Only sparse related work was found across sufficient source coverage. Broader product, "
+                "public-service and patent checks are still required."
             )
 
         return {
             "successful_source_count": successful_sources,
+            "minimum_sources_for_gap_assessment": _MIN_SOURCES_FOR_GAP,
+            "coverage_sufficient_for_gap_assessment": coverage_ok,
             "relevant_match_count": len(relevant),
             "ecosystems_with_relevant_matches": ecosystems,
             "gap_status": gap_status,
@@ -326,27 +319,15 @@ class SolutionScanService:
             for future in as_completed(futures):
                 ordered_payloads[futures[future]] = future.result()
 
-        source_payloads = [
-            payload
-            for payload in ordered_payloads
-            if payload is not None
-        ]
+        source_payloads = [payload for payload in ordered_payloads if payload is not None]
         assessment = self.assess(query, source_payloads)
         return {
             "engine": self.ENGINE_VERSION,
             "problem_key": opportunity.get("problem_key"),
             "query": query,
-            "assessment": {
-                key: value
-                for key, value in assessment.items()
-                if key != "matches"
-            },
+            "assessment": {key: value for key, value in assessment.items() if key != "matches"},
             "sources": [
-                {
-                    key: value
-                    for key, value in source.items()
-                    if key != "items"
-                }
+                {key: value for key, value in source.items() if key != "items"}
                 for source in source_payloads
             ],
             "matches": assessment["matches"],
@@ -355,6 +336,7 @@ class SolutionScanService:
                 "search_result_means_solution_is_effective": False,
                 "global_novelty_verified": False,
                 "relevance_score_is_probability": False,
+                "minimum_sources_for_gap_assessment": _MIN_SOURCES_FOR_GAP,
                 "scope_is_limited_to_successfully_scanned_sources": True,
             },
         }
