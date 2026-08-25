@@ -1,6 +1,14 @@
 name: HORIZON Live
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/horizon-live.yml'
+      - 'scripts/evidence_public_snapshot.py'
+      - 'app/services/human_signal_engine.py'
+      - 'app/services/solution_scan.py'
+      - 'app/services/horizon_*.py'
   schedule:
     # Avoid the top of the hour, where scheduled Actions are more likely to queue.
     - cron: '23 * * * *'
