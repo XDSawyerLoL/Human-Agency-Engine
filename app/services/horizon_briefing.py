@@ -45,7 +45,7 @@ def _category_for_domain(domain: str) -> str:
 
 
 class HorizonWorldBriefingService:
-    ENGINE_VERSION = "horizon-world-briefing-v0.1"
+    ENGINE_VERSION = "horizon-world-briefing-v0.2"
 
     def __init__(self, db: Session):
         self.db = db
@@ -144,6 +144,8 @@ class HorizonWorldBriefingService:
                     "pattern_key": pattern.pattern_key,
                     "pattern_name": pattern.name,
                     "predicted_response": forecast.predicted_response,
+                    "mechanism_chain": list(pattern.mechanism_chain or []),
+                    "pattern_confidence": float(pattern.confidence),
                     "hypothesis_band": forecast.hypothesis_band,
                     "provisional_score": float(forecast.provisional_score),
                     "provisional_score_is_probability": False,
