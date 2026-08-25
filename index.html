@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#03070b">
+  <meta name="description" content="ÉVIDENCE — Human Signal Engine. Un cockpit public alimenté par HORIZON pour détecter les problèmes humains persistants, vérifier les solutions existantes et proposer des interventions falsifiables.">
+  <title>ÉVIDENCE — Human Signal Engine | HORIZON</title>
+  <link rel="preconnect" href="https://api.github.com">
+  <link rel="preconnect" href="https://raw.githubusercontent.com">
+  <link rel="stylesheet" href="./evidence-public.css">
+</head>
+<body>
+  <canvas id="ambientCanvas" aria-hidden="true"></canvas>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="scanline" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Évidence accueil">
+      <span class="brand-sigil" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="brand-copy">
+        <strong>ÉVIDENCE</strong>
+        <small>HUMAN SIGNAL ENGINE</small>
+      </span>
+    </a>
+
+    <nav class="nav" aria-label="Navigation principale">
+      <a href="#signals">Signaux</a>
+      <a href="#anomalies">Anomalies</a>
+      <a href="#blackbox">Black box</a>
+      <a href="#truth">Méthode</a>
+    </nav>
+
+    <div class="heartbeat" id="heartbeatBadge" data-state="loading">
+      <span class="heartbeat-dot"></span>
+      <div>
+        <strong>HORIZON</strong>
+        <small id="heartbeatText">vérification…</small>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero section-shell">
+      <div class="hero-copy">
+        <div class="overline"><span></span> PUBLIC INTELLIGENCE COCKPIT</div>
+        <h1>Le monde laisse des traces<br><em>avant de changer.</em></h1>
+        <p class="hero-lead">HORIZON observe. <strong>Évidence cherche ce qui cloche.</strong> Le moteur croise des signaux publics, repère les frictions humaines persistantes, cherche ce qui existe déjà et remonte les anomalies qui méritent réellement une enquête.</p>
+
+        <div class="hero-actions">
+          <a class="primary-cta" href="#anomalies"><span>Voir ce qu’Évidence a trouvé</span><b>↓</b></a>
+          <button class="ghost-cta" id="explainButton" type="button">Comment le moteur pense</button>
+        </div>
+
+        <div class="truth-strip">
+          <span><i class="truth-ok"></i> Aucun score présenté comme une probabilité</span>
+          <span><i class="truth-ok"></i> Aucune « nouveauté mondiale » inventée</span>
+          <span><i class="truth-ok"></i> Chaque idée doit pouvoir être réfutée</span>
+        </div>
+      </div>
+
+      <div class="hero-orbit" aria-label="Visualisation abstraite du champ de signaux">
+        <div class="orbit-shell">
+          <div class="orbit orbit-1"></div>
+          <div class="orbit orbit-2"></div>
+          <div class="orbit orbit-3"></div>
+          <div class="orbit-axis axis-a"></div>
+          <div class="orbit-axis axis-b"></div>
+          <div class="core-glow"></div>
+          <div class="core">
+            <small>ÉVIDENCE</small>
+            <strong id="heroAnomalyCount">—</strong>
+            <span>anomalies suivies</span>
+          </div>
+          <div class="satellite sat-a"><span></span><small>WORLD</small></div>
+          <div class="satellite sat-b"><span></span><small>SCAN</small></div>
+          <div class="satellite sat-c"><span></span><small>ACT</small></div>
+        </div>
+        <div class="orbit-caption">
+          <span class="live-pulse"></span>
+          <div><strong id="snapshotState">Flux public en acquisition</strong><small id="snapshotTimestamp">Aucun snapshot chargé</small></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="telemetry section-shell" aria-label="Télémétrie du moteur">
+      <article><span>SIGNAUX ANALYSÉS</span><strong id="metricEvidence">—</strong><small>dans le snapshot courant</small></article>
+      <article><span>PROBLÈMES SURFACÉS</span><strong id="metricProblems">—</strong><small>hypothèses à investiguer</small></article>
+      <article><span>SCANS DE SOLUTIONS</span><strong id="metricScans">—</strong><small>dans ce cycle public</small></article>
+      <article><span>SOURCES HORIZON</span><strong id="metricSources">—</strong><small>familles observées</small></article>
+      <article class="telemetry-accent"><span>PLUS FORTE ANOMALIE</span><strong id="metricTopAnomaly">—</strong><small>indice explicable · ≠ probabilité</small></article>
+    </section>
+
+    <section class="manifesto section-shell">
+      <span class="manifesto-index">01</span>
+      <p>Évidence ne cherche pas ce dont tout le monde parle. Il cherche <strong>ce qui continue d’arriver</strong>, ce qui traverse plusieurs sources, ce que les réponses actuelles absorbent mal — puis demande : <em>« pourquoi ce problème existe encore ? »</em></p>
+    </section>
+
+    <section class="signal-field section-shell" id="signals">
+      <div class="section-heading">
+        <div>
+          <div class="overline"><span></span> SIGNAL CONSTELLATION</div>
+          <h2>Le champ de signaux</h2>
+          <p>Une carte abstraite des problèmes actuellement surfacés. Taille = indice d’anomalie. Les connexions représentent des familles de domaine communes, pas une causalité.</p>
+        </div>
+        <div class="field-legend">
+          <span><i class="dot gap"></i>Lacune candidate</span>
+          <span><i class="dot sparse"></i>Sous-exploré</span>
+          <span><i class="dot known"></i>Travail connexe</span>
+          <span><i class="dot unknown"></i>À scanner</span>
+        </div>
+      </div>
+
+      <div class="field-stage">
+        <canvas id="signalCanvas"></canvas>
+        <div class="field-empty" id="fieldEmpty">
+          <span class="field-empty-ring"></span>
+          <strong>Acquisition du premier snapshot public</strong>
+          <small>Le cockpit ne fabrique pas de faux signaux pour remplir l’écran.</small>
+        </div>
+        <div class="field-hud top-left"><small>MODE</small><strong>PUBLIC WORLD EVIDENCE</strong></div>
+        <div class="field-hud top-right"><small>CLAIM LEVEL</small><strong>DIAGNOSTIC</strong></div>
+        <div class="field-hud bottom-left"><small>NODE</small><strong id="selectedNodeLabel">—</strong></div>
+        <div class="field-hud bottom-right"><small>UTC</small><strong id="utcClock">--:--:--</strong></div>
+      </div>
+    </section>
+
+    <section class="anomaly-section section-shell" id="anomalies">
+      <div class="section-heading anomaly-heading">
+        <div>
+          <div class="overline danger"><span></span> ANOMALY QUEUE</div>
+          <h2>Ce qui mérite une vraie enquête</h2>
+          <p>Évidence privilégie les problèmes soutenus par des faits, persistants, multi-sources et peu couverts par les solutions retrouvées. L’indice sert à prioriser — jamais à prétendre connaître la vérité.</p>
+        </div>
+        <div class="queue-status">
+          <span id="queueStatusDot"></span>
+          <div><small>QUEUE STATUS</small><strong id="queueStatusText">NO SNAPSHOT</strong></div>
+        </div>
+      </div>
+
+      <div class="top-anomaly" id="topAnomaly">
+        <div class="top-anomaly-empty">
+          <span>?</span>
+          <div><strong>Aucune anomalie publique chargée</strong><small>La prochaine donnée affichée ici viendra du moteur, pas d’un exemple préfabriqué.</small></div>
+        </div>
+      </div>
+
+      <div class="anomaly-grid" id="anomalyGrid"></div>
+    </section>
+
+    <section class="decision-lab section-shell">
+      <div class="decision-copy">
+        <div class="overline"><span></span> FROM SIGNAL TO ACTION</div>
+        <h2>Le moteur n’a pas le droit de s’arrêter à « intéressant ».</h2>
+        <p>Pour chaque anomalie, Évidence doit produire une intervention minimale, la preuve sous-jacente et une condition qui tuerait l’idée. Une hypothèse impossible à réfuter est rejetée par conception.</p>
+      </div>
+      <div class="decision-flow" aria-label="Pipeline d'Évidence">
+        <div><b>01</b><strong>OBSERVE</strong><span>faits + hypothèses</span></div>
+        <i>→</i>
+        <div><b>02</b><strong>CONVERGE</strong><span>sources + persistance</span></div>
+        <i>→</i>
+        <div><b>03</b><strong>SCAN</strong><span>solutions existantes</span></div>
+        <i>→</i>
+        <div><b>04</b><strong>PROPOSE</strong><span>outil / action</span></div>
+        <i>→</i>
+        <div class="flow-last"><b>05</b><strong>TRY TO KILL IT</strong><span>test falsifiable</span></div>
+      </div>
+    </section>
+
+    <section class="blackbox section-shell" id="blackbox">
+      <div class="blackbox-panel">
+        <div class="blackbox-head">
+          <div>
+            <div class="overline"><span></span> BLACK BOX / TRANSPARENT MODE</div>
+            <h2>Ce que la machine est réellement en train de faire</h2>
+          </div>
+          <span class="terminal-led"><i></i> READ ONLY</span>
+        </div>
+        <div class="terminal" id="terminalLog" aria-live="polite">
+          <div><time>--:--:--</time><span class="sys">SYSTEM</span><p>Waiting for public Evidence snapshot…</p></div>
+        </div>
+      </div>
+      <aside class="blackbox-aside">
+        <article>
+          <span>RUNTIME</span>
+          <strong id="runtimeMode">GitHub / HORIZON</strong>
+          <p>La collecte peut fonctionner avec le fallback GitHub Actions et un état SQLite roulant, sans serveur permanent.</p>
+        </article>
+        <article>
+          <span>PUBLICATION</span>
+          <strong>Snapshot anonymisé</strong>
+          <p>Le site public ne reçoit ni clé API, ni donnée personnelle : seulement une synthèse de signaux mondiaux publics.</p>
+        </article>
+        <article>
+          <span>FAILURE MODE</span>
+          <strong>Dire « je ne sais pas »</strong>
+          <p>Si la couverture des sources est insuffisante, Évidence doit l’afficher au lieu de conclure à une lacune.</p>
+        </article>
+      </aside>
+    </section>
+
+    <section class="truth-contract section-shell" id="truth">
+      <div class="section-heading">
+        <div>
+          <div class="overline"><span></span> EPISTEMIC CONTRACT</div>
+          <h2>Le contrat anti-bullshit</h2>
+          <p>La partie la plus importante du moteur n’est pas ce qu’il affirme. C’est ce qu’il s’interdit d’affirmer.</p>
+        </div>
+      </div>
+      <div class="contract-grid">
+        <article><b>01</b><strong>Un score n’est pas une probabilité.</strong><p>L’indice d’anomalie sert à trier l’attention. Il ne signifie pas « 87 % de chances d’avoir raison ».</p></article>
+        <article><b>02</b><strong>Pas de solution trouvée ≠ aucune solution.</strong><p>Une lacune reste limitée aux écosystèmes effectivement scannés et à la qualité de leur couverture.</p></article>
+        <article><b>03</b><strong>Un article répété n’est pas une convergence.</strong><p>Le moteur distingue autant que possible les familles de sources et évite de compter la même information plusieurs fois.</p></article>
+        <article><b>04</b><strong>Toute idée doit avoir une sortie de secours.</strong><p>Chaque intervention est accompagnée d’une observation qui doit conduire à l’abandonner si elle échoue.</p></article>
+      </div>
+    </section>
+
+    <section class="final-statement section-shell">
+      <span class="manifesto-index">02</span>
+      <div>
+        <p>Le but n’est pas de prédire l’avenir comme un oracle.</p>
+        <h2>Le but est de remarquer <em>plus tôt</em> ce que nous sommes en train de normaliser.</h2>
+      </div>
+      <a href="https://github.com/XDSawyerLoL/Human-Agency-Engine" target="_blank" rel="noreferrer">Voir le moteur sur GitHub ↗</a>
+    </section>
+  </main>
+
+  <dialog class="explain-dialog" id="explainDialog">
+    <button class="dialog-close" id="dialogClose" type="button" aria-label="Fermer">×</button>
+    <div class="overline"><span></span> HOW IT THINKS</div>
+    <h2>Évidence n’est pas une IA qui « trouve des idées ».</h2>
+    <p>Il part d’événements et d’hypothèses produits par HORIZON, regroupe les signaux par problème, mesure leur persistance et leur indépendance, puis cherche du travail existant dans plusieurs écosystèmes. Ce n’est qu’ensuite qu’il propose une intervention.</p>
+    <div class="dialog-rule"><b>La règle :</b><span>Signal → problème → scan des réponses → action → tentative de réfutation.</span></div>
+    <p class="dialog-note">Si une étape manque, la sortie doit être marquée comme incomplète. L’interface publique conserve cette incertitude au lieu de la cacher.</p>
+  </dialog>
+
+  <footer class="footer section-shell">
+    <div><strong>ÉVIDENCE</strong><span>Human Signal Engine · HORIZON kernel</span></div>
+    <p>Données publiques uniquement sur cette interface. Diagnostic ≠ probabilité. Lacune candidate ≠ nouveauté mondiale.</p>
+    <span id="footerBuild">PUBLIC COCKPIT / 2026</span>
+  </footer>
+
+  <script src="./evidence-public.js" defer></script>
+</body>
+</html>
