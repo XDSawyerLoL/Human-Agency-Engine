@@ -49,4 +49,5 @@ class CameraRegistryItem(BaseModel):
     longitude: float | None = Field(default=None, ge=-180.0, le=180.0)
     display_authorized: bool = False
     analysis_authorized: bool = False
+    attribution: str | None = Field(default=None, max_length=500)
     terms_reference: str | None = Field(default=None, max_length=2000)
