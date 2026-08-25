@@ -1,7 +1,7 @@
 {
   "schema": "evidence-public-snapshot-v1",
   "engine": "evidence-human-signal-public-v1",
-  "generated_at": "2026-08-25T11:55:57.361395+00:00",
+  "generated_at": "2026-08-25T12:02:46.308566+00:00",
   "runtime_mode": "github-only-horizon",
   "status": "live",
   "summary": {
