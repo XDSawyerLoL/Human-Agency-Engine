@@ -4,8 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#071019">
-  <title>HORIZON — Predictive Intelligence</title>
+  <title>ÉVIDENCE — Human Signal Engine</title>
   <link rel="stylesheet" href="/ui/styles.css">
+  <link rel="stylesheet" href="/ui/evidence.css">
 </head>
 <body>
   <div class="ambient ambient-a"></div>
@@ -15,8 +16,8 @@
     <div class="brand">
       <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
       <div>
-        <div class="brand-name">HORIZON</div>
-        <div class="brand-sub">Predictive Intelligence</div>
+        <div class="brand-name">ÉVIDENCE</div>
+        <div class="brand-sub">Human Signal Engine · powered by HORIZON</div>
       </div>
     </div>
     <div class="top-actions">
@@ -28,15 +29,15 @@
   <main class="shell">
     <section class="hero">
       <div>
-        <p class="eyebrow">WORLD ANTICIPATION ENGINE</p>
-        <h1>Voir ce qui arrive<br><span>avant que ce soit évident.</span></h1>
-        <p class="hero-copy">Météo, tensions sociales, économie, énergie, géopolitique et infrastructures sur une seule surface de prévision.</p>
+        <p class="eyebrow">HUMAN SIGNAL ENGINE</p>
+        <h1>Détecter ce qui doit changer<br><span>avant que le problème devienne évident.</span></h1>
+        <p class="hero-copy">Évidence utilise le noyau HORIZON pour suivre les signaux du monde, distinguer faits et hypothèses, puis faire émerger les problèmes humains à investiguer et les interventions concrètes à tester.</p>
       </div>
       <div class="hero-status">
         <div class="pulse-ring"><div class="pulse-core"></div></div>
         <div>
           <strong id="globalStatus">En attente</strong>
-          <span id="globalStatusDetail">Connectez HORIZON pour charger les signaux.</span>
+          <span id="globalStatusDetail">Connectez le noyau HORIZON pour charger les signaux.</span>
         </div>
       </div>
     </section>
@@ -67,8 +68,8 @@
     <section class="section-block">
       <div class="section-heading">
         <div>
-          <p class="eyebrow">RADAR GLOBAL</p>
-          <h2>Ce que HORIZON surveille</h2>
+          <p class="eyebrow">WORLD SIGNAL RADAR</p>
+          <h2>Ce que le noyau HORIZON surveille</h2>
         </div>
         <button id="refreshButton" class="primary-button" type="button"><span>↻</span> Actualiser</button>
       </div>
@@ -84,6 +85,23 @@
 
       <div id="domainGrid" class="domain-grid empty-grid">
         <div class="empty-state">Aucune donnée chargée.</div>
+      </div>
+    </section>
+
+    <section class="section-block evidence-block">
+      <div class="section-heading evidence-heading">
+        <div class="evidence-heading-copy">
+          <p class="eyebrow">PROBLEM RADAR</p>
+          <h2>Problèmes humains à investiguer</h2>
+          <p>Pas des « idées IA ». Chaque carte part d’un signal traçable. Évidence sépare ce qui est observé de ce qui reste à prouver : persistance, diversité des sources, absence de solution efficace et nouveauté.</p>
+        </div>
+        <div class="opportunity-summary">
+          <strong id="opportunityCount">—</strong>
+          <span id="opportunityStatus">En attente d’analyse</span>
+        </div>
+      </div>
+      <div id="opportunityGrid" class="opportunity-grid">
+        <div class="empty-state">Le radar de problèmes apparaîtra ici.</div>
       </div>
     </section>
 
@@ -135,13 +153,13 @@
         </article>
         <article>
           <span class="truth-index">03</span>
-          <strong>Prévision</strong>
-          <p>Une conséquence plausible est projetée via un mécanisme explicite.</p>
+          <strong>Problème à tester</strong>
+          <p>Un signal persiste ou converge assez pour justifier une enquête sur la friction humaine réelle.</p>
         </article>
         <article>
           <span class="truth-index">04</span>
-          <strong>Calibration</strong>
-          <p>Les probabilités numériques restent désactivées tant que les preuves empiriques sont insuffisantes.</p>
+          <strong>Nouveauté non présumée</strong>
+          <p>Évidence ne dira jamais « personne n’y a pensé » sans scan indépendant des solutions existantes.</p>
         </article>
       </div>
     </section>
@@ -167,7 +185,7 @@
         <input id="externalIdInput" type="text" autocomplete="off" placeholder="ex. horizon-user">
         <small>Optionnel. Nécessaire pour les prévisions personnelles.</small>
       </label>
-      <button id="connectButton" class="primary-button wide" type="button">Charger HORIZON</button>
+      <button id="connectButton" class="primary-button wide" type="button">Charger Évidence</button>
       <p id="settingsError" class="settings-error"></p>
     </div>
   </aside>
@@ -192,5 +210,6 @@
   </template>
 
   <script src="/ui/app.js" defer></script>
+  <script src="/ui/evidence.js" defer></script>
 </body>
 </html>
