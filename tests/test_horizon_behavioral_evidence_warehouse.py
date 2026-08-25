@@ -3,6 +3,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 from app.db import SessionLocal
+from app.horizon_api import app as horizon_app  # noqa: F401
 from app.horizon_behavioral_warehouse_models import (
     HorizonBehavioralDocument,
     HorizonBehavioralEffect,
