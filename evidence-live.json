@@ -1,14 +1,14 @@
 {
   "schema": "evidence-public-snapshot-v1",
   "engine": "evidence-human-signal-public-v1",
-  "generated_at": "2026-08-25T20:56:36.552740+00:00",
+  "generated_at": "2026-08-25T21:54:58.679975+00:00",
   "runtime_mode": "github-only-horizon",
   "status": "live",
   "summary": {
     "evidence_items_considered": 400,
-    "opportunities_returned": 4,
-    "strong_signals": 2,
-    "emerging_signals": 2,
+    "opportunities_returned": 5,
+    "strong_signals": 1,
+    "emerging_signals": 3,
     "solution_scans_attempted": 3,
     "diagnostic_scores_are_probabilities": false,
     "solution_absence_verified": false,
@@ -25,7 +25,7 @@
         "label": "strong_signal",
         "diagnostic_score": 100,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 191,
+        "confirmed_evidence_count": 198,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "fr-fuel-ruptures-live"
@@ -67,7 +67,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T20:52:20.298143"
+          "observed_at": "2026-08-25T21:50:44.923475"
         },
         {
           "kind": "confirmed_event",
@@ -76,7 +76,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T20:52:20.298143"
+          "observed_at": "2026-08-25T21:50:44.923475"
         },
         {
           "kind": "confirmed_event",
@@ -85,7 +85,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T20:52:20.298143"
+          "observed_at": "2026-08-25T21:50:44.923475"
         },
         {
           "kind": "confirmed_event",
@@ -94,7 +94,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T20:52:20.298143"
+          "observed_at": "2026-08-25T21:50:44.923475"
         },
         {
           "kind": "confirmed_event",
@@ -103,7 +103,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T20:52:20.298143"
+          "observed_at": "2026-08-25T21:50:44.923475"
         },
         {
           "kind": "confirmed_event",
@@ -112,7 +112,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T20:52:20.298143"
+          "observed_at": "2026-08-25T21:50:44.923475"
         },
         {
           "kind": "confirmed_event",
@@ -121,7 +121,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T20:52:20.298143"
+          "observed_at": "2026-08-25T21:50:44.923475"
         },
         {
           "kind": "confirmed_event",
@@ -130,7 +130,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-25T20:52:20.298143"
+          "observed_at": "2026-08-25T21:50:44.923475"
         }
       ],
       "solution_scan": {
@@ -278,18 +278,18 @@
       "domain": "transport_mobility",
       "domain_label": "Transport & mobility",
       "event_type": "rail_transport_disruption",
-      "problem_statement": "Repeated or independently supported signals around ‘Lille Tourcoing et Lille Hazebrouck Perturbation publiée à 19:16’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘Weitere Informationen:’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
-        "label": "strong_signal",
-        "diagnostic_score": 100,
+        "label": "emerging_signal",
+        "diagnostic_score": 61,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 9,
+        "confirmed_evidence_count": 2,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "sncf-service-alerts"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 12.3,
+        "persistence_hours": 9.8,
         "domain_maturity": "live_single_source",
         "max_corroboration_score": 0.0,
         "corroboration_score_is_probability": false
@@ -313,29 +313,11 @@
       "validation": {
         "hypothesis": "People exposed to repeated rail transport disruption signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
         "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
-        "reject_if": "Reject the opportunity if 10 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
+        "reject_if": "Reject the opportunity if 4 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
         "domain": "transport_mobility",
-        "episode_target": 10
+        "episode_target": 4
       },
       "evidence": [
-        {
-          "kind": "confirmed_event",
-          "title": "Lille Tourcoing et Lille Hazebrouck Perturbation publiée à 19:16",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T20:52:37.338929"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "BESUCHERZAHLEN3",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T20:52:37.338929"
-        },
         {
           "kind": "confirmed_event",
           "title": "Weitere Informationen:",
@@ -343,52 +325,16 @@
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T20:52:37.338929"
+          "observed_at": "2026-08-25T21:51:06.991144"
         },
         {
           "kind": "confirmed_event",
-          "title": "Solution de substitution proposée",
+          "title": "Verkehrsbeeinträchtigungenseit 22: 35 Uhr",
           "fact_status": "confirmed_or_derived_event",
           "source": "sncf-service-alerts",
           "source_classes": [],
           "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T20:52:37.338929"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Conditions météorologiques : Votre TER du 26/08 sera supprimé.",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T20:52:37.338929"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": ":Änderung der Verkaufsbedingungen",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T20:52:37.338929"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ihr Zug hat Verspätung.",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T20:52:37.338929"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ihr Zug hat Verspätung.",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-25T20:52:37.338929"
+          "observed_at": "2026-08-25T21:51:06.991144"
         }
       ],
       "solution_scan": {
@@ -533,18 +479,18 @@
       "domain": "natural_hazards",
       "domain_label": "Natural hazards",
       "event_type": "wildfire",
-      "problem_statement": "Repeated or independently supported signals around ‘Forest fires in Angola’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘Forest fires in Serbia’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
         "label": "emerging_signal",
         "diagnostic_score": 59,
         "diagnostic_score_is_probability": false,
         "confirmed_evidence_count": 0,
-        "emerging_hypothesis_count": 194,
+        "emerging_hypothesis_count": 188,
         "independent_source_keys": [
           "official_multilateral"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 3.0,
+        "persistence_hours": 4.0,
         "domain_maturity": "live_multi_source",
         "max_corroboration_score": 0.6733,
         "corroboration_score_is_probability": false
@@ -573,6 +519,17 @@
         "episode_target": 10
       },
       "evidence": [
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Forest fires in Serbia",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-25T21:50:33.504556"
+        },
         {
           "kind": "emerging_hypothesis",
           "title": "Forest fires in Angola",
@@ -642,17 +599,6 @@
         {
           "kind": "emerging_hypothesis",
           "title": "Forest fires in Indonesia",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-25T20:52:03.483953"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Forest fires in Mozambique",
           "fact_status": "unconfirmed_emerging_event",
           "source": null,
           "source_classes": [
@@ -810,18 +756,18 @@
       "domain": "natural_hazards",
       "domain_label": "Natural hazards",
       "event_type": "tropical_cyclone",
-      "problem_statement": "Repeated or independently supported signals around ‘Tropical Cyclone LALA-26’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘Tropical Cyclone SAUDEL-26’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
         "label": "emerging_signal",
         "diagnostic_score": 59,
         "diagnostic_score_is_probability": false,
         "confirmed_evidence_count": 0,
-        "emerging_hypothesis_count": 6,
+        "emerging_hypothesis_count": 10,
         "independent_source_keys": [
           "official_multilateral"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 1.8,
+        "persistence_hours": 2.8,
         "domain_maturity": "live_multi_source",
         "max_corroboration_score": 0.6733,
         "corroboration_score_is_probability": false
@@ -845,11 +791,55 @@
       "validation": {
         "hypothesis": "People exposed to repeated tropical cyclone signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
         "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
-        "reject_if": "Reject the opportunity if 8 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
+        "reject_if": "Reject the opportunity if 10 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
         "domain": "natural_hazards",
-        "episode_target": 8
+        "episode_target": 10
       },
       "evidence": [
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Tropical Cyclone SAUDEL-26",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-25T21:50:33.504556"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Tropical Cyclone NARRA-26",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-25T21:50:33.504556"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Tropical Cyclone LALA-26",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-25T21:50:33.504556"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Tropical Cyclone ISELLE-26",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-25T21:50:33.504556"
+        },
         {
           "kind": "emerging_hypothesis",
           "title": "Tropical Cyclone LALA-26",
@@ -893,28 +883,78 @@
           ],
           "source_url": null,
           "observed_at": "2026-08-25T20:52:03.483953"
-        },
+        }
+      ],
+      "solution_scan": {
+        "status": "not_scanned_in_this_cycle"
+      }
+    },
+    {
+      "problem_key": "natural_hazards:earthquake",
+      "domain": "natural_hazards",
+      "domain_label": "Natural hazards",
+      "event_type": "earthquake",
+      "problem_statement": "Repeated or independently supported signals around ‘Earthquake in Afghanistan’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "signal_strength": {
+        "label": "weak_signal",
+        "diagnostic_score": 35,
+        "diagnostic_score_is_probability": false,
+        "confirmed_evidence_count": 0,
+        "emerging_hypothesis_count": 2,
+        "independent_source_keys": [
+          "official_multilateral"
+        ],
+        "source_diversity_count": 1,
+        "persistence_hours": 0.0,
+        "domain_maturity": "live_multi_source",
+        "max_corroboration_score": 0.6733,
+        "corroboration_score_is_probability": false
+      },
+      "unresolvedness": {
+        "status": "needs_solution_scan",
+        "claim": "The engine has evidence of the underlying signal, but it has not yet established that existing solutions fail or that the problem is globally unresolved.",
+        "solution_absence_verified": false
+      },
+      "novelty": {
+        "status": "not_assessed",
+        "globally_unique_claim": false,
+        "reason": "Novelty requires a separate scan of products, public services, research, patents and community work; absence cannot be inferred from the news or event stream."
+      },
+      "candidate_action": {
+        "type": "tool_or_workflow_experiment",
+        "tool_archetype": "local exposure and continuity assistant",
+        "mechanism": "Combine verified hazard signals with exposure, fallback routes and a time-bounded action plan.",
+        "first_build": "Prototype a narrow local exposure and continuity assistant for the earthquake case. It must consume verified HORIZON evidence, expose uncertainty, and produce one measurable next action rather than another feed of alerts."
+      },
+      "validation": {
+        "hypothesis": "People exposed to repeated earthquake signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
+        "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
+        "reject_if": "Reject the opportunity if 4 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
+        "domain": "natural_hazards",
+        "episode_target": 4
+      },
+      "evidence": [
         {
           "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone SAUDEL-26",
+          "title": "Earthquake in Afghanistan",
           "fact_status": "unconfirmed_emerging_event",
           "source": null,
           "source_classes": [
             "official_multilateral"
           ],
           "source_url": null,
-          "observed_at": "2026-08-25T19:05:27.495623"
+          "observed_at": "2026-08-25T21:50:33.504556"
         },
         {
           "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone LALA-26",
+          "title": "Earthquake in Japan",
           "fact_status": "unconfirmed_emerging_event",
           "source": null,
           "source_classes": [
             "official_multilateral"
           ],
           "source_url": null,
-          "observed_at": "2026-08-25T19:05:27.495623"
+          "observed_at": "2026-08-25T21:50:33.504556"
         }
       ],
       "solution_scan": {
