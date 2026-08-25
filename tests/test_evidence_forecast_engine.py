@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from app.services.evidence_forecast_engine import EvidenceForecastEngine
 
 
@@ -230,9 +232,10 @@ def test_graph_dependency_is_exposed_as_driver_not_causal_proof():
 
 
 def test_confirmed_event_continues_prediction_with_absolute_window():
+    occurred_at = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
     briefing = {
         "engine": "test-briefing",
-        "events": [_confirmed_event(event_id=30, occurred_at="2026-08-25T12:00:00+00:00")],
+        "events": [_confirmed_event(event_id=30, occurred_at=occurred_at)],
         "hypotheses": [],
     }
 
@@ -251,9 +254,10 @@ def test_confirmed_event_continues_prediction_with_absolute_window():
 
 
 def test_expired_confirmed_event_is_not_published_as_active_prediction():
+    occurred_at = (datetime.now(timezone.utc) - timedelta(days=10)).isoformat()
     briefing = {
         "engine": "test-briefing",
-        "events": [_confirmed_event(event_id=31, occurred_at="2020-01-01T00:00:00+00:00", high_hours=24)],
+        "events": [_confirmed_event(event_id=31, occurred_at=occurred_at, high_hours=24)],
         "hypotheses": [],
     }
 
