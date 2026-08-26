@@ -97,6 +97,7 @@ app.get('/api/health', async (_req, res) => {
     status: snapshot ? 'ok' : 'warming',
     service: 'evidence-world-eye-node',
     storage: store.mode,
+    port: config.port,
     last_snapshot: snapshot?.generated_at ?? null,
     last_error: lastError,
     providers: providerState()
@@ -118,11 +119,20 @@ app.post('/api/refresh', async (req, res) => {
   res.json({ status: snapshot ? 'ok' : 'failed', generated_at: snapshot?.generated_at ?? null, error: lastError });
 });
 
-app.get('*path', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+// Express 5 / path-to-regexp v8 wildcard syntax. This also matches the root path.
+app.get('/{*path}', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-await store.init();
-app.listen(config.port, '0.0.0.0', () => {
-  console.log(`[evidence] Node World Eye listening on :${config.port}; storage=${store.mode}`);
+// Hostinger expects server-side Node Web Apps to be reachable on port 3000.
+const server = app.listen(config.port, '0.0.0.0', () => {
+  console.log(`[evidence] Node World Eye listening on 0.0.0.0:${config.port}; storage=${store.mode}`);
 });
+
+server.on('error', error => {
+  console.error('[evidence] server error', error);
+  process.exitCode = 1;
+});
+
+// Storage is optional. Never block the HTTP process while MySQL is being detected.
+store.init().catch(error => console.error('[store-init]', error));
 refreshWorld();
 setInterval(refreshWorld, config.refreshMs).unref();
