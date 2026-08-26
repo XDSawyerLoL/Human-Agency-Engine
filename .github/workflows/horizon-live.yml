@@ -78,6 +78,32 @@ jobs:
       - name: Install HORIZON dependencies
         run: pip install -r requirements.txt
 
+      - name: Report provider credential wiring
+        if: steps.mode.outputs.mode == 'github-only'
+        shell: bash
+        env:
+          METEOFRANCE_APPLICATION_ID: ${{ secrets.METEOFRANCE_APPLICATION_ID }}
+          WINDY_POINT_FORECAST_API_KEY: ${{ secrets.WINDY_POINT_FORECAST_API_KEY }}
+          HORIZON_COLLECTOR_WINDY_POINTS_JSON: ${{ vars.HORIZON_COLLECTOR_WINDY_POINTS_JSON }}
+        run: |
+          set -euo pipefail
+          if [ -n "$METEOFRANCE_APPLICATION_ID" ]; then
+            echo "Meteo-France credential: configured"
+          else
+            echo "Meteo-France credential: missing"
+          fi
+          if [ -n "$WINDY_POINT_FORECAST_API_KEY" ]; then
+            echo "Windy Point Forecast credential: configured"
+          else
+            echo "Windy Point Forecast credential: missing"
+          fi
+          if [ -n "$HORIZON_COLLECTOR_WINDY_POINTS_JSON" ] && [ "$HORIZON_COLLECTOR_WINDY_POINTS_JSON" != "[]" ]; then
+            echo "Windy collection points: configured"
+          else
+            echo "Windy collection points: not configured"
+          fi
+          echo "Secret values are intentionally never printed."
+
       - name: Restore previous GitHub-only state
         if: steps.mode.outputs.mode == 'github-only'
         shell: bash
@@ -138,10 +164,12 @@ jobs:
           PYTHONPATH: .
           DATABASE_URL: sqlite:///./horizon-github.db
           API_KEY: change-me
+          METEOFRANCE_APPLICATION_ID: ${{ secrets.METEOFRANCE_APPLICATION_ID }}
+          WINDY_POINT_FORECAST_API_KEY: ${{ secrets.WINDY_POINT_FORECAST_API_KEY }}
           HORIZON_COLLECTOR_ENABLED: 'true'
           HORIZON_COLLECTOR_MAX_SOURCES_PER_CYCLE: '10'
           HORIZON_COLLECTOR_METEOALARM_ALL_EUROPE: 'false'
-          HORIZON_COLLECTOR_WINDY_POINTS_JSON: '[]'
+          HORIZON_COLLECTOR_WINDY_POINTS_JSON: ${{ vars.HORIZON_COLLECTOR_WINDY_POINTS_JSON }}
         run: python scripts/horizon_github_cycle.py
 
       - name: Build sanitized Évidence predictive snapshot
