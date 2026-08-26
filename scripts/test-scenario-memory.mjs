@@ -18,4 +18,7 @@ if (!rows.every(x => x.memory?.recomputed && x.probability?.method === 'evidence
 const selected = selectPublicForecasts(rows, 72);
 if (selected.length < 25) throw new Error(`public selector suppresses too much scenario memory: ${selected.length}`);
 if (selected.filter(x => x.event_type === 'memory_climate_scenario').length > 7) throw new Error('climate memory escaped environmental cap');
+for (const needle of ['cadre contraignant','suppressions de postes','mer de Chine','banque centrale']) {
+  if (!selected.some(x => `${x.title}`.toLowerCase().includes(needle.toLowerCase()))) throw new Error(`key remembered scenario lost by public selection: ${needle}`);
+}
 console.log(`scenario memory ok: ${stats.total} total, ${stats.active} active, ${selected.length} publishable under diversity caps`);
