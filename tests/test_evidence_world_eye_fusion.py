@@ -69,8 +69,8 @@ def test_distinct_health_outbreak_titles_remain_distinct_scenarios():
 
 def test_one_event_type_cannot_monopolize_twenty_slot_world_eye():
     fuel = [
-        _forecast(100 + index, event_type="fuel_supply_disruption", label=f"Ruptures temporaires — département {index + 10}", probability=70 - index)
-        for index in range(12)
+        _forecast(100 + index, event_type="fuel_supply_disruption", label=f"Ruptures temporaires — département {index + 10}", probability=80 - index)
+        for index in range(25)
     ]
     others = [
         _forecast(300, event_type="major_earthquake", label="Séisme M5.7 — Region X", probability=49),
