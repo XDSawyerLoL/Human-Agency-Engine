@@ -7,6 +7,11 @@ x-horizon-environment: &horizon-environment
   TOKEN_ENCRYPTION_KEY: ${HORIZON_TOKEN_ENCRYPTION_KEY:?HORIZON_TOKEN_ENCRYPTION_KEY is required}
   METEOFRANCE_APPLICATION_ID: ${METEOFRANCE_APPLICATION_ID:-}
   WINDY_POINT_FORECAST_API_KEY: ${WINDY_POINT_FORECAST_API_KEY:-}
+  FRED_API_KEY: ${FRED_API_KEY:-}
+  METACULUS_API_KEY: ${METACULUS_API_KEY:-}
+  COPERNICUS_API_KEY: ${COPERNICUS_API_KEY:-}
+  FORECAST_API_KEY: ${FORECAST_API_KEY:-}
+  POINT_API_KEY: ${POINT_API_KEY:-}
   HORIZON_COLLECTOR_ENABLED: ${HORIZON_COLLECTOR_ENABLED:-true}
   HORIZON_COLLECTOR_TICK_SECONDS: ${HORIZON_COLLECTOR_TICK_SECONDS:-30}
   HORIZON_COLLECTOR_LEASE_SECONDS: ${HORIZON_COLLECTOR_LEASE_SECONDS:-900}
@@ -20,10 +25,11 @@ x-horizon-environment: &horizon-environment
   HORIZON_COLLECTOR_FUEL_SECONDS: ${HORIZON_COLLECTOR_FUEL_SECONDS:-900}
   HORIZON_COLLECTOR_RTE_SECONDS: ${HORIZON_COLLECTOR_RTE_SECONDS:-900}
   HORIZON_COLLECTOR_WINDY_SECONDS: ${HORIZON_COLLECTOR_WINDY_SECONDS:-1800}
+  HORIZON_COLLECTOR_WORLD_PULSE_SECONDS: ${HORIZON_COLLECTOR_WORLD_PULSE_SECONDS:-900}
   HORIZON_COLLECTOR_SYNTHESIS_SECONDS: ${HORIZON_COLLECTOR_SYNTHESIS_SECONDS:-900}
-  HORIZON_COLLECTOR_MAX_ACTIVE_EVENTS: ${HORIZON_COLLECTOR_MAX_ACTIVE_EVENTS:-200}
+  HORIZON_COLLECTOR_MAX_ACTIVE_EVENTS: ${HORIZON_COLLECTOR_MAX_ACTIVE_EVENTS:-300}
   HORIZON_COLLECTOR_EVENT_GRAPH_LOOKBACK_HOURS: ${HORIZON_COLLECTOR_EVENT_GRAPH_LOOKBACK_HOURS:-336}
-  HORIZON_COLLECTOR_METEOALARM_ALL_EUROPE: ${HORIZON_COLLECTOR_METEOALARM_ALL_EUROPE:-false}
+  HORIZON_COLLECTOR_METEOALARM_ALL_EUROPE: ${HORIZON_COLLECTOR_METEOALARM_ALL_EUROPE:-true}
   HORIZON_COLLECTOR_RTE_REGION_CODES: ${HORIZON_COLLECTOR_RTE_REGION_CODES:-}
   HORIZON_COLLECTOR_WINDY_POINTS_JSON: ${HORIZON_COLLECTOR_WINDY_POINTS_JSON:-[]}
   HORIZON_CORPUS_WORKER_ENABLED: ${HORIZON_CORPUS_WORKER_ENABLED:-true}
@@ -73,7 +79,21 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 45s
+    networks:
+      - horizon_private
+
+  init:
+    build:
+      context: .
+      dockerfile: Dockerfile.horizon
+    restart: "no"
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      <<: *horizon-environment
+    command: ["python", "scripts/horizon_hostinger_init.py"]
     networks:
       - horizon_private
 
@@ -83,8 +103,8 @@ services:
       dockerfile: Dockerfile.horizon
     restart: unless-stopped
     depends_on:
-      api:
-        condition: service_healthy
+      init:
+        condition: service_completed_successfully
     environment:
       <<: *horizon-environment
     command: ["python", "scripts/horizon_collector.py"]
@@ -98,8 +118,8 @@ services:
       dockerfile: Dockerfile.horizon
     restart: unless-stopped
     depends_on:
-      api:
-        condition: service_healthy
+      init:
+        condition: service_completed_successfully
     environment:
       <<: *horizon-environment
     command: ["python", "scripts/horizon_corpus_worker.py"]
@@ -107,8 +127,73 @@ services:
     networks:
       - horizon_private
 
+  snapshot:
+    build:
+      context: .
+      dockerfile: Dockerfile.horizon
+    restart: unless-stopped
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    environment:
+      <<: *horizon-environment
+      EVIDENCE_PUBLIC_DIR: /public
+      EVIDENCE_SNAPSHOT_INTERVAL_SECONDS: ${EVIDENCE_SNAPSHOT_INTERVAL_SECONDS:-300}
+      EVIDENCE_FORECAST_LIMIT: ${EVIDENCE_FORECAST_LIMIT:-20}
+    command: ["python", "scripts/evidence_snapshot_worker.py"]
+    volumes:
+      - horizon_evidence_public:/public
+    stop_grace_period: 30s
+    networks:
+      - horizon_private
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.evidence-web
+    restart: unless-stopped
+    depends_on:
+      snapshot:
+        condition: service_started
+    ports:
+      - "${EVIDENCE_BIND_ADDRESS:-0.0.0.0}:${EVIDENCE_HTTP_PORT:-8080}:80"
+    volumes:
+      - horizon_evidence_public:/usr/share/nginx/html/data:ro
+    networks:
+      - horizon_private
+
+  backup:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${HORIZON_POSTGRES_PASSWORD:?HORIZON_POSTGRES_PASSWORD is required}
+      HORIZON_BACKUP_INTERVAL_SECONDS: ${HORIZON_BACKUP_INTERVAL_SECONDS:-86400}
+      HORIZON_BACKUP_RETENTION_DAYS: ${HORIZON_BACKUP_RETENTION_DAYS:-7}
+    volumes:
+      - horizon_postgres_backups:/backups
+    command:
+      - sh
+      - -ec
+      - |
+        while true; do
+          ts=$$(date -u +%Y%m%dT%H%M%SZ)
+          tmp="/backups/horizon-$${ts}.dump.tmp"
+          out="/backups/horizon-$${ts}.dump"
+          pg_dump -h db -U horizon -d horizon -Fc > "$${tmp}"
+          mv "$${tmp}" "$${out}"
+          find /backups -type f -name 'horizon-*.dump' -mtime +$${HORIZON_BACKUP_RETENTION_DAYS} -delete
+          sleep "$${HORIZON_BACKUP_INTERVAL_SECONDS}"
+        done
+    networks:
+      - horizon_private
+
 volumes:
   horizon_postgres_data:
+  horizon_evidence_public:
+  horizon_postgres_backups:
 
 networks:
   horizon_private:
