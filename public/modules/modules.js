@@ -88,7 +88,11 @@
     try{
       const r=await fetch('/api/calibration/sports',{cache:'no-store'}); const data=await r.json();
       if(!r.ok)throw new Error(data?.error||`HTTP ${r.status}`);
-      renderResult({key:'sports',label:'Sports Calibration Lab',meta:{matches:data.matches_tested??data.matches??'—',brier:data.brier_score??data.brier??'—',status:data.status??'ok'},items:[],notice:data.note||data.notice||'Backtest sportif terminé.'});
+      renderResult({
+        key:'sports',label:'Sports Calibration Lab',
+        meta:{competition:data.competition||'—',saison:data.season||'—',entrainement:data.training_matches??'—',test:data.test_matches??'—',brier_multiclasses:data.multiclass_brier??'—'},
+        items:[],notice:data.interpretation||'Backtest sportif terminé.'
+      });
     }catch(error){
       renderResult({key:'sports',label:'Sports Calibration Lab',items:[],notice:`Backtest indisponible : ${error.message}`});
     }finally{button.disabled=false;button.textContent=old;}
