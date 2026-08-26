@@ -14,12 +14,46 @@ on:
 
 jobs:
   redeploy:
-    if: ${{ vars.HOSTINGER_VM_ID != '' }}
     runs-on: ubuntu-latest
     concurrency:
       group: horizon-hostinger-production
       cancel-in-progress: false
     steps:
+      - name: Resolve Hostinger VPS
+        id: hostinger-vps
+        env:
+          HOSTINGER_API_KEY: ${{ secrets.HOSTINGER_API_KEY }}
+          CONFIGURED_VM_ID: ${{ vars.HOSTINGER_VM_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          vm_id="$CONFIGURED_VM_ID"
+
+          if [[ -z "$vm_id" ]]; then
+            if [[ -z "$HOSTINGER_API_KEY" ]]; then
+              echo "::error::HOSTINGER_API_KEY is not configured."
+              exit 1
+            fi
+
+            response="$(curl --fail-with-body --silent --show-error \
+              https://developers.hostinger.com/api/vps/v1/virtual-machines \
+              --header "Authorization: Bearer ${HOSTINGER_API_KEY}" \
+              --header "Accept: application/json")"
+            vm_count="$(jq 'length' <<< "$response")"
+
+            if [[ "$vm_count" -ne 1 ]]; then
+              echo "::error::Set HOSTINGER_VM_ID because the API returned ${vm_count} VPS instances."
+              exit 1
+            fi
+            vm_id="$(jq -r '.[0].id' <<< "$response")"
+          fi
+
+          if [[ ! "$vm_id" =~ ^[0-9]+$ ]]; then
+            echo "::error::The resolved Hostinger VPS ID is invalid."
+            exit 1
+          fi
+          echo "vm-id=$vm_id" >> "$GITHUB_OUTPUT"
+
       - name: Checkout selected revision
         uses: actions/checkout@v7
         with:
@@ -36,7 +70,7 @@ jobs:
         uses: hostinger/deploy-action@v1
         with:
           api-key: ${{ secrets.HOSTINGER_API_KEY }}
-          virtual-machine: ${{ vars.HOSTINGER_VM_ID }}
+          virtual-machine: ${{ steps.hostinger-vps.outputs.vm-id }}
           project-name: horizon
           docker-compose-path: docker-compose.hostinger.yml
           environment-variables: |
