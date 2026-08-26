@@ -3,9 +3,9 @@ import { selectPublicForecasts } from '../src/public_selection.js';
 
 const now = Date.parse('2026-08-26T12:00:00Z');
 const stats = scenarioMemoryStats(now);
-if (stats.total !== 57) throw new Error(`scenario memory incomplete: ${stats.total}/57`);
+if (stats.total !== 60) throw new Error(`scenario memory incomplete: ${stats.total}/60`);
 if (stats.active < 50) throw new Error(`too few active scenario-memory seeds: ${stats.active}`);
-if (scenarioMemorySeeds({activeOnly:false}).length !== 57) throw new Error('scenarioMemorySeeds lost catalog entries');
+if (scenarioMemorySeeds({activeOnly:false}).length !== 60) throw new Error('scenarioMemorySeeds lost catalog entries');
 
 const rows = buildScenarioMemoryForecasts([], { now });
 if (rows.length !== stats.active) throw new Error(`memory builder mismatch: ${rows.length}/${stats.active}`);
