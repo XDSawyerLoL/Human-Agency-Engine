@@ -15,7 +15,7 @@ for (const key of ['polymarket','trends','metaculus','windy']) {
 }
 if (!Array.isArray(byKey.get('gdelt').themes) || byKey.get('gdelt').themes.length < 8) throw new Error('GDELT thematic module is too narrow');
 const stats=scenarioMemoryStats(Date.parse('2026-08-26T12:00:00Z'));
-if (stats.total !== 57 || stats.active < 50) throw new Error(`scenario memory incomplete: ${JSON.stringify(stats)}`);
+if (stats.total !== 60 || stats.active < 50) throw new Error(`scenario memory incomplete: ${JSON.stringify(stats)}`);
 
 // These modules are deterministic/local and must work even when external APIs are unavailable.
 for (const key of ['metaculus','windy']) {
