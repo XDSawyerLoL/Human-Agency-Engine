@@ -6,7 +6,10 @@ import { fileURLToPath } from 'node:url';
 import { config, providerState } from './src/config.js';
 import { EvidenceStore } from './src/store.js';
 import { collectWorldSignals } from './src/sources.js';
+import { collectBreadthSignals } from './src/breadth_sources.js';
 import { buildForecasts } from './src/predictor.js';
+import { buildBreadthForecasts } from './src/breadth_predictor.js';
+import { selectPublicForecasts } from './src/public_selection.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -36,8 +39,17 @@ async function refreshWorld() {
   refreshing = (async () => {
     const generatedAt = new Date().toISOString();
     try {
-      const collected = await collectWorldSignals();
-      const forecasts = buildForecasts(collected.signals, config.maxForecasts);
+      const [collected, breadth] = await Promise.all([collectWorldSignals(), collectBreadthSignals()]);
+      collected.signals.push(...breadth.signals);
+      collected.source_status.push(breadth.status);
+      collected.duration_ms = Math.max(collected.duration_ms, breadth.status.duration_ms ?? 0);
+
+      // Build a wide candidate pool first. The public selector then removes semantic duplicates
+      // and enforces a balanced mix of domains/horizons instead of letting hazard feeds dominate.
+      const coreCandidates = buildForecasts(collected.signals, Math.max(config.maxForecasts * 3, 96));
+      const breadthCandidates = buildBreadthForecasts(breadth.signals);
+      const forecasts = selectPublicForecasts([...coreCandidates, ...breadthCandidates], config.maxForecasts);
+
       await store.appendHistory(forecasts, generatedAt);
       await store.attachHistory(forecasts);
       for (const f of forecasts) {
@@ -53,23 +65,37 @@ async function refreshWorld() {
       }
       const sourceProviders = new Set(forecasts.flatMap(f => f.consolidation.source_providers.map(s => s.key)));
       const sourceFamilies = new Set(forecasts.flatMap(f => f.consolidation.source_families.map(s => s.key)));
+      const domainCounts = forecasts.reduce((acc, f) => {
+        acc[f.domain] = (acc[f.domain] ?? 0) + 1;
+        return acc;
+      }, {});
+      const horizonCounts = forecasts.reduce((acc, f) => {
+        acc[f.horizon_tier] = (acc[f.horizon_tier] ?? 0) + 1;
+        return acc;
+      }, {});
       const snapshot = {
-        schema: 'evidence-node-world-eye-v1',
-        engine: 'evidence-node-predictive-public-v1',
+        schema: 'evidence-node-world-eye-v2-breadth',
+        engine: 'evidence-node-predictive-public-v2-diverse',
         generated_at: generatedAt,
         runtime_mode: 'hostinger-node-managed',
         status: 'live',
         summary: {
           signals_considered: collected.signals.length,
+          raw_candidate_forecasts: coreCandidates.length + breadthCandidates.length,
           predictions_returned: forecasts.length,
           source_families: sourceFamilies.size,
           source_providers: sourceProviders.size,
           active_source_providers: [...sourceProviders],
           source_status: collected.source_status,
           collection_duration_ms: collected.duration_ms,
+          domain_distribution: domainCounts,
+          horizon_distribution: horizonCounts,
           probability_history_enabled: true,
           numeric_model_estimates_enabled: true,
           duplicate_probability_inflation_prevented: true,
+          public_semantic_dedup_enabled: true,
+          environmental_public_cap_enabled: true,
+          breadth_radar_enabled: true,
           public_french_localization_enabled: true,
           second_order_only: true,
           empirical_probability_calibration_enabled: false,
@@ -83,12 +109,13 @@ async function refreshWorld() {
           consolidation_is_probability: false,
           current_event_is_not_forecast: true,
           falsification_required: true,
-          expired_forecasts_must_resolve: true
+          expired_forecasts_must_resolve: true,
+          duplicate_public_scenarios_allowed: false
         }
       };
       await store.saveSnapshot(snapshot);
       lastError = null;
-      console.log(JSON.stringify({ event: 'world_refresh', signals: collected.signals.length, forecasts: forecasts.length, sources: collected.source_status }));
+      console.log(JSON.stringify({ event: 'world_refresh', signals: collected.signals.length, forecasts: forecasts.length, domains: domainCounts, horizons: horizonCounts, sources: collected.source_status }));
       return snapshot;
     } catch (error) {
       lastError = { at: new Date().toISOString(), message: error.message };
