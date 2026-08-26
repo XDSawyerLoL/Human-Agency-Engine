@@ -67,7 +67,7 @@ jobs:
         run: docker compose -f docker-compose.hostinger.yml config >/dev/null
 
       - name: Redeploy selected revision to Hostinger VPS
-        uses: hostinger/deploy-action@v1
+        uses: hostinger/deploy-on-vps@v2
         with:
           api-key: ${{ secrets.HOSTINGER_API_KEY }}
           virtual-machine: ${{ steps.hostinger-vps.outputs.vm-id }}
