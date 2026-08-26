@@ -16,15 +16,13 @@ class Settings(BaseSettings):
     google_sync_lookback_days: int = 14
     google_sync_lookahead_days: int = 60
     google_max_gmail_messages: int = 250
-    # Opaque credential shown after `Authorization: Basic` by the
-    # Météo-France API portal. Never commit the real value.
     meteofrance_application_id: str = ""
-    # Windy Point Forecast API key. The free testing key intentionally returns
-    # modified/shuffled data and must never be treated as production evidence.
     windy_point_forecast_api_key: str = ""
+    fred_api_key: str = ""
+    metaculus_api_key: str = ""
+    copernicus_api_key: str = ""
+    forecast_api_key: str = ""
 
-    # Permanent HORIZON world-intelligence collector. Cadences are deliberately
-    # operational schedules, never evidence weights or probabilities.
     horizon_collector_enabled: bool = True
     horizon_collector_tick_seconds: int = 30
     horizon_collector_lease_seconds: int = 900
@@ -38,15 +36,14 @@ class Settings(BaseSettings):
     horizon_collector_fuel_seconds: int = 900
     horizon_collector_rte_seconds: int = 900
     horizon_collector_windy_seconds: int = 1800
+    horizon_collector_world_pulse_seconds: int = 900
     horizon_collector_synthesis_seconds: int = 900
-    horizon_collector_max_active_events: int = 200
+    horizon_collector_max_active_events: int = 300
     horizon_collector_event_graph_lookback_hours: int = 336
-    horizon_collector_meteoalarm_all_europe: bool = False
+    horizon_collector_meteoalarm_all_europe: bool = True
     horizon_collector_rte_region_codes: str = ""
     horizon_collector_windy_points_json: str = "[]"
 
-    # Historical corpus work is intentionally separated from the live collector.
-    # Default: at most one pending corpus, one slice, every six hours.
     horizon_corpus_worker_enabled: bool = True
     horizon_corpus_worker_interval_seconds: int = 21600
     horizon_corpus_worker_lease_seconds: int = 7200
@@ -76,26 +73,19 @@ class Settings(BaseSettings):
         if self.google_redirect_uri:
             return self.google_redirect_uri
         if self.render_external_hostname:
-            return (
-                f"https://{self.render_external_hostname}"
-                "/v1/connectors/google/callback"
-            )
+            return f"https://{self.render_external_hostname}/v1/connectors/google/callback"
         return "http://localhost:8000/v1/connectors/google/callback"
 
     def validate_runtime(self) -> None:
         errors: list[str] = []
-
         if bool(self.google_client_id) != bool(self.google_client_secret):
-            errors.append(
-                "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be configured together"
-            )
-
+            errors.append("GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be configured together")
         if self.horizon_collector_tick_seconds < 5:
             errors.append("HORIZON_COLLECTOR_TICK_SECONDS must be at least 5")
         if self.horizon_collector_lease_seconds < self.horizon_collector_tick_seconds * 3:
             errors.append("HORIZON_COLLECTOR_LEASE_SECONDS must be at least 3x the collector tick")
-        if not 1 <= self.horizon_collector_max_sources_per_cycle <= 10:
-            errors.append("HORIZON_COLLECTOR_MAX_SOURCES_PER_CYCLE must be between 1 and 10")
+        if not 1 <= self.horizon_collector_max_sources_per_cycle <= 12:
+            errors.append("HORIZON_COLLECTOR_MAX_SOURCES_PER_CYCLE must be between 1 and 12")
         cadence_values = (
             self.horizon_collector_sncf_seconds,
             self.horizon_collector_vigicrues_seconds,
@@ -106,11 +96,11 @@ class Settings(BaseSettings):
             self.horizon_collector_fuel_seconds,
             self.horizon_collector_rte_seconds,
             self.horizon_collector_windy_seconds,
+            self.horizon_collector_world_pulse_seconds,
             self.horizon_collector_synthesis_seconds,
         )
         if any(value < 60 for value in cadence_values):
             errors.append("HORIZON collector source cadences must be at least 60 seconds")
-
         if self.horizon_corpus_worker_interval_seconds < 900:
             errors.append("HORIZON_CORPUS_WORKER_INTERVAL_SECONDS must be at least 900")
         if self.horizon_corpus_worker_lease_seconds < 900:
@@ -119,7 +109,6 @@ class Settings(BaseSettings):
             errors.append("HORIZON_CORPUS_WORKER_MAX_RUNS_PER_CYCLE must be between 1 and 5")
         if not 1 <= self.horizon_corpus_worker_slices_per_run <= 3:
             errors.append("HORIZON_CORPUS_WORKER_SLICES_PER_RUN must be between 1 and 3")
-
         if self.is_production:
             if self.api_key == "change-me" or len(self.api_key) < 32:
                 errors.append("API_KEY must be a non-default secret of at least 32 characters")
@@ -127,7 +116,6 @@ class Settings(BaseSettings):
                 errors.append("Production requires a persistent non-SQLite DATABASE_URL")
             if not self.token_encryption_key:
                 errors.append("TOKEN_ENCRYPTION_KEY is required in production")
-
         if errors:
             raise RuntimeError("Invalid runtime configuration: " + "; ".join(errors))
 
