@@ -1,0 +1,101 @@
+{
+  "updated_at": "2026-08-26T00:00:00Z",
+  "cameras": [
+    {
+      "id": "new-york-times-square",
+      "name": "Times Square",
+      "city": "New York",
+      "country": "États-Unis",
+      "region": "Amériques",
+      "kind": "Ville",
+      "timezone": "America/New_York",
+      "video_id": "JQ_jwk_7OVE",
+      "provider": "EarthCam",
+      "source_url": "https://www.youtube.com/watch?v=JQ_jwk_7OVE"
+    },
+    {
+      "id": "rio-copacabana",
+      "name": "Plage de Copacabana",
+      "city": "Rio de Janeiro",
+      "country": "Brésil",
+      "region": "Amériques",
+      "kind": "Littoral",
+      "timezone": "America/Sao_Paulo",
+      "video_id": "7ecGJrsCv60",
+      "provider": "Homes in Rio",
+      "source_url": "https://www.youtube.com/watch?v=7ecGJrsCv60"
+    },
+    {
+      "id": "venise",
+      "name": "Venise en mouvement",
+      "city": "Venise",
+      "country": "Italie",
+      "region": "Europe",
+      "kind": "Ville",
+      "timezone": "Europe/Rome",
+      "video_id": "a1mcaV3Sf9U",
+      "provider": "I Love You Venice",
+      "source_url": "https://www.youtube.com/watch?v=a1mcaV3Sf9U"
+    },
+    {
+      "id": "tokyo-shibuya",
+      "name": "Carrefour de Shibuya",
+      "city": "Tokyo",
+      "country": "Japon",
+      "region": "Asie",
+      "kind": "Ville",
+      "timezone": "Asia/Tokyo",
+      "video_id": "8H3nRCFVR6Y",
+      "provider": "TV Asahi News",
+      "source_url": "https://www.youtube.com/watch?v=8H3nRCFVR6Y"
+    },
+    {
+      "id": "bangkok-sukhumvit",
+      "name": "Sukhumvit Road",
+      "city": "Bangkok",
+      "country": "Thaïlande",
+      "region": "Asie",
+      "kind": "Ville",
+      "timezone": "Asia/Bangkok",
+      "video_id": "UemFRPrl1hk",
+      "provider": "The Real Samui Webcam",
+      "source_url": "https://www.youtube.com/watch?v=UemFRPrl1hk"
+    },
+    {
+      "id": "cape-town-table-mountain",
+      "name": "Table Mountain",
+      "city": "Le Cap",
+      "country": "Afrique du Sud",
+      "region": "Afrique",
+      "kind": "Relief",
+      "timezone": "Africa/Johannesburg",
+      "video_id": "i5R4ZlVLzLI",
+      "provider": "Table Mountain Live Stream",
+      "source_url": "https://www.youtube.com/watch?v=i5R4ZlVLzLI"
+    },
+    {
+      "id": "sydney-harbour",
+      "name": "Sydney Harbour",
+      "city": "Sydney",
+      "country": "Australie",
+      "region": "Océanie",
+      "kind": "Port",
+      "timezone": "Australia/Sydney",
+      "video_id": "jshwkG1ZpP8",
+      "provider": "WebcamSydney",
+      "source_url": "https://www.youtube.com/watch?v=jshwkG1ZpP8"
+    },
+    {
+      "id": "alaska-brooks-falls",
+      "name": "Brooks Falls",
+      "city": "Katmai",
+      "country": "Alaska, États-Unis",
+      "region": "Nature",
+      "kind": "Faune sauvage",
+      "timezone": "America/Anchorage",
+      "video_id": "J7ZrIDvqlic",
+      "provider": "Explore.org",
+      "source_url": "https://www.youtube.com/watch?v=J7ZrIDvqlic"
+    }
+  ]
+}

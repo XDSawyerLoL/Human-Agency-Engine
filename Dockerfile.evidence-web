@@ -1,9 +1,7 @@
 FROM nginx:1.27-alpine
 
 COPY hostinger/evidence-nginx.conf /etc/nginx/conf.d/default.conf
-COPY public/index.html /usr/share/nginx/html/index.html
-COPY public/app.css /usr/share/nginx/html/app.css
-COPY public/app.js /usr/share/nginx/html/app.js
+COPY public/ /usr/share/nginx/html/
 
 # The snapshot worker mounts the live public data in this directory.
 RUN mkdir -p /usr/share/nginx/html/data

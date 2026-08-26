@@ -184,3 +184,10 @@ The cockpit groups weather, natural hazards, social/collective behavior, economy
 
 The web assets are copied into the existing HORIZON Docker image; no Node build, Vercel deployment or additional paid hosting layer is required.
 
+The Hostinger Compose stack also publishes the ÉVIDENCE public dashboard through its dedicated Nginx service:
+
+- `/` — live forecast dashboard backed by the generated `evidence-live.json` snapshot;
+- `/cameras/` — WORLD EYE catalog of public live cameras across six world regions;
+- each camera keeps a direct link to its external broadcaster if the embedded player is unavailable.
+
+The camera feeds are an observational surface only. They are not ingested as forecast evidence and never alter a model probability automatically.

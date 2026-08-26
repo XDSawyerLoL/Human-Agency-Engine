@@ -20,6 +20,8 @@ Operational endpoints:
 - `GET /v1/horizon/collector/status` — live collector state
 - `GET /v1/horizon/world/coverage` — maturity inventory across weather, hazards, mobility, supply/fuel, energy, media, geopolitics, economy/labor, health, cyber/technology, regulation/policy, financial stress and personal context
 
+The public `web` service exposes the ÉVIDENCE dashboard on port `8080` by default and the WORLD EYE live-camera page at `/cameras/`. Camera players use external public broadcasters; their availability is independent from HORIZON health and they do not feed the prediction model automatically.
+
 Numeric forecast probabilities remain disabled independently of deployment status.
 
 ## GitHub -> Hostinger deployment invariant
@@ -185,4 +187,3 @@ After the reverse proxy/TLS entry points at the HORIZON API service:
 - `https://<horizon-domain>/docs` exposes FastAPI documentation.
 
 The cockpit asks for the HORIZON API key and keeps it in browser `sessionStorage` only. It sends the key as `X-API-Key` to the same-origin API. This is an operator interface, not yet an end-user account/authentication system.
-
