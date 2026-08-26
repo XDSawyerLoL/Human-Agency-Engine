@@ -27,16 +27,24 @@ jobs:
           node-version: '22'
       - run: npm install --ignore-scripts
       - run: npm run check
-      - name: Smoke-test predictor without network
+      - name: Smoke-test multi-horizon predictor without network
         run: |
           node --input-type=module <<'NODE'
           import { buildForecasts } from './src/predictor.js';
           const now = new Date().toISOString();
-          const rows = buildForecasts([{source_key:'test',source_label:'Test',source_family:'official_primary',source_trust:.95,observed_at:now,event_at:now,event_type:'major_earthquake',title:'Séisme test',geography:'Zone test',severity:.8,url:'',facts:{}}],20);
-          if (rows.length !== 1) throw new Error('forecast missing');
-          if (rows[0].headline.includes('Séisme test')) throw new Error('forecast merely repeats current event');
-          if (!rows[0].falsification) throw new Error('falsification missing');
-          console.log(rows[0].headline, rows[0].probability.percent);
+          const common = {source_key:'test',source_label:'Test',source_family:'official_primary',source_trust:.95,observed_at:now,event_at:now,severity:.8,url:'',facts:{}};
+          const rows = buildForecasts([
+            {...common,event_type:'major_earthquake',title:'Séisme test',geography:'Zone test'},
+            {...common,event_type:'media_geopolitical_trade',title:'Signal commerce test',geography:'Monde'}
+          ],36);
+          if (rows.length < 5) throw new Error(`not enough distinct forecasts: ${rows.length}`);
+          if (rows.some(r => r.headline.includes('Séisme test'))) throw new Error('forecast merely repeats current event');
+          if (!rows.every(r => r.falsification && r.time_window?.end_at)) throw new Error('forecast contract incomplete');
+          if (!rows.some(r => r.horizon_tier === 'immediate')) throw new Error('immediate horizon missing');
+          if (!rows.some(r => r.horizon_tier === 'medium')) throw new Error('medium horizon missing');
+          if (!rows.some(r => r.horizon_tier === 'long')) throw new Error('long horizon missing');
+          if (!rows.some(r => r.horizon_tier === 'strategic')) throw new Error('strategic horizon missing');
+          console.log(rows.map(r => `${r.horizon_tier}:${r.probability.percent}%:${r.headline}`).join('\n'));
           NODE
       - name: Start Express and verify Hostinger health endpoint
         run: |
