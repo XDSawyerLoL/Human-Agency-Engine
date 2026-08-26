@@ -8,6 +8,7 @@ from fastapi.encoders import jsonable_encoder
 
 from app.db import SessionLocal
 from app.services.horizon_collector import HorizonCollectorService
+from app.services.horizon_world_patterns import HorizonWorldPatternService
 
 
 STATUS_PATH = Path(os.getenv("HORIZON_GITHUB_STATUS_PATH", "horizon-github-status.json"))
@@ -23,6 +24,7 @@ def main() -> None:
 
     db = SessionLocal()
     try:
+        world_pattern_ids = HorizonWorldPatternService(db).sync()
         service = HorizonCollectorService(db)
         cycle = service.run_due(
             owner_id=owner_id,
@@ -34,6 +36,7 @@ def main() -> None:
             "run_id": run_id,
             "run_attempt": run_attempt,
             "owner_id": owner_id,
+            "world_pattern_ids": world_pattern_ids,
             "cycle": jsonable_encoder(cycle),
             "collector": jsonable_encoder(status),
             "critical_semantics": {
@@ -42,6 +45,7 @@ def main() -> None:
                 "public_world_evidence_only": True,
                 "personal_data_allowed": False,
                 "github_actions_is_not_permanent_hosting": True,
+                "world_pulse_patterns_synced": True,
                 "numeric_probabilities_enabled": False,
             },
         }
