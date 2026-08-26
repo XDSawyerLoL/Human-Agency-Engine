@@ -16,6 +16,8 @@ import { getWorldEye } from './src/world_eye.js';
 import { moduleCatalog, runLabModule, collectResearchModuleCandidates } from './src/lab_modules.js';
 import { enrichForecastIntelligence, buildCycleSignalSummary, buildSnapshotAnalytics } from './src/decision_intelligence.js';
 import { attachShadowEnsemble, counterfactualSensitivity } from './src/forecast_reasoning.js';
+import { attachAdaptiveEnsemble } from './src/adaptive_ensemble.js';
+import { compileForecastQuestion } from './src/forecast_compiler.js';
 import { sportsCalibrationLab, benchmarkRoadmap } from './src/calibration_labs.js';
 import { buildResolutionAssessments } from './src/resolution_engine.js';
 import {
@@ -123,6 +125,10 @@ async function refreshWorld() {
       const signalCycle = buildCycleSignalSummary(collected.signals, generatedAt);
       await store.recordSignalCycle(signalCycle);
 
+      // Résoudre d'abord les anciennes prévisions avec les signaux actuels : la V9 n'apprend que du passé résolu.
+      const resolutionCycle = await runResolutionCycle(collected.signals, generatedAt);
+      const learning = await getLearningReport(store);
+
       const coreCandidates = buildForecasts(collected.signals, Math.max(config.maxForecasts * 3, 160));
       const breadthCandidates = buildBreadthForecasts(breadth.signals);
       const deepCandidates = buildDeepForecasts(collected.signals);
@@ -134,7 +140,6 @@ async function refreshWorld() {
       await store.appendHistory(forecasts, generatedAt);
       await store.attachHistory(forecasts);
       await store.recordForecastRegistry(forecasts, generatedAt);
-      await recordForecastMetadata(store, forecasts, generatedAt);
       for (const f of forecasts) {
         const history = f.probability_history ?? [];
         if (history.length >= 2) {
@@ -147,10 +152,11 @@ async function refreshWorld() {
         }
         enrichForecastIntelligence(f);
         attachShadowEnsemble(f);
+        attachAdaptiveEnsemble(f, learning);
       }
+      // Le premier ensemble publié est persisté après calcul afin de pouvoir être backtesté sans look-ahead.
+      await recordForecastMetadata(store, forecasts, generatedAt);
 
-      const resolutionCycle = await runResolutionCycle(collected.signals, generatedAt);
-      const learning = await getLearningReport(store);
       const memoryPublished = forecasts.filter(f => f?.memory?.recomputed).length;
       const livePublished = forecasts.length - memoryPublished;
       const memoryStats = scenarioMemoryStats();
@@ -161,8 +167,8 @@ async function refreshWorld() {
       const catalog = sourceCatalog(collected, sourceProviders);
       const signalAnalytics = await store.getSignalAnalytics();
       const snapshot = {
-        schema: 'evidence-node-world-eye-v8',
-        engine: 'evidence-node-predictive-public-v8-self-calibrating',
+        schema: 'evidence-node-world-eye-v9',
+        engine: 'evidence-node-predictive-public-v9-adaptive-forecast-os',
         generated_at: generatedAt,
         runtime_mode: 'hostinger-node-managed',
         status: 'live',
@@ -195,6 +201,10 @@ async function refreshWorld() {
           decision_layer_enabled: true,
           counterfactual_sensitivity_enabled: true,
           shadow_ensemble_enabled: true,
+          adaptive_ensemble_enabled: true,
+          adaptive_ensemble_learning_resolutions: learning.ensemble.live_backtest.n,
+          adaptive_ensemble_promotion_ready: learning.ensemble.promotion_ready,
+          forecast_compiler_enabled: true,
           sports_calibration_lab_enabled: true,
           resolution_engine_enabled: true,
           resolution_due: resolutionCycle.due,
@@ -223,6 +233,9 @@ async function refreshWorld() {
           brier_score: learning.calibration.global.brier,
           log_loss: learning.calibration.global.log_loss,
           ece: learning.calibration.global.ece,
+          adaptive_ensemble_status: learning.ensemble.status,
+          adaptive_ensemble_live_backtest: learning.ensemble.live_backtest,
+          adaptive_ensemble_promotion_ready: learning.ensemble.promotion_ready,
           resolution_states: learning.resolution.states
         },
         forecasts,
@@ -236,6 +249,9 @@ async function refreshWorld() {
           scenario_memory_is_recomputed_by_horizon: true,
           decision_brief_is_automatic_order: false,
           shadow_ensemble_is_public_probability: false,
+          adaptive_ensemble_is_public_probability: false,
+          adaptive_ensemble_requires_live_track_record: true,
+          forecast_compiler_can_invent_probability: false,
           falsification_required: true,
           expired_forecasts_must_resolve: true,
           ambiguous_forecasts_auto_scored: false,
@@ -247,7 +263,7 @@ async function refreshWorld() {
       snapshot.analytics = buildSnapshotAnalytics(snapshot, signalAnalytics);
       await store.saveSnapshot(snapshot);
       lastError = null;
-      console.log(JSON.stringify({ event:'world_refresh', signals:collected.signals.length, forecasts:forecasts.length, live:livePublished, memory:memoryPublished, candidates:allCandidates.length, resolution:resolutionCycle, calibration_n:learning.calibration.scorable_resolutions, domains:domainCounts, horizons:horizonCounts, sources:collected.source_status }));
+      console.log(JSON.stringify({ event:'world_refresh', signals:collected.signals.length, forecasts:forecasts.length, live:livePublished, memory:memoryPublished, candidates:allCandidates.length, resolution:resolutionCycle, calibration_n:learning.calibration.scorable_resolutions, ensemble_n:learning.ensemble.live_backtest.n, domains:domainCounts, horizons:horizonCounts, sources:collected.source_status }));
       return snapshot;
     } catch (error) {
       lastError = { at: new Date().toISOString(), message: error.message };
@@ -336,6 +352,7 @@ app.get('/api/track-record', async (_req, res) => {
     log_loss:global.log_loss,
     hit_rate:global.hit_rate===null?null:Math.round(global.hit_rate*1000)/10,
     calibration:learning.calibration,
+    ensemble:learning.ensemble,
     resolution:learning.resolution,
     persistent_learning:learning.persistent
   });
@@ -345,6 +362,12 @@ app.get('/api/calibration', async (_req, res) => {
   res.set('Cache-Control', 'public, max-age=30');
   const learning = await getLearningReport(store);
   res.json(learning.calibration);
+});
+
+app.get('/api/ensemble', async (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=30');
+  const learning = await getLearningReport(store);
+  res.json({generated_at:new Date().toISOString(),...learning.ensemble});
 });
 
 app.get('/api/resolutions', async (_req, res) => {
@@ -372,7 +395,7 @@ app.post('/api/resolutions/:scenarioKey', async (req, res) => {
       resolver:'manual_verified'
     });
     const learning = await getLearningReport(store);
-    res.json({status:'ok',resolution:result,calibration:learning.calibration});
+    res.json({status:'ok',resolution:result,calibration:learning.calibration,ensemble:learning.ensemble});
   } catch (error) {
     res.status(400).json({status:'error',error:String(error?.message||error)});
   }
@@ -399,6 +422,18 @@ app.post('/api/counterfactual/:scenarioKey', async (req, res) => {
   const f = snapshot?.forecasts?.find(x => String(x.scenario_key) === String(req.params.scenarioKey));
   if (!f) return res.status(404).json({error:'scenario_not_found'});
   res.json(counterfactualSensitivity(f, req.body?.changes || []));
+});
+
+app.post('/api/forecast/compile', async (req, res) => {
+  try {
+    const snapshot=await store.getSnapshot() || await refreshWorld();
+    if(!snapshot) return res.status(503).json({status:'warming'});
+    res.json(compileForecastQuestion(String(req.body?.question||''),snapshot));
+  } catch(error) {
+    const message=String(error?.message||error);
+    const clientError=['question_too_short','invalid_now'].includes(message);
+    res.status(clientError?400:500).json({status:'error',error:message});
+  }
 });
 
 app.post('/api/refresh', async (req, res) => {

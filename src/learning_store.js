@@ -1,10 +1,26 @@
 import { buildCalibrationReport } from './calibration_engine.js';
+import { buildAdaptiveEnsembleLearning } from './adaptive_ensemble.js';
 import { resolutionContract } from './resolution_engine.js';
 
 const memoryMeta = new Map();
 const memoryResolution = new Map();
 const json = value => JSON.stringify(value ?? null);
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
+
+function ensembleSnapshot(f) {
+  if (!f?.adaptive_ensemble || !Number.isFinite(Number(f.adaptive_ensemble.estimate))) return null;
+  return {
+    estimate:Number(f.adaptive_ensemble.estimate),
+    percent:Number(f.adaptive_ensemble.percent),
+    status:f.adaptive_ensemble.status,
+    promotion_ready:Boolean(f.adaptive_ensemble.promotion_ready),
+    replaces_public_probability:Boolean(f.adaptive_ensemble.replaces_public_probability),
+    components:(f.adaptive_ensemble.components||[]).map(x=>({
+      key:x.key,label:x.label,estimate:Number(x.estimate),weight:Number(x.weight),base_weight:Number(x.base_weight),
+      reliability_multiplier:Number(x.reliability_multiplier),training_samples:Number(x.training_samples||0),weight_scope:x.weight_scope
+    }))
+  };
+}
 
 export async function initLearningStore(store) {
   if (!store?.pool) return {mode:'memory',persistent:false};
@@ -31,17 +47,33 @@ export async function initLearningStore(store) {
 }
 
 export async function recordForecastMetadata(store, forecasts = [], at = new Date().toISOString()) {
+  const existingByKey=new Map();
+  if(store?.pool && forecasts.length){
+    const keys=forecasts.map(f=>f.scenario_key).filter(Boolean);
+    if(keys.length){
+      const [rows]=await store.pool.query('SELECT scenario_key,payload FROM evidence_forecast_meta WHERE scenario_key IN (?)',[keys]);
+      for(const row of rows) existingByKey.set(row.scenario_key,parse(row.payload)||{});
+    }
+  }
+
   for (const f of forecasts) {
+    const previous=memoryMeta.get(f.scenario_key)||existingByKey.get(f.scenario_key)||{};
+    const currentEnsemble=ensembleSnapshot(f);
+    const firstEnsemble=previous?.forecast?.first_adaptive_ensemble||currentEnsemble;
+    const firstProbability=Number(previous?.forecast?.first_probability ?? f.probability?.estimate ?? 0);
     const payload = {
       forecast:{
         scenario_key:f.scenario_key,scenario_id:f.scenario_id,title:f.title||f.headline,summary:f.summary,
         domain:f.domain,horizon_tier:f.horizon_tier,region:f.region,target_date:f.target_date||f.time_window?.end_at,
-        event_type:f.event_type,origin_group:f.origin_group,first_probability:Number(f.probability?.estimate??0),
+        event_type:f.event_type,origin_group:f.origin_group,first_probability:firstProbability,
         source_providers:f.consolidation?.source_providers||[],source_families:f.consolidation?.source_families||[],
-        memory:f.memory||null
+        memory:f.memory||null,
+        first_adaptive_ensemble:firstEnsemble,
+        adaptive_ensemble:currentEnsemble
       },
       resolution_contract:resolutionContract(f),
-      recorded_at:at
+      recorded_at:previous?.recorded_at||at,
+      updated_at:at
     };
     memoryMeta.set(f.scenario_key,payload);
   }
@@ -136,6 +168,7 @@ async function resolvedRows(store) {
 export async function getLearningReport(store) {
   const rows=await resolvedRows(store);
   const calibration=buildCalibrationReport(rows);
+  const ensemble=buildAdaptiveEnsembleLearning(rows);
   let resolutionStates=[]; let stateCounts={};
   if(store?.pool){
     const [states]=await store.pool.query(`SELECT scenario_key,resolution_status,outcome,resolver,confidence,resolution_kind,evidence,note,checked_at,resolved_at
@@ -147,7 +180,7 @@ export async function getLearningReport(store) {
     resolutionStates=[...memoryResolution.values()].slice(-100).reverse();
     stateCounts=resolutionStates.reduce((a,r)=>{a[r.status||r.resolution_status]=(a[r.status||r.resolution_status]||0)+1;return a;},{});
   }
-  return {storage_mode:store?.mode||'memory',persistent:store?.mode==='mysql',calibration,resolution:{states:stateCounts,recent:resolutionStates.slice(0,30)}};
+  return {storage_mode:store?.mode||'memory',persistent:store?.mode==='mysql',calibration,ensemble,resolution:{states:stateCounts,recent:resolutionStates.slice(0,30)}};
 }
 
 export async function storageReadiness(store) {
@@ -155,6 +188,6 @@ export async function storageReadiness(store) {
     mode:store?.mode||'memory',persistent:store?.mode==='mysql',mysql_connected:Boolean(store?.pool),
     learning_tables_ready:Boolean(store?.pool),
     accepted_configuration:['MYSQL_URL','DATABASE_URL(mysql://...)','MYSQL_HOST + MYSQL_PORT + MYSQL_USER + MYSQL_PASSWORD + MYSQL_DATABASE'],
-    note:store?.pool?'Historique, résolutions et calibration sont persistants.':'Le moteur fonctionne, mais l’apprentissage historique sera perdu au redémarrage tant que MySQL n’est pas connecté.'
+    note:store?.pool?'Historique, résolutions, calibration et apprentissage de l’ensemble sont persistants.':'Le moteur fonctionne, mais l’apprentissage historique sera perdu au redémarrage tant que MySQL n’est pas connecté.'
   };
 }
