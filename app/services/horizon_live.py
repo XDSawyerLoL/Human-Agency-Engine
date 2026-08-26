@@ -31,6 +31,22 @@ GDELT_QUERY_PACK = {
     "energy_markets": '("gas supply" OR "oil supply" OR "energy shortage" OR "power shortage" OR "energy crisis" OR "energy price spike")',
 }
 
+# If GDELT rejects or times out on a broad boolean query, a single-term fallback
+# keeps the world discovery channel alive without pretending it is equally rich.
+GDELT_FALLBACK_QUERY = {
+    "supply": "shortage",
+    "weather_disaster": "wildfire",
+    "conflict_security": "sanctions",
+    "infrastructure": "blackout",
+    "economy_labor": "layoffs",
+    "social_collective": "protest",
+    "public_health": "outbreak",
+    "regulation_policy": "tariff",
+    "cyber_technology": "ransomware",
+    "financial_stress": "liquidity",
+    "energy_markets": "energy",
+}
+
 
 def _parse_seen_date(value: object) -> datetime | None:
     if not value:
@@ -85,7 +101,7 @@ class HorizonLiveService:
         if client is None:
             client = httpx.Client(
                 timeout=httpx.Timeout(20.0),
-                follow_redirects=False,
+                follow_redirects=True,
                 headers={"User-Agent": self.USER_AGENT, "Accept": "application/json"},
             )
 
@@ -94,30 +110,43 @@ class HorizonLiveService:
         replayed_ids: list[int] = []
         errors: list[dict] = []
         successful_families = 0
+        fallback_families: list[str] = []
 
         try:
             for family in families:
-                query = GDELT_QUERY_PACK[family]
-                try:
-                    response = client.get(
-                        GDELT_DOC_ENDPOINT,
-                        params={
-                            "query": query,
-                            "mode": "artlist",
-                            "format": "json",
-                            "sort": "datedesc",
-                            "timespan": f"{request.timespan_minutes}min",
-                            "maxrecords": request.max_records_per_query,
-                        },
-                    )
-                    response.raise_for_status()
-                    payload = response.json()
-                    articles = payload.get("articles", []) if isinstance(payload, dict) else []
-                    if not isinstance(articles, list):
-                        raise ValueError("GDELT JSON payload has no article list")
-                    successful_families += 1
-                except (httpx.HTTPError, ValueError) as exc:
-                    errors.append({"family": family, "error": str(exc)[:300]})
+                articles: list = []
+                family_errors: list[str] = []
+                attempts = [
+                    (GDELT_QUERY_PACK[family], request.timespan_minutes, "broad"),
+                    (GDELT_FALLBACK_QUERY[family], max(60, request.timespan_minutes), "fallback"),
+                ]
+                for query, timespan_minutes, mode in attempts:
+                    try:
+                        response = client.get(
+                            GDELT_DOC_ENDPOINT,
+                            params={
+                                "query": query,
+                                "mode": "artlist",
+                                "format": "json",
+                                "sort": "datedesc",
+                                "timespan": f"{timespan_minutes}min",
+                                "maxrecords": request.max_records_per_query,
+                            },
+                        )
+                        response.raise_for_status()
+                        payload = response.json()
+                        candidate_articles = payload.get("articles", []) if isinstance(payload, dict) else []
+                        if not isinstance(candidate_articles, list):
+                            raise ValueError("GDELT JSON payload has no article list")
+                        articles = candidate_articles
+                        successful_families += 1
+                        if mode == "fallback":
+                            fallback_families.append(family)
+                        break
+                    except (httpx.HTTPError, ValueError) as exc:
+                        family_errors.append(f"{mode}: {str(exc)[:220]}")
+                else:
+                    errors.append({"family": family, "error": " | ".join(family_errors)[:500]})
                     continue
 
                 for article in articles:
@@ -128,8 +157,6 @@ class HorizonLiveService:
                         continue
                     external_key = _external_key(url)
 
-                    # Recurring polls must not create a second immutable observation
-                    # merely because the retrieval clock changed.
                     existing = self.db.query(HorizonRawObservation).filter(
                         HorizonRawObservation.source_id == source.id,
                         HorizonRawObservation.external_key == external_key,
@@ -146,8 +173,6 @@ class HorizonLiveService:
                         title=title,
                         summary="",
                         source_url=url,
-                        # Publisher country is not event geography. Geography remains
-                        # unknown until an event normalizer has defensible evidence.
                         geography=[],
                         canonical_facts={
                             "watch_family": family,
@@ -158,6 +183,7 @@ class HorizonLiveService:
                         },
                         raw_metadata={
                             "gdelt_query_family": family,
+                            "gdelt_fallback_query_used": family in fallback_families,
                             "social_image": article.get("socialimage"),
                             "url_mobile": article.get("url_mobile"),
                         },
@@ -175,7 +201,13 @@ class HorizonLiveService:
                 client.close()
 
         if successful_families == 0:
-            raise RuntimeError("all GDELT live discovery queries failed")
+            detail = "; ".join(
+                f"{item.get('family')}: {item.get('error')}" for item in errors[:3]
+            )
+            raise RuntimeError(
+                "all GDELT live discovery queries failed"
+                + (f"; sample errors: {detail}" if detail else "")
+            )
 
         return {
             "source_key": source.source_key,
@@ -183,6 +215,7 @@ class HorizonLiveService:
             "endpoint_allowlisted": GDELT_DOC_ENDPOINT,
             "families_requested": families,
             "families_succeeded": successful_families,
+            "families_using_fallback": sorted(set(fallback_families)),
             "new_observations": len(created_ids),
             "replayed_observations": len(replayed_ids),
             "created_observation_ids": created_ids,
