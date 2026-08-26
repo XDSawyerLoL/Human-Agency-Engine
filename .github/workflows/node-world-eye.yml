@@ -67,4 +67,4 @@ jobs:
           curl -fsS http://127.0.0.1:3000/api/resolutions >/tmp/resolutions.json
           node -e "const x=require('/tmp/resolutions.json'); if(!Array.isArray(x.queue)||typeof x.states!=='object') process.exit(1); console.log('resolution endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/storage >/tmp/storage.json
-          node -e "const x=require('/tmp/storage.json'); if(typeof x.persistent!=='boolean'||!Array.isArray(x.required_environment)) process.exit(1); console.log('storage readiness endpoint ok')"
+          node -e "const x=require('/tmp/storage.json'); if(typeof x.persistent!=='boolean'||!Array.isArray(x.accepted_configuration)) process.exit(1); console.log('storage readiness endpoint ok')"
