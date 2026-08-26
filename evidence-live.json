@@ -1,7 +1,7 @@
 {
   "schema": "evidence-public-snapshot-v2",
   "engine": "evidence-predictive-public-v0.3",
-  "generated_at": "2026-08-26T07:51:53.380601+00:00",
+  "generated_at": "2026-08-26T07:56:42.060805+00:00",
   "runtime_mode": "github-only-horizon",
   "status": "live",
   "summary": {
@@ -256,10 +256,19 @@
             64
           ],
           "fact_status": "forecast_from_confirmed_event"
+        },
+        {
+          "at": "2026-08-26T07:56:42.060805+00:00",
+          "percent": 45,
+          "interval_percent": [
+            27,
+            64
+          ],
+          "fact_status": "forecast_from_confirmed_event"
         }
       ],
-      "probability_delta_points": null,
-      "probability_direction": "new"
+      "probability_delta_points": 0.0,
+      "probability_direction": "stable"
     },
     {
       "scenario_key": "ed04dd54562901810d356ada",
@@ -937,10 +946,19 @@
             61
           ],
           "fact_status": "forecast_from_confirmed_event"
+        },
+        {
+          "at": "2026-08-26T07:56:42.060805+00:00",
+          "percent": 43,
+          "interval_percent": [
+            24,
+            61
+          ],
+          "fact_status": "forecast_from_confirmed_event"
         }
       ],
-      "probability_delta_points": null,
-      "probability_direction": "new"
+      "probability_delta_points": 0.0,
+      "probability_direction": "stable"
     }
   ],
   "critical_semantics": {
