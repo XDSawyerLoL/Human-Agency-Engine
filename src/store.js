@@ -2,12 +2,16 @@ import mysql from 'mysql2/promise';
 import { config } from './config.js';
 
 const HISTORY_MAX_POINTS = 72;
+const SIGNAL_LEDGER_MAX_CYCLES = 7 * 24 * 6 + 12;
+const DAY = 86_400_000;
+const clampProbability = p => Math.max(0.001, Math.min(0.999, Number(p) || 0));
 
 export class EvidenceStore {
   constructor() {
     this.snapshot = null;
     this.history = new Map();
     this.registry = new Map();
+    this.signalLedger = [];
     this.pool = null;
     this.mode = 'memory';
   }
@@ -57,8 +61,12 @@ export class EvidenceStore {
         INDEX idx_registry_target (target_at),
         INDEX idx_registry_status (status)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
-      const [rows] = await this.pool.query('SELECT payload FROM evidence_state WHERE state_key = ?', ['snapshot']);
-      if (rows?.[0]?.payload) this.snapshot = typeof rows[0].payload === 'string' ? JSON.parse(rows[0].payload) : rows[0].payload;
+      const [rows] = await this.pool.query('SELECT state_key, payload FROM evidence_state WHERE state_key IN (?, ?)', ['snapshot','signal_ledger']);
+      for (const row of rows || []) {
+        const payload = typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload;
+        if (row.state_key === 'snapshot') this.snapshot = payload;
+        if (row.state_key === 'signal_ledger' && Array.isArray(payload)) this.signalLedger = payload;
+      }
       this.mode = 'mysql';
     } catch (error) {
       console.error('[store] MySQL indisponible, mémoire seule:', error.message);
@@ -182,6 +190,54 @@ export class EvidenceStore {
     }
   }
 
+  async recordSignalCycle(cycle) {
+    if (!cycle?.at) return;
+    const cutoff = Date.now() - 7 * DAY;
+    this.signalLedger.push(cycle);
+    this.signalLedger = this.signalLedger
+      .filter(x => Date.parse(x.at || 0) >= cutoff)
+      .slice(-SIGNAL_LEDGER_MAX_CYCLES);
+    if (!this.pool) return;
+    try {
+      await this.pool.query(
+        `INSERT INTO evidence_state (state_key, payload) VALUES ('signal_ledger', ?)
+         ON DUPLICATE KEY UPDATE payload = VALUES(payload), updated_at = CURRENT_TIMESTAMP`,
+        [JSON.stringify(this.signalLedger)]
+      );
+    } catch (error) {
+      console.error('[store] signal ledger MySQL:', error.message);
+    }
+  }
+
+  async getSignalAnalytics() {
+    const cutoff = Date.now() - 7 * DAY;
+    const cycles = this.signalLedger.filter(x => Date.parse(x.at || 0) >= cutoff);
+    const byDay = new Map();
+    const domains = {};
+    const sourceTotals = {};
+    const countries = new Set();
+    for (const cycle of cycles) {
+      const d = new Date(cycle.at);
+      const day = Number.isNaN(d.getTime()) ? 'inconnu' : d.toISOString().slice(0,10);
+      byDay.set(day, (byDay.get(day) || 0) + Number(cycle.count || 0));
+      for (const [key,n] of Object.entries(cycle.domains || {})) domains[key] = (domains[key] || 0) + Number(n || 0);
+      for (const [key,n] of Object.entries(cycle.sources || {})) sourceTotals[key] = (sourceTotals[key] || 0) + Number(n || 0);
+      for (const c of cycle.countries || []) countries.add(c);
+    }
+    const last = cycles.at(-1) || null;
+    const dates = [...Array(7)].map((_,i)=>new Date(Date.now()-(6-i)*DAY).toISOString().slice(0,10));
+    return {
+      current_cycle_count:Number(last?.count || 0),
+      volume_7d:dates.map(date=>({date,count:Number(byDay.get(date)||0)})),
+      domain_distribution:domains,
+      source_distribution:sourceTotals,
+      countries:[...countries],
+      realtime_feed:last?.feed || [],
+      cycles_recorded:cycles.length,
+      persistent:this.mode === 'mysql'
+    };
+  }
+
   async getTrackRecord() {
     const now = Date.now();
     let registryRows = [...this.registry.values()];
@@ -205,14 +261,30 @@ export class EvidenceStore {
       }
     }
 
-    const resolved = registryRows.filter(r => ['resolved','invalidated'].includes(String(r.status))).length;
-    const successful = registryRows.filter(r => String(r.status)==='resolved' && Number(r.outcome)===1).length;
-    const failed = registryRows.filter(r => String(r.status)==='invalidated' || (String(r.status)==='resolved' && Number(r.outcome)===0)).length;
+    const resolvedRows = registryRows.filter(r => ['resolved','invalidated'].includes(String(r.status)) && [0,1].includes(Number(r.outcome)));
+    const resolved = resolvedRows.length;
+    const successful = resolvedRows.filter(r => Number(r.outcome)===1).length;
+    const failed = resolvedRows.filter(r => Number(r.outcome)===0).length;
     const expiredUnresolved = registryRows.filter(r => r.target_at && new Date(r.target_at).getTime() < now && !['resolved','invalidated'].includes(String(r.status))).length;
     const current = this.snapshot?.forecasts ?? [];
-    const buckets = [
+    const bucketDefs = [
       { label:'< 40%', min:0, max:39 }, { label:'40–59%', min:40, max:59 }, { label:'60–79%', min:60, max:79 }, { label:'≥ 80%', min:80, max:100 }
-    ].map(b => ({...b, active:current.filter(f => Number(f?.probability?.percent ?? 0) >= b.min && Number(f?.probability?.percent ?? 0) <= b.max).length}));
+    ];
+    const buckets = bucketDefs.map(b => {
+      const rows = resolvedRows.filter(r => Number(r.first_probability)*100 >= b.min && Number(r.first_probability)*100 <= b.max);
+      return {
+        ...b,
+        active:current.filter(f => Number(f?.probability?.percent ?? 0) >= b.min && Number(f?.probability?.percent ?? 0) <= b.max).length,
+        resolved:rows.length,
+        observed_frequency:rows.length ? Math.round(rows.reduce((a,r)=>a+Number(r.outcome),0)/rows.length*1000)/10 : null
+      };
+    });
+    const brier = resolved ? resolvedRows.reduce((sum,r)=>{
+      const p=clampProbability(r.first_probability); const y=Number(r.outcome); return sum+(p-y)**2;
+    },0)/resolved : null;
+    const logLoss = resolved ? resolvedRows.reduce((sum,r)=>{
+      const p=clampProbability(r.first_probability); const y=Number(r.outcome); return sum-(y*Math.log(p)+(1-y)*Math.log(1-p));
+    },0)/resolved : null;
 
     return {
       generated_at: new Date().toISOString(),
@@ -226,13 +298,14 @@ export class EvidenceStore {
       expired_unresolved: expiredUnresolved,
       calibration_ready: resolved >= 30,
       empirical_calibration_enabled: resolved >= 30,
-      brier_score: null,
-      log_loss: null,
+      brier_score: brier === null ? null : Math.round(brier*10000)/10000,
+      log_loss: logLoss === null ? null : Math.round(logLoss*10000)/10000,
       hit_rate: resolved ? Math.round(successful / resolved * 1000) / 10 : null,
       buckets,
+      resolution_queue:registryRows.filter(r=>r.target_at && new Date(r.target_at).getTime()<now && !['resolved','invalidated'].includes(String(r.status))).slice(0,50),
       recent: registryRows.slice(0,20),
       note: resolved >= 30
-        ? 'Le corpus contient assez de résolutions pour calculer une calibration empirique ; le calcul automatique du Brier Score est la prochaine étape.'
+        ? 'Calibration empirique calculable sur les scénarios résolus. Les scores reposent sur la probabilité enregistrée à la première publication.'
         : 'Collecte historique en cours. Aucun score de performance n’est inventé avant un nombre suffisant de prédictions réellement résolues.'
     };
   }
