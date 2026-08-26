@@ -12,6 +12,25 @@ const value = (...names) => {
   return '';
 };
 
+function mysqlUrlConfig() {
+  const raw=value('MYSQL_URL','DATABASE_URL');
+  if(!raw) return null;
+  try {
+    const u=new URL(raw);
+    if(!['mysql:','mariadb:'].includes(u.protocol)) return null;
+    return {
+      host:u.hostname,
+      port:Number.parseInt(u.port||'3306',10)||3306,
+      user:decodeURIComponent(u.username||''),
+      password:decodeURIComponent(u.password||''),
+      database:decodeURIComponent(String(u.pathname||'').replace(/^\//,''))
+    };
+  } catch { return null; }
+}
+
+const mysqlUrl=mysqlUrlConfig();
+const mysqlPortRaw=value('MYSQL_PORT','DB_PORT');
+
 export const config = {
   // Hostinger Web Apps reverse-proxy server-side Node apps to port 3000.
   port: 3000,
@@ -25,11 +44,11 @@ export const config = {
   pointApiKey: value('POINT_API_KEY'),
   metaculusApiKey: value('METACULUS_API_KEY'),
   mysql: {
-    host: value('MYSQL_HOST', 'DB_HOST'),
-    port: int('MYSQL_PORT', int('DB_PORT', 3306, 1, 65535), 1, 65535),
-    user: value('MYSQL_USER', 'DB_USER'),
-    password: value('MYSQL_PASSWORD', 'DB_PASSWORD'),
-    database: value('MYSQL_DATABASE', 'DB_NAME')
+    host: value('MYSQL_HOST', 'DB_HOST') || mysqlUrl?.host || '',
+    port: mysqlPortRaw ? Math.max(1,Math.min(65535,Number.parseInt(mysqlPortRaw,10)||3306)) : (mysqlUrl?.port || 3306),
+    user: value('MYSQL_USER', 'DB_USER') || mysqlUrl?.user || '',
+    password: value('MYSQL_PASSWORD', 'DB_PASSWORD') || mysqlUrl?.password || '',
+    database: value('MYSQL_DATABASE', 'DB_NAME') || mysqlUrl?.database || ''
   },
   adminRefreshKey: value('EVIDENCE_ADMIN_KEY')
 };
@@ -40,5 +59,6 @@ export const providerState = () => ({
   WindyConfiguredButNotUsedAsProductionEvidence: Boolean(config.windyApiKey),
   CopernicusPublic: true,
   MetaculusReferenceOnly: Boolean(config.metaculusApiKey),
-  PointReferenceOnly: Boolean(config.pointApiKey)
+  PointReferenceOnly: Boolean(config.pointApiKey),
+  PersistentLearningConfigured: Boolean(config.mysql.host && config.mysql.user && config.mysql.database)
 });

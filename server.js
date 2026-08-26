@@ -17,12 +17,23 @@ import { moduleCatalog, runLabModule, collectResearchModuleCandidates } from './
 import { enrichForecastIntelligence, buildCycleSignalSummary, buildSnapshotAnalytics } from './src/decision_intelligence.js';
 import { attachShadowEnsemble, counterfactualSensitivity } from './src/forecast_reasoning.js';
 import { sportsCalibrationLab, benchmarkRoadmap } from './src/calibration_labs.js';
+import { buildResolutionAssessments } from './src/resolution_engine.js';
+import {
+  initLearningStore,
+  recordForecastMetadata,
+  getDueResolutionRows,
+  saveResolutionAssessment,
+  resolveForecast,
+  getLearningReport,
+  storageReadiness
+} from './src/learning_store.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const store = new EvidenceStore();
 let refreshing = null;
 let lastError = null;
+let learningReady = false;
 const moduleRuns = new Map();
 const RESEARCH_DEADLINE_MS = 9_000;
 
@@ -83,6 +94,18 @@ async function collectResearchWithDeadline() {
   }
 }
 
+async function runResolutionCycle(signals, generatedAt) {
+  try {
+    const due = await getDueResolutionRows(store, {limit:120, now:new Date(generatedAt)});
+    const assessments = buildResolutionAssessments(due, signals, {now:Date.parse(generatedAt)});
+    for (const assessment of assessments) await saveResolutionAssessment(store, assessment);
+    return {due:due.length,assessed:assessments.length,auto_resolved:assessments.filter(x=>x.status==='auto_resolved').length};
+  } catch (error) {
+    console.error('[resolution-cycle]', error.message);
+    return {due:0,assessed:0,auto_resolved:0,error:error.message};
+  }
+}
+
 async function refreshWorld() {
   if (refreshing) return refreshing;
   refreshing = (async () => {
@@ -111,6 +134,7 @@ async function refreshWorld() {
       await store.appendHistory(forecasts, generatedAt);
       await store.attachHistory(forecasts);
       await store.recordForecastRegistry(forecasts, generatedAt);
+      await recordForecastMetadata(store, forecasts, generatedAt);
       for (const f of forecasts) {
         const history = f.probability_history ?? [];
         if (history.length >= 2) {
@@ -125,6 +149,8 @@ async function refreshWorld() {
         attachShadowEnsemble(f);
       }
 
+      const resolutionCycle = await runResolutionCycle(collected.signals, generatedAt);
+      const learning = await getLearningReport(store);
       const memoryPublished = forecasts.filter(f => f?.memory?.recomputed).length;
       const livePublished = forecasts.length - memoryPublished;
       const memoryStats = scenarioMemoryStats();
@@ -135,8 +161,8 @@ async function refreshWorld() {
       const catalog = sourceCatalog(collected, sourceProviders);
       const signalAnalytics = await store.getSignalAnalytics();
       const snapshot = {
-        schema: 'evidence-node-world-eye-v7',
-        engine: 'evidence-node-predictive-public-v7-scenario-memory',
+        schema: 'evidence-node-world-eye-v8',
+        engine: 'evidence-node-predictive-public-v8-self-calibrating',
         generated_at: generatedAt,
         runtime_mode: 'hostinger-node-managed',
         status: 'live',
@@ -170,6 +196,14 @@ async function refreshWorld() {
           counterfactual_sensitivity_enabled: true,
           shadow_ensemble_enabled: true,
           sports_calibration_lab_enabled: true,
+          resolution_engine_enabled: true,
+          resolution_due: resolutionCycle.due,
+          resolution_assessed: resolutionCycle.assessed,
+          resolution_auto_resolved: resolutionCycle.auto_resolved,
+          calibration_engine_enabled: true,
+          calibration_scorable_resolutions: learning.calibration.scorable_resolutions,
+          empirical_probability_calibration_enabled: learning.calibration.calibration_ready,
+          persistent_learning_enabled: learning.persistent,
           numeric_model_estimates_enabled: true,
           duplicate_probability_inflation_prevented: true,
           public_semantic_dedup_enabled: true,
@@ -179,13 +213,21 @@ async function refreshWorld() {
           long_range_5_plus_enabled: deepCandidates.length > 0 || memoryCandidates.some(f => f.horizon_tier === 'deep'),
           public_french_localization_enabled: true,
           second_order_only: true,
-          empirical_probability_calibration_enabled: false,
           storage_mode: store.mode,
           providers_configured: collected.providers_configured
         },
+        learning: {
+          persistent: learning.persistent,
+          calibration_ready: learning.calibration.calibration_ready,
+          scorable_resolutions: learning.calibration.scorable_resolutions,
+          brier_score: learning.calibration.global.brier,
+          log_loss: learning.calibration.global.log_loss,
+          ece: learning.calibration.global.ece,
+          resolution_states: learning.resolution.states
+        },
         forecasts,
         contract: {
-          product_promise: 'Anticiper des conséquences plausibles, mesurer leur impact et décider quoi préparer avant qu’elles deviennent évidentes.',
+          product_promise: 'Anticiper des conséquences plausibles, mesurer leur impact, décider quoi préparer puis vérifier objectivement la prévision.',
           probability_is_certainty: false,
           consolidation_is_probability: false,
           confidence_is_probability: false,
@@ -196,6 +238,8 @@ async function refreshWorld() {
           shadow_ensemble_is_public_probability: false,
           falsification_required: true,
           expired_forecasts_must_resolve: true,
+          ambiguous_forecasts_auto_scored: false,
+          binary_scores_use_first_published_probability: true,
           duplicate_public_scenarios_allowed: false,
           five_plus_year_scenarios_are_conditional: true
         }
@@ -203,7 +247,7 @@ async function refreshWorld() {
       snapshot.analytics = buildSnapshotAnalytics(snapshot, signalAnalytics);
       await store.saveSnapshot(snapshot);
       lastError = null;
-      console.log(JSON.stringify({ event:'world_refresh', signals:collected.signals.length, forecasts:forecasts.length, live:livePublished, memory:memoryPublished, candidates:allCandidates.length, domains:domainCounts, horizons:horizonCounts, sources:collected.source_status }));
+      console.log(JSON.stringify({ event:'world_refresh', signals:collected.signals.length, forecasts:forecasts.length, live:livePublished, memory:memoryPublished, candidates:allCandidates.length, resolution:resolutionCycle, calibration_n:learning.calibration.scorable_resolutions, domains:domainCounts, horizons:horizonCounts, sources:collected.source_status }));
       return snapshot;
     } catch (error) {
       lastError = { at: new Date().toISOString(), message: error.message };
@@ -218,10 +262,13 @@ async function refreshWorld() {
 
 app.get('/api/health', async (_req, res) => {
   const snapshot = await store.getSnapshot();
+  const storage = await storageReadiness(store);
   res.json({
     status: snapshot ? 'ok' : 'warming',
     service: 'evidence-world-eye-node',
     storage: store.mode,
+    learning_ready: learningReady,
+    persistent_learning: storage.persistent,
     port: config.port,
     last_snapshot: snapshot?.generated_at ?? null,
     last_error: lastError,
@@ -255,7 +302,6 @@ app.get('/api/analytics', async (_req, res) => {
 
 app.get('/api/modules', (_req, res) => {
   res.set('Cache-Control', 'public, max-age=60');
-  // Future Engine is internal scenario memory now, not a separate public module.
   res.json({ generated_at:new Date().toISOString(), modules:moduleCatalog().filter(m => m.key !== 'future-engine') });
 });
 
@@ -270,7 +316,6 @@ app.post('/api/modules/:key/run', async (req, res) => {
     const result = await runLabModule(key, { theme:String(req.body?.theme || '') });
     res.json({ status:'ok', generated_at:new Date().toISOString(), ...result });
   } catch (error) {
-    // A remote provider can fail without making the Lab button itself fail.
     res.json({
       status:'degraded', module:key, key, label:key.toUpperCase(), items:[], forecasts:[],
       generated_at:new Date().toISOString(),
@@ -281,7 +326,61 @@ app.post('/api/modules/:key/run', async (req, res) => {
 
 app.get('/api/track-record', async (_req, res) => {
   res.set('Cache-Control', 'public, max-age=30');
-  res.json(await store.getTrackRecord());
+  const [legacy, learning] = await Promise.all([store.getTrackRecord(), getLearningReport(store)]);
+  const global = learning.calibration.global;
+  res.json({
+    ...legacy,
+    calibration_ready:learning.calibration.calibration_ready,
+    empirical_calibration_enabled:learning.calibration.calibration_ready,
+    brier_score:global.brier,
+    log_loss:global.log_loss,
+    hit_rate:global.hit_rate===null?null:Math.round(global.hit_rate*1000)/10,
+    calibration:learning.calibration,
+    resolution:learning.resolution,
+    persistent_learning:learning.persistent
+  });
+});
+
+app.get('/api/calibration', async (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=30');
+  const learning = await getLearningReport(store);
+  res.json(learning.calibration);
+});
+
+app.get('/api/resolutions', async (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=30');
+  const [queue, learning] = await Promise.all([getDueResolutionRows(store,{limit:100}),getLearningReport(store)]);
+  res.json({
+    generated_at:new Date().toISOString(),
+    queue:queue.map(r=>({
+      scenario_key:r.scenario_key,title:r.title,domain:r.domain,horizon_tier:r.horizon_tier,target_at:r.target_at,
+      first_probability:Number(r.first_probability),last_probability:Number(r.last_probability),resolution_status:r.resolution_status||'pending',
+      contract:r.meta?.resolution_contract||null
+    })),
+    states:learning.resolution.states,
+    recent:learning.resolution.recent
+  });
+});
+
+app.post('/api/resolutions/:scenarioKey', async (req, res) => {
+  if (!config.adminRefreshKey || req.get('x-evidence-admin-key') !== config.adminRefreshKey) return res.status(403).json({error:'forbidden'});
+  try {
+    const result = await resolveForecast(store,String(req.params.scenarioKey),{
+      outcome:Number(req.body?.outcome),
+      note:String(req.body?.note||''),
+      evidence:Array.isArray(req.body?.evidence)?req.body.evidence.slice(0,20):[],
+      resolver:'manual_verified'
+    });
+    const learning = await getLearningReport(store);
+    res.json({status:'ok',resolution:result,calibration:learning.calibration});
+  } catch (error) {
+    res.status(400).json({status:'error',error:String(error?.message||error)});
+  }
+});
+
+app.get('/api/storage', async (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json(await storageReadiness(store));
 });
 
 app.get('/api/calibration/sports', async (_req, res) => {
@@ -322,6 +421,20 @@ server.on('error', error => {
   process.exitCode = 1;
 });
 
-store.init().catch(error => console.error('[store-init]', error));
-refreshWorld();
-setInterval(refreshWorld, config.refreshMs).unref();
+async function boot() {
+  try {
+    await store.init();
+    await initLearningStore(store);
+    learningReady = true;
+  } catch (error) {
+    console.error('[learning-init]', error.message);
+    learningReady = false;
+  }
+  await refreshWorld();
+  setInterval(refreshWorld, config.refreshMs).unref();
+}
+
+boot().catch(error => {
+  lastError = {at:new Date().toISOString(),message:error.message};
+  console.error('[boot]', error);
+});
