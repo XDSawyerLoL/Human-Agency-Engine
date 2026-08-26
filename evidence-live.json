@@ -1,7 +1,7 @@
 {
   "schema": "evidence-public-snapshot-v2",
   "engine": "evidence-predictive-public-v0.3",
-  "generated_at": "2026-08-26T08:51:19.953425+00:00",
+  "generated_at": "2026-08-26T09:10:22.999431+00:00",
   "runtime_mode": "github-only-horizon",
   "status": "live",
   "summary": {
@@ -9,19 +9,18 @@
     "confirmed_events_considered": 200,
     "emerging_signals_considered": 200,
     "raw_predictions_considered": 100,
-    "raw_support_rows_in_published_scenarios": 100,
-    "predictions_returned": 2,
-    "scenario_groups_collapsed": 98,
-    "confirmed_precursor_predictions": 2,
+    "raw_support_rows_in_published_scenarios": 17,
+    "predictions_returned": 5,
+    "scenario_groups_collapsed": 95,
+    "confirmed_precursor_predictions": 5,
     "emerging_precursor_predictions": 0,
-    "model_probability_estimates": 2,
+    "model_probability_estimates": 5,
     "empirically_calibrated_predictions": 0,
     "dependency_edges_considered": 0,
-    "source_families": 2,
-    "source_providers": 2,
+    "source_families": 1,
+    "source_providers": 1,
     "active_source_families": [
-      "official_primary",
-      "usgs-earthquake-live"
+      "official_primary"
     ],
     "probability_history_enabled": true,
     "probability_history_max_points": 48,
@@ -36,236 +35,9 @@
   },
   "forecasts": [
     {
-      "scenario_key": "e0d1fe05b4ecce181e44103c",
+      "scenario_key": "9a07f7cc918bffe877a85a67",
       "candidate_id": null,
-      "event_id": 10489,
-      "domain": "media_attention",
-      "domain_label": "Media & collective attention",
-      "event_type": "major_earthquake",
-      "headline": "Après un séisme important, de nouvelles secousses et des perturbations locales de mobilité, d’accès ou de services restent plus probables pendant la phase de réponse, avec un risque de dommages additionnels sur les infrastructures déjà fragilisées.",
-      "outcome": "Après un séisme important, de nouvelles secousses et des perturbations locales de mobilité, d’accès ou de services restent plus probables pendant la phase de réponse, avec un risque de dommages additionnels sur les infrastructures déjà fragilisées.",
-      "public_language": "mixed",
-      "fact_status": "forecast_from_confirmed_event",
-      "trajectory": "building",
-      "probability": {
-        "type": "model_estimate",
-        "estimate": 0.6044,
-        "percent": 60,
-        "interval_low": 0.4373,
-        "interval_mid": 0.6044,
-        "interval_high": 0.7715,
-        "interval_percent": [
-          44,
-          77
-        ],
-        "method": "evidence-log-odds-v0.2",
-        "calibration_status": "uncalibrated_model_estimate",
-        "empirically_calibrated": false,
-        "can_be_read_as_empirical_frequency": false,
-        "evidence_quality": 0.7056
-      },
-      "time_window": {
-        "kind": "absolute_after_confirmed_precursor",
-        "low_hours": 0.0,
-        "high_hours": 168.0,
-        "start_at": "2026-08-25T12:12:03.252000Z",
-        "end_at": "2026-09-01T12:12:03.252000Z",
-        "human": "du 25/08 12:12 au 01/09 12:12 UTC",
-        "absolute_dates_claimed": true,
-        "expired": false
-      },
-      "why_now": "Le précurseur « Séisme M5.5 — south of the Fiji Islands » est désormais enregistré comme événement confirmé ou dérivé par HORIZON. Sa source principale est usgs-earthquake-live avec une fiabilité déclarée de 98/100. Le moteur projette maintenant la conséquence suivante : Après un séisme important, de nouvelles secousses et des perturbations locales de mobilité, d’accès ou de services restent plus probables pendant la phase de réponse, avec un risque de dommages additionnels sur les infrastructures déjà fragilisées..",
-      "causal_chain": [
-        "séisme principal",
-        "séquence d’après-chocs",
-        "inspection et restrictions d’accès",
-        "capacité locale de transport ou de services réduite",
-        "retards de secours et de remise en service"
-      ],
-      "drivers": [
-        {
-          "type": "confirmed_precursor",
-          "label": "Séisme M5.5 — south of the Fiji Islands",
-          "event_type": "major_earthquake",
-          "support_score": 0.98,
-          "support_score_is_probability": false,
-          "relation": null,
-          "causal_proof": null,
-          "source_classes": [
-            "usgs-earthquake-live"
-          ],
-          "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:42.175408",
-          "last_observed_at": "2026-08-26T08:41:42.175408"
-        }
-      ],
-      "watch_next": [
-        "séisme principal",
-        "signal observable correspondant à une étape intermédiaire du mécanisme",
-        "matérialisation indépendante du résultat projeté"
-      ],
-      "probability_up_if": [
-        "un signal correspondant à l'étape suivante apparaît : séisme principal",
-        "une source indépendante confirme une conséquence intermédiaire du mécanisme",
-        "le graphe HORIZON ajoute un précurseur amont cohérent dans la même zone et fenêtre temporelle"
-      ],
-      "probability_down_if": [
-        "les indicateurs intermédiaires attendus restent absents",
-        "des observations indépendantes montrent que la pression se résorbe",
-        "la fenêtre expire sans matérialisation observable de : Après un séisme important, de nouvelles secousses et des perturbations locales de mobilité, d’accès ou de services restent plus probables pendant la phase de réponse, avec un risque de dommages additionnels sur les infrastructures déjà fragilisées."
-      ],
-      "falsification": "Le scénario est considéré comme raté si le signal observable correspondant à « Après un séisme important, de nouvelles secousses et des perturbations locales de mobilité, d’accès ou de services restent plus probables pendant la phase de réponse, avec un risque de dommages additionnels sur les infrastructures déjà fragilisées. » n'apparaît pas dans la fenêtre déclarée (du 25/08 12:12 au 01/09 12:12 UTC), ou si les observations indépendantes contredisent la trajectoire avant l'échéance.",
-      "evidence": [
-        {
-          "kind": "confirmed_event",
-          "title": "Séisme M5.5 — south of the Fiji Islands",
-          "fact_status": "confirmed_or_derived_event",
-          "source_classes": [
-            "usgs-earthquake-live"
-          ],
-          "observed_at": "2026-08-26T08:41:42.175408",
-          "first_observed_at": "2026-08-26T08:41:42.175408",
-          "corroboration_score": 0.98,
-          "corroboration_score_is_probability": false
-        }
-      ],
-      "model_components": {
-        "precursor_confirmed": true,
-        "source_reliability": 0.98,
-        "source_diversity": 1,
-        "persistence_hours": 20.49,
-        "pattern_confidence": 0.7,
-        "graph_dependency_support": 0.0,
-        "pattern_support_count": 0,
-        "pattern_contradiction_count": 0,
-        "pattern_empirically_calibrated": false,
-        "component_scores_are_probabilities": false,
-        "fusion_raw_forecast_count": 1,
-        "fusion_changes_probability": false
-      },
-      "fusion": {
-        "engine": "evidence-scenario-fusion-v1",
-        "raw_forecast_count": 1,
-        "supporting_event_ids": [
-          10489
-        ],
-        "supporting_candidate_ids": [],
-        "source_keys": [
-          "usgs-earthquake-live"
-        ],
-        "duplicate_probability_inflation_prevented": true,
-        "probability_merge_method": "strongest_representative_not_recomputed",
-        "probability_recomputed_after_fusion": false,
-        "geography_aware_grouping": false,
-        "group_time_bucket": "2026-08-25"
-      },
-      "consolidation": {
-        "engine": "evidence-consolidation-v1.1",
-        "score": 62,
-        "score_is_probability": false,
-        "level": "modérée",
-        "source_family_count": 1,
-        "source_families": [
-          {
-            "key": "usgs-earthquake-live",
-            "label": "Usgs-Earthquake-Live",
-            "trust": 0.55,
-            "category": "other"
-          }
-        ],
-        "source_provider_count": 1,
-        "source_providers": [
-          {
-            "key": "usgs-earthquake-live",
-            "label": "Usgs Earthquake Live",
-            "role": "source"
-          }
-        ],
-        "dimensions": [
-          {
-            "key": "source_quality",
-            "label": "Qualité des sources",
-            "score": 55
-          },
-          {
-            "key": "source_diversity",
-            "label": "Diversité des familles",
-            "score": 25
-          },
-          {
-            "key": "freshness",
-            "label": "Fraîcheur des signaux",
-            "score": 100
-          },
-          {
-            "key": "pattern",
-            "label": "Pattern historique / comportemental",
-            "score": 70
-          },
-          {
-            "key": "graph",
-            "label": "Support du graphe de dépendances",
-            "score": 50
-          }
-        ],
-        "strengths": [
-          "Le précurseur principal est confirmé par HORIZON.",
-          "Le mécanisme projeté est soutenu par un pattern fort."
-        ],
-        "weaknesses": [
-          "La diversité de sources est encore faible."
-        ],
-        "probability_case": {
-          "estimate_percent": 60,
-          "interval_percent": [
-            44,
-            77
-          ],
-          "calibration_status": "uncalibrated_model_estimate",
-          "explanation": "La probabilité est produite par le modèle Évidence. Les scores de consolidation ci-dessus expliquent la solidité des entrées mais ne sont pas eux-mêmes des probabilités."
-        },
-        "scenario_competition": {
-          "kind": "binary_window_outcome",
-          "mutually_exclusive": true,
-          "outcomes": [
-            {
-              "label": "Après un séisme important, de nouvelles secousses et des perturbations locales de mobilité, d’accès ou de services restent plus probables pendant la phase de réponse, avec un risque de dommages additionnels sur les infrastructures déjà fragilisées.",
-              "percent": 60
-            },
-            {
-              "label": "Pas de matérialisation dans la fenêtre déclarée",
-              "percent": 40
-            }
-          ]
-        },
-        "divergence": {
-          "reference_type": "internal_model_prior",
-          "reference_label": "Prior interne du modèle",
-          "reference_percent": 25.0,
-          "forecast_percent": 60.0,
-          "delta_points": 35.0,
-          "label": "fortement au-dessus de la référence",
-          "external_consensus_available": false
-        }
-      },
-      "probability_history": [
-        {
-          "at": "2026-08-26T08:51:19.953425+00:00",
-          "percent": 60,
-          "interval_percent": [
-            44,
-            77
-          ],
-          "fact_status": "forecast_from_confirmed_event"
-        }
-      ],
-      "probability_delta_points": null,
-      "probability_direction": "new"
-    },
-    {
-      "scenario_key": "ed04dd54562901810d356ada",
-      "candidate_id": null,
-      "event_id": 10470,
+      "event_id": 10738,
       "domain": "supply_fuel",
       "domain_label": "Supply chains & fuel",
       "event_type": "fuel_supply_disruption",
@@ -295,18 +67,18 @@
         "kind": "absolute_after_confirmed_precursor",
         "low_hours": 0.0,
         "high_hours": 168.0,
-        "start_at": "2026-08-26T08:41:32.079912Z",
-        "end_at": "2026-09-02T08:41:32.079912Z",
-        "human": "du 26/08 08:41 au 02/09 08:41 UTC",
+        "start_at": "2026-08-26T09:08:53.055802Z",
+        "end_at": "2026-09-02T09:08:53.055802Z",
+        "human": "du 26/08 09:08 au 02/09 09:08 UTC",
         "absolute_dates_claimed": true,
         "expired": false
       },
-      "why_now": "HORIZON a regroupé 99 alertes ou événements compatibles avec le même mécanisme prédictif. Les observations proviennent actuellement de fr-fuel-ruptures-live. Le nombre de doublons ne multiplie pas la probabilité : Évidence conserve une estimation représentative et utilise la répétition surtout pour documenter la consolidation.",
+      "why_now": "HORIZON a regroupé 4 observations compatibles dans le même périmètre (fr-dept:95). Les observations proviennent de fr-fuel-ruptures-live. Les doublons documentent la consolidation mais ne multiplient pas la probabilité.",
       "causal_chain": [
         "menace d’approvisionnement perçue",
-        "rareté perçue et apprentissage social",
-        "accélération des achats de précaution",
-        "pression sur les files et les stocks",
+        "rareté perçue",
+        "achats de précaution",
+        "pression sur les stocks",
         "ruptures ou indisponibilités visibles"
       ],
       "drivers": [
@@ -322,8 +94,8 @@
             "fr-fuel-ruptures-live"
           ],
           "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
         },
         {
           "type": "confirmed_precursor",
@@ -337,8 +109,8 @@
             "fr-fuel-ruptures-live"
           ],
           "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
         },
         {
           "type": "confirmed_precursor",
@@ -352,8 +124,8 @@
             "fr-fuel-ruptures-live"
           ],
           "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
         },
         {
           "type": "confirmed_precursor",
@@ -367,197 +139,17 @@
             "fr-fuel-ruptures-live"
           ],
           "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
-        },
-        {
-          "type": "confirmed_precursor",
-          "label": "Ruptures temporaires de SP98 — département 94 (11/76)",
-          "event_type": "fuel_supply_disruption",
-          "support_score": 0.96,
-          "support_score_is_probability": false,
-          "relation": null,
-          "causal_proof": null,
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
-        },
-        {
-          "type": "confirmed_precursor",
-          "label": "Ruptures temporaires de SP95 — département 94 (7/18)",
-          "event_type": "fuel_supply_disruption",
-          "support_score": 0.96,
-          "support_score_is_probability": false,
-          "relation": null,
-          "causal_proof": null,
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
-        },
-        {
-          "type": "confirmed_precursor",
-          "label": "Ruptures temporaires de GPLc — département 94 (12/24)",
-          "event_type": "fuel_supply_disruption",
-          "support_score": 0.96,
-          "support_score_is_probability": false,
-          "relation": null,
-          "causal_proof": null,
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
-        },
-        {
-          "type": "confirmed_precursor",
-          "label": "Ruptures temporaires de E85 — département 94 (6/35)",
-          "event_type": "fuel_supply_disruption",
-          "support_score": 0.96,
-          "support_score_is_probability": false,
-          "relation": null,
-          "causal_proof": null,
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
-        },
-        {
-          "type": "confirmed_precursor",
-          "label": "Ruptures temporaires de SP98 — département 93 (14/80)",
-          "event_type": "fuel_supply_disruption",
-          "support_score": 0.96,
-          "support_score_is_probability": false,
-          "relation": null,
-          "causal_proof": null,
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
-        },
-        {
-          "type": "confirmed_precursor",
-          "label": "Ruptures temporaires de GPLc — département 93 (4/21)",
-          "event_type": "fuel_supply_disruption",
-          "support_score": 0.96,
-          "support_score_is_probability": false,
-          "relation": null,
-          "causal_proof": null,
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
-        },
-        {
-          "type": "confirmed_precursor",
-          "label": "Ruptures temporaires de SP98 — département 92 (14/66)",
-          "event_type": "fuel_supply_disruption",
-          "support_score": 0.96,
-          "support_score_is_probability": false,
-          "relation": null,
-          "causal_proof": null,
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
-        },
-        {
-          "type": "confirmed_precursor",
-          "label": "Ruptures temporaires de SP95 — département 92 (5/8)",
-          "event_type": "fuel_supply_disruption",
-          "support_score": 0.96,
-          "support_score_is_probability": false,
-          "relation": null,
-          "causal_proof": null,
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
-        },
-        {
-          "type": "confirmed_precursor",
-          "label": "Ruptures temporaires de GPLc — département 92 (4/8)",
-          "event_type": "fuel_supply_disruption",
-          "support_score": 0.96,
-          "support_score_is_probability": false,
-          "relation": null,
-          "causal_proof": null,
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
-        },
-        {
-          "type": "confirmed_precursor",
-          "label": "Ruptures temporaires de SP98 — département 91 (30/127)",
-          "event_type": "fuel_supply_disruption",
-          "support_score": 0.96,
-          "support_score_is_probability": false,
-          "relation": null,
-          "causal_proof": null,
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
-        },
-        {
-          "type": "confirmed_precursor",
-          "label": "Ruptures temporaires de SP95 — département 91 (5/36)",
-          "event_type": "fuel_supply_disruption",
-          "support_score": 0.96,
-          "support_score_is_probability": false,
-          "relation": null,
-          "causal_proof": null,
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
-        },
-        {
-          "type": "confirmed_precursor",
-          "label": "Ruptures temporaires de GPLc — département 91 (13/41)",
-          "event_type": "fuel_supply_disruption",
-          "support_score": 0.96,
-          "support_score_is_probability": false,
-          "relation": null,
-          "causal_proof": null,
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "fact_status": "confirmed_or_derived_event",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "last_observed_at": "2026-08-26T08:41:32.079912"
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
         }
       ],
       "watch_next": [
-        "files d’attente, accélération des achats et extension des ruptures",
+        "files d’attente, achats de précaution et extension des ruptures",
         "confirmation indépendante d’une étape intermédiaire",
         "matérialisation observable du résultat projeté"
       ],
       "probability_up_if": [
-        "des observations indépendantes confirment : files d’attente, accélération des achats et extension des ruptures",
+        "des observations indépendantes confirment : files d’attente, achats de précaution et extension des ruptures",
         "une nouvelle famille de sources indépendante soutient le même mécanisme",
         "le graphe HORIZON ajoute un précurseur amont cohérent"
       ],
@@ -566,7 +158,7 @@
         "des observations indépendantes montrent que la pression se résorbe",
         "la fenêtre expire sans matérialisation observable du scénario : Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles."
       ],
-      "falsification": "Le scénario est considéré comme raté si aucun signal observable correspondant à « Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles. » n’apparaît dans du 26/08 08:41 au 02/09 08:41 UTC, ou si des observations indépendantes contredisent la trajectoire avant l’échéance.",
+      "falsification": "Le scénario est considéré comme raté si aucun signal observable correspondant à « Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles. » n’apparaît dans du 26/08 09:08 au 02/09 09:08 UTC, ou si des observations indépendantes contredisent la trajectoire avant l’échéance.",
       "evidence": [
         {
           "kind": "confirmed_event",
@@ -575,8 +167,8 @@
           "source_classes": [
             "fr-fuel-ruptures-live"
           ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
           "corroboration_score": 0.96,
           "corroboration_score_is_probability": false
         },
@@ -587,8 +179,8 @@
           "source_classes": [
             "fr-fuel-ruptures-live"
           ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
           "corroboration_score": 0.96,
           "corroboration_score_is_probability": false
         },
@@ -599,8 +191,8 @@
           "source_classes": [
             "fr-fuel-ruptures-live"
           ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
           "corroboration_score": 0.96,
           "corroboration_score_is_probability": false
         },
@@ -611,152 +203,8 @@
           "source_classes": [
             "fr-fuel-ruptures-live"
           ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "corroboration_score": 0.96,
-          "corroboration_score_is_probability": false
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP98 — département 94 (11/76)",
-          "fact_status": "confirmed_or_derived_event",
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "corroboration_score": 0.96,
-          "corroboration_score_is_probability": false
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP95 — département 94 (7/18)",
-          "fact_status": "confirmed_or_derived_event",
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "corroboration_score": 0.96,
-          "corroboration_score_is_probability": false
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de GPLc — département 94 (12/24)",
-          "fact_status": "confirmed_or_derived_event",
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "corroboration_score": 0.96,
-          "corroboration_score_is_probability": false
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de E85 — département 94 (6/35)",
-          "fact_status": "confirmed_or_derived_event",
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "corroboration_score": 0.96,
-          "corroboration_score_is_probability": false
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP98 — département 93 (14/80)",
-          "fact_status": "confirmed_or_derived_event",
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "corroboration_score": 0.96,
-          "corroboration_score_is_probability": false
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de GPLc — département 93 (4/21)",
-          "fact_status": "confirmed_or_derived_event",
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "corroboration_score": 0.96,
-          "corroboration_score_is_probability": false
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP98 — département 92 (14/66)",
-          "fact_status": "confirmed_or_derived_event",
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "corroboration_score": 0.96,
-          "corroboration_score_is_probability": false
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP95 — département 92 (5/8)",
-          "fact_status": "confirmed_or_derived_event",
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "corroboration_score": 0.96,
-          "corroboration_score_is_probability": false
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de GPLc — département 92 (4/8)",
-          "fact_status": "confirmed_or_derived_event",
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "corroboration_score": 0.96,
-          "corroboration_score_is_probability": false
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP98 — département 91 (30/127)",
-          "fact_status": "confirmed_or_derived_event",
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "corroboration_score": 0.96,
-          "corroboration_score_is_probability": false
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP95 — département 91 (5/36)",
-          "fact_status": "confirmed_or_derived_event",
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
-          "corroboration_score": 0.96,
-          "corroboration_score_is_probability": false
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de GPLc — département 91 (13/41)",
-          "fact_status": "confirmed_or_derived_event",
-          "source_classes": [
-            "fr-fuel-ruptures-live"
-          ],
-          "observed_at": "2026-08-26T08:41:32.079912",
-          "first_observed_at": "2026-08-26T08:41:32.079912",
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
           "corroboration_score": 0.96,
           "corroboration_score_is_probability": false
         }
@@ -772,112 +220,17 @@
         "pattern_contradiction_count": 0,
         "pattern_empirically_calibrated": false,
         "component_scores_are_probabilities": false,
-        "fusion_raw_forecast_count": 99,
+        "fusion_raw_forecast_count": 4,
         "fusion_changes_probability": false
       },
       "fusion": {
-        "engine": "evidence-scenario-fusion-v1",
-        "raw_forecast_count": 99,
+        "engine": "evidence-scenario-fusion-v2-world-eye",
+        "raw_forecast_count": 4,
         "supporting_event_ids": [
-          10372,
-          10373,
-          10374,
-          10375,
-          10376,
-          10377,
-          10378,
-          10379,
-          10380,
-          10381,
-          10382,
-          10383,
-          10384,
-          10385,
-          10386,
-          10387,
-          10388,
-          10389,
-          10390,
-          10391,
-          10392,
-          10393,
-          10394,
-          10395,
-          10396,
-          10397,
-          10398,
-          10399,
-          10400,
-          10401,
-          10402,
-          10403,
-          10404,
-          10405,
-          10406,
-          10407,
-          10408,
-          10409,
-          10410,
-          10411,
-          10412,
-          10413,
-          10414,
-          10415,
-          10416,
-          10417,
-          10418,
-          10419,
-          10420,
-          10421,
-          10422,
-          10423,
-          10424,
-          10425,
-          10426,
-          10427,
-          10428,
-          10429,
-          10430,
-          10431,
-          10432,
-          10433,
-          10434,
-          10435,
-          10436,
-          10437,
-          10438,
-          10439,
-          10440,
-          10441,
-          10442,
-          10443,
-          10444,
-          10445,
-          10446,
-          10447,
-          10448,
-          10449,
-          10450,
-          10451,
-          10452,
-          10453,
-          10454,
-          10455,
-          10456,
-          10457,
-          10458,
-          10459,
-          10460,
-          10461,
-          10462,
-          10463,
-          10464,
-          10465,
-          10466,
-          10467,
-          10468,
-          10469,
-          10470
+          10735,
+          10736,
+          10737,
+          10738
         ],
         "supporting_candidate_ids": [],
         "source_keys": [
@@ -886,7 +239,7 @@
         "duplicate_probability_inflation_prevented": true,
         "probability_merge_method": "strongest_representative_not_recomputed",
         "probability_recomputed_after_fusion": false,
-        "geography_aware_grouping": false,
+        "geography_aware_grouping": true,
         "group_time_bucket": "2026-08-26"
       },
       "consolidation": {
@@ -940,7 +293,7 @@
         ],
         "strengths": [
           "Le précurseur principal est confirmé par HORIZON.",
-          "HORIZON a regroupé 99 alertes ou événements correspondant au même scénario sans multiplier artificiellement sa probabilité.",
+          "HORIZON a regroupé 4 alertes ou événements correspondant au même scénario sans multiplier artificiellement sa probabilité.",
           "La qualité moyenne des sources est élevée."
         ],
         "weaknesses": [
@@ -981,34 +334,7 @@
       },
       "probability_history": [
         {
-          "at": "2026-08-26T07:51:53.380601+00:00",
-          "percent": 43,
-          "interval_percent": [
-            24,
-            61
-          ],
-          "fact_status": "forecast_from_confirmed_event"
-        },
-        {
-          "at": "2026-08-26T07:56:42.060805+00:00",
-          "percent": 43,
-          "interval_percent": [
-            24,
-            61
-          ],
-          "fact_status": "forecast_from_confirmed_event"
-        },
-        {
-          "at": "2026-08-26T08:11:20.468534+00:00",
-          "percent": 43,
-          "interval_percent": [
-            24,
-            61
-          ],
-          "fact_status": "forecast_from_confirmed_event"
-        },
-        {
-          "at": "2026-08-26T08:51:19.953425+00:00",
+          "at": "2026-08-26T09:10:22.999431+00:00",
           "percent": 43,
           "interval_percent": [
             24,
@@ -1017,8 +343,1172 @@
           "fact_status": "forecast_from_confirmed_event"
         }
       ],
-      "probability_delta_points": 0.0,
-      "probability_direction": "stable"
+      "probability_delta_points": null,
+      "probability_direction": "new"
+    },
+    {
+      "scenario_key": "cce1d947f56ac90f3f2c6d59",
+      "candidate_id": null,
+      "event_id": 10734,
+      "domain": "supply_fuel",
+      "domain_label": "Supply chains & fuel",
+      "event_type": "fuel_supply_disruption",
+      "headline": "Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles.",
+      "outcome": "Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles.",
+      "public_language": "fr",
+      "fact_status": "forecast_from_confirmed_event",
+      "trajectory": "forming",
+      "probability": {
+        "type": "model_estimate",
+        "estimate": 0.4293,
+        "percent": 43,
+        "interval_low": 0.2446,
+        "interval_mid": 0.4293,
+        "interval_high": 0.614,
+        "interval_percent": [
+          24,
+          61
+        ],
+        "method": "evidence-log-odds-v0.2",
+        "calibration_status": "uncalibrated_model_estimate",
+        "empirically_calibrated": false,
+        "can_be_read_as_empirical_frequency": false,
+        "evidence_quality": 0.5959
+      },
+      "time_window": {
+        "kind": "absolute_after_confirmed_precursor",
+        "low_hours": 0.0,
+        "high_hours": 168.0,
+        "start_at": "2026-08-26T09:08:53.055802Z",
+        "end_at": "2026-09-02T09:08:53.055802Z",
+        "human": "du 26/08 09:08 au 02/09 09:08 UTC",
+        "absolute_dates_claimed": true,
+        "expired": false
+      },
+      "why_now": "HORIZON a regroupé 4 observations compatibles dans le même périmètre (fr-dept:94). Les observations proviennent de fr-fuel-ruptures-live. Les doublons documentent la consolidation mais ne multiplient pas la probabilité.",
+      "causal_chain": [
+        "menace d’approvisionnement perçue",
+        "rareté perçue",
+        "achats de précaution",
+        "pression sur les stocks",
+        "ruptures ou indisponibilités visibles"
+      ],
+      "drivers": [
+        {
+          "type": "confirmed_precursor",
+          "label": "Ruptures temporaires de SP98 — département 94 (12/77)",
+          "event_type": "fuel_supply_disruption",
+          "support_score": 0.96,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
+        },
+        {
+          "type": "confirmed_precursor",
+          "label": "Ruptures temporaires de SP95 — département 94 (7/18)",
+          "event_type": "fuel_supply_disruption",
+          "support_score": 0.96,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
+        },
+        {
+          "type": "confirmed_precursor",
+          "label": "Ruptures temporaires de GPLc — département 94 (12/24)",
+          "event_type": "fuel_supply_disruption",
+          "support_score": 0.96,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
+        },
+        {
+          "type": "confirmed_precursor",
+          "label": "Ruptures temporaires de E85 — département 94 (6/35)",
+          "event_type": "fuel_supply_disruption",
+          "support_score": 0.96,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
+        }
+      ],
+      "watch_next": [
+        "files d’attente, achats de précaution et extension des ruptures",
+        "confirmation indépendante d’une étape intermédiaire",
+        "matérialisation observable du résultat projeté"
+      ],
+      "probability_up_if": [
+        "des observations indépendantes confirment : files d’attente, achats de précaution et extension des ruptures",
+        "une nouvelle famille de sources indépendante soutient le même mécanisme",
+        "le graphe HORIZON ajoute un précurseur amont cohérent"
+      ],
+      "probability_down_if": [
+        "les indicateurs intermédiaires attendus restent absents",
+        "des observations indépendantes montrent que la pression se résorbe",
+        "la fenêtre expire sans matérialisation observable du scénario : Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles."
+      ],
+      "falsification": "Le scénario est considéré comme raté si aucun signal observable correspondant à « Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles. » n’apparaît dans du 26/08 09:08 au 02/09 09:08 UTC, ou si des observations indépendantes contredisent la trajectoire avant l’échéance.",
+      "evidence": [
+        {
+          "kind": "confirmed_event",
+          "title": "Ruptures temporaires de SP98 — département 94 (12/77)",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "corroboration_score": 0.96,
+          "corroboration_score_is_probability": false
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Ruptures temporaires de SP95 — département 94 (7/18)",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "corroboration_score": 0.96,
+          "corroboration_score_is_probability": false
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Ruptures temporaires de GPLc — département 94 (12/24)",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "corroboration_score": 0.96,
+          "corroboration_score_is_probability": false
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Ruptures temporaires de E85 — département 94 (6/35)",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "corroboration_score": 0.96,
+          "corroboration_score_is_probability": false
+        }
+      ],
+      "model_components": {
+        "precursor_confirmed": true,
+        "source_reliability": 0.96,
+        "source_diversity": 1,
+        "persistence_hours": 0.0,
+        "pattern_confidence": 0.58,
+        "graph_dependency_support": 0.0,
+        "pattern_support_count": 0,
+        "pattern_contradiction_count": 0,
+        "pattern_empirically_calibrated": false,
+        "component_scores_are_probabilities": false,
+        "fusion_raw_forecast_count": 4,
+        "fusion_changes_probability": false
+      },
+      "fusion": {
+        "engine": "evidence-scenario-fusion-v2-world-eye",
+        "raw_forecast_count": 4,
+        "supporting_event_ids": [
+          10731,
+          10732,
+          10733,
+          10734
+        ],
+        "supporting_candidate_ids": [],
+        "source_keys": [
+          "fr-fuel-ruptures-live"
+        ],
+        "duplicate_probability_inflation_prevented": true,
+        "probability_merge_method": "strongest_representative_not_recomputed",
+        "probability_recomputed_after_fusion": false,
+        "geography_aware_grouping": true,
+        "group_time_bucket": "2026-08-26"
+      },
+      "consolidation": {
+        "engine": "evidence-consolidation-v1.1",
+        "score": 70,
+        "score_is_probability": false,
+        "level": "solide",
+        "source_family_count": 1,
+        "source_families": [
+          {
+            "key": "official_primary",
+            "label": "Source officielle primaire",
+            "trust": 0.97,
+            "category": "fact"
+          }
+        ],
+        "source_provider_count": 1,
+        "source_providers": [
+          {
+            "key": "fr-fuel-ruptures-live",
+            "label": "Données publiques carburants",
+            "role": "officiel"
+          }
+        ],
+        "dimensions": [
+          {
+            "key": "source_quality",
+            "label": "Qualité des sources",
+            "score": 97
+          },
+          {
+            "key": "source_diversity",
+            "label": "Diversité des familles",
+            "score": 25
+          },
+          {
+            "key": "freshness",
+            "label": "Fraîcheur des signaux",
+            "score": 100
+          },
+          {
+            "key": "pattern",
+            "label": "Pattern historique / comportemental",
+            "score": 58
+          },
+          {
+            "key": "graph",
+            "label": "Support du graphe de dépendances",
+            "score": 50
+          }
+        ],
+        "strengths": [
+          "Le précurseur principal est confirmé par HORIZON.",
+          "HORIZON a regroupé 4 alertes ou événements correspondant au même scénario sans multiplier artificiellement sa probabilité.",
+          "La qualité moyenne des sources est élevée."
+        ],
+        "weaknesses": [
+          "La diversité de sources est encore faible."
+        ],
+        "probability_case": {
+          "estimate_percent": 43,
+          "interval_percent": [
+            24,
+            61
+          ],
+          "calibration_status": "uncalibrated_model_estimate",
+          "explanation": "La probabilité est produite par le modèle Évidence. Les scores de consolidation ci-dessus expliquent la solidité des entrées mais ne sont pas eux-mêmes des probabilités."
+        },
+        "scenario_competition": {
+          "kind": "binary_window_outcome",
+          "mutually_exclusive": true,
+          "outcomes": [
+            {
+              "label": "Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles.",
+              "percent": 43
+            },
+            {
+              "label": "Pas de matérialisation dans la fenêtre déclarée",
+              "percent": 57
+            }
+          ]
+        },
+        "divergence": {
+          "reference_type": "internal_model_prior",
+          "reference_label": "Prior interne du modèle",
+          "reference_percent": 25.0,
+          "forecast_percent": 43.0,
+          "delta_points": 18.0,
+          "label": "fortement au-dessus de la référence",
+          "external_consensus_available": false
+        }
+      },
+      "probability_history": [
+        {
+          "at": "2026-08-26T09:10:22.999431+00:00",
+          "percent": 43,
+          "interval_percent": [
+            24,
+            61
+          ],
+          "fact_status": "forecast_from_confirmed_event"
+        }
+      ],
+      "probability_delta_points": null,
+      "probability_direction": "new"
+    },
+    {
+      "scenario_key": "9b73d9e09824f691c35d3776",
+      "candidate_id": null,
+      "event_id": 10730,
+      "domain": "supply_fuel",
+      "domain_label": "Supply chains & fuel",
+      "event_type": "fuel_supply_disruption",
+      "headline": "Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles.",
+      "outcome": "Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles.",
+      "public_language": "fr",
+      "fact_status": "forecast_from_confirmed_event",
+      "trajectory": "forming",
+      "probability": {
+        "type": "model_estimate",
+        "estimate": 0.4293,
+        "percent": 43,
+        "interval_low": 0.2446,
+        "interval_mid": 0.4293,
+        "interval_high": 0.614,
+        "interval_percent": [
+          24,
+          61
+        ],
+        "method": "evidence-log-odds-v0.2",
+        "calibration_status": "uncalibrated_model_estimate",
+        "empirically_calibrated": false,
+        "can_be_read_as_empirical_frequency": false,
+        "evidence_quality": 0.5959
+      },
+      "time_window": {
+        "kind": "absolute_after_confirmed_precursor",
+        "low_hours": 0.0,
+        "high_hours": 168.0,
+        "start_at": "2026-08-26T09:08:53.055802Z",
+        "end_at": "2026-09-02T09:08:53.055802Z",
+        "human": "du 26/08 09:08 au 02/09 09:08 UTC",
+        "absolute_dates_claimed": true,
+        "expired": false
+      },
+      "why_now": "HORIZON a regroupé 2 observations compatibles dans le même périmètre (fr-dept:93). Les observations proviennent de fr-fuel-ruptures-live. Les doublons documentent la consolidation mais ne multiplient pas la probabilité.",
+      "causal_chain": [
+        "menace d’approvisionnement perçue",
+        "rareté perçue",
+        "achats de précaution",
+        "pression sur les stocks",
+        "ruptures ou indisponibilités visibles"
+      ],
+      "drivers": [
+        {
+          "type": "confirmed_precursor",
+          "label": "Ruptures temporaires de SP98 — département 93 (14/80)",
+          "event_type": "fuel_supply_disruption",
+          "support_score": 0.96,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
+        },
+        {
+          "type": "confirmed_precursor",
+          "label": "Ruptures temporaires de GPLc — département 93 (4/21)",
+          "event_type": "fuel_supply_disruption",
+          "support_score": 0.96,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
+        }
+      ],
+      "watch_next": [
+        "files d’attente, achats de précaution et extension des ruptures",
+        "confirmation indépendante d’une étape intermédiaire",
+        "matérialisation observable du résultat projeté"
+      ],
+      "probability_up_if": [
+        "des observations indépendantes confirment : files d’attente, achats de précaution et extension des ruptures",
+        "une nouvelle famille de sources indépendante soutient le même mécanisme",
+        "le graphe HORIZON ajoute un précurseur amont cohérent"
+      ],
+      "probability_down_if": [
+        "les indicateurs intermédiaires attendus restent absents",
+        "des observations indépendantes montrent que la pression se résorbe",
+        "la fenêtre expire sans matérialisation observable du scénario : Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles."
+      ],
+      "falsification": "Le scénario est considéré comme raté si aucun signal observable correspondant à « Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles. » n’apparaît dans du 26/08 09:08 au 02/09 09:08 UTC, ou si des observations indépendantes contredisent la trajectoire avant l’échéance.",
+      "evidence": [
+        {
+          "kind": "confirmed_event",
+          "title": "Ruptures temporaires de SP98 — département 93 (14/80)",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "corroboration_score": 0.96,
+          "corroboration_score_is_probability": false
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Ruptures temporaires de GPLc — département 93 (4/21)",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "corroboration_score": 0.96,
+          "corroboration_score_is_probability": false
+        }
+      ],
+      "model_components": {
+        "precursor_confirmed": true,
+        "source_reliability": 0.96,
+        "source_diversity": 1,
+        "persistence_hours": 0.0,
+        "pattern_confidence": 0.58,
+        "graph_dependency_support": 0.0,
+        "pattern_support_count": 0,
+        "pattern_contradiction_count": 0,
+        "pattern_empirically_calibrated": false,
+        "component_scores_are_probabilities": false,
+        "fusion_raw_forecast_count": 2,
+        "fusion_changes_probability": false
+      },
+      "fusion": {
+        "engine": "evidence-scenario-fusion-v2-world-eye",
+        "raw_forecast_count": 2,
+        "supporting_event_ids": [
+          10729,
+          10730
+        ],
+        "supporting_candidate_ids": [],
+        "source_keys": [
+          "fr-fuel-ruptures-live"
+        ],
+        "duplicate_probability_inflation_prevented": true,
+        "probability_merge_method": "strongest_representative_not_recomputed",
+        "probability_recomputed_after_fusion": false,
+        "geography_aware_grouping": true,
+        "group_time_bucket": "2026-08-26"
+      },
+      "consolidation": {
+        "engine": "evidence-consolidation-v1.1",
+        "score": 70,
+        "score_is_probability": false,
+        "level": "solide",
+        "source_family_count": 1,
+        "source_families": [
+          {
+            "key": "official_primary",
+            "label": "Source officielle primaire",
+            "trust": 0.97,
+            "category": "fact"
+          }
+        ],
+        "source_provider_count": 1,
+        "source_providers": [
+          {
+            "key": "fr-fuel-ruptures-live",
+            "label": "Données publiques carburants",
+            "role": "officiel"
+          }
+        ],
+        "dimensions": [
+          {
+            "key": "source_quality",
+            "label": "Qualité des sources",
+            "score": 97
+          },
+          {
+            "key": "source_diversity",
+            "label": "Diversité des familles",
+            "score": 25
+          },
+          {
+            "key": "freshness",
+            "label": "Fraîcheur des signaux",
+            "score": 100
+          },
+          {
+            "key": "pattern",
+            "label": "Pattern historique / comportemental",
+            "score": 58
+          },
+          {
+            "key": "graph",
+            "label": "Support du graphe de dépendances",
+            "score": 50
+          }
+        ],
+        "strengths": [
+          "Le précurseur principal est confirmé par HORIZON.",
+          "HORIZON a regroupé 2 alertes ou événements correspondant au même scénario sans multiplier artificiellement sa probabilité.",
+          "La qualité moyenne des sources est élevée."
+        ],
+        "weaknesses": [
+          "La diversité de sources est encore faible."
+        ],
+        "probability_case": {
+          "estimate_percent": 43,
+          "interval_percent": [
+            24,
+            61
+          ],
+          "calibration_status": "uncalibrated_model_estimate",
+          "explanation": "La probabilité est produite par le modèle Évidence. Les scores de consolidation ci-dessus expliquent la solidité des entrées mais ne sont pas eux-mêmes des probabilités."
+        },
+        "scenario_competition": {
+          "kind": "binary_window_outcome",
+          "mutually_exclusive": true,
+          "outcomes": [
+            {
+              "label": "Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles.",
+              "percent": 43
+            },
+            {
+              "label": "Pas de matérialisation dans la fenêtre déclarée",
+              "percent": 57
+            }
+          ]
+        },
+        "divergence": {
+          "reference_type": "internal_model_prior",
+          "reference_label": "Prior interne du modèle",
+          "reference_percent": 25.0,
+          "forecast_percent": 43.0,
+          "delta_points": 18.0,
+          "label": "fortement au-dessus de la référence",
+          "external_consensus_available": false
+        }
+      },
+      "probability_history": [
+        {
+          "at": "2026-08-26T09:10:22.999431+00:00",
+          "percent": 43,
+          "interval_percent": [
+            24,
+            61
+          ],
+          "fact_status": "forecast_from_confirmed_event"
+        }
+      ],
+      "probability_delta_points": null,
+      "probability_direction": "new"
+    },
+    {
+      "scenario_key": "9d297b0db072ad27a5e08e56",
+      "candidate_id": null,
+      "event_id": 10728,
+      "domain": "supply_fuel",
+      "domain_label": "Supply chains & fuel",
+      "event_type": "fuel_supply_disruption",
+      "headline": "Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles.",
+      "outcome": "Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles.",
+      "public_language": "fr",
+      "fact_status": "forecast_from_confirmed_event",
+      "trajectory": "forming",
+      "probability": {
+        "type": "model_estimate",
+        "estimate": 0.4293,
+        "percent": 43,
+        "interval_low": 0.2446,
+        "interval_mid": 0.4293,
+        "interval_high": 0.614,
+        "interval_percent": [
+          24,
+          61
+        ],
+        "method": "evidence-log-odds-v0.2",
+        "calibration_status": "uncalibrated_model_estimate",
+        "empirically_calibrated": false,
+        "can_be_read_as_empirical_frequency": false,
+        "evidence_quality": 0.5959
+      },
+      "time_window": {
+        "kind": "absolute_after_confirmed_precursor",
+        "low_hours": 0.0,
+        "high_hours": 168.0,
+        "start_at": "2026-08-26T09:08:53.055802Z",
+        "end_at": "2026-09-02T09:08:53.055802Z",
+        "human": "du 26/08 09:08 au 02/09 09:08 UTC",
+        "absolute_dates_claimed": true,
+        "expired": false
+      },
+      "why_now": "HORIZON a regroupé 3 observations compatibles dans le même périmètre (fr-dept:92). Les observations proviennent de fr-fuel-ruptures-live. Les doublons documentent la consolidation mais ne multiplient pas la probabilité.",
+      "causal_chain": [
+        "menace d’approvisionnement perçue",
+        "rareté perçue",
+        "achats de précaution",
+        "pression sur les stocks",
+        "ruptures ou indisponibilités visibles"
+      ],
+      "drivers": [
+        {
+          "type": "confirmed_precursor",
+          "label": "Ruptures temporaires de SP98 — département 92 (14/66)",
+          "event_type": "fuel_supply_disruption",
+          "support_score": 0.96,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
+        },
+        {
+          "type": "confirmed_precursor",
+          "label": "Ruptures temporaires de SP95 — département 92 (5/8)",
+          "event_type": "fuel_supply_disruption",
+          "support_score": 0.96,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
+        },
+        {
+          "type": "confirmed_precursor",
+          "label": "Ruptures temporaires de GPLc — département 92 (4/8)",
+          "event_type": "fuel_supply_disruption",
+          "support_score": 0.96,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
+        }
+      ],
+      "watch_next": [
+        "files d’attente, achats de précaution et extension des ruptures",
+        "confirmation indépendante d’une étape intermédiaire",
+        "matérialisation observable du résultat projeté"
+      ],
+      "probability_up_if": [
+        "des observations indépendantes confirment : files d’attente, achats de précaution et extension des ruptures",
+        "une nouvelle famille de sources indépendante soutient le même mécanisme",
+        "le graphe HORIZON ajoute un précurseur amont cohérent"
+      ],
+      "probability_down_if": [
+        "les indicateurs intermédiaires attendus restent absents",
+        "des observations indépendantes montrent que la pression se résorbe",
+        "la fenêtre expire sans matérialisation observable du scénario : Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles."
+      ],
+      "falsification": "Le scénario est considéré comme raté si aucun signal observable correspondant à « Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles. » n’apparaît dans du 26/08 09:08 au 02/09 09:08 UTC, ou si des observations indépendantes contredisent la trajectoire avant l’échéance.",
+      "evidence": [
+        {
+          "kind": "confirmed_event",
+          "title": "Ruptures temporaires de SP98 — département 92 (14/66)",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "corroboration_score": 0.96,
+          "corroboration_score_is_probability": false
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Ruptures temporaires de SP95 — département 92 (5/8)",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "corroboration_score": 0.96,
+          "corroboration_score_is_probability": false
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Ruptures temporaires de GPLc — département 92 (4/8)",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "corroboration_score": 0.96,
+          "corroboration_score_is_probability": false
+        }
+      ],
+      "model_components": {
+        "precursor_confirmed": true,
+        "source_reliability": 0.96,
+        "source_diversity": 1,
+        "persistence_hours": 0.0,
+        "pattern_confidence": 0.58,
+        "graph_dependency_support": 0.0,
+        "pattern_support_count": 0,
+        "pattern_contradiction_count": 0,
+        "pattern_empirically_calibrated": false,
+        "component_scores_are_probabilities": false,
+        "fusion_raw_forecast_count": 3,
+        "fusion_changes_probability": false
+      },
+      "fusion": {
+        "engine": "evidence-scenario-fusion-v2-world-eye",
+        "raw_forecast_count": 3,
+        "supporting_event_ids": [
+          10726,
+          10727,
+          10728
+        ],
+        "supporting_candidate_ids": [],
+        "source_keys": [
+          "fr-fuel-ruptures-live"
+        ],
+        "duplicate_probability_inflation_prevented": true,
+        "probability_merge_method": "strongest_representative_not_recomputed",
+        "probability_recomputed_after_fusion": false,
+        "geography_aware_grouping": true,
+        "group_time_bucket": "2026-08-26"
+      },
+      "consolidation": {
+        "engine": "evidence-consolidation-v1.1",
+        "score": 70,
+        "score_is_probability": false,
+        "level": "solide",
+        "source_family_count": 1,
+        "source_families": [
+          {
+            "key": "official_primary",
+            "label": "Source officielle primaire",
+            "trust": 0.97,
+            "category": "fact"
+          }
+        ],
+        "source_provider_count": 1,
+        "source_providers": [
+          {
+            "key": "fr-fuel-ruptures-live",
+            "label": "Données publiques carburants",
+            "role": "officiel"
+          }
+        ],
+        "dimensions": [
+          {
+            "key": "source_quality",
+            "label": "Qualité des sources",
+            "score": 97
+          },
+          {
+            "key": "source_diversity",
+            "label": "Diversité des familles",
+            "score": 25
+          },
+          {
+            "key": "freshness",
+            "label": "Fraîcheur des signaux",
+            "score": 100
+          },
+          {
+            "key": "pattern",
+            "label": "Pattern historique / comportemental",
+            "score": 58
+          },
+          {
+            "key": "graph",
+            "label": "Support du graphe de dépendances",
+            "score": 50
+          }
+        ],
+        "strengths": [
+          "Le précurseur principal est confirmé par HORIZON.",
+          "HORIZON a regroupé 3 alertes ou événements correspondant au même scénario sans multiplier artificiellement sa probabilité.",
+          "La qualité moyenne des sources est élevée."
+        ],
+        "weaknesses": [
+          "La diversité de sources est encore faible."
+        ],
+        "probability_case": {
+          "estimate_percent": 43,
+          "interval_percent": [
+            24,
+            61
+          ],
+          "calibration_status": "uncalibrated_model_estimate",
+          "explanation": "La probabilité est produite par le modèle Évidence. Les scores de consolidation ci-dessus expliquent la solidité des entrées mais ne sont pas eux-mêmes des probabilités."
+        },
+        "scenario_competition": {
+          "kind": "binary_window_outcome",
+          "mutually_exclusive": true,
+          "outcomes": [
+            {
+              "label": "Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles.",
+              "percent": 43
+            },
+            {
+              "label": "Pas de matérialisation dans la fenêtre déclarée",
+              "percent": 57
+            }
+          ]
+        },
+        "divergence": {
+          "reference_type": "internal_model_prior",
+          "reference_label": "Prior interne du modèle",
+          "reference_percent": 25.0,
+          "forecast_percent": 43.0,
+          "delta_points": 18.0,
+          "label": "fortement au-dessus de la référence",
+          "external_consensus_available": false
+        }
+      },
+      "probability_history": [
+        {
+          "at": "2026-08-26T09:10:22.999431+00:00",
+          "percent": 43,
+          "interval_percent": [
+            24,
+            61
+          ],
+          "fact_status": "forecast_from_confirmed_event"
+        }
+      ],
+      "probability_delta_points": null,
+      "probability_direction": "new"
+    },
+    {
+      "scenario_key": "360cb56862c3c1377594c9a3",
+      "candidate_id": null,
+      "event_id": 10725,
+      "domain": "supply_fuel",
+      "domain_label": "Supply chains & fuel",
+      "event_type": "fuel_supply_disruption",
+      "headline": "Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles.",
+      "outcome": "Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles.",
+      "public_language": "fr",
+      "fact_status": "forecast_from_confirmed_event",
+      "trajectory": "forming",
+      "probability": {
+        "type": "model_estimate",
+        "estimate": 0.4293,
+        "percent": 43,
+        "interval_low": 0.2446,
+        "interval_mid": 0.4293,
+        "interval_high": 0.614,
+        "interval_percent": [
+          24,
+          61
+        ],
+        "method": "evidence-log-odds-v0.2",
+        "calibration_status": "uncalibrated_model_estimate",
+        "empirically_calibrated": false,
+        "can_be_read_as_empirical_frequency": false,
+        "evidence_quality": 0.5959
+      },
+      "time_window": {
+        "kind": "absolute_after_confirmed_precursor",
+        "low_hours": 0.0,
+        "high_hours": 168.0,
+        "start_at": "2026-08-26T09:08:53.055802Z",
+        "end_at": "2026-09-02T09:08:53.055802Z",
+        "human": "du 26/08 09:08 au 02/09 09:08 UTC",
+        "absolute_dates_claimed": true,
+        "expired": false
+      },
+      "why_now": "HORIZON a regroupé 4 observations compatibles dans le même périmètre (fr-dept:91). Les observations proviennent de fr-fuel-ruptures-live. Les doublons documentent la consolidation mais ne multiplient pas la probabilité.",
+      "causal_chain": [
+        "menace d’approvisionnement perçue",
+        "rareté perçue",
+        "achats de précaution",
+        "pression sur les stocks",
+        "ruptures ou indisponibilités visibles"
+      ],
+      "drivers": [
+        {
+          "type": "confirmed_precursor",
+          "label": "Ruptures temporaires de SP98 — département 91 (30/127)",
+          "event_type": "fuel_supply_disruption",
+          "support_score": 0.96,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
+        },
+        {
+          "type": "confirmed_precursor",
+          "label": "Ruptures temporaires de SP95 — département 91 (5/36)",
+          "event_type": "fuel_supply_disruption",
+          "support_score": 0.96,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
+        },
+        {
+          "type": "confirmed_precursor",
+          "label": "Ruptures temporaires de GPLc — département 91 (13/41)",
+          "event_type": "fuel_supply_disruption",
+          "support_score": 0.96,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
+        },
+        {
+          "type": "confirmed_precursor",
+          "label": "Ruptures temporaires de E85 — département 91 (9/69)",
+          "event_type": "fuel_supply_disruption",
+          "support_score": 0.96,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "last_observed_at": "2026-08-26T09:08:53.055802"
+        }
+      ],
+      "watch_next": [
+        "files d’attente, achats de précaution et extension des ruptures",
+        "confirmation indépendante d’une étape intermédiaire",
+        "matérialisation observable du résultat projeté"
+      ],
+      "probability_up_if": [
+        "des observations indépendantes confirment : files d’attente, achats de précaution et extension des ruptures",
+        "une nouvelle famille de sources indépendante soutient le même mécanisme",
+        "le graphe HORIZON ajoute un précurseur amont cohérent"
+      ],
+      "probability_down_if": [
+        "les indicateurs intermédiaires attendus restent absents",
+        "des observations indépendantes montrent que la pression se résorbe",
+        "la fenêtre expire sans matérialisation observable du scénario : Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles."
+      ],
+      "falsification": "Le scénario est considéré comme raté si aucun signal observable correspondant à « Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles. » n’apparaît dans du 26/08 09:08 au 02/09 09:08 UTC, ou si des observations indépendantes contredisent la trajectoire avant l’échéance.",
+      "evidence": [
+        {
+          "kind": "confirmed_event",
+          "title": "Ruptures temporaires de SP98 — département 91 (30/127)",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "corroboration_score": 0.96,
+          "corroboration_score_is_probability": false
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Ruptures temporaires de SP95 — département 91 (5/36)",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "corroboration_score": 0.96,
+          "corroboration_score_is_probability": false
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Ruptures temporaires de GPLc — département 91 (13/41)",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "corroboration_score": 0.96,
+          "corroboration_score_is_probability": false
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Ruptures temporaires de E85 — département 91 (9/69)",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "fr-fuel-ruptures-live"
+          ],
+          "observed_at": "2026-08-26T09:08:53.055802",
+          "first_observed_at": "2026-08-26T09:08:53.055802",
+          "corroboration_score": 0.96,
+          "corroboration_score_is_probability": false
+        }
+      ],
+      "model_components": {
+        "precursor_confirmed": true,
+        "source_reliability": 0.96,
+        "source_diversity": 1,
+        "persistence_hours": 0.0,
+        "pattern_confidence": 0.58,
+        "graph_dependency_support": 0.0,
+        "pattern_support_count": 0,
+        "pattern_contradiction_count": 0,
+        "pattern_empirically_calibrated": false,
+        "component_scores_are_probabilities": false,
+        "fusion_raw_forecast_count": 4,
+        "fusion_changes_probability": false
+      },
+      "fusion": {
+        "engine": "evidence-scenario-fusion-v2-world-eye",
+        "raw_forecast_count": 4,
+        "supporting_event_ids": [
+          10722,
+          10723,
+          10724,
+          10725
+        ],
+        "supporting_candidate_ids": [],
+        "source_keys": [
+          "fr-fuel-ruptures-live"
+        ],
+        "duplicate_probability_inflation_prevented": true,
+        "probability_merge_method": "strongest_representative_not_recomputed",
+        "probability_recomputed_after_fusion": false,
+        "geography_aware_grouping": true,
+        "group_time_bucket": "2026-08-26"
+      },
+      "consolidation": {
+        "engine": "evidence-consolidation-v1.1",
+        "score": 70,
+        "score_is_probability": false,
+        "level": "solide",
+        "source_family_count": 1,
+        "source_families": [
+          {
+            "key": "official_primary",
+            "label": "Source officielle primaire",
+            "trust": 0.97,
+            "category": "fact"
+          }
+        ],
+        "source_provider_count": 1,
+        "source_providers": [
+          {
+            "key": "fr-fuel-ruptures-live",
+            "label": "Données publiques carburants",
+            "role": "officiel"
+          }
+        ],
+        "dimensions": [
+          {
+            "key": "source_quality",
+            "label": "Qualité des sources",
+            "score": 97
+          },
+          {
+            "key": "source_diversity",
+            "label": "Diversité des familles",
+            "score": 25
+          },
+          {
+            "key": "freshness",
+            "label": "Fraîcheur des signaux",
+            "score": 100
+          },
+          {
+            "key": "pattern",
+            "label": "Pattern historique / comportemental",
+            "score": 58
+          },
+          {
+            "key": "graph",
+            "label": "Support du graphe de dépendances",
+            "score": 50
+          }
+        ],
+        "strengths": [
+          "Le précurseur principal est confirmé par HORIZON.",
+          "HORIZON a regroupé 4 alertes ou événements correspondant au même scénario sans multiplier artificiellement sa probabilité.",
+          "La qualité moyenne des sources est élevée."
+        ],
+        "weaknesses": [
+          "La diversité de sources est encore faible."
+        ],
+        "probability_case": {
+          "estimate_percent": 43,
+          "interval_percent": [
+            24,
+            61
+          ],
+          "calibration_status": "uncalibrated_model_estimate",
+          "explanation": "La probabilité est produite par le modèle Évidence. Les scores de consolidation ci-dessus expliquent la solidité des entrées mais ne sont pas eux-mêmes des probabilités."
+        },
+        "scenario_competition": {
+          "kind": "binary_window_outcome",
+          "mutually_exclusive": true,
+          "outcomes": [
+            {
+              "label": "Tension sur l’approvisionnement en carburant : risque d’achats de précaution, de files d’attente et de ruptures plus visibles.",
+              "percent": 43
+            },
+            {
+              "label": "Pas de matérialisation dans la fenêtre déclarée",
+              "percent": 57
+            }
+          ]
+        },
+        "divergence": {
+          "reference_type": "internal_model_prior",
+          "reference_label": "Prior interne du modèle",
+          "reference_percent": 25.0,
+          "forecast_percent": 43.0,
+          "delta_points": 18.0,
+          "label": "fortement au-dessus de la référence",
+          "external_consensus_available": false
+        }
+      },
+      "probability_history": [
+        {
+          "at": "2026-08-26T09:10:22.999431+00:00",
+          "percent": 43,
+          "interval_percent": [
+            24,
+            61
+          ],
+          "fact_status": "forecast_from_confirmed_event"
+        }
+      ],
+      "probability_delta_points": null,
+      "probability_direction": "new"
     }
   ],
   "critical_semantics": {
