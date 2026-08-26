@@ -4,43 +4,43 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#030711">
-  <meta name="description" content="ÉVIDENCE — cartographie des futurs probables, des prochaines heures aux prochaines années.">
-  <title>ÉVIDENCE — Ce qui devient probable</title>
-  <link rel="stylesheet" href="/app.css?v=evidence-reference-20260826-1530">
+  <meta name="description" content="ÉVIDENCE — l'œil du monde de demain : scénarios prédictifs sourcés, des prochaines heures à 10 ans.">
+  <title>ÉVIDENCE — World Eye</title>
+  <link rel="stylesheet" href="/app.css?v=evidence-world-eye-v3">
+  <link rel="stylesheet" href="/world-eye-v3.css?v=evidence-world-eye-v3">
 </head>
 <body>
   <div class="background-grid" aria-hidden="true"></div>
   <header class="topbar">
     <a class="brand" href="#top" aria-label="ÉVIDENCE, accueil">
       <span class="brand-orbit" aria-hidden="true"><i></i><b></b></span>
-      <span class="brand-copy"><strong>ÉVIDENCE</strong><small>Ce qui devient probable</small></span>
+      <span class="brand-copy"><strong>ÉVIDENCE</strong><small>WORLD EYE · Ce qui devient probable</small></span>
     </a>
     <nav aria-label="Navigation principale">
-      <a class="active" href="#predictions">Prévisions</a>
+      <a class="active" href="#predictions">À retenir</a>
       <a href="#horizons">Horizons</a>
-      <a href="/cameras/">Caméras monde</a>
-      <a href="#method">Méthode</a>
-      <a href="#about">À propos</a>
+      <a href="/cameras/">Monde en direct</a>
+      <a href="#method">Sources & méthode</a>
     </nav>
     <div class="top-actions">
       <span class="live-dot" id="liveDot" data-state="loading" title="État du flux"></span>
       <button class="search-btn" id="searchToggle" aria-label="Rechercher une prévision">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.4-3.4"></path></svg>
       </button>
-      <a class="explore-btn" href="/cameras/">Monde en direct <span>→</span></a>
+      <a class="explore-btn" href="/cameras/">Voir le monde <span>→</span></a>
     </div>
   </header>
 
   <div class="search-drawer" id="searchDrawer" hidden>
-    <div class="search-box"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.4-3.4"></path></svg><input id="searchInput" type="search" placeholder="Énergie, santé, Europe, climat…" autocomplete="off"><button id="searchClose" aria-label="Fermer">×</button></div>
+    <div class="search-box"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.4-3.4"></path></svg><input id="searchInput" type="search" placeholder="Énergie, emploi, IA, Europe, commerce…" autocomplete="off"><button id="searchClose" aria-label="Fermer">×</button></div>
   </div>
 
   <main id="top" class="page-shell">
-    <section class="hero-band" id="predictions">
+    <section class="hero-band hero-v3" id="predictions">
       <div class="hero-copy">
         <div class="hero-badge">INTELLIGENCE PRÉDICTIVE MONDIALE</div>
-        <h1>Voir demain<br>se former <em>aujourd’hui.</em></h1>
-        <p>ÉVIDENCE détecte les signaux mondiaux et estime ce qui devient probable dans les <strong>heures, semaines, mois et années</strong> à venir.</p>
+        <h1>L’œil du monde.<br><em>Avant demain.</em></h1>
+        <p>ÉVIDENCE observe les signaux publics, cherche leurs interactions et publie uniquement les futurs suffisamment argumentés — des prochaines heures jusqu’aux transformations à <strong>5–10 ans</strong>.</p>
         <div class="hero-metrics">
           <article><span class="metric-icon wave">⌁</span><div><small>PRÉDICTIONS ACTIVES</small><strong id="metricForecasts">—</strong><em id="metricForecastsMeta">champ en construction</em></div></article>
           <article><span class="metric-icon signal">⌁</span><div><small>SIGNAUX ANALYSÉS</small><strong id="metricSignals">—</strong><em id="metricSignalsMeta">dernier cycle</em></div></article>
@@ -48,77 +48,82 @@
         </div>
       </div>
 
-      <div id="primaryForecast" class="primary-host">
-        <div class="loading-card"><i></i><div><strong>ÉVIDENCE observe le monde…</strong><small>Le scénario dominant arrive.</small></div></div>
-      </div>
-
-      <div class="earth-stage" aria-hidden="true">
-        <div class="earth-glow"></div>
-        <svg class="earth" viewBox="0 0 520 520" role="img" aria-label="Globe numérique">
-          <defs>
-            <radialGradient id="earthFill" cx="38%" cy="35%" r="70%"><stop offset="0" stop-color="#102a4b"/><stop offset=".48" stop-color="#071a33"/><stop offset="1" stop-color="#02070f"/></radialGradient>
-            <linearGradient id="landStroke" x1="0" x2="1"><stop stop-color="#41dfff"/><stop offset="1" stop-color="#5f7cff"/></linearGradient>
-            <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-            <clipPath id="sphere"><circle cx="260" cy="260" r="224"/></clipPath>
-          </defs>
-          <circle cx="260" cy="260" r="224" fill="url(#earthFill)" stroke="#173e6c" stroke-width="2"/>
-          <g clip-path="url(#sphere)" opacity=".55" stroke="#1c4872" fill="none">
-            <ellipse cx="260" cy="260" rx="224" ry="74"/><ellipse cx="260" cy="260" rx="224" ry="135"/><ellipse cx="260" cy="260" rx="224" ry="190"/>
-            <ellipse cx="260" cy="260" rx="74" ry="224"/><ellipse cx="260" cy="260" rx="135" ry="224"/><ellipse cx="260" cy="260" rx="190" ry="224"/>
-          </g>
-          <g clip-path="url(#sphere)" fill="none" stroke="url(#landStroke)" stroke-width="2.2" filter="url(#glow)" opacity=".9">
-            <path d="M210 101l26 7 18 23 29-2 16 15 25 3 12 18 33 14 1 24-17 16-20-1-9 17-18-5-14 8-3 21-14 15-12 32-20 4-16-17-18-5-15-22-3-30-13-18 4-25-12-23 10-25 15-7 9-27 25-11z"/>
-            <path d="M254 267l31 18 20 30-5 31-23 18-5 29-22 22-20-7-9-30-17-18-10-33 13-21 10-27 37-12z"/>
-            <path d="M359 188l34 8 17 20 30 5 15 19-16 23-19 7-12 26-27 5-12-21-24-8-13-27 8-30 19-27z"/>
-            <path d="M106 186l28-22 25 2 11 17 25 7 8 20-21 14-19-3-12 18-25-1-16-18-10-20z"/>
-          </g>
-          <g fill="#75ebff" filter="url(#glow)">
-            <circle cx="278" cy="205" r="3.5"/><circle cx="294" cy="196" r="2.7"/><circle cx="310" cy="212" r="3"/><circle cx="267" cy="228" r="2.6"/><circle cx="324" cy="240" r="2.5"/><circle cx="352" cy="219" r="2.8"/><circle cx="247" cy="245" r="2.2"/>
-          </g>
-          <g stroke="#4aa7ff" opacity=".55" fill="none"><path d="M278 205Q310 174 352 219"/><path d="M294 196Q280 220 247 245"/><path d="M310 212Q321 227 324 240"/></g>
-        </svg>
-        <div class="earth-caption"><span></span><b>WORLD EYE</b><small id="snapshotTime">connexion au monde</small></div>
+      <div class="world-eye-console" id="worldEyeConsole">
+        <div class="world-eye-visual">
+          <div class="earth-live-glow"></div>
+          <img id="earthLive" alt="Dernière image disponible de la Terre par NASA DSCOVR EPIC" hidden>
+          <div class="earth-live-fallback" id="earthFallback">
+            <span class="fallback-orbit"></span>
+            <strong>Connexion satellite…</strong>
+            <small>NASA DSCOVR / EPIC</small>
+          </div>
+          <div class="earth-scan" aria-hidden="true"></div>
+          <div class="eye-live-badge"><i></i> WORLD EYE · SATELLITE</div>
+          <div class="earth-credit"><b id="earthProvider">NASA DSCOVR / EPIC</b><span id="earthCaptured">dernière acquisition</span></div>
+        </div>
+        <div class="world-eye-info">
+          <div><small>CE QUE L’ŒIL VOIT</small><strong id="eyeSignalCount">— signaux</strong></div>
+          <div><small>CE QU’IL PROJETTE</small><strong id="eyeHorizonCount">— horizons</strong></div>
+          <p id="eyeCaption">Image réelle de la face éclairée de la Terre. Les prédictions restent distinctes de l’image : elle matérialise le flux mondial observé.</p>
+          <a href="/cameras/">Ouvrir le monde en direct <span>→</span></a>
+        </div>
       </div>
     </section>
 
-    <section class="forecast-layout" id="horizons">
-      <div class="horizon-board" id="horizonBoard">
+    <section class="now-section">
+      <div class="section-head">
+        <div><small>CE QU’IL FAUT RETENIR</small><h2>Ce qui devient probable maintenant</h2></div>
+        <span id="snapshotTime">connexion au monde</span>
+      </div>
+      <div id="primaryForecast" class="top-forecast-grid">
+        <div class="loading-card"><i></i><div><strong>ÉVIDENCE observe le monde…</strong><small>Les scénarios dominants arrivent.</small></div></div>
+      </div>
+    </section>
+
+    <section class="horizon-toolbar" aria-label="Horizons prédictifs">
+      <span>HORIZONS</span>
+      <div id="horizonTabs"></div>
+    </section>
+
+    <section class="forecast-layout forecast-v3" id="horizons">
+      <div class="horizon-board horizon-board-v3" id="horizonBoard">
         <div class="board-loading">Construction de la cartographie des futurs…</div>
       </div>
 
-      <aside class="method-panel" id="method">
-        <h2>Pourquoi cette estimation ?</h2>
+      <aside class="method-panel method-v3" id="method">
+        <div class="method-kicker">TRANSPARENCE DU MOTEUR</div>
+        <h2>Pourquoi y croire ?</h2>
         <div class="method-flow">
-          <div><span class="flow-icon radar">◉</span><small>Signal faible</small></div><i>→</i>
+          <div><span class="flow-icon radar">◉</span><small>Signal</small></div><i>→</i>
           <div><span class="flow-icon dots">⠿</span><small>Convergence</small></div><i>→</i>
-          <div><span class="flow-icon branch">⌘</span><small>Scénario</small></div><i>→</i>
+          <div><span class="flow-icon branch">⌘</span><small>Mécanisme</small></div><i>→</i>
           <div><span class="flow-icon estimate">◎</span><small>Estimation</small></div>
         </div>
-        <p>HORIZON relie les signaux publics, recherche les convergences significatives et projette des scénarios concrets. La méthodologie reste visible, mais elle ne prend plus la place du futur.</p>
+        <p>Chaque carte sépare la <strong>probabilité estimée</strong> de la <strong>solidité des preuves</strong>. Les sources qui ont réellement contribué sont visibles sur la carte ; les références externes sont signalées comme telles.</p>
         <div class="panel-separator"></div>
-        <div class="sources-title">SOURCES ACTIVES <span id="sourceCount">—</span></div>
-        <div class="source-grid" id="sourceGrid"><span>Connexion…</span></div>
+        <div class="sources-title">SOURCES & RÔLES <span id="sourceCount">—</span></div>
+        <div class="source-role-list" id="sourceGrid"><span>Connexion…</span></div>
         <div class="source-more" id="sourceMore"></div>
         <div class="panel-separator"></div>
-        <div class="privacy-note"><span>♢</span><p>Données publiques. Aucune donnée personnelle. Les probabilités restent des estimations de modèle, pas des certitudes.</p></div>
+        <div class="privacy-note"><span>♢</span><p>Données publiques. Les probabilités sont encore des estimations de modèle non calibrées empiriquement. Les scénarios 5–10 ans sont explicitement conditionnels.</p></div>
       </aside>
     </section>
 
     <section class="about-strip" id="about">
       <div><span>ÉVIDENCE / HORIZON</span><h2>Le futur n’est pas certain.<br><em>Il laisse des traces.</em></h2></div>
-      <p>Chaque scénario garde ses sources, sa trajectoire, ce qui le renforce et ce qui pourrait l’invalider — accessibles dans le détail, sans alourdir l’écran principal.</p>
+      <p>Une bonne prédiction doit dire ce qui pourrait arriver, quand, pourquoi, ce qui la renforcerait, ce qui la réfuterait et quelles sources ont réellement participé au raisonnement.</p>
     </section>
   </main>
 
   <footer class="benefit-footer">
     <div class="footer-line"></div>
-    <div class="benefit"><span>◇</span>Anticipez les risques</div>
-    <div class="benefit"><span>◎</span>Saisissez les opportunités</div>
-    <div class="benefit"><span>▥</span>Prenez de meilleures décisions</div>
-    <div class="benefit"><span>♢</span>Agissez avec confiance</div>
+    <div class="benefit"><span>◇</span>Anticiper les risques</div>
+    <div class="benefit"><span>◎</span>Détecter les opportunités</div>
+    <div class="benefit"><span>▥</span>Comprendre les mécanismes</div>
+    <div class="benefit"><span>♢</span>Voir les sources</div>
     <div class="footer-line purple"></div>
   </footer>
 
-  <script src="/app.js?v=evidence-reference-20260826-1530" defer></script>
+  <script src="/app.js?v=evidence-world-eye-v3" defer></script>
 </body>
 </html>
