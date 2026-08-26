@@ -16,6 +16,7 @@ import { moduleCatalog, runLabModule, collectResearchModuleCandidates } from './
 import { enrichForecastIntelligence, buildCycleSignalSummary, buildSnapshotAnalytics } from './src/decision_intelligence.js';
 import { attachShadowEnsemble, counterfactualSensitivity } from './src/forecast_reasoning.js';
 import { sportsCalibrationLab, benchmarkRoadmap } from './src/calibration_labs.js';
+import { getFutureEngineReferenceForecasts, getFutureEngineCatalogStats } from './src/future_engine_reference.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -99,7 +100,6 @@ async function refreshWorld() {
       const signalCycle = buildCycleSignalSummary(collected.signals, generatedAt);
       await store.recordSignalCycle(signalCycle);
 
-      // Large internal pool first; public selection removes duplicates and balances domains/horizons.
       const coreCandidates = buildForecasts(collected.signals, Math.max(config.maxForecasts * 3, 120));
       const breadthCandidates = buildBreadthForecasts(breadth.signals);
       const deepCandidates = buildDeepForecasts(collected.signals);
@@ -124,21 +124,17 @@ async function refreshWorld() {
         attachShadowEnsemble(f);
       }
 
+      const referenceForecasts = getFutureEngineReferenceForecasts({activeOnly:true});
+      const referenceStats = getFutureEngineCatalogStats();
       const sourceProviders = new Set(forecasts.flatMap(f => (f.consolidation?.source_providers ?? []).map(s => s.key)));
       const sourceFamilies = new Set(forecasts.flatMap(f => (f.consolidation?.source_families ?? []).map(s => s.key)));
-      const domainCounts = forecasts.reduce((acc, f) => {
-        acc[f.domain] = (acc[f.domain] ?? 0) + 1;
-        return acc;
-      }, {});
-      const horizonCounts = forecasts.reduce((acc, f) => {
-        acc[f.horizon_tier] = (acc[f.horizon_tier] ?? 0) + 1;
-        return acc;
-      }, {});
+      const domainCounts = forecasts.reduce((acc, f) => { acc[f.domain] = (acc[f.domain] ?? 0) + 1; return acc; }, {});
+      const horizonCounts = forecasts.reduce((acc, f) => { acc[f.horizon_tier] = (acc[f.horizon_tier] ?? 0) + 1; return acc; }, {});
       const catalog = sourceCatalog(collected, sourceProviders);
       const signalAnalytics = await store.getSignalAnalytics();
       const snapshot = {
-        schema: 'evidence-node-world-eye-v6',
-        engine: 'evidence-node-predictive-public-v6-decision-intelligence',
+        schema: 'evidence-node-world-eye-v7',
+        engine: 'evidence-node-predictive-public-v7-reference-catalog',
         generated_at: generatedAt,
         runtime_mode: 'hostinger-node-managed',
         status: 'live',
@@ -146,6 +142,8 @@ async function refreshWorld() {
           signals_considered: collected.signals.length,
           raw_candidate_forecasts: allCandidates.length,
           predictions_returned: forecasts.length,
+          reference_forecasts_returned: referenceForecasts.length,
+          future_engine_catalog_stats: referenceStats,
           research_candidate_forecasts: researchCandidates.length,
           research_deadline_ms: RESEARCH_DEADLINE_MS,
           source_families: sourceFamilies.size,
@@ -160,6 +158,8 @@ async function refreshWorld() {
           forecast_registry_enabled: true,
           signal_ledger_7d_enabled: true,
           modular_lab_enabled: true,
+          all_modules_actionable_enabled: true,
+          future_engine_reference_catalog_enabled: true,
           impact_analysis_enabled: true,
           confidence_breakdown_enabled: true,
           decision_layer_enabled: true,
@@ -180,6 +180,7 @@ async function refreshWorld() {
           providers_configured: collected.providers_configured
         },
         forecasts,
+        reference_forecasts: referenceForecasts,
         contract: {
           product_promise: 'Anticiper des conséquences plausibles, mesurer leur impact et décider quoi préparer avant qu’elles deviennent évidentes.',
           probability_is_certainty: false,
@@ -187,6 +188,7 @@ async function refreshWorld() {
           confidence_is_probability: false,
           current_event_is_not_forecast: true,
           external_consensus_is_model_probability: false,
+          reference_forecasts_are_evidence_probability: false,
           decision_brief_is_automatic_order: false,
           shadow_ensemble_is_public_probability: false,
           falsification_required: true,
@@ -198,7 +200,7 @@ async function refreshWorld() {
       snapshot.analytics = buildSnapshotAnalytics(snapshot, signalAnalytics);
       await store.saveSnapshot(snapshot);
       lastError = null;
-      console.log(JSON.stringify({ event: 'world_refresh', signals: collected.signals.length, forecasts: forecasts.length, candidates:allCandidates.length, domains: domainCounts, horizons: horizonCounts, sources: collected.source_status }));
+      console.log(JSON.stringify({ event:'world_refresh', signals:collected.signals.length, forecasts:forecasts.length, references:referenceForecasts.length, candidates:allCandidates.length, domains:domainCounts, horizons:horizonCounts, sources:collected.source_status }));
       return snapshot;
     } catch (error) {
       lastError = { at: new Date().toISOString(), message: error.message };
@@ -220,17 +222,15 @@ app.get('/api/health', async (_req, res) => {
     port: config.port,
     last_snapshot: snapshot?.generated_at ?? null,
     last_error: lastError,
+    reference_forecasts: snapshot?.reference_forecasts?.length ?? getFutureEngineReferenceForecasts({activeOnly:true}).length,
     providers: providerState()
   });
 });
 
 app.get('/api/world-eye', async (_req, res) => {
   res.set('Cache-Control', 'public, max-age=900, stale-while-revalidate=3600');
-  try {
-    res.json(await getWorldEye());
-  } catch (error) {
-    res.status(503).json({ status:'unavailable', provider:'NASA DSCOVR / EPIC', error:String(error?.message || error) });
-  }
+  try { res.json(await getWorldEye()); }
+  catch (error) { res.status(503).json({ status:'unavailable', provider:'NASA DSCOVR / EPIC', error:String(error?.message || error) }); }
 });
 
 app.get('/api/snapshot', async (_req, res) => {
@@ -238,8 +238,15 @@ app.get('/api/snapshot', async (_req, res) => {
   const snapshot = await store.getSnapshot();
   if (snapshot) return res.json(snapshot);
   const built = await refreshWorld();
-  if (!built) return res.status(503).json({ status: 'warming', error: lastError?.message ?? 'initialisation' });
+  if (!built) return res.status(503).json({ status:'warming', error:lastError?.message ?? 'initialisation' });
   res.json(built);
+});
+
+app.get('/api/reference-forecasts', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=1800');
+  const includeExpired = ['1','true','yes'].includes(String(req.query.include_expired || '').toLowerCase());
+  const forecasts = getFutureEngineReferenceForecasts({activeOnly:!includeExpired});
+  res.json({generated_at:new Date().toISOString(),origin:'Future Engine · catalogue importé',stats:getFutureEngineCatalogStats(),forecasts});
 });
 
 app.get('/api/analytics', async (_req, res) => {
@@ -289,14 +296,14 @@ app.get('/api/benchmarks', (_req, res) => {
 app.post('/api/counterfactual/:scenarioKey', async (req, res) => {
   const snapshot = await store.getSnapshot() || await refreshWorld();
   const f = snapshot?.forecasts?.find(x => String(x.scenario_key) === String(req.params.scenarioKey));
-  if (!f) return res.status(404).json({error:'scenario_not_found'});
+  if (!f) return res.status(404).json({error:'scenario_not_found',note:'Les références Future Engine ne passent pas dans le simulateur ÉVIDENCE tant qu’elles ne sont pas recalculées par notre moteur.'});
   res.json(counterfactualSensitivity(f, req.body?.changes || []));
 });
 
 app.post('/api/refresh', async (req, res) => {
-  if (!config.adminRefreshKey || req.get('x-evidence-admin-key') !== config.adminRefreshKey) return res.status(403).json({ error: 'forbidden' });
+  if (!config.adminRefreshKey || req.get('x-evidence-admin-key') !== config.adminRefreshKey) return res.status(403).json({ error:'forbidden' });
   const snapshot = await refreshWorld();
-  res.json({ status: snapshot ? 'ok' : 'failed', generated_at: snapshot?.generated_at ?? null, error: lastError });
+  res.json({ status:snapshot ? 'ok':'failed', generated_at:snapshot?.generated_at ?? null, error:lastError });
 });
 
 app.get('/{*path}', (_req, res) => {
