@@ -222,6 +222,7 @@ def test_live_convergence_route_can_run_with_network_sources_disabled():
             "include_rte_realtime": False,
             "include_vigicrues": False,
             "include_sncf": False,
+            "include_world_pulse": False,
             "windy_points": [],
             "refresh_provisional_candidates": False,
             "snapshot_recent_active_events": False,
