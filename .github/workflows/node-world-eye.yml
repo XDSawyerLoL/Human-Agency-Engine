@@ -1,0 +1,40 @@
+name: Node World Eye CI
+
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'server.js'
+      - 'src/**'
+      - 'public/**'
+      - '.github/workflows/node-world-eye.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'server.js'
+      - 'src/**'
+      - 'public/**'
+      - '.github/workflows/node-world-eye.yml'
+
+jobs:
+  node-world-eye:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - run: npm run check
+      - name: Smoke-test predictor without network
+        run: |
+          node --input-type=module <<'NODE'
+          import { buildForecasts } from './src/predictor.js';
+          const now = new Date().toISOString();
+          const rows = buildForecasts([{source_key:'test',source_label:'Test',source_family:'official_primary',source_trust:.95,observed_at:now,event_at:now,event_type:'major_earthquake',title:'Séisme test',geography:'Zone test',severity:.8,url:'',facts:{}}],20);
+          if (rows.length !== 1) throw new Error('forecast missing');
+          if (rows[0].headline.includes('Séisme test')) throw new Error('forecast merely repeats current event');
+          if (!rows[0].falsification) throw new Error('falsification missing');
+          console.log(rows[0].headline, rows[0].probability.percent);
+          NODE
