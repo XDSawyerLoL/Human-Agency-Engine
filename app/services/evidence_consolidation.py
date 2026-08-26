@@ -23,13 +23,27 @@ SOURCE_KEY_HINTS: tuple[tuple[str, str], ...] = (
     ("meteo-france", "official_primary"),
     ("vigicrues", "official_primary"),
     ("gdacs", "official_primary"),
+    ("sncf", "official_primary"),
+    ("fuel", "official_primary"),
     ("rte", "official_statistical"),
-    ("sncf", "official_operational"),
-    ("fuel", "official_operational"),
     ("windy", "model_forecast"),
     ("gdelt", "news_global"),
     ("metaculus", "human_forecast"),
     ("polymarket", "prediction_market"),
+)
+
+SOURCE_PROVIDER_HINTS: tuple[tuple[str, str, str], ...] = (
+    ("sncf", "SNCF Voyageurs", "officiel"),
+    ("meteofrance", "Météo-France", "officiel"),
+    ("meteo-france", "Météo-France", "officiel"),
+    ("vigicrues", "Vigicrues", "officiel"),
+    ("rte", "RTE", "officiel"),
+    ("gdacs", "GDACS", "officiel / inter-agences"),
+    ("fuel", "Données publiques carburants", "officiel"),
+    ("windy", "Windy / modèle météo", "modèle"),
+    ("gdelt", "GDELT", "détection médias"),
+    ("metaculus", "Metaculus", "consensus externe"),
+    ("polymarket", "Marché prédictif", "consensus externe"),
 )
 
 MODEL_PRIOR_PERCENT = round((1.0 / (1.0 + exp(1.10))) * 100, 1)
@@ -60,6 +74,15 @@ def _source_meta(family: str) -> dict[str, Any]:
     if meta:
         return dict(meta)
     return {"label": family.replace("_", " ").title(), "trust": 0.55, "category": "other"}
+
+
+def _provider_meta(source_key: str) -> dict[str, str]:
+    raw = str(source_key or "").strip()
+    lowered = raw.lower()
+    for hint, label, role in SOURCE_PROVIDER_HINTS:
+        if hint in lowered:
+            return {"key": raw, "label": label, "role": role}
+    return {"key": raw, "label": raw.replace("-", " ").replace("_", " ").title(), "role": "source"}
 
 
 def _freshness_score(drivers: list[dict[str, Any]]) -> float:
@@ -110,7 +133,7 @@ class EvidenceConsolidator:
     only the forecast model emits a probability estimate.
     """
 
-    VERSION = "evidence-consolidation-v1"
+    VERSION = "evidence-consolidation-v1.1"
 
     def consolidate(self, forecast: dict[str, Any]) -> dict[str, Any]:
         probability = dict(forecast.get("probability") or {})
@@ -120,8 +143,10 @@ class EvidenceConsolidator:
         raw_sources: list[str] = []
         for driver in drivers:
             raw_sources.extend(str(item) for item in (driver.get("source_classes") or []) if item)
-        families = sorted({_source_family(item) for item in raw_sources if item})
+        unique_source_keys = sorted(set(raw_sources))
+        families = sorted({_source_family(item) for item in unique_source_keys if item})
         metas = [{"key": family, **_source_meta(family)} for family in families]
+        providers = [_provider_meta(item) for item in unique_source_keys]
 
         source_diversity = max(int(components.get("source_diversity") or 0), len(families))
         diversity_score = _clamp(source_diversity / 4.0)
@@ -153,10 +178,15 @@ class EvidenceConsolidator:
 
         strengths: list[str] = []
         weaknesses: list[str] = []
+        merged_count = int((forecast.get("fusion") or {}).get("raw_forecast_count") or 1)
         if confirmed:
             strengths.append("Le précurseur principal est confirmé par HORIZON.")
         else:
             weaknesses.append("Le précurseur principal reste un signal émergent non confirmé.")
+        if merged_count > 1:
+            strengths.append(
+                f"HORIZON a regroupé {merged_count} alertes ou événements correspondant au même scénario sans multiplier artificiellement sa probabilité."
+            )
         if source_diversity >= 3:
             strengths.append(f"{source_diversity} familles de sources contribuent au scénario.")
         elif source_diversity <= 1:
@@ -207,6 +237,8 @@ class EvidenceConsolidator:
             "level": _level(score),
             "source_family_count": source_diversity,
             "source_families": metas,
+            "source_provider_count": len(providers),
+            "source_providers": providers,
             "dimensions": dimensions,
             "strengths": strengths[:5],
             "weaknesses": weaknesses[:5],
