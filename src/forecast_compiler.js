@@ -72,7 +72,7 @@ function similarity(question,forecast,domain){
   const b=new Set(tokens(text));
   const overlap=a.filter(x=>b.has(x)).length;
   const lexical=overlap/Math.max(3,a.length);
-  const domainBoost=domain!=='general'&&String(forecast?.domain||'')===domain?.08:0;
+  const domainBoost=(domain!=='general'&&String(forecast?.domain||'')===domain)?.08:0;
   return clamp(lexical+domainBoost,0,1);
 }
 
