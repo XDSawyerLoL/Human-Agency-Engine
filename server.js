@@ -9,7 +9,9 @@ import { collectWorldSignals } from './src/sources.js';
 import { collectBreadthSignals } from './src/breadth_sources.js';
 import { buildForecasts } from './src/predictor.js';
 import { buildBreadthForecasts } from './src/breadth_predictor.js';
+import { buildDeepForecasts } from './src/deep_predictor.js';
 import { selectPublicForecasts } from './src/public_selection.js';
+import { getWorldEye } from './src/world_eye.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -34,6 +36,25 @@ app.use(express.static(path.join(__dirname, 'public'), {
   }
 }));
 
+function sourceCatalog(collected, activeKeys) {
+  const configured = collected?.providers_configured || {};
+  const active = key => activeKeys.has(key);
+  return [
+    { key:'usgs-earthquake-live', label:'USGS', role:'Observation officielle', active:active('usgs-earthquake-live'), model_input:true },
+    { key:'noaa-swpc-kp-forecast', label:'NOAA SWPC', role:'Prévision officielle', active:active('noaa-swpc-kp-forecast'), model_input:true },
+    { key:'nasa-eonet', label:'NASA EONET', role:'Agrégateur d’observations', active:active('nasa-eonet'), model_input:true },
+    { key:'who-disease-outbreak-news', label:'OMS', role:'Source multilatérale officielle', active:active('who-disease-outbreak-news'), model_input:true },
+    { key:'copernicus-cems-rapid-mapping', label:'Copernicus EMS', role:'Cartographie d’urgence officielle', active:active('copernicus-cems-rapid-mapping'), model_input:true },
+    { key:'fred-macro-pulse', label:'FRED · Federal Reserve', role:'Statistiques officielles', active:active('fred-macro-pulse'), model_input:true },
+    { key:'forecastapi', label:'ForecastAPI', role:'Projection statistique secondaire', active:active('forecastapi'), model_input:true },
+    { key:'gdelt-doc-2', label:'GDELT', role:'Convergence médias mondiaux', active:active('gdelt-doc-2'), model_input:true },
+    { key:'gdelt-breadth-radar', label:'GDELT · radar thématique', role:'Détection de signaux émergents', active:active('gdelt-breadth-radar'), model_input:true },
+    { key:'metaculus-reference', label:'Metaculus', role:'Référence externe · hors calcul de probabilité', active:Boolean(configured.metaculus_reference_only), model_input:false },
+    { key:'point-reference', label:'Point', role:'Référence documentaire · hors calcul de probabilité', active:Boolean(configured.point_reference_only), model_input:false },
+    { key:'windy-reference', label:'Windy', role:'Configuration présente · données test non utilisées en preuve', active:Boolean(configured.windy_configured_not_used_as_production_evidence), model_input:false }
+  ];
+}
+
 async function refreshWorld() {
   if (refreshing) return refreshing;
   refreshing = (async () => {
@@ -44,11 +65,12 @@ async function refreshWorld() {
       collected.source_status.push(breadth.status);
       collected.duration_ms = Math.max(collected.duration_ms, breadth.status.duration_ms ?? 0);
 
-      // Build a wide candidate pool first. The public selector then removes semantic duplicates
-      // and enforces a balanced mix of domains/horizons instead of letting hazard feeds dominate.
+      // Large internal pool first; public selection then removes duplicates and balances domains/horizons.
       const coreCandidates = buildForecasts(collected.signals, Math.max(config.maxForecasts * 3, 96));
       const breadthCandidates = buildBreadthForecasts(breadth.signals);
-      const forecasts = selectPublicForecasts([...coreCandidates, ...breadthCandidates], config.maxForecasts);
+      const deepCandidates = buildDeepForecasts(collected.signals);
+      const allCandidates = [...coreCandidates, ...breadthCandidates, ...deepCandidates];
+      const forecasts = selectPublicForecasts(allCandidates, config.maxForecasts);
 
       await store.appendHistory(forecasts, generatedAt);
       await store.attachHistory(forecasts);
@@ -73,19 +95,21 @@ async function refreshWorld() {
         acc[f.horizon_tier] = (acc[f.horizon_tier] ?? 0) + 1;
         return acc;
       }, {});
+      const catalog = sourceCatalog(collected, sourceProviders);
       const snapshot = {
-        schema: 'evidence-node-world-eye-v2-breadth',
-        engine: 'evidence-node-predictive-public-v2-diverse',
+        schema: 'evidence-node-world-eye-v3',
+        engine: 'evidence-node-predictive-public-v3-world-eye',
         generated_at: generatedAt,
         runtime_mode: 'hostinger-node-managed',
         status: 'live',
         summary: {
           signals_considered: collected.signals.length,
-          raw_candidate_forecasts: coreCandidates.length + breadthCandidates.length,
+          raw_candidate_forecasts: allCandidates.length,
           predictions_returned: forecasts.length,
           source_families: sourceFamilies.size,
           source_providers: sourceProviders.size,
           active_source_providers: [...sourceProviders],
+          source_catalog: catalog,
           source_status: collected.source_status,
           collection_duration_ms: collected.duration_ms,
           domain_distribution: domainCounts,
@@ -96,6 +120,7 @@ async function refreshWorld() {
           public_semantic_dedup_enabled: true,
           environmental_public_cap_enabled: true,
           breadth_radar_enabled: true,
+          long_range_5_plus_enabled: deepCandidates.length > 0,
           public_french_localization_enabled: true,
           second_order_only: true,
           empirical_probability_calibration_enabled: false,
@@ -110,7 +135,8 @@ async function refreshWorld() {
           current_event_is_not_forecast: true,
           falsification_required: true,
           expired_forecasts_must_resolve: true,
-          duplicate_public_scenarios_allowed: false
+          duplicate_public_scenarios_allowed: false,
+          five_plus_year_scenarios_are_conditional: true
         }
       };
       await store.saveSnapshot(snapshot);
@@ -139,6 +165,15 @@ app.get('/api/health', async (_req, res) => {
     last_error: lastError,
     providers: providerState()
   });
+});
+
+app.get('/api/world-eye', async (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=900, stale-while-revalidate=3600');
+  try {
+    res.json(await getWorldEye());
+  } catch (error) {
+    res.status(503).json({ status:'unavailable', provider:'NASA DSCOVR / EPIC', error:String(error?.message || error) });
+  }
 });
 
 app.get('/api/snapshot', async (_req, res) => {
