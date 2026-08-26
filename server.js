@@ -19,7 +19,17 @@ app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(compression());
 app.use(express.json({ limit: '64kb' }));
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: '5m', etag: true }));
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: 0,
+  etag: true,
+  setHeaders(res, filePath) {
+    if (/\.(?:html|css|js)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 
 async function refreshWorld() {
   if (refreshing) return refreshing;
@@ -119,10 +129,11 @@ app.post('/api/refresh', async (req, res) => {
   res.json({ status: snapshot ? 'ok' : 'failed', generated_at: snapshot?.generated_at ?? null, error: lastError });
 });
 
-// Express 5 / path-to-regexp v8 wildcard syntax. This also matches the root path.
-app.get('/{*path}', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/{*path}', (_req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
-// Hostinger expects server-side Node Web Apps to be reachable on port 3000.
 const server = app.listen(config.port, '0.0.0.0', () => {
   console.log(`[evidence] Node World Eye listening on 0.0.0.0:${config.port}; storage=${store.mode}`);
 });
@@ -132,7 +143,6 @@ server.on('error', error => {
   process.exitCode = 1;
 });
 
-// Storage is optional. Never block the HTTP process while MySQL is being detected.
 store.init().catch(error => console.error('[store-init]', error));
 refreshWorld();
 setInterval(refreshWorld, config.refreshMs).unref();
