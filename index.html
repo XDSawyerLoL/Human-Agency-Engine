@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#03070b">
-  <meta name="description" content="ÉVIDENCE — Human Signal Engine. Un cockpit public alimenté par HORIZON pour détecter les problèmes humains persistants, vérifier les solutions existantes et proposer des interventions falsifiables.">
-  <title>ÉVIDENCE — Human Signal Engine | HORIZON</title>
+  <meta name="description" content="ÉVIDENCE — cockpit prédictif HORIZON. Des signaux publics aux scénarios futurs, avec estimation probabiliste, fenêtre temporelle, chaîne de mécanismes et conditions d'invalidation.">
+  <title>ÉVIDENCE — Predictive Intelligence | HORIZON</title>
   <link rel="preconnect" href="https://api.github.com">
   <link rel="preconnect" href="https://raw.githubusercontent.com">
   <link rel="stylesheet" href="./evidence-public.css">
@@ -18,209 +18,148 @@
   <header class="topbar">
     <a class="brand" href="#top" aria-label="Évidence accueil">
       <span class="brand-sigil" aria-hidden="true"><i></i><i></i><i></i></span>
-      <span class="brand-copy">
-        <strong>ÉVIDENCE</strong>
-        <small>HUMAN SIGNAL ENGINE</small>
-      </span>
+      <span class="brand-copy"><strong>ÉVIDENCE</strong><small>PREDICTIVE INTELLIGENCE</small></span>
     </a>
-
     <nav class="nav" aria-label="Navigation principale">
+      <a href="#anomalies">Prévisions</a>
       <a href="#signals">Signaux</a>
-      <a href="#anomalies">Anomalies</a>
       <a href="#blackbox">Black box</a>
-      <a href="#truth">Méthode</a>
+      <a href="#truth">Calibration</a>
     </nav>
-
     <div class="heartbeat" id="heartbeatBadge" data-state="loading">
       <span class="heartbeat-dot"></span>
-      <div>
-        <strong>HORIZON</strong>
-        <small id="heartbeatText">vérification…</small>
-      </div>
+      <div><strong>HORIZON</strong><small id="heartbeatText">vérification…</small></div>
     </div>
   </header>
 
   <main id="top">
     <section class="hero section-shell">
       <div class="hero-copy">
-        <div class="overline"><span></span> PUBLIC INTELLIGENCE COCKPIT</div>
-        <h1>Le monde laisse des traces<br><em>avant de changer.</em></h1>
-        <p class="hero-lead">HORIZON observe. <strong>Évidence cherche ce qui cloche.</strong> Le moteur croise des signaux publics, repère les frictions humaines persistantes, cherche ce qui existe déjà et remonte les anomalies qui méritent réellement une enquête.</p>
-
+        <div class="overline"><span></span> PREDICTIVE WORLD COCKPIT</div>
+        <h1>Voir ce qui se dessine<br><em>avant que cela devienne évident.</em></h1>
+        <p class="hero-lead">HORIZON accumule les signaux. <strong>Évidence projette ce qui pourrait arriver ensuite.</strong> Le moteur relie des précurseurs publics, suit leur convergence et publie les scénarios qui montent — avec une estimation probabiliste, une fenêtre temporelle et les conditions qui feraient changer le calcul.</p>
         <div class="hero-actions">
-          <a class="primary-cta" href="#anomalies"><span>Voir ce qu’Évidence a trouvé</span><b>↓</b></a>
-          <button class="ghost-cta" id="explainButton" type="button">Comment le moteur pense</button>
+          <a class="primary-cta" href="#anomalies"><span>Voir les scénarios actifs</span><b>↓</b></a>
+          <button class="ghost-cta" id="explainButton" type="button">Comment le calcul fonctionne</button>
         </div>
-
         <div class="truth-strip">
-          <span><i class="truth-ok"></i> Aucun score présenté comme une probabilité</span>
-          <span><i class="truth-ok"></i> Aucune « nouveauté mondiale » inventée</span>
-          <span><i class="truth-ok"></i> Chaque idée doit pouvoir être réfutée</span>
+          <span><i class="truth-ok"></i> % = estimation du modèle, calibration visible</span>
+          <span><i class="truth-ok"></i> Chaque prévision a une fenêtre de validité</span>
+          <span><i class="truth-ok"></i> Chaque scénario peut être invalidé</span>
         </div>
       </div>
 
-      <div class="hero-orbit" aria-label="Visualisation abstraite du champ de signaux">
+      <div class="hero-orbit" aria-label="Visualisation du champ prédictif">
         <div class="orbit-shell">
-          <div class="orbit orbit-1"></div>
-          <div class="orbit orbit-2"></div>
-          <div class="orbit orbit-3"></div>
-          <div class="orbit-axis axis-a"></div>
-          <div class="orbit-axis axis-b"></div>
-          <div class="core-glow"></div>
-          <div class="core">
-            <small>ÉVIDENCE</small>
-            <strong id="heroAnomalyCount">—</strong>
-            <span>anomalies suivies</span>
-          </div>
-          <div class="satellite sat-a"><span></span><small>WORLD</small></div>
-          <div class="satellite sat-b"><span></span><small>SCAN</small></div>
-          <div class="satellite sat-c"><span></span><small>ACT</small></div>
+          <div class="orbit orbit-1"></div><div class="orbit orbit-2"></div><div class="orbit orbit-3"></div>
+          <div class="orbit-axis axis-a"></div><div class="orbit-axis axis-b"></div><div class="core-glow"></div>
+          <div class="core"><small>SCÉNARIOS</small><strong id="heroAnomalyCount">—</strong><span>prévisions suivies</span></div>
+          <div class="satellite sat-a"><span></span><small>SENSE</small></div>
+          <div class="satellite sat-b"><span></span><small>LINK</small></div>
+          <div class="satellite sat-c"><span></span><small>PROJECT</small></div>
         </div>
         <div class="orbit-caption">
           <span class="live-pulse"></span>
-          <div><strong id="snapshotState">Flux public en acquisition</strong><small id="snapshotTimestamp">Aucun snapshot chargé</small></div>
+          <div><strong id="snapshotState">Flux prédictif en acquisition</strong><small id="snapshotTimestamp">Aucun snapshot chargé</small></div>
         </div>
       </div>
     </section>
 
     <section class="telemetry section-shell" aria-label="Télémétrie du moteur">
-      <article><span>SIGNAUX ANALYSÉS</span><strong id="metricEvidence">—</strong><small>dans le snapshot courant</small></article>
-      <article><span>PROBLÈMES SURFACÉS</span><strong id="metricProblems">—</strong><small>hypothèses à investiguer</small></article>
-      <article><span>SCANS DE SOLUTIONS</span><strong id="metricScans">—</strong><small>dans ce cycle public</small></article>
-      <article><span>SOURCES HORIZON</span><strong id="metricSources">—</strong><small>familles observées</small></article>
-      <article class="telemetry-accent"><span>PLUS FORTE ANOMALIE</span><strong id="metricTopAnomaly">—</strong><small>indice explicable · ≠ probabilité</small></article>
+      <article><span>SIGNAUX ANALYSÉS</span><strong id="metricEvidence">—</strong><small>faits + hypothèses du cycle</small></article>
+      <article><span>PRÉVISIONS ACTIVES</span><strong id="metricProblems">—</strong><small>scénarios suffisamment soutenus</small></article>
+      <article><span>DÉPENDANCES</span><strong id="metricScans">—</strong><small>liens précurseurs examinés</small></article>
+      <article><span>FAMILLES DE SOURCES</span><strong id="metricSources">—</strong><small>origines indépendantes visibles</small></article>
+      <article class="telemetry-accent"><span>SCÉNARIO LE + PROBABLE</span><strong id="metricTopAnomaly">—</strong><small>estimation du modèle · calibration affichée</small></article>
     </section>
 
     <section class="manifesto section-shell">
       <span class="manifesto-index">01</span>
-      <p>Évidence ne cherche pas ce dont tout le monde parle. Il cherche <strong>ce qui continue d’arriver</strong>, ce qui traverse plusieurs sources, ce que les réponses actuelles absorbent mal — puis demande : <em>« pourquoi ce problème existe encore ? »</em></p>
+      <p>Évidence pose une seule question : <strong>si ces signaux continuent de converger, qu’est-ce qui devient plus probable ensuite</strong> — dans les prochaines heures, les prochains jours ou les prochaines semaines ?</p>
+    </section>
+
+    <section class="anomaly-section section-shell" id="anomalies">
+      <div class="section-heading anomaly-heading">
+        <div>
+          <div class="overline danger"><span></span> FORECAST QUEUE</div>
+          <h2>Ce qui pourrait arriver ensuite</h2>
+          <p>Chaque carte est une prévision falsifiable : résultat attendu, estimation probabiliste, intervalle d’incertitude, fenêtre temporelle, chaîne de mécanismes, signaux qui feraient monter le scénario et signaux qui le feraient chuter.</p>
+        </div>
+        <div class="queue-status"><span id="queueStatusDot"></span><div><small>FORECAST STATUS</small><strong id="queueStatusText">NO SNAPSHOT</strong></div></div>
+      </div>
+      <div class="top-anomaly" id="topAnomaly">
+        <div class="top-anomaly-empty"><span>?</span><div><strong>Aucune prévision publique chargée</strong><small>Évidence n’invente pas de scénario pour remplir l’écran.</small></div></div>
+      </div>
+      <div class="anomaly-grid" id="anomalyGrid"></div>
     </section>
 
     <section class="signal-field section-shell" id="signals">
       <div class="section-heading">
         <div>
           <div class="overline"><span></span> SIGNAL CONSTELLATION</div>
-          <h2>Le champ de signaux</h2>
-          <p>Une carte abstraite des problèmes actuellement surfacés. Taille = indice d’anomalie. Les connexions représentent des familles de domaine communes, pas une causalité.</p>
+          <h2>Le champ prédictif</h2>
+          <p>Taille du nœud = estimation du scénario. Les connexions montrent des scénarios partageant un domaine ou un précurseur. Une connexion indique une dépendance plausible, jamais une causalité prouvée.</p>
         </div>
         <div class="field-legend">
-          <span><i class="dot gap"></i>Lacune candidate</span>
-          <span><i class="dot sparse"></i>Sous-exploré</span>
-          <span><i class="dot known"></i>Travail connexe</span>
-          <span><i class="dot unknown"></i>À scanner</span>
+          <span><i class="dot gap"></i>≥ 70 %</span>
+          <span><i class="dot sparse"></i>50–69 %</span>
+          <span><i class="dot known"></i>30–49 %</span>
+          <span><i class="dot unknown"></i>&lt; 30 %</span>
         </div>
       </div>
-
       <div class="field-stage">
         <canvas id="signalCanvas"></canvas>
-        <div class="field-empty" id="fieldEmpty">
-          <span class="field-empty-ring"></span>
-          <strong>Acquisition du premier snapshot public</strong>
-          <small>Le cockpit ne fabrique pas de faux signaux pour remplir l’écran.</small>
-        </div>
-        <div class="field-hud top-left"><small>MODE</small><strong>PUBLIC WORLD EVIDENCE</strong></div>
-        <div class="field-hud top-right"><small>CLAIM LEVEL</small><strong>DIAGNOSTIC</strong></div>
-        <div class="field-hud bottom-left"><small>NODE</small><strong id="selectedNodeLabel">—</strong></div>
+        <div class="field-empty" id="fieldEmpty"><span class="field-empty-ring"></span><strong>Aucun scénario suffisamment soutenu</strong><small>Le moteur attend de vraies convergences avant d’afficher une prévision.</small></div>
+        <div class="field-hud top-left"><small>MODE</small><strong>PUBLIC WORLD FORECAST</strong></div>
+        <div class="field-hud top-right"><small>PROBABILITY</small><strong>MODEL ESTIMATE</strong></div>
+        <div class="field-hud bottom-left"><small>SCENARIO</small><strong id="selectedNodeLabel">—</strong></div>
         <div class="field-hud bottom-right"><small>UTC</small><strong id="utcClock">--:--:--</strong></div>
       </div>
     </section>
 
-    <section class="anomaly-section section-shell" id="anomalies">
-      <div class="section-heading anomaly-heading">
-        <div>
-          <div class="overline danger"><span></span> ANOMALY QUEUE</div>
-          <h2>Ce qui mérite une vraie enquête</h2>
-          <p>Évidence privilégie les problèmes soutenus par des faits, persistants, multi-sources et peu couverts par les solutions retrouvées. L’indice sert à prioriser — jamais à prétendre connaître la vérité.</p>
-        </div>
-        <div class="queue-status">
-          <span id="queueStatusDot"></span>
-          <div><small>QUEUE STATUS</small><strong id="queueStatusText">NO SNAPSHOT</strong></div>
-        </div>
-      </div>
-
-      <div class="top-anomaly" id="topAnomaly">
-        <div class="top-anomaly-empty">
-          <span>?</span>
-          <div><strong>Aucune anomalie publique chargée</strong><small>La prochaine donnée affichée ici viendra du moteur, pas d’un exemple préfabriqué.</small></div>
-        </div>
-      </div>
-
-      <div class="anomaly-grid" id="anomalyGrid"></div>
-    </section>
-
     <section class="decision-lab section-shell">
       <div class="decision-copy">
-        <div class="overline"><span></span> FROM SIGNAL TO ACTION</div>
-        <h2>Le moteur n’a pas le droit de s’arrêter à « intéressant ».</h2>
-        <p>Pour chaque anomalie, Évidence doit produire une intervention minimale, la preuve sous-jacente et une condition qui tuerait l’idée. Une hypothèse impossible à réfuter est rejetée par conception.</p>
+        <div class="overline"><span></span> FROM SIGNAL TO FORECAST</div>
+        <h2>Une prévision doit bouger quand le monde bouge.</h2>
+        <p>Évidence ne produit pas un verdict figé. Chaque nouveau signal doit repondérer le scénario, modifier son intervalle ou le faire disparaître. Une fenêtre expirée sans matérialisation compte comme un échec, pas comme une réussite reportée.</p>
       </div>
-      <div class="decision-flow" aria-label="Pipeline d'Évidence">
-        <div><b>01</b><strong>OBSERVE</strong><span>faits + hypothèses</span></div>
-        <i>→</i>
-        <div><b>02</b><strong>CONVERGE</strong><span>sources + persistance</span></div>
-        <i>→</i>
-        <div><b>03</b><strong>SCAN</strong><span>solutions existantes</span></div>
-        <i>→</i>
-        <div><b>04</b><strong>PROPOSE</strong><span>outil / action</span></div>
-        <i>→</i>
-        <div class="flow-last"><b>05</b><strong>TRY TO KILL IT</strong><span>test falsifiable</span></div>
+      <div class="decision-flow" aria-label="Pipeline prédictif d'Évidence">
+        <div><b>01</b><strong>OBSERVE</strong><span>signaux publics</span></div><i>→</i>
+        <div><b>02</b><strong>LINK</strong><span>précurseurs + dépendances</span></div><i>→</i>
+        <div><b>03</b><strong>PROJECT</strong><span>scénarios + fenêtre</span></div><i>→</i>
+        <div><b>04</b><strong>UPDATE</strong><span>hausse / baisse du %</span></div><i>→</i>
+        <div class="flow-last"><b>05</b><strong>RESOLVE</strong><span>réussi / raté / expiré</span></div>
       </div>
     </section>
 
     <section class="blackbox section-shell" id="blackbox">
       <div class="blackbox-panel">
         <div class="blackbox-head">
-          <div>
-            <div class="overline"><span></span> BLACK BOX / TRANSPARENT MODE</div>
-            <h2>Ce que la machine est réellement en train de faire</h2>
-          </div>
+          <div><div class="overline"><span></span> BLACK BOX / TRANSPARENT MODE</div><h2>Pourquoi le scénario monte maintenant</h2></div>
           <span class="terminal-led"><i></i> READ ONLY</span>
         </div>
-        <div class="terminal" id="terminalLog" aria-live="polite">
-          <div><time>--:--:--</time><span class="sys">SYSTEM</span><p>Waiting for public Evidence snapshot…</p></div>
-        </div>
+        <div class="terminal" id="terminalLog" aria-live="polite"><div><time>--:--:--</time><span class="sys">SYSTEM</span><p>Waiting for predictive Evidence snapshot…</p></div></div>
       </div>
       <aside class="blackbox-aside">
-        <article>
-          <span>RUNTIME</span>
-          <strong id="runtimeMode">GitHub / HORIZON</strong>
-          <p>La collecte peut fonctionner avec le fallback GitHub Actions et un état SQLite roulant, sans serveur permanent.</p>
-        </article>
-        <article>
-          <span>PUBLICATION</span>
-          <strong>Snapshot anonymisé</strong>
-          <p>Le site public ne reçoit ni clé API, ni donnée personnelle : seulement une synthèse de signaux mondiaux publics.</p>
-        </article>
-        <article>
-          <span>FAILURE MODE</span>
-          <strong>Dire « je ne sais pas »</strong>
-          <p>Si la couverture des sources est insuffisante, Évidence doit l’afficher au lieu de conclure à une lacune.</p>
-        </article>
+        <article><span>RUNTIME</span><strong id="runtimeMode">GitHub / HORIZON</strong><p>HORIZON collecte les signaux et reconstruit périodiquement l’état du monde utilisé par Évidence.</p></article>
+        <article><span>CALIBRATION</span><strong>Visible, jamais simulée</strong><p>Un pourcentage non calibré historiquement est explicitement marqué comme estimation du modèle. Il ne devient fréquence empirique qu’après suffisamment de prévisions résolues.</p></article>
+        <article><span>FAILURE MODE</span><strong>La prévision peut mourir</strong><p>Absence de confirmation, sources qui divergent ou fenêtre expirée : le scénario doit baisser ou être compté comme raté.</p></article>
       </aside>
     </section>
 
     <section class="truth-contract section-shell" id="truth">
-      <div class="section-heading">
-        <div>
-          <div class="overline"><span></span> EPISTEMIC CONTRACT</div>
-          <h2>Le contrat anti-bullshit</h2>
-          <p>La partie la plus importante du moteur n’est pas ce qu’il affirme. C’est ce qu’il s’interdit d’affirmer.</p>
-        </div>
-      </div>
+      <div class="section-heading"><div><div class="overline"><span></span> PREDICTION CONTRACT</div><h2>Le contrat de prévision</h2><p>Le moteur a le droit d’estimer. Il n’a pas le droit de transformer une estimation en certitude.</p></div></div>
       <div class="contract-grid">
-        <article><b>01</b><strong>Un score n’est pas une probabilité.</strong><p>L’indice d’anomalie sert à trier l’attention. Il ne signifie pas « 87 % de chances d’avoir raison ».</p></article>
-        <article><b>02</b><strong>Pas de solution trouvée ≠ aucune solution.</strong><p>Une lacune reste limitée aux écosystèmes effectivement scannés et à la qualité de leur couverture.</p></article>
-        <article><b>03</b><strong>Un article répété n’est pas une convergence.</strong><p>Le moteur distingue autant que possible les familles de sources et évite de compter la même information plusieurs fois.</p></article>
-        <article><b>04</b><strong>Toute idée doit avoir une sortie de secours.</strong><p>Chaque intervention est accompagnée d’une observation qui doit conduire à l’abandonner si elle échoue.</p></article>
+        <article><b>01</b><strong>Un pourcentage est une estimation de modèle.</strong><p>Exemple : 64 % signifie « le modèle estime 0,64 avec les informations actuelles ». Tant que la calibration historique n’est pas validée, ce n’est pas une fréquence empirique.</p></article>
+        <article><b>02</b><strong>Une chaîne causale reste une hypothèse.</strong><p>Un précurseur temporel et géographique cohérent augmente le scénario ; il ne prouve pas à lui seul que A cause B.</p></article>
+        <article><b>03</b><strong>La fenêtre expire.</strong><p>Si le résultat annoncé n’apparaît pas dans la fenêtre déclarée, la prévision est comptée comme ratée. Pas de déplacement opportuniste du but.</p></article>
+        <article><b>04</b><strong>Chaque nouveau signal reprice le futur.</strong><p>Nouvelle corroboration : le scénario peut monter. Signal invalidé ou divergence : il doit baisser. C’est la trajectoire qui importe.</p></article>
       </div>
     </section>
 
     <section class="final-statement section-shell">
       <span class="manifesto-index">02</span>
-      <div>
-        <p>Le but n’est pas de prédire l’avenir comme un oracle.</p>
-        <h2>Le but est de remarquer <em>plus tôt</em> ce que nous sommes en train de normaliser.</h2>
-      </div>
+      <div><p>Évidence ne dit pas ce qui va arriver.</p><h2>Il mesure ce qui devient <em>plus probable</em> avant que cela devienne évident.</h2></div>
       <a href="https://github.com/XDSawyerLoL/Human-Agency-Engine" target="_blank" rel="noreferrer">Voir le moteur sur GitHub ↗</a>
     </section>
   </main>
@@ -228,16 +167,16 @@
   <dialog class="explain-dialog" id="explainDialog">
     <button class="dialog-close" id="dialogClose" type="button" aria-label="Fermer">×</button>
     <div class="overline"><span></span> HOW IT THINKS</div>
-    <h2>Évidence n’est pas une IA qui « trouve des idées ».</h2>
-    <p>Il part d’événements et d’hypothèses produits par HORIZON, regroupe les signaux par problème, mesure leur persistance et leur indépendance, puis cherche du travail existant dans plusieurs écosystèmes. Ce n’est qu’ensuite qu’il propose une intervention.</p>
-    <div class="dialog-rule"><b>La règle :</b><span>Signal → problème → scan des réponses → action → tentative de réfutation.</span></div>
-    <p class="dialog-note">Si une étape manque, la sortie doit être marquée comme incomplète. L’interface publique conserve cette incertitude au lieu de la cacher.</p>
+    <h2>Évidence construit des scénarios, pas des slogans.</h2>
+    <p>Le moteur part de signaux émergents HORIZON, mesure leur corroboration et leur diversité, cherche des précurseurs plausibles dans le graphe d’événements, applique des mécanismes de comportement connus, puis estime le scénario futur et sa fenêtre temporelle.</p>
+    <div class="dialog-rule"><b>La règle :</b><span>Signal → précurseurs → mécanisme → scénario → estimation → fenêtre → résolution.</span></div>
+    <p class="dialog-note">Le chiffre peut être utile avant d’être parfaitement calibré, mais son statut reste affiché. Quand HORIZON aura accumulé suffisamment de prévisions historiques résolues, les estimations pourront être remplacées par des fréquences empiriquement calibrées.</p>
   </dialog>
 
   <footer class="footer section-shell">
-    <div><strong>ÉVIDENCE</strong><span>Human Signal Engine · HORIZON kernel</span></div>
-    <p>Données publiques uniquement sur cette interface. Diagnostic ≠ probabilité. Lacune candidate ≠ nouveauté mondiale.</p>
-    <span id="footerBuild">PUBLIC COCKPIT / 2026</span>
+    <div><strong>ÉVIDENCE</strong><span>Predictive Intelligence · HORIZON kernel</span></div>
+    <p>Données publiques uniquement. Estimation probabiliste ≠ certitude. Dépendance plausible ≠ causalité prouvée.</p>
+    <span id="footerBuild">PREDICTIVE COCKPIT / 2026</span>
   </footer>
 
   <script src="./evidence-public.js" defer></script>

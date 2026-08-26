@@ -45,6 +45,7 @@ def _category_for_domain(domain: str) -> str:
 
 
 class HorizonWorldBriefingService:
+    # Keep the existing public contract version: fields below are additive.
     ENGINE_VERSION = "horizon-world-briefing-v0.1"
 
     def __init__(self, db: Session):
@@ -63,6 +64,34 @@ class HorizonWorldBriefingService:
             item["domain"]: item["current_maturity"]
             for item in coverage["domains"]
         }
+
+        active_patterns = (
+            self.db.query(HorizonBehaviorPattern)
+            .filter(HorizonBehaviorPattern.status == "active")
+            .order_by(HorizonBehaviorPattern.confidence.desc(), HorizonBehaviorPattern.id.asc())
+            .all()
+        )
+        patterns_by_event_type: dict[str, list[dict]] = defaultdict(list)
+        for pattern in active_patterns:
+            payload = {
+                "pattern_key": pattern.pattern_key,
+                "pattern_name": pattern.name,
+                "predicted_response": pattern.predicted_response,
+                "mechanism_chain": list(pattern.mechanism_chain or []),
+                "pattern_confidence": float(pattern.confidence),
+                "relative_lag_hours": {
+                    "low": pattern.expected_lag_hours_low,
+                    "high": pattern.expected_lag_hours_high,
+                },
+                "support_count": pattern.support_count,
+                "contradiction_count": pattern.contradiction_count,
+                "formal_probability": bool((pattern.provenance or {}).get("formal_probability", False)),
+                "calibrated_on_horizon_outcomes": bool(
+                    (pattern.provenance or {}).get("calibrated_on_horizon_outcomes", False)
+                ),
+            }
+            for event_type in pattern.event_types or []:
+                patterns_by_event_type[str(event_type)].append(payload)
 
         events = (
             self.db.query(HorizonGlobalEvent)
@@ -91,6 +120,7 @@ class HorizonWorldBriefingService:
                 "observed_at": row.first_observed_at.isoformat(),
                 "occurred_at": row.occurred_at.isoformat(),
                 "source_url": row.source_url,
+                "predictive_patterns": patterns_by_event_type.get(str(row.event_type), []),
                 "probability": None,
             })
 
@@ -144,6 +174,8 @@ class HorizonWorldBriefingService:
                     "pattern_key": pattern.pattern_key,
                     "pattern_name": pattern.name,
                     "predicted_response": forecast.predicted_response,
+                    "mechanism_chain": list(pattern.mechanism_chain or []),
+                    "pattern_confidence": float(pattern.confidence),
                     "hypothesis_band": forecast.hypothesis_band,
                     "provisional_score": float(forecast.provisional_score),
                     "provisional_score_is_probability": False,

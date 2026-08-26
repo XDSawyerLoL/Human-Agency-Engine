@@ -5,16 +5,6 @@
   const SNAPSHOT_URL = `https://raw.githubusercontent.com/${REPO}/evidence-live-data/evidence-live.json`;
   const HEARTBEAT_URL = `https://api.github.com/repos/${REPO}/actions/workflows/horizon-live.yml/runs?per_page=1`;
 
-  const gapLabels = {
-    insufficient_source_coverage: "Couverture insuffisante",
-    candidate_gap_in_scanned_sources: "Lacune candidate",
-    underexplored_in_scanned_sources: "Zone sous-explorée",
-    related_work_found: "Travail connexe trouvé",
-    substantial_existing_work_found: "Écosystème déjà actif",
-    not_scanned_in_this_cycle: "À scanner",
-    pending: "À scanner",
-  };
-
   const domainLabels = {
     weather_climate: "Météo & climat",
     natural_hazards: "Risques naturels",
@@ -33,32 +23,71 @@
   };
 
   const $ = (selector) => document.querySelector(selector);
-  const $$ = (selector) => [...document.querySelectorAll(selector)];
-
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;",
   })[c]);
-
-  const safeUrl = (value) => {
-    try {
-      const url = new URL(String(value || ""));
-      return ["http:", "https:"].includes(url.protocol) ? url.href : "";
-    } catch (_) {
-      return "";
-    }
-  };
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, Number(value) || 0));
   }
 
-  function hashString(value) {
-    let h = 2166136261;
-    for (let i = 0; i < String(value).length; i += 1) {
-      h ^= String(value).charCodeAt(i);
-      h = Math.imul(h, 16777619);
+  function probabilityPercent(forecast) {
+    const explicit = Number(forecast?.probability?.percent);
+    if (Number.isFinite(explicit)) return Math.round(clamp(explicit, 0, 100));
+    return Math.round(clamp(Number(forecast?.probability?.estimate) * 100, 0, 100));
+  }
+
+  function probabilityInterval(forecast) {
+    const direct = forecast?.probability?.interval_percent;
+    if (Array.isArray(direct) && direct.length >= 2) {
+      return [Math.round(Number(direct[0]) || 0), Math.round(Number(direct[1]) || 0)];
     }
-    return h >>> 0;
+    return [
+      Math.round(clamp(Number(forecast?.probability?.interval_low) * 100, 0, 100)),
+      Math.round(clamp(Number(forecast?.probability?.interval_high) * 100, 0, 100)),
+    ];
+  }
+
+  function probabilityTrail(forecast) {
+    const history = (forecast?.probability_history || [])
+      .map((point) => Number(point?.percent))
+      .filter((value) => Number.isFinite(value))
+      .slice(-6);
+    if (!history.length) return `${probabilityPercent(forecast)}%`;
+    return `${history.map((value) => `${Math.round(value)}`).join(" → ")}%`;
+  }
+
+  function probabilityDeltaLabel(forecast) {
+    const delta = Number(forecast?.probability_delta_points);
+    const direction = forecast?.probability_direction;
+    if (!Number.isFinite(delta) || direction === "new") return "NOUVEAU SCÉNARIO";
+    const sign = delta > 0 ? "+" : "";
+    if (direction === "rising") return `HAUSSE ${sign}${delta.toFixed(1)} pt`;
+    if (direction === "falling") return `BAISSE ${delta.toFixed(1)} pt`;
+    return `STABLE ${sign}${delta.toFixed(1)} pt`;
+  }
+
+  function probabilityClass(percent) {
+    if (percent >= 70) return "gap";
+    if (percent >= 50) return "sparse";
+    if (percent >= 30) return "known";
+    return "unknown";
+  }
+
+  function trajectoryLabel(value) {
+    return ({ building: "EN RENFORCEMENT", forming: "EN FORMATION", fragile: "FRAGILE" })[value] || "EN OBSERVATION";
+  }
+
+  function calibrationLabel(forecast) {
+    return forecast?.probability?.empirically_calibrated
+      ? "CALIBRÉ HISTORIQUEMENT"
+      : "ESTIMATION MODÈLE · NON CALIBRÉE";
+  }
+
+  function forecastOriginLabel(forecast) {
+    return forecast?.fact_status === "forecast_from_confirmed_event"
+      ? "PRÉCURSEUR CONFIRMÉ"
+      : "SIGNAL ÉMERGENT";
   }
 
   function formatRelative(dateValue) {
@@ -72,86 +101,37 @@
     return `il y a ${Math.floor(seconds / 86400)} j`;
   }
 
-  function formatObservedHours(hours) {
-    const value = Number(hours) || 0;
-    if (value >= 24 * 30) return `${Math.round(value / (24 * 30))} mois`;
-    if (value >= 48) return `${Math.round(value / 24)} j`;
-    return `${Math.round(value)} h`;
-  }
-
-  function scanStatus(opportunity) {
-    return opportunity?.solution_scan?.assessment?.gap_status
-      || opportunity?.solution_scan?.status
-      || "not_scanned_in_this_cycle";
-  }
-
-  function anomalyIndex(opportunity) {
-    const signal = opportunity?.signal_strength || {};
-    const score = clamp(signal.diagnostic_score, 0, 100);
-    const persistence = clamp(Math.log10(1 + (Number(signal.persistence_hours) || 0)) * 5.2, 0, 12);
-    const diversity = clamp((Number(signal.source_diversity_count) || 0) * 1.4, 0, 8);
-    const confirmed = clamp((Number(signal.confirmed_evidence_count) || 0) * 2, 0, 8);
-    const gap = {
-      candidate_gap_in_scanned_sources: 18,
-      underexplored_in_scanned_sources: 10,
-      related_work_found: -4,
-      substantial_existing_work_found: -12,
-      insufficient_source_coverage: -8,
-      not_scanned_in_this_cycle: 0,
-      pending: 0,
-    }[scanStatus(opportunity)] || 0;
-    return Math.round(clamp(score * 0.66 + persistence + diversity + confirmed + gap, 0, 100));
-  }
-
-  function gapClass(status) {
-    if (status === "candidate_gap_in_scanned_sources") return "gap";
-    if (status === "underexplored_in_scanned_sources") return "sparse";
-    if (["related_work_found", "substantial_existing_work_found"].includes(status)) return "known";
-    return "unknown";
-  }
-
-  function explainWhy(opportunity) {
-    const signal = opportunity?.signal_strength || {};
-    const parts = [];
-    const confirmed = Number(signal.confirmed_evidence_count) || 0;
-    const diversity = Number(signal.source_diversity_count) || 0;
-    const persistence = Number(signal.persistence_hours) || 0;
-    const status = scanStatus(opportunity);
-    const scan = opportunity?.solution_scan?.assessment || {};
-
-    if (confirmed) parts.push(`${confirmed} fait${confirmed > 1 ? "s" : ""} confirmé${confirmed > 1 ? "s" : ""}`);
-    if (diversity) parts.push(`${diversity} famille${diversity > 1 ? "s" : ""} de sources`);
-    if (persistence >= 6) parts.push(`persistance observée ${formatObservedHours(persistence)}`);
-
-    let ending = "";
-    if (status === "candidate_gap_in_scanned_sources") {
-      ending = `Le scan a couvert ${scan.successful_source_count || "plusieurs"} écosystèmes sans trouver de travail suffisamment proche.`;
-    } else if (status === "underexplored_in_scanned_sources") {
-      ending = `Le travail connexe retrouvé reste sparse malgré une couverture de sources suffisante.`;
-    } else if (status === "related_work_found") {
-      ending = `Des réponses existent déjà ; la question devient de savoir si elles résolvent la friction de bout en bout.`;
-    } else if (status === "substantial_existing_work_found") {
-      ending = `Le terrain est déjà actif : l’opportunité éventuelle est probablement dans l’intégration ou un segment oublié.`;
-    } else if (status === "insufficient_source_coverage") {
-      ending = `Le scan de solutions est trop incomplet pour conclure à une lacune.`;
-    } else {
-      ending = "Le problème est suffisamment visible pour mériter un scan de solutions, mais ce scan n’a pas été publié dans ce cycle.";
-    }
-
-    const evidence = parts.length ? `Le signal combine ${parts.join(", ")}. ` : "";
-    return evidence + ending;
-  }
-
-  function sourceCount(opportunities) {
+  function sourceFamilyCount(forecasts) {
     const sources = new Set();
-    for (const op of opportunities) {
-      for (const source of op?.signal_strength?.independent_source_keys || []) sources.add(source);
+    for (const forecast of forecasts) {
+      for (const driver of forecast?.drivers || []) {
+        for (const source of driver?.source_classes || []) sources.add(String(source));
+      }
     }
     return sources.size;
   }
 
-  function relevantMatches(opportunity) {
-    return (opportunity?.solution_scan?.matches || []).filter((m) => m.is_relevant).slice(0, 4);
+  function renderList(items, emptyText) {
+    const clean = (items || []).filter(Boolean);
+    if (!clean.length) return `<span class="detail-block">${esc(emptyText)}</span>`;
+    return `<div class="match-list">${clean.map((item) => `<span>› ${esc(item)}</span>`).join("")}</div>`;
+  }
+
+  function renderChain(forecast) {
+    const chain = (forecast?.causal_chain || []).filter(Boolean);
+    if (!chain.length) return `<span class="detail-block">Chaîne non disponible.</span>`;
+    return `<div class="match-list">${chain.map((step, index) => `<span>${index + 1}. ${esc(step)}</span>`).join("")}</div>`;
+  }
+
+  function driverSummary(forecast) {
+    const drivers = forecast?.drivers || [];
+    if (!drivers.length) return "Aucun précurseur supplémentaire n’est publié dans ce snapshot.";
+    const precursorCount = drivers.filter((d) => d.type === "precursor_dependency").length;
+    const primary = drivers.find((d) => d.type === "emerging_signal" || d.type === "confirmed_precursor");
+    const support = Math.round((Number(primary?.support_score) || 0) * 100);
+    const families = primary?.source_classes?.length || 0;
+    const label = primary?.type === "confirmed_precursor" ? "fiabilité source" : "corroboration";
+    return `${forecastOriginLabel(forecast)} · ${families} famille${families === 1 ? "" : "s"} de sources · ${label} ${support}/100 · ${precursorCount} dépendance${precursorCount === 1 ? "" : "s"} amont plausible${precursorCount === 1 ? "" : "s"}.`;
   }
 
   function terminalLine(kind, message, time = new Date()) {
@@ -159,111 +139,99 @@
     if (!terminal) return;
     const line = document.createElement("div");
     const hhmmss = time.toLocaleTimeString("fr-FR", { hour12: false });
-    const label = { sys: "SYSTEM", scan: "SCAN", signal: "SIGNAL", warn: "GUARD", error: "ERROR" }[kind] || "SYSTEM";
+    const label = { sys: "SYSTEM", scan: "GRAPH", signal: "FORECAST", warn: "CALIB", error: "ERROR" }[kind] || "SYSTEM";
     line.innerHTML = `<time>${esc(hhmmss)}</time><span class="${esc(kind)}">${esc(label)}</span><p>${esc(message)}</p>`;
     terminal.appendChild(line);
-    while (terminal.children.length > 26) terminal.removeChild(terminal.firstChild);
+    while (terminal.children.length > 28) terminal.removeChild(terminal.firstChild);
     terminal.scrollTop = terminal.scrollHeight;
   }
 
-  function resetTerminal() {
+  function renderTerminal(snapshot, forecasts) {
     const terminal = $("#terminalLog");
     if (terminal) terminal.innerHTML = "";
-  }
-
-  function renderTerminal(snapshot, opportunities) {
-    resetTerminal();
     const generated = snapshot?.generated_at ? new Date(snapshot.generated_at) : new Date();
-    terminalLine("sys", `Snapshot public chargé · ${snapshot?.engine || "Évidence"}.`, generated);
-    terminalLine("sys", `Mode ${snapshot?.runtime_mode || "public-world-evidence"} · données personnelles interdites.`, generated);
-    terminalLine("signal", `${snapshot?.summary?.evidence_items_considered || 0} éléments de preuve considérés · ${opportunities.length} problèmes surfacés.`, generated);
-
-    const scanned = opportunities.filter((op) => op.solution_scan?.assessment).length;
-    terminalLine("scan", `${scanned} Solution Scan${scanned > 1 ? "s" : ""} inclus dans ce snapshot public.`, generated);
-
-    opportunities.slice(0, 5).forEach((op) => {
-      const idx = anomalyIndex(op);
-      terminalLine("signal", `${op.problem_key || op.event_type || "signal"} → anomalie ${idx}/100 · ${gapLabels[scanStatus(op)] || scanStatus(op)}.`, generated);
+    terminalLine("sys", `Snapshot prédictif chargé · ${snapshot?.engine || "Évidence"}.`, generated);
+    terminalLine("sys", `${snapshot?.summary?.evidence_items_considered || 0} éléments examinés · ${forecasts.length} scénarios publiés.`, generated);
+    terminalLine("scan", `${snapshot?.summary?.dependency_edges_considered || 0} dépendances précurseur → situation examinées.`, generated);
+    forecasts.slice(0, 6).forEach((forecast) => {
+      const p = probabilityPercent(forecast);
+      const [low, high] = probabilityInterval(forecast);
+      terminalLine(
+        "signal",
+        `${forecastOriginLabel(forecast)} · ${forecast.headline || forecast.event_type || "scénario"} → ${p}% [${low}–${high}] · ${probabilityDeltaLabel(forecast)} · ${forecast?.time_window?.human || "fenêtre inconnue"}.`,
+        generated,
+      );
     });
-
-    if (opportunities.some((op) => scanStatus(op) === "insufficient_source_coverage")) {
-      terminalLine("warn", "Couverture insuffisante détectée : aucune inférence négative de lacune autorisée sur ces signaux.", generated);
-    }
-    terminalLine("warn", "Les indices sont des scores de priorisation. Aucun n’est une probabilité.", generated);
-    terminalLine("warn", "Une lacune candidate reste limitée aux sources effectivement scannées.", generated);
+    terminalLine("warn", "Les pourcentages actuels sont des estimations de modèle, pas encore des fréquences historiques calibrées.", generated);
+    terminalLine("warn", "La trajectoire 41 → 52 → 64 représente le repricing successif du modèle à chaque cycle, pas une fréquence observée.", generated);
+    terminalLine("warn", "Une dépendance du graphe augmente un scénario mais ne constitue pas une preuve de causalité.", generated);
+    terminalLine("warn", "Une fenêtre expirée sans matérialisation doit compter comme un échec de prévision.", generated);
   }
 
-  function matchHtml(opportunity) {
-    const matches = relevantMatches(opportunity);
-    if (!matches.length) return `<span class="detail-block">Aucun résultat connexe publié dans ce snapshot.</span>`;
-    return `<div class="match-list">${matches.map((match) => {
-      const url = safeUrl(match.url);
-      const label = `${match.title || match.ecosystem || "Résultat"} · ${match.ecosystem || "source"}`;
-      return url ? `<a href="${esc(url)}" target="_blank" rel="noreferrer">↗ ${esc(label)}</a>` : `<span>${esc(label)}</span>`;
-    }).join("")}</div>`;
-  }
-
-  function renderTopAnomaly(opportunity) {
-    const root = $("#topAnomaly");
-    if (!root || !opportunity) return;
-    const idx = anomalyIndex(opportunity);
-    const action = opportunity.candidate_action || {};
-    const status = scanStatus(opportunity);
-    root.innerHTML = `
-      <article class="top-card">
+  function topForecastHtml(forecast) {
+    const p = probabilityPercent(forecast);
+    const [low, high] = probabilityInterval(forecast);
+    const cls = probabilityClass(p);
+    return `
+      <article class="top-card" data-scenario="${esc(forecast.scenario_key || "")}">
         <div>
-          <span class="top-card-rank">CANDIDAT A-01 · ${esc(domainLabels[opportunity.domain] || opportunity.domain_label || opportunity.domain || "domaine")}</span>
-          <h3>${esc(opportunity.problem_statement || opportunity.event_type || "Problème à investiguer")}</h3>
-          <p class="reason">${esc(explainWhy(opportunity))}</p>
+          <span class="top-card-rank">FORECAST F-01 · ${esc(forecastOriginLabel(forecast))} · ${esc(domainLabels[forecast.domain] || forecast.domain_label || forecast.domain || "domaine")}</span>
+          <h3>${esc(forecast.headline || forecast.outcome || "Scénario en formation")}</h3>
+          <p class="reason">${esc(forecast.why_now || "Aucune explication publiée.")}</p>
           <div class="top-card-action">
-            <span>INTERVENTION À TESTER</span>
-            <strong>${esc(action.tool_archetype || "Expérience ciblée")}</strong>
-            <p>${esc(action.mechanism || action.first_build || "Aucune intervention publiée.")}</p>
+            <span>FENÊTRE ATTENDUE</span>
+            <strong>${esc(forecast?.time_window?.human || "indéterminée")}</strong>
+            <p>${esc(driverSummary(forecast))}</p>
           </div>
         </div>
         <div class="top-card-side">
-          <div class="anomaly-score">${idx}<small>/100</small></div>
-          <span class="score-label">INDICE D’ANOMALIE</span>
-          <span class="score-note">Diagnostic explicable · ≠ probabilité</span>
-          <span class="gap-badge ${gapClass(status)}" style="margin-top:14px;max-width:max-content">${esc(gapLabels[status] || status)}</span>
+          <div class="anomaly-score">${p}<small>%</small></div>
+          <span class="score-label">ESTIMATION ACTUELLE</span>
+          <span class="score-note">Intervalle ${low}–${high} %</span>
+          <span class="score-note" style="margin-top:8px">Δ ${esc(probabilityDeltaLabel(forecast))}</span>
+          <span class="score-note" style="margin-top:5px">TRAJECTOIRE · ${esc(probabilityTrail(forecast))}</span>
+          <span class="gap-badge ${cls}" style="margin-top:14px;max-width:max-content">${esc(trajectoryLabel(forecast.trajectory))}</span>
+          <span class="score-note" style="margin-top:10px">${esc(calibrationLabel(forecast))}</span>
         </div>
-      </article>`;
+      </article>
+      <div class="anomaly-grid" style="margin-top:16px">
+        <article class="anomaly-card"><p class="anomaly-domain">CHAÎNE PROJETÉE</p>${renderChain(forecast)}</article>
+        <article class="anomaly-card"><p class="anomaly-domain">LE SCÉNARIO MONTE SI…</p>${renderList(forecast.probability_up_if, "Aucun déclencheur haussier publié.")}</article>
+        <article class="anomaly-card"><p class="anomaly-domain">LE SCÉNARIO BAISSE SI…</p>${renderList(forecast.probability_down_if, "Aucun déclencheur baissier publié.")}</article>
+      </div>`;
   }
 
-  function renderCards(opportunities) {
+  function renderCards(forecasts) {
     const grid = $("#anomalyGrid");
     if (!grid) return;
-    grid.innerHTML = opportunities.slice(1).map((op, index) => {
-      const signal = op.signal_strength || {};
-      const action = op.candidate_action || {};
-      const validation = op.validation || {};
-      const idx = anomalyIndex(op);
-      const status = scanStatus(op);
+    grid.innerHTML = forecasts.slice(1).map((forecast, index) => {
+      const p = probabilityPercent(forecast);
+      const [low, high] = probabilityInterval(forecast);
+      const components = forecast.model_components || {};
+      const cls = probabilityClass(p);
       return `
-        <article class="anomaly-card">
-          <div class="anomaly-card-head">
-            <span class="anomaly-rank">A-${String(index + 2).padStart(2, "0")}</span>
-            <span class="gap-badge ${gapClass(status)}">${esc(gapLabels[status] || status)}</span>
-          </div>
-          <p class="anomaly-domain">${esc(domainLabels[op.domain] || op.domain_label || op.domain || "Domaine")}</p>
-          <h3>${esc(op.problem_statement || op.event_type || "Signal à investiguer")}</h3>
-          <div class="mini-score"><strong>${idx}</strong><div><span style="width:${idx}%"></span></div></div>
+        <article class="anomaly-card" data-scenario="${esc(forecast.scenario_key || "")}">
+          <div class="anomaly-card-head"><span class="anomaly-rank">F-${String(index + 2).padStart(2, "0")}</span><span class="gap-badge ${cls}">${esc(trajectoryLabel(forecast.trajectory))}</span></div>
+          <p class="anomaly-domain">${esc(forecastOriginLabel(forecast))} · ${esc(domainLabels[forecast.domain] || forecast.domain_label || forecast.domain || "Domaine")}</p>
+          <h3>${esc(forecast.headline || forecast.outcome || "Scénario")}</h3>
+          <div class="mini-score"><strong>${p}%</strong><div><span style="width:${p}%"></span></div></div>
           <div class="proof-row">
-            <div><strong>${Number(signal.confirmed_evidence_count || 0)}</strong><span>faits</span></div>
-            <div><strong>${Number(signal.source_diversity_count || 0)}</strong><span>sources</span></div>
-            <div><strong>${formatObservedHours(signal.persistence_hours || 0)}</strong><span>persistance</span></div>
+            <div><strong>${low}–${high}%</strong><span>intervalle</span></div>
+            <div><strong>${Number(components.source_diversity || 0)}</strong><span>sources</span></div>
+            <div><strong>${Math.round(Number(components.persistence_hours || 0))} h</strong><span>persistance</span></div>
           </div>
           <div class="card-action">
-            <small>ACTION À TESTER</small>
-            <strong>${esc(action.tool_archetype || "Expérience ciblée")}</strong>
-            <p>${esc(action.mechanism || "Intervention non publiée.")}</p>
+            <small>FENÊTRE</small><strong>${esc(forecast?.time_window?.human || "indéterminée")}</strong>
+            <p>${esc(probabilityDeltaLabel(forecast))} · ${esc(probabilityTrail(forecast))}</p>
+            <p>${esc(calibrationLabel(forecast))}</p>
           </div>
           <details>
-            <summary>Pourquoi ceci est étrange + preuves ↘</summary>
+            <summary>Pourquoi maintenant + comment l’invalider ↘</summary>
             <div class="detail-grid">
-              <div class="detail-block"><b>LECTURE DU MOTEUR</b>${esc(explainWhy(op))}</div>
-              <div class="detail-block"><b>CE QUI TUERAIT L’IDÉE</b>${esc(validation.reject_if || "Condition de rejet non publiée.")}</div>
-              <div class="detail-block"><b>TRAVAIL CONNEXE</b>${matchHtml(op)}</div>
+              <div class="detail-block"><b>LECTURE DU MOTEUR</b>${esc(forecast.why_now || "Non publiée.")}</div>
+              <div class="detail-block"><b>CHAÎNE PROJETÉE</b>${renderChain(forecast)}</div>
+              <div class="detail-block"><b>À SURVEILLER ENSUITE</b>${renderList(forecast.watch_next, "Aucun signal suivant publié.")}</div>
+              <div class="detail-block"><b>INVALIDATION</b>${esc(forecast.falsification || "Règle non publiée.")}</div>
             </div>
           </details>
         </article>`;
@@ -271,52 +239,58 @@
   }
 
   function renderSnapshot(snapshot) {
-    const opportunities = [...(snapshot?.opportunities || [])]
-      .sort((a, b) => anomalyIndex(b) - anomalyIndex(a));
+    const forecasts = [...(snapshot?.forecasts || [])].sort((a, b) => probabilityPercent(b) - probabilityPercent(a));
 
-    $("#heroAnomalyCount").textContent = opportunities.length;
+    $("#heroAnomalyCount").textContent = forecasts.length;
     $("#metricEvidence").textContent = snapshot?.summary?.evidence_items_considered ?? "—";
-    $("#metricProblems").textContent = opportunities.length;
-    $("#metricScans").textContent = opportunities.filter((op) => op.solution_scan?.assessment).length;
-    $("#metricSources").textContent = sourceCount(opportunities) || "—";
-    $("#metricTopAnomaly").textContent = opportunities.length ? `${anomalyIndex(opportunities[0])}` : "—";
+    $("#metricProblems").textContent = forecasts.length;
+    $("#metricScans").textContent = snapshot?.summary?.dependency_edges_considered ?? "—";
+    $("#metricSources").textContent = snapshot?.summary?.source_families || sourceFamilyCount(forecasts) || "—";
+    $("#metricTopAnomaly").textContent = forecasts.length ? `${probabilityPercent(forecasts[0])}%` : "—";
     $("#runtimeMode").textContent = snapshot?.runtime_mode || "GitHub / HORIZON";
 
     if (snapshot?.generated_at) {
-      $("#snapshotState").textContent = opportunities.length ? "Flux public synchronisé" : "Snapshot public sans anomalie";
-      $("#snapshotTimestamp").textContent = `${formatRelative(snapshot.generated_at)} · ${new Date(snapshot.generated_at).toLocaleString("fr-FR")}`;
-    }
-
-    const queueDot = $("#queueStatusDot");
-    const queueText = $("#queueStatusText");
-    if (opportunities.length) {
-      queueDot?.classList.add("live");
-      if (queueText) queueText.textContent = `${opportunities.length} ACTIVE`;
-      $("#fieldEmpty")?.classList.add("hidden");
-      renderTopAnomaly(opportunities[0]);
-      renderCards(opportunities);
-      initSignalCanvas(opportunities);
+      $("#snapshotState").textContent = forecasts.length ? "Flux prédictif synchronisé" : "Snapshot sans scénario publiable";
+      $("#snapshotTimestamp").textContent = `mis à jour ${formatRelative(snapshot.generated_at)}`;
     } else {
-      if (queueText) queueText.textContent = "EMPTY";
+      $("#snapshotState").textContent = "Moteur prédictif en initialisation";
+      $("#snapshotTimestamp").textContent = "aucun snapshot v2 généré";
     }
 
-    renderTerminal(snapshot, opportunities);
+    const fieldEmpty = $("#fieldEmpty");
+    if (fieldEmpty) {
+      fieldEmpty.hidden = forecasts.length > 0;
+      fieldEmpty.classList.toggle("hidden", forecasts.length > 0);
+    }
+    $("#queueStatusText").textContent = forecasts.length ? `${forecasts.length} ACTIVE${forecasts.length > 1 ? "S" : ""}` : "NO FORECAST";
+    $("#queueStatusDot")?.classList.toggle("live", forecasts.length > 0);
+
+    const top = $("#topAnomaly");
+    if (top) {
+      top.innerHTML = forecasts.length
+        ? topForecastHtml(forecasts[0])
+        : `<div class="top-anomaly-empty"><span>?</span><div><strong>Aucun scénario suffisamment soutenu</strong><small>Le moteur ne remplit pas l’écran avec des prédictions fictives.</small></div></div>`;
+    }
+    renderCards(forecasts);
+    renderTerminal(snapshot, forecasts);
+    renderSignalField(forecasts);
   }
 
   async function loadSnapshot() {
-    terminalLine("sys", "Connexion au canal public Evidence…");
     try {
-      const response = await fetch(`${SNAPSHOT_URL}?t=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" });
-      if (!response.ok) throw new Error(`snapshot ${response.status}`);
+      const response = await fetch(`${SNAPSHOT_URL}?v=${Date.now()}`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`snapshot HTTP ${response.status}`);
       const snapshot = await response.json();
-      if (!snapshot || snapshot.status === "awaiting_first_runtime_snapshot") {
-        throw new Error("snapshot non initialisé");
+      if (!String(snapshot?.schema || "").startsWith("evidence-public-snapshot-v2")) {
+        renderSnapshot({ status: "migrating", generated_at: null, runtime_mode: "predictive-migration", summary: {}, forecasts: [] });
+        terminalLine("warn", "Le flux public disponible est encore au format diagnostic v1 ; attente d’un snapshot prédictif v2.");
+        return;
       }
       renderSnapshot(snapshot);
     } catch (error) {
-      $("#snapshotState").textContent = "Canal public non initialisé";
-      $("#snapshotTimestamp").textContent = "Aucune donnée fictive affichée";
-      terminalLine("warn", `Snapshot live indisponible (${error.message}). L’interface reste vide plutôt que d’inventer des signaux.`);
+      renderSnapshot({ status: "unavailable", generated_at: null, summary: {}, forecasts: [] });
+      terminalLine("error", `Flux prédictif indisponible : ${error?.message || error}`);
+      $("#snapshotState").textContent = "Flux prédictif indisponible";
     }
   }
 
@@ -324,22 +298,17 @@
     const badge = $("#heartbeatBadge");
     const text = $("#heartbeatText");
     try {
-      const response = await fetch(HEARTBEAT_URL, {
-        headers: { Accept: "application/vnd.github+json" },
-        cache: "no-store",
-      });
-      if (!response.ok) throw new Error(`GitHub ${response.status}`);
-      const body = await response.json();
-      const run = body.workflow_runs?.[0];
-      if (!run) throw new Error("aucun run");
-      const success = run.status === "completed" && run.conclusion === "success";
-      badge.dataset.state = success ? "success" : (run.status === "in_progress" ? "loading" : "failure");
-      text.textContent = run.status === "in_progress"
-        ? "cycle actif"
-        : `${run.conclusion || run.status} · ${formatRelative(run.updated_at)}`;
+      const response = await fetch(HEARTBEAT_URL, { headers: { Accept: "application/vnd.github+json" }, cache: "no-store" });
+      if (!response.ok) throw new Error(`heartbeat ${response.status}`);
+      const data = await response.json();
+      const run = data?.workflow_runs?.[0];
+      if (!run) throw new Error("aucune exécution");
+      const good = run.status === "in_progress" || run.conclusion === "success";
+      badge.dataset.state = good ? "success" : "failure";
+      text.textContent = run.status === "in_progress" ? "cycle en cours" : `${run.conclusion || run.status} · ${formatRelative(run.updated_at)}`;
     } catch (_) {
-      badge.dataset.state = "loading";
-      text.textContent = "status public indisponible";
+      badge.dataset.state = "failure";
+      text.textContent = "heartbeat non vérifié";
     }
   }
 
@@ -348,27 +317,30 @@
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     let particles = [];
-
     function resize() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.floor(innerWidth * dpr);
-      canvas.height = Math.floor(innerHeight * dpr);
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      canvas.width = innerWidth * dpr;
+      canvas.height = innerHeight * dpr;
+      canvas.style.width = `${innerWidth}px`;
+      canvas.style.height = `${innerHeight}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      particles = Array.from({ length: Math.min(90, Math.floor(innerWidth / 17)) }, (_, i) => ({
-        x: (hashString(`x${i}`) % innerWidth),
-        y: (hashString(`y${i}`) % innerHeight),
-        r: 0.35 + ((hashString(`r${i}`) % 100) / 160),
-        s: 0.03 + ((hashString(`s${i}`) % 100) / 3500),
+      particles = Array.from({ length: Math.min(80, Math.max(35, Math.floor(innerWidth / 20))) }, (_, i) => ({
+        x: (i * 137.3) % innerWidth,
+        y: (i * 89.7) % innerHeight,
+        r: 0.4 + (i % 5) * 0.18,
+        phase: i * 0.73,
       }));
     }
-
+    let t = 0;
     function draw() {
       ctx.clearRect(0, 0, innerWidth, innerHeight);
-      ctx.fillStyle = "rgba(95, 202, 235, .35)";
+      t += 0.003;
       for (const p of particles) {
-        p.y += p.s;
-        if (p.y > innerHeight + 4) p.y = -4;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+        const alpha = 0.08 + (Math.sin(t * 9 + p.phase) + 1) * 0.035;
+        ctx.fillStyle = `rgba(105, 203, 230, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x + Math.sin(t + p.phase) * 4, p.y + Math.cos(t * 0.8 + p.phase) * 3, p.r, 0, Math.PI * 2);
+        ctx.fill();
       }
       requestAnimationFrame(draw);
     }
@@ -377,37 +349,41 @@
   }
 
   let fieldAnimation = null;
-  function initSignalCanvas(opportunities) {
+  function renderSignalField(forecasts) {
     const canvas = $("#signalCanvas");
-    if (!canvas || !opportunities.length) return;
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
     let nodes = [];
-    let t = 0;
     let selected = null;
+    let t = 0;
 
-    const palette = {
-      gap: [100, 224, 177],
-      sparse: [255, 207, 120],
-      known: [114, 168, 255],
-      unknown: [110, 138, 154],
-    };
+    function sharedDriver(a, b) {
+      const left = new Set((a.drivers || []).filter((d) => d.type === "precursor_dependency").map((d) => d.label));
+      return (b.drivers || []).some((d) => d.type === "precursor_dependency" && left.has(d.label));
+    }
+
+    function colorFor(p) {
+      if (p >= 70) return [235, 103, 110];
+      if (p >= 50) return [226, 176, 82];
+      if (p >= 30) return [86, 190, 191];
+      return [104, 129, 153];
+    }
 
     function buildNodes(width, height) {
-      nodes = opportunities.map((op, index) => {
-        const seed = hashString(op.problem_key || `${op.domain}-${index}`);
-        const angle = ((seed % 360) / 180) * Math.PI;
-        const radius = 0.16 + (((seed >>> 7) % 100) / 100) * 0.32;
-        const idx = anomalyIndex(op);
+      nodes = forecasts.map((forecast, index) => {
+        const p = probabilityPercent(forecast);
+        const angle = (index / Math.max(1, forecasts.length)) * Math.PI * 2 + (index % 3) * 0.27;
+        const ring = Math.min(width, height) * (0.22 + (index % 3) * 0.09);
         return {
-          op,
-          idx,
-          x: width / 2 + Math.cos(angle) * width * radius,
-          y: height / 2 + Math.sin(angle) * height * radius * 0.72,
-          baseX: width / 2 + Math.cos(angle) * width * radius,
-          baseY: height / 2 + Math.sin(angle) * height * radius * 0.72,
-          r: 4 + idx / 9,
-          phase: ((seed >>> 13) % 628) / 100,
-          color: palette[gapClass(scanStatus(op))] || palette.unknown,
+          forecast,
+          p,
+          baseX: width / 2 + Math.cos(angle) * ring,
+          baseY: height / 2 + Math.sin(angle) * ring * 0.66,
+          x: 0,
+          y: 0,
+          r: 7 + p * 0.15,
+          phase: index * 1.27,
+          color: colorFor(p),
         };
       });
     }
@@ -415,8 +391,8 @@
     function resize() {
       const rect = canvas.getBoundingClientRect();
       const dpr = Math.min(devicePixelRatio || 1, 2);
-      canvas.width = Math.floor(rect.width * dpr);
-      canvas.height = Math.floor(rect.height * dpr);
+      canvas.width = Math.max(1, rect.width * dpr);
+      canvas.height = Math.max(1, rect.height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       buildNodes(rect.width, rect.height);
     }
@@ -425,37 +401,31 @@
       const { width, height } = canvas.getBoundingClientRect();
       ctx.clearRect(0, 0, width, height);
       t += 0.008;
-
       for (let i = 0; i < nodes.length; i += 1) {
         const a = nodes[i];
         a.x = a.baseX + Math.cos(t * 0.7 + a.phase) * 6;
         a.y = a.baseY + Math.sin(t * 0.9 + a.phase) * 5;
         for (let j = i + 1; j < nodes.length; j += 1) {
           const b = nodes[j];
-          if (a.op.domain !== b.op.domain) continue;
-          const dist = Math.hypot(a.x - b.x, a.y - b.y);
-          if (dist > width * 0.42) continue;
-          ctx.strokeStyle = `rgba(73, 152, 184, ${Math.max(.04, .18 - dist / 1800)})`;
-          ctx.lineWidth = 0.6;
+          if (a.forecast.domain !== b.forecast.domain && !sharedDriver(a.forecast, b.forecast)) continue;
+          ctx.strokeStyle = sharedDriver(a.forecast, b.forecast) ? "rgba(236, 145, 111, .24)" : "rgba(73, 152, 184, .14)";
+          ctx.lineWidth = sharedDriver(a.forecast, b.forecast) ? 1.1 : 0.6;
           ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
         }
       }
-
       for (const n of nodes) {
         const [r, g, b] = n.color;
-        const pulse = 1 + Math.sin(t * 5 + n.phase) * 0.12;
+        const pulse = 1 + Math.sin(t * 5 + n.phase) * 0.10;
         const rr = n.r * pulse;
         const grd = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, rr * 2.7);
-        grd.addColorStop(0, `rgba(${r},${g},${b},.85)`);
-        grd.addColorStop(.18, `rgba(${r},${g},${b},.35)`);
+        grd.addColorStop(0, `rgba(${r},${g},${b},.82)`);
+        grd.addColorStop(.2, `rgba(${r},${g},${b},.28)`);
         grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
         ctx.fillStyle = grd;
         ctx.beginPath(); ctx.arc(n.x, n.y, rr * 2.7, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = `rgba(${r},${g},${b},.55)`;
-        ctx.lineWidth = selected === n ? 1.5 : .8;
+        ctx.strokeStyle = `rgba(${r},${g},${b},.62)`;
+        ctx.lineWidth = selected === n ? 1.6 : .8;
         ctx.beginPath(); ctx.arc(n.x, n.y, rr, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = `rgba(${r},${g},${b},.75)`;
-        ctx.beginPath(); ctx.arc(n.x, n.y, Math.max(1.7, rr * .18), 0, Math.PI * 2); ctx.fill();
       }
       fieldAnimation = requestAnimationFrame(draw);
     }
@@ -466,9 +436,7 @@
       const y = event.clientY - rect.top;
       selected = nodes.find((n) => Math.hypot(n.x - x, n.y - y) <= n.r * 1.7) || null;
       canvas.style.cursor = selected ? "pointer" : "default";
-      $("#selectedNodeLabel").textContent = selected
-        ? `${selected.op.event_type || selected.op.problem_key} · ${selected.idx}/100`
-        : "—";
+      $("#selectedNodeLabel").textContent = selected ? `${selected.forecast.event_type || "scénario"} · ${selected.p}%` : "—";
     };
     canvas.onpointerleave = () => {
       selected = null;
@@ -476,10 +444,8 @@
     };
     canvas.onclick = () => {
       if (!selected) return;
-      const key = selected.op.problem_key;
-      const cards = $$(".anomaly-card, .top-card");
-      const targetIndex = opportunities.findIndex((op) => op.problem_key === key);
-      const target = targetIndex === 0 ? $("#topAnomaly") : cards[targetIndex];
+      const scenario = selected.forecast.scenario_key || "";
+      const target = [...document.querySelectorAll("[data-scenario]")].find((el) => el.dataset.scenario === scenario);
       target?.scrollIntoView({ behavior: "smooth", block: "center" });
     };
 
@@ -490,9 +456,7 @@
 
   function startUtcClock() {
     const el = $("#utcClock");
-    const tick = () => {
-      if (el) el.textContent = new Date().toLocaleTimeString("fr-FR", { timeZone: "UTC", hour12: false });
-    };
+    const tick = () => { if (el) el.textContent = new Date().toLocaleTimeString("fr-FR", { timeZone: "UTC", hour12: false }); };
     tick(); setInterval(tick, 1000);
   }
 
@@ -500,9 +464,7 @@
     const dialog = $("#explainDialog");
     $("#explainButton")?.addEventListener("click", () => dialog?.showModal());
     $("#dialogClose")?.addEventListener("click", () => dialog?.close());
-    dialog?.addEventListener("click", (event) => {
-      if (event.target === dialog) dialog.close();
-    });
+    dialog?.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
   }
 
   initAmbient();

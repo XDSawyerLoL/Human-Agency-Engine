@@ -4,12 +4,45 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..db import get_db
+from ..horizon_event_graph_schemas import HorizonEventGraphBuildRequest
+from ..services.evidence_forecast_engine import EvidenceForecastEngine
 from ..services.horizon_briefing import HorizonWorldBriefingService
+from ..services.horizon_event_graph import HorizonEventGraphService
 from ..services.human_signal_engine import HumanSignalEngine
 from ..services.solution_scan import SolutionScanService
 
 
 router = APIRouter()
+
+
+@router.get("/human-signals/forecasts")
+def human_signal_forecasts(
+    limit: int = Query(default=12, ge=1, le=100),
+    event_limit: int = Query(default=200, ge=1, le=500),
+    candidate_limit: int = Query(default=200, ge=1, le=500),
+    lookback_hours: int = Query(default=336, ge=24, le=24 * 90),
+    db: Session = Depends(get_db),
+):
+    """Project falsifiable public-world scenarios from converging HORIZON evidence."""
+    briefing = HorizonWorldBriefingService(db).snapshot(
+        external_id=None,
+        event_limit=event_limit,
+        candidate_limit=candidate_limit,
+        forecast_limit=1,
+    )
+    graph_result = HorizonEventGraphService(db).build(
+        HorizonEventGraphBuildRequest(
+            lookback_hours=lookback_hours,
+            max_events=event_limit,
+            max_candidates=candidate_limit,
+            max_signals=min(2000, max(400, (event_limit + candidate_limit) * 3)),
+        )
+    )
+    return EvidenceForecastEngine().forecast(
+        briefing,
+        graph=graph_result.get("graph_snapshot") or {},
+        limit=limit,
+    )
 
 
 @router.get("/human-signals/opportunities")
@@ -20,6 +53,7 @@ def human_signal_opportunities(
     candidate_limit: int = Query(default=120, ge=1, le=200),
     db: Session = Depends(get_db),
 ):
+    """Legacy diagnostic surface kept for compatibility; Évidence public uses /forecasts."""
     briefing = HorizonWorldBriefingService(db).snapshot(
         external_id=external_id,
         event_limit=event_limit,
