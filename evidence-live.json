@@ -1,7 +1,7 @@
 {
   "schema": "evidence-public-snapshot-v2",
   "engine": "evidence-predictive-public-v0.3",
-  "generated_at": "2026-08-26T09:10:22.999431+00:00",
+  "generated_at": "2026-08-26T09:15:25.429698+00:00",
   "runtime_mode": "github-only-horizon",
   "status": "live",
   "summary": {
@@ -341,10 +341,19 @@
             61
           ],
           "fact_status": "forecast_from_confirmed_event"
+        },
+        {
+          "at": "2026-08-26T09:15:25.429698+00:00",
+          "percent": 43,
+          "interval_percent": [
+            24,
+            61
+          ],
+          "fact_status": "forecast_from_confirmed_event"
         }
       ],
-      "probability_delta_points": null,
-      "probability_direction": "new"
+      "probability_delta_points": 0.0,
+      "probability_direction": "stable"
     },
     {
       "scenario_key": "cce1d947f56ac90f3f2c6d59",
@@ -653,10 +662,19 @@
             61
           ],
           "fact_status": "forecast_from_confirmed_event"
+        },
+        {
+          "at": "2026-08-26T09:15:25.429698+00:00",
+          "percent": 43,
+          "interval_percent": [
+            24,
+            61
+          ],
+          "fact_status": "forecast_from_confirmed_event"
         }
       ],
-      "probability_delta_points": null,
-      "probability_direction": "new"
+      "probability_delta_points": 0.0,
+      "probability_direction": "stable"
     },
     {
       "scenario_key": "9b73d9e09824f691c35d3776",
@@ -909,10 +927,19 @@
             61
           ],
           "fact_status": "forecast_from_confirmed_event"
+        },
+        {
+          "at": "2026-08-26T09:15:25.429698+00:00",
+          "percent": 43,
+          "interval_percent": [
+            24,
+            61
+          ],
+          "fact_status": "forecast_from_confirmed_event"
         }
       ],
-      "probability_delta_points": null,
-      "probability_direction": "new"
+      "probability_delta_points": 0.0,
+      "probability_direction": "stable"
     },
     {
       "scenario_key": "9d297b0db072ad27a5e08e56",
@@ -1193,10 +1220,19 @@
             61
           ],
           "fact_status": "forecast_from_confirmed_event"
+        },
+        {
+          "at": "2026-08-26T09:15:25.429698+00:00",
+          "percent": 43,
+          "interval_percent": [
+            24,
+            61
+          ],
+          "fact_status": "forecast_from_confirmed_event"
         }
       ],
-      "probability_delta_points": null,
-      "probability_direction": "new"
+      "probability_delta_points": 0.0,
+      "probability_direction": "stable"
     },
     {
       "scenario_key": "360cb56862c3c1377594c9a3",
@@ -1505,10 +1541,19 @@
             61
           ],
           "fact_status": "forecast_from_confirmed_event"
+        },
+        {
+          "at": "2026-08-26T09:15:25.429698+00:00",
+          "percent": 43,
+          "interval_percent": [
+            24,
+            61
+          ],
+          "fact_status": "forecast_from_confirmed_event"
         }
       ],
-      "probability_delta_points": null,
-      "probability_direction": "new"
+      "probability_delta_points": 0.0,
+      "probability_direction": "stable"
     }
   ],
   "critical_semantics": {
