@@ -13,6 +13,9 @@ import { buildDeepForecasts } from './src/deep_predictor.js';
 import { selectPublicForecasts } from './src/public_selection.js';
 import { getWorldEye } from './src/world_eye.js';
 import { moduleCatalog, runLabModule, collectResearchModuleCandidates } from './src/lab_modules.js';
+import { enrichForecastIntelligence, buildCycleSignalSummary, buildSnapshotAnalytics } from './src/decision_intelligence.js';
+import { attachShadowEnsemble, counterfactualSensitivity } from './src/forecast_reasoning.js';
+import { sportsCalibrationLab, benchmarkRoadmap } from './src/calibration_labs.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -56,9 +59,9 @@ function sourceCatalog(collected, activeKeys) {
     { key:'arxiv-module', label:'arXiv', role:'Frontière scientifique et technologique', active:active('arxiv-module'), model_input:true },
     { key:'polymarket-reference', label:'Polymarket', role:'Consensus de marché externe · hors calcul ÉVIDENCE', active:true, model_input:false },
     { key:'google-trends-reference', label:'Google Trends', role:'Attention collective · hors calcul seul', active:true, model_input:false },
-    { key:'metaculus-reference', label:'Metaculus', role:'Référence externe · hors calcul de probabilité', active:Boolean(configured.metaculus_reference_only), model_input:false },
+    { key:'metaculus-reference', label:'Metaculus', role:'Référence externe · benchmark FutureEval · hors calcul de probabilité', active:Boolean(configured.metaculus_reference_only), model_input:false },
     { key:'point-reference', label:'Point', role:'Référence documentaire · hors calcul de probabilité', active:Boolean(configured.point_reference_only), model_input:false },
-    { key:'windy-reference', label:'Windy', role:'Configuration présente · données test non utilisées en preuve', active:Boolean(configured.windy_configured_not_used_as_production_evidence), model_input:false }
+    { key:'windy-reference', label:'Windy', role:'Carte météo de référence · hors preuve de production', active:Boolean(configured.windy_configured_not_used_as_production_evidence), model_input:false }
   ];
 }
 
@@ -93,6 +96,9 @@ async function refreshWorld() {
       collected.source_status.push(breadth.status, ...(research.statuses ?? []));
       collected.duration_ms = Math.max(collected.duration_ms, breadth.status.duration_ms ?? 0);
 
+      const signalCycle = buildCycleSignalSummary(collected.signals, generatedAt);
+      await store.recordSignalCycle(signalCycle);
+
       // Large internal pool first; public selection removes duplicates and balances domains/horizons.
       const coreCandidates = buildForecasts(collected.signals, Math.max(config.maxForecasts * 3, 120));
       const breadthCandidates = buildBreadthForecasts(breadth.signals);
@@ -114,7 +120,10 @@ async function refreshWorld() {
         } else {
           f.probability_direction = 'new';
         }
+        enrichForecastIntelligence(f);
+        attachShadowEnsemble(f);
       }
+
       const sourceProviders = new Set(forecasts.flatMap(f => (f.consolidation?.source_providers ?? []).map(s => s.key)));
       const sourceFamilies = new Set(forecasts.flatMap(f => (f.consolidation?.source_families ?? []).map(s => s.key)));
       const domainCounts = forecasts.reduce((acc, f) => {
@@ -126,9 +135,10 @@ async function refreshWorld() {
         return acc;
       }, {});
       const catalog = sourceCatalog(collected, sourceProviders);
+      const signalAnalytics = await store.getSignalAnalytics();
       const snapshot = {
-        schema: 'evidence-node-world-eye-v5',
-        engine: 'evidence-node-predictive-public-v5-lab',
+        schema: 'evidence-node-world-eye-v6',
+        engine: 'evidence-node-predictive-public-v6-decision-intelligence',
         generated_at: generatedAt,
         runtime_mode: 'hostinger-node-managed',
         status: 'live',
@@ -148,7 +158,14 @@ async function refreshWorld() {
           horizon_distribution: horizonCounts,
           probability_history_enabled: true,
           forecast_registry_enabled: true,
+          signal_ledger_7d_enabled: true,
           modular_lab_enabled: true,
+          impact_analysis_enabled: true,
+          confidence_breakdown_enabled: true,
+          decision_layer_enabled: true,
+          counterfactual_sensitivity_enabled: true,
+          shadow_ensemble_enabled: true,
+          sports_calibration_lab_enabled: true,
           numeric_model_estimates_enabled: true,
           duplicate_probability_inflation_prevented: true,
           public_semantic_dedup_enabled: true,
@@ -164,17 +181,21 @@ async function refreshWorld() {
         },
         forecasts,
         contract: {
-          product_promise: 'Anticiper des conséquences plausibles avant qu’elles deviennent évidentes.',
+          product_promise: 'Anticiper des conséquences plausibles, mesurer leur impact et décider quoi préparer avant qu’elles deviennent évidentes.',
           probability_is_certainty: false,
           consolidation_is_probability: false,
+          confidence_is_probability: false,
           current_event_is_not_forecast: true,
           external_consensus_is_model_probability: false,
+          decision_brief_is_automatic_order: false,
+          shadow_ensemble_is_public_probability: false,
           falsification_required: true,
           expired_forecasts_must_resolve: true,
           duplicate_public_scenarios_allowed: false,
           five_plus_year_scenarios_are_conditional: true
         }
       };
+      snapshot.analytics = buildSnapshotAnalytics(snapshot, signalAnalytics);
       await store.saveSnapshot(snapshot);
       lastError = null;
       console.log(JSON.stringify({ event: 'world_refresh', signals: collected.signals.length, forecasts: forecasts.length, candidates:allCandidates.length, domains: domainCounts, horizons: horizonCounts, sources: collected.source_status }));
@@ -221,6 +242,14 @@ app.get('/api/snapshot', async (_req, res) => {
   res.json(built);
 });
 
+app.get('/api/analytics', async (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=30');
+  const snapshot = await store.getSnapshot() || await refreshWorld();
+  if (!snapshot) return res.status(503).json({status:'warming'});
+  const signalAnalytics = await store.getSignalAnalytics();
+  res.json({ generated_at:new Date().toISOString(), ...buildSnapshotAnalytics(snapshot, signalAnalytics) });
+});
+
 app.get('/api/modules', (_req, res) => {
   res.set('Cache-Control', 'public, max-age=60');
   res.json({ generated_at:new Date().toISOString(), modules:moduleCatalog() });
@@ -244,6 +273,24 @@ app.post('/api/modules/:key/run', async (req, res) => {
 app.get('/api/track-record', async (_req, res) => {
   res.set('Cache-Control', 'public, max-age=30');
   res.json(await store.getTrackRecord());
+});
+
+app.get('/api/calibration/sports', async (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=21600, stale-while-revalidate=86400');
+  try { res.json(await sportsCalibrationLab()); }
+  catch(error){ res.status(502).json({status:'error',error:String(error?.message||error)}); }
+});
+
+app.get('/api/benchmarks', (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  res.json({generated_at:new Date().toISOString(),...benchmarkRoadmap()});
+});
+
+app.post('/api/counterfactual/:scenarioKey', async (req, res) => {
+  const snapshot = await store.getSnapshot() || await refreshWorld();
+  const f = snapshot?.forecasts?.find(x => String(x.scenario_key) === String(req.params.scenarioKey));
+  if (!f) return res.status(404).json({error:'scenario_not_found'});
+  res.json(counterfactualSensitivity(f, req.body?.changes || []));
 });
 
 app.post('/api/refresh', async (req, res) => {
