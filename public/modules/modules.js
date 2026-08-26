@@ -1,17 +1,16 @@
 (() => {
   'use strict';
   const $ = s => document.querySelector(s);
-  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[c]));
-  const icons = { 'future-engine':'◈', gdelt:'◎', pubmed:'✚', arxiv:'⌁', polymarket:'◌', trends:'↗', fred:'▥', metaculus:'◇', windy:'≈' };
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  const icons = { gdelt:'◎', pubmed:'✚', arxiv:'⌁', polymarket:'◌', trends:'↗', fred:'▥', metaculus:'◇', windy:'≈' };
   const date = v => { const d=new Date(v); return Number.isNaN(d.getTime())?'—':new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short',year:'numeric'}).format(d); };
 
   function moduleCard(m) {
     const core = Boolean(m.core_input);
     const themes = Array.isArray(m.themes) && m.themes.length
       ? `<select data-theme="${esc(m.key)}" aria-label="Thème ${esc(m.label)}">${m.themes.map(t => `<option value="${esc(t.key)}">${esc(t.label)}</option>`).join('')}</select>` : '';
-    const verb = m.key==='gdelt'?'Lancer l’analyse':m.key==='future-engine'?'Parcourir':m.key==='metaculus'?'Ouvrir les références':m.key==='windy'?'Ouvrir Weather Eye':'Synchroniser';
-    const action = m.actionable ? `<button class="v5-btn" data-run="${esc(m.key)}">${verb}</button>` : `<span class="v5-tag ref">INDISPONIBLE</span>`;
-    return `<article class="v5-module ${core ? 'core' : 'reference'}"><div class="v5-module-top"><span class="v5-module-icon">${icons[m.key] || '◎'}</span><span class="v5-status ${core ? '' : 'reference'}">${core ? 'MOTEUR' : 'RÉFÉRENCE'}</span></div><h3>${esc(m.label)}</h3><p>${esc(m.description)}</p><span class="v5-tag ${core ? 'core' : 'ref'}">${esc(m.status || 'actif')}</span><div class="v5-module-foot">${themes}${action}</div></article>`;
+    const verb = m.key==='gdelt'?'Lancer l’analyse':m.key==='metaculus'?'Voir les questions':m.key==='windy'?'Ouvrir Weather Eye':'Synchroniser';
+    return `<article class="v5-module ${core ? 'core' : 'reference'}"><div class="v5-module-top"><span class="v5-module-icon">${icons[m.key] || '◎'}</span><span class="v5-status ${core ? '' : 'reference'}">${core ? 'MOTEUR' : 'SIGNAL'}</span></div><h3>${esc(m.label)}</h3><p>${esc(m.description)}</p><span class="v5-tag ${core ? 'core' : 'ref'}">${esc(m.status || 'actif')}</span><div class="v5-module-foot">${themes}<button class="v5-btn" data-run="${esc(m.key)}">${verb}</button></div></article>`;
   }
 
   function forecastCard(f) {
@@ -35,7 +34,7 @@
     if (moduleKey === 'polymarket') meta = `${item.probability ?? '—'}% marché · volume ${Number(item.volume || 0).toLocaleString('fr-FR')} · ${date(item.end_date)}`;
     else if (moduleKey === 'trends') meta = item.traffic || 'tendance émergente';
     else if (moduleKey === 'fred') meta = `${item.series || ''} · observé ${item.latest ?? '—'} le ${item.date || '—'} · ${projectionMeta(item.projection)}`;
-    else if (['metaculus','windy','future-engine'].includes(moduleKey)) meta = `${item.probability ?? '—'}% référence · ${item.region || 'Monde'} · échéance ${date(item.target_date)}`;
+    else if (['metaculus','windy'].includes(moduleKey)) meta = `${item.probability ?? '—'}% · ${item.region || 'Monde'} · échéance ${date(item.target_date)}`;
     else meta = [item.topic, item.domain, item.date || item.seen_at].filter(Boolean).join(' · ');
     const inner = `<b>${esc(title)}</b><small>${esc(meta)}</small>`;
     return item.url ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${inner}<span>↗</span></a>` : `<div>${inner}<span></span></div>`;
@@ -45,11 +44,9 @@
     const links=Array.isArray(data.links)?data.links:[];
     return links.length?`<div class="v5-quicklinks">${links.map(x=>`<a class="v5-btn secondary" href="${esc(x.url)}" target="${String(x.url).startsWith('/')?'_self':'_blank'}" rel="noopener noreferrer">${esc(x.label)} ↗</a>`).join('')}</div>`:'';
   }
-
   function renderMap(data){
     return data.map_embed_url?`<div class="v5-module-map"><iframe title="Carte météo Windy" src="${esc(data.map_embed_url)}" loading="lazy" referrerpolicy="no-referrer"></iframe></div>`:'';
   }
-
   function renderMeta(data){
     if(!data.meta || typeof data.meta!=='object')return '';
     const entries=Object.entries(data.meta).filter(([,v])=>['string','number','boolean'].includes(typeof v));
@@ -76,11 +73,25 @@
     try {
       const theme = document.querySelector(`[data-theme="${CSS.escape(key)}"]`)?.value || '';
       const r = await fetch(`/api/modules/${encodeURIComponent(key)}/run`, {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({theme})});
-      const data = await r.json(); if (!r.ok) throw new Error(data?.error || `HTTP ${r.status}`); renderResult(data);
+      const data = await r.json();
+      if (!r.ok) throw new Error(data?.error || `HTTP ${r.status}`);
+      renderResult(data);
     } catch (error) {
       $('#resultTitle').textContent = 'Module indisponible'; $('#resultMeta').textContent = 'Diagnostic du connecteur';
-      $('#moduleOutput').innerHTML = `<div class="v5-note"><b>${esc(key)}</b> : ${esc(error.message)}. Le moteur principal continue de fonctionner ; ce module sera retenté indépendamment.</div>`;
+      $('#moduleOutput').innerHTML = `<div class="v5-note"><b>${esc(key)}</b> : ${esc(error.message)}.</div>`;
     } finally { button.disabled = false; button.textContent = old; }
+  }
+
+  async function runSports(button){
+    const old=button.textContent; button.disabled=true; button.textContent='Backtest…';
+    $('#moduleOutput').innerHTML='<div class="v5-note">Calcul de la baseline sportive et du score de calibration…</div>';
+    try{
+      const r=await fetch('/api/calibration/sports',{cache:'no-store'}); const data=await r.json();
+      if(!r.ok)throw new Error(data?.error||`HTTP ${r.status}`);
+      renderResult({key:'sports',label:'Sports Calibration Lab',meta:{matches:data.matches_tested??data.matches??'—',brier:data.brier_score??data.brier??'—',status:data.status??'ok'},items:[],notice:data.note||data.notice||'Backtest sportif terminé.'});
+    }catch(error){
+      renderResult({key:'sports',label:'Sports Calibration Lab',items:[],notice:`Backtest indisponible : ${error.message}`});
+    }finally{button.disabled=false;button.textContent=old;}
   }
 
   async function init() {
@@ -89,7 +100,8 @@
       const modules = Array.isArray(data.modules) ? data.modules : [];
       $('#moduleGrid').innerHTML = modules.map(moduleCard).join('') || '<div class="v5-output">Aucun module publié.</div>';
       document.querySelectorAll('[data-run]').forEach(btn => btn.addEventListener('click', () => runModule(btn.dataset.run, btn)));
-    } catch (error) { $('#moduleGrid').innerHTML = `<div class="v5-output"><div class="v5-note">Impossible de charger le catalogue : ${esc(error.message)}</div></div>`; }
+      document.querySelectorAll('[data-sports-calibration]').forEach(btn=>btn.addEventListener('click',()=>runSports(btn)));
+    } catch (error) { $('#moduleGrid').innerHTML = `<div class="v5-output"><div class="v5-note">Impossible de charger les modules : ${esc(error.message)}</div></div>`; }
   }
   init();
 })();
