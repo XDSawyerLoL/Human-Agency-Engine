@@ -1,1101 +1,1229 @@
 {
-  "schema": "evidence-public-snapshot-v1",
-  "engine": "evidence-human-signal-public-v1",
-  "generated_at": "2026-08-26T07:19:44.416057+00:00",
+  "schema": "evidence-public-snapshot-v2",
+  "engine": "evidence-predictive-public-v0.2",
+  "generated_at": "2026-08-26T07:27:02.880806+00:00",
   "runtime_mode": "github-only-horizon",
   "status": "live",
   "summary": {
     "evidence_items_considered": 400,
-    "opportunities_returned": 6,
-    "strong_signals": 2,
-    "emerging_signals": 3,
-    "solution_scans_attempted": 3,
-    "diagnostic_scores_are_probabilities": false,
-    "solution_absence_verified": false,
-    "novelty_verified": false
+    "confirmed_events_considered": 200,
+    "emerging_signals_considered": 200,
+    "predictions_returned": 10,
+    "confirmed_precursor_predictions": 10,
+    "emerging_precursor_predictions": 0,
+    "model_probability_estimates": 10,
+    "empirically_calibrated_predictions": 0,
+    "dependency_edges_considered": 0,
+    "source_families": 1,
+    "probability_history_enabled": true,
+    "probability_history_max_points": 48,
+    "numeric_model_estimates_enabled": true,
+    "empirical_probability_calibration_enabled": false
   },
-  "opportunities": [
+  "forecasts": [
     {
-      "problem_key": "supply_fuel:fuel_supply_disruption",
-      "domain": "supply_fuel",
-      "domain_label": "Supply chains & fuel",
-      "event_type": "fuel_supply_disruption",
-      "problem_statement": "Repeated or independently supported signals around ‘Ruptures temporaires de SP98 — département 95 (20/105)’ may indicate a recurring human decision, coordination or access problem worth testing.",
-      "signal_strength": {
-        "label": "strong_signal",
-        "diagnostic_score": 100,
-        "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 166,
-        "emerging_hypothesis_count": 0,
-        "independent_source_keys": [
-          "fr-fuel-ruptures-live"
-        ],
-        "source_diversity_count": 1,
-        "persistence_hours": 0.0,
-        "domain_maturity": "live_single_source",
-        "max_corroboration_score": 0.0,
-        "corroboration_score_is_probability": false
-      },
-      "unresolvedness": {
-        "status": "needs_solution_scan",
-        "claim": "The engine has evidence of the underlying signal, but it has not yet established that existing solutions fail or that the problem is globally unresolved.",
-        "solution_absence_verified": false
-      },
-      "novelty": {
-        "status": "not_assessed",
-        "globally_unique_claim": false,
-        "reason": "Novelty requires a separate scan of products, public services, research, patents and community work; absence cannot be inferred from the news or event stream."
-      },
-      "candidate_action": {
-        "type": "tool_or_workflow_experiment",
-        "tool_archetype": "availability and fallback planner",
-        "mechanism": "Detect recurring supply friction early and turn it into stock, timing or alternative-source decisions.",
-        "first_build": "Prototype a narrow availability and fallback planner for the fuel supply disruption case. It must consume verified HORIZON evidence, expose uncertainty, and produce one measurable next action rather than another feed of alerts."
-      },
-      "validation": {
-        "hypothesis": "People exposed to repeated fuel supply disruption signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
-        "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
-        "reject_if": "Reject the opportunity if 10 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
-        "domain": "supply_fuel",
-        "episode_target": 10
-      },
-      "evidence": [
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP98 — département 95 (20/105)",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "fr-fuel-ruptures-live",
-          "source_classes": [],
-          "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T07:15:55.404727"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP95 — département 95 (8/21)",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "fr-fuel-ruptures-live",
-          "source_classes": [],
-          "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T07:15:55.404727"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de GPLc — département 95 (12/30)",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "fr-fuel-ruptures-live",
-          "source_classes": [],
-          "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T07:15:55.404727"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de E85 — département 95 (7/57)",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "fr-fuel-ruptures-live",
-          "source_classes": [],
-          "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T07:15:55.404727"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP98 — département 94 (11/77)",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "fr-fuel-ruptures-live",
-          "source_classes": [],
-          "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T07:15:55.404727"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP95 — département 94 (7/18)",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "fr-fuel-ruptures-live",
-          "source_classes": [],
-          "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T07:15:55.404727"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de GPLc — département 94 (12/24)",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "fr-fuel-ruptures-live",
-          "source_classes": [],
-          "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T07:15:55.404727"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Ruptures temporaires de E85 — département 94 (6/35)",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "fr-fuel-ruptures-live",
-          "source_classes": [],
-          "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T07:15:55.404727"
-        }
-      ],
-      "solution_scan": {
-        "status": "scanned",
-        "assessment": {
-          "successful_source_count": 3,
-          "minimum_sources_for_gap_assessment": 3,
-          "coverage_sufficient_for_gap_assessment": true,
-          "relevant_match_count": 7,
-          "ecosystems_with_relevant_matches": [
-            "github",
-            "hackernews"
-          ],
-          "gap_status": "related_work_found",
-          "explanation": "Existing work is visible, but this scan does not establish whether it solves the observed human friction end-to-end. Compare mechanisms and user outcomes before rejecting the opportunity.",
-          "global_novelty_verified": false,
-          "existing_solution_effectiveness_verified": false
-        },
-        "sources": [
-          {
-            "source": "github",
-            "label": "Open-source / developer projects",
-            "status": "ok",
-            "result_count": 6
-          },
-          {
-            "source": "openalex",
-            "label": "Academic research",
-            "status": "ok",
-            "result_count": 8
-          },
-          {
-            "source": "hackernews",
-            "label": "Startup / technology community",
-            "status": "ok",
-            "result_count": 4
-          },
-          {
-            "source": "gdelt",
-            "label": "Public web & media coverage",
-            "status": "error",
-            "result_count": 0
-          }
-        ],
-        "matches": [
-          {
-            "ecosystem": "github",
-            "title": "nikosleonidis/fuel-supply-simulator",
-            "url": "https://github.com/nikosleonidis/fuel-supply-simulator",
-            "published_at": "2026-07-22T12:56:54Z",
-            "relevance_score": 95,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "disruption",
-              "fuel",
-              "supply"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "hackernews",
-            "title": "Impact Assessment: risk of disruption to the UK fuel supply [2017] [pdf]",
-            "url": "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/652310/Downstream_oil_fuel_supply_resilience_impact_assessment.pdf",
-            "published_at": "2021-09-29T12:34:02Z",
-            "relevance_score": 82,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "disruption",
-              "fuel",
-              "supply"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "github",
-            "title": "ReynoldsL2025/png-fuel-depletion-simulation",
-            "url": "https://github.com/ReynoldsL2025/png-fuel-depletion-simulation",
-            "published_at": "2026-04-30T09:17:43Z",
-            "relevance_score": 72,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "disruption",
-              "fuel",
-              "supply"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "github",
-            "title": "mandira15/Hormuz-SentinelX",
-            "url": "https://github.com/mandira15/Hormuz-SentinelX",
-            "published_at": "2026-07-14T09:30:43Z",
-            "relevance_score": 45,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "fuel",
-              "supply"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "github",
-            "title": "ravnholmcapital/Maritime-Business-Intelligence.",
-            "url": "https://github.com/ravnholmcapital/Maritime-Business-Intelligence.",
-            "published_at": "2026-07-07T12:34:07Z",
-            "relevance_score": 45,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "fuel",
-              "supply"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "github",
-            "title": "BalajiParlapalli/Swiggy---crisisiq",
-            "url": "https://github.com/BalajiParlapalli/Swiggy---crisisiq",
-            "published_at": "2026-05-21T09:12:14Z",
-            "relevance_score": 45,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "fuel",
-              "supply"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "github",
-            "title": "premprasad1707/-Smart_Resource_management_forcast",
-            "url": "https://github.com/premprasad1707/-Smart_Resource_management_forcast",
-            "published_at": "2026-05-06T10:43:36Z",
-            "relevance_score": 45,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "fuel",
-              "supply"
-            ],
-            "is_relevant": true
-          }
-        ]
-      }
-    },
-    {
-      "problem_key": "transport_mobility:rail_transport_disruption",
+      "scenario_key": "02f98b4afc4a344cda9b4bf8",
+      "candidate_id": null,
+      "event_id": 9695,
       "domain": "transport_mobility",
       "domain_label": "Transport & mobility",
       "event_type": "rail_transport_disruption",
-      "problem_statement": "Repeated or independently supported signals around ‘Perturbation - Retard’ may indicate a recurring human decision, coordination or access problem worth testing.",
-      "signal_strength": {
-        "label": "strong_signal",
-        "diagnostic_score": 100,
-        "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 34,
-        "emerging_hypothesis_count": 0,
-        "independent_source_keys": [
-          "sncf-service-alerts"
+      "headline": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "outcome": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "fact_status": "forecast_from_confirmed_event",
+      "trajectory": "forming",
+      "probability": {
+        "type": "model_estimate",
+        "estimate": 0.4432,
+        "percent": 44,
+        "interval_low": 0.2601,
+        "interval_mid": 0.4432,
+        "interval_high": 0.6263,
+        "interval_percent": [
+          26,
+          63
         ],
-        "source_diversity_count": 1,
-        "persistence_hours": 1.3,
-        "domain_maturity": "live_single_source",
-        "max_corroboration_score": 0.0,
-        "corroboration_score_is_probability": false
+        "method": "evidence-log-odds-v0.2",
+        "calibration_status": "uncalibrated_model_estimate",
+        "empirically_calibrated": false,
+        "can_be_read_as_empirical_frequency": false,
+        "evidence_quality": 0.6056
       },
-      "unresolvedness": {
-        "status": "needs_solution_scan",
-        "claim": "The engine has evidence of the underlying signal, but it has not yet established that existing solutions fail or that the problem is globally unresolved.",
-        "solution_absence_verified": false
+      "time_window": {
+        "kind": "absolute_after_confirmed_precursor",
+        "low_hours": 0.0,
+        "high_hours": 24.0,
+        "start_at": "2026-08-26T05:56:00Z",
+        "end_at": "2026-08-27T05:56:00Z",
+        "human": "du 26/08 05:56 au 27/08 05:56 UTC",
+        "absolute_dates_claimed": true,
+        "expired": false
       },
-      "novelty": {
-        "status": "not_assessed",
-        "globally_unique_claim": false,
-        "reason": "Novelty requires a separate scan of products, public services, research, patents and community work; absence cannot be inferred from the news or event stream."
+      "why_now": "Le précurseur « Weitere Informationen: » est désormais enregistré comme événement confirmé ou dérivé par HORIZON. Sa source principale est sncf-service-alerts avec une fiabilité déclarée de 93/100. Le moteur projette maintenant la conséquence suivante : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times..",
+      "causal_chain": [
+        "public-transport capacity loss",
+        "traveler route and mode substitution",
+        "alternative-network demand pressure",
+        "road or substitute-service congestion",
+        "observable travel-time deterioration"
+      ],
+      "drivers": [
+        {
+          "type": "confirmed_precursor",
+          "label": "Weitere Informationen:",
+          "event_type": "rail_transport_disruption",
+          "support_score": 0.93,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "last_observed_at": "2026-08-26T07:16:13.702855"
+        }
+      ],
+      "watch_next": [
+        "public-transport capacity loss",
+        "signal observable correspondant à une étape intermédiaire du mécanisme",
+        "matérialisation indépendante du résultat projeté"
+      ],
+      "probability_up_if": [
+        "un signal correspondant à l'étape suivante apparaît : public-transport capacity loss",
+        "une source indépendante confirme une conséquence intermédiaire du mécanisme",
+        "le graphe HORIZON ajoute un précurseur amont cohérent dans la même zone et fenêtre temporelle"
+      ],
+      "probability_down_if": [
+        "les indicateurs intermédiaires attendus restent absents",
+        "des observations indépendantes montrent que la pression se résorbe",
+        "la fenêtre expire sans matérialisation observable de : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times."
+      ],
+      "falsification": "Le scénario est considéré comme raté si le signal observable correspondant à « A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times. » n'apparaît pas dans la fenêtre déclarée (du 26/08 05:56 au 27/08 05:56 UTC), ou si les observations indépendantes contredisent la trajectoire avant l'échéance.",
+      "evidence": [
+        {
+          "kind": "confirmed_event",
+          "title": "Weitere Informationen:",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "observed_at": "2026-08-26T07:16:13.702855",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "corroboration_score": 0.93,
+          "corroboration_score_is_probability": false
+        }
+      ],
+      "model_components": {
+        "precursor_confirmed": true,
+        "source_reliability": 0.93,
+        "source_diversity": 1,
+        "persistence_hours": 1.34,
+        "pattern_confidence": 0.56,
+        "graph_dependency_support": 0.0,
+        "pattern_support_count": 0,
+        "pattern_contradiction_count": 0,
+        "pattern_empirically_calibrated": false,
+        "component_scores_are_probabilities": false
       },
-      "candidate_action": {
-        "type": "tool_or_workflow_experiment",
-        "tool_archetype": "mobility continuity assistant",
-        "mechanism": "Aggregate disruption evidence, estimate practical exposure and propose verified fallback options.",
-        "first_build": "Prototype a narrow mobility continuity assistant for the rail transport disruption case. It must consume verified HORIZON evidence, expose uncertainty, and produce one measurable next action rather than another feed of alerts."
+      "probability_history": [
+        {
+          "at": "2026-08-26T07:27:02.880806+00:00",
+          "percent": 44,
+          "interval_percent": [
+            26,
+            63
+          ],
+          "fact_status": "forecast_from_confirmed_event"
+        }
+      ],
+      "probability_delta_points": null,
+      "probability_direction": "new"
+    },
+    {
+      "scenario_key": "69077704ed0372c16e86e757",
+      "candidate_id": null,
+      "event_id": 9679,
+      "domain": "transport_mobility",
+      "domain_label": "Transport & mobility",
+      "event_type": "rail_transport_disruption",
+      "headline": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "outcome": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "fact_status": "forecast_from_confirmed_event",
+      "trajectory": "forming",
+      "probability": {
+        "type": "model_estimate",
+        "estimate": 0.443,
+        "percent": 44,
+        "interval_low": 0.2598,
+        "interval_mid": 0.443,
+        "interval_high": 0.6261,
+        "interval_percent": [
+          26,
+          63
+        ],
+        "method": "evidence-log-odds-v0.2",
+        "calibration_status": "uncalibrated_model_estimate",
+        "empirically_calibrated": false,
+        "can_be_read_as_empirical_frequency": false,
+        "evidence_quality": 0.6054
       },
-      "validation": {
-        "hypothesis": "People exposed to repeated rail transport disruption signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
-        "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
-        "reject_if": "Reject the opportunity if 10 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
-        "domain": "transport_mobility",
-        "episode_target": 10
+      "time_window": {
+        "kind": "absolute_after_confirmed_precursor",
+        "low_hours": 0.0,
+        "high_hours": 24.0,
+        "start_at": "2026-08-26T05:57:00Z",
+        "end_at": "2026-08-27T05:57:00Z",
+        "human": "du 26/08 05:57 au 27/08 05:57 UTC",
+        "absolute_dates_claimed": true,
+        "expired": false
       },
+      "why_now": "Le précurseur « 3411Abfahrt von PARIS-VAUGIRARD. » est désormais enregistré comme événement confirmé ou dérivé par HORIZON. Sa source principale est sncf-service-alerts avec une fiabilité déclarée de 93/100. Le moteur projette maintenant la conséquence suivante : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times..",
+      "causal_chain": [
+        "public-transport capacity loss",
+        "traveler route and mode substitution",
+        "alternative-network demand pressure",
+        "road or substitute-service congestion",
+        "observable travel-time deterioration"
+      ],
+      "drivers": [
+        {
+          "type": "confirmed_precursor",
+          "label": "3411Abfahrt von PARIS-VAUGIRARD.",
+          "event_type": "rail_transport_disruption",
+          "support_score": 0.93,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "last_observed_at": "2026-08-26T07:16:13.702855"
+        }
+      ],
+      "watch_next": [
+        "public-transport capacity loss",
+        "signal observable correspondant à une étape intermédiaire du mécanisme",
+        "matérialisation indépendante du résultat projeté"
+      ],
+      "probability_up_if": [
+        "un signal correspondant à l'étape suivante apparaît : public-transport capacity loss",
+        "une source indépendante confirme une conséquence intermédiaire du mécanisme",
+        "le graphe HORIZON ajoute un précurseur amont cohérent dans la même zone et fenêtre temporelle"
+      ],
+      "probability_down_if": [
+        "les indicateurs intermédiaires attendus restent absents",
+        "des observations indépendantes montrent que la pression se résorbe",
+        "la fenêtre expire sans matérialisation observable de : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times."
+      ],
+      "falsification": "Le scénario est considéré comme raté si le signal observable correspondant à « A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times. » n'apparaît pas dans la fenêtre déclarée (du 26/08 05:57 au 27/08 05:57 UTC), ou si les observations indépendantes contredisent la trajectoire avant l'échéance.",
+      "evidence": [
+        {
+          "kind": "confirmed_event",
+          "title": "3411Abfahrt von PARIS-VAUGIRARD.",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "observed_at": "2026-08-26T07:16:13.702855",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "corroboration_score": 0.93,
+          "corroboration_score_is_probability": false
+        }
+      ],
+      "model_components": {
+        "precursor_confirmed": true,
+        "source_reliability": 0.93,
+        "source_diversity": 1,
+        "persistence_hours": 1.32,
+        "pattern_confidence": 0.56,
+        "graph_dependency_support": 0.0,
+        "pattern_support_count": 0,
+        "pattern_contradiction_count": 0,
+        "pattern_empirically_calibrated": false,
+        "component_scores_are_probabilities": false
+      },
+      "probability_history": [
+        {
+          "at": "2026-08-26T07:27:02.880806+00:00",
+          "percent": 44,
+          "interval_percent": [
+            26,
+            63
+          ],
+          "fact_status": "forecast_from_confirmed_event"
+        }
+      ],
+      "probability_delta_points": null,
+      "probability_direction": "new"
+    },
+    {
+      "scenario_key": "0ccb80c8874ef46ee35badfc",
+      "candidate_id": null,
+      "event_id": 9669,
+      "domain": "transport_mobility",
+      "domain_label": "Transport & mobility",
+      "event_type": "rail_transport_disruption",
+      "headline": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "outcome": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "fact_status": "forecast_from_confirmed_event",
+      "trajectory": "forming",
+      "probability": {
+        "type": "model_estimate",
+        "estimate": 0.4396,
+        "percent": 44,
+        "interval_low": 0.2561,
+        "interval_mid": 0.4396,
+        "interval_high": 0.6231,
+        "interval_percent": [
+          26,
+          62
+        ],
+        "method": "evidence-log-odds-v0.2",
+        "calibration_status": "uncalibrated_model_estimate",
+        "empirically_calibrated": false,
+        "can_be_read_as_empirical_frequency": false,
+        "evidence_quality": 0.6032
+      },
+      "time_window": {
+        "kind": "absolute_after_confirmed_precursor",
+        "low_hours": 0.0,
+        "high_hours": 24.0,
+        "start_at": "2026-08-26T06:08:00Z",
+        "end_at": "2026-08-27T06:08:00Z",
+        "human": "du 26/08 06:08 au 27/08 06:08 UTC",
+        "absolute_dates_claimed": true,
+        "expired": false
+      },
+      "why_now": "Le précurseur « Weitere Informationen: » est désormais enregistré comme événement confirmé ou dérivé par HORIZON. Sa source principale est sncf-service-alerts avec une fiabilité déclarée de 93/100. Le moteur projette maintenant la conséquence suivante : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times..",
+      "causal_chain": [
+        "public-transport capacity loss",
+        "traveler route and mode substitution",
+        "alternative-network demand pressure",
+        "road or substitute-service congestion",
+        "observable travel-time deterioration"
+      ],
+      "drivers": [
+        {
+          "type": "confirmed_precursor",
+          "label": "Weitere Informationen:",
+          "event_type": "rail_transport_disruption",
+          "support_score": 0.93,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "last_observed_at": "2026-08-26T07:16:13.702855"
+        }
+      ],
+      "watch_next": [
+        "public-transport capacity loss",
+        "signal observable correspondant à une étape intermédiaire du mécanisme",
+        "matérialisation indépendante du résultat projeté"
+      ],
+      "probability_up_if": [
+        "un signal correspondant à l'étape suivante apparaît : public-transport capacity loss",
+        "une source indépendante confirme une conséquence intermédiaire du mécanisme",
+        "le graphe HORIZON ajoute un précurseur amont cohérent dans la même zone et fenêtre temporelle"
+      ],
+      "probability_down_if": [
+        "les indicateurs intermédiaires attendus restent absents",
+        "des observations indépendantes montrent que la pression se résorbe",
+        "la fenêtre expire sans matérialisation observable de : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times."
+      ],
+      "falsification": "Le scénario est considéré comme raté si le signal observable correspondant à « A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times. » n'apparaît pas dans la fenêtre déclarée (du 26/08 06:08 au 27/08 06:08 UTC), ou si les observations indépendantes contredisent la trajectoire avant l'échéance.",
+      "evidence": [
+        {
+          "kind": "confirmed_event",
+          "title": "Weitere Informationen:",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "observed_at": "2026-08-26T07:16:13.702855",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "corroboration_score": 0.93,
+          "corroboration_score_is_probability": false
+        }
+      ],
+      "model_components": {
+        "precursor_confirmed": true,
+        "source_reliability": 0.93,
+        "source_diversity": 1,
+        "persistence_hours": 1.14,
+        "pattern_confidence": 0.56,
+        "graph_dependency_support": 0.0,
+        "pattern_support_count": 0,
+        "pattern_contradiction_count": 0,
+        "pattern_empirically_calibrated": false,
+        "component_scores_are_probabilities": false
+      },
+      "probability_history": [
+        {
+          "at": "2026-08-26T07:27:02.880806+00:00",
+          "percent": 44,
+          "interval_percent": [
+            26,
+            62
+          ],
+          "fact_status": "forecast_from_confirmed_event"
+        }
+      ],
+      "probability_delta_points": null,
+      "probability_direction": "new"
+    },
+    {
+      "scenario_key": "332ec6d5426f122f6dc838d0",
+      "candidate_id": null,
+      "event_id": 9671,
+      "domain": "transport_mobility",
+      "domain_label": "Transport & mobility",
+      "event_type": "rail_transport_disruption",
+      "headline": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "outcome": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "fact_status": "forecast_from_confirmed_event",
+      "trajectory": "forming",
+      "probability": {
+        "type": "model_estimate",
+        "estimate": 0.4389,
+        "percent": 44,
+        "interval_low": 0.2554,
+        "interval_mid": 0.4389,
+        "interval_high": 0.6225,
+        "interval_percent": [
+          26,
+          62
+        ],
+        "method": "evidence-log-odds-v0.2",
+        "calibration_status": "uncalibrated_model_estimate",
+        "empirically_calibrated": false,
+        "can_be_read_as_empirical_frequency": false,
+        "evidence_quality": 0.6028
+      },
+      "time_window": {
+        "kind": "absolute_after_confirmed_precursor",
+        "low_hours": 0.0,
+        "high_hours": 24.0,
+        "start_at": "2026-08-26T06:10:00Z",
+        "end_at": "2026-08-27T06:10:00Z",
+        "human": "du 26/08 06:10 au 27/08 06:10 UTC",
+        "absolute_dates_claimed": true,
+        "expired": false
+      },
+      "why_now": "Le précurseur « Weitere Informationen: » est désormais enregistré comme événement confirmé ou dérivé par HORIZON. Sa source principale est sncf-service-alerts avec une fiabilité déclarée de 93/100. Le moteur projette maintenant la conséquence suivante : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times..",
+      "causal_chain": [
+        "public-transport capacity loss",
+        "traveler route and mode substitution",
+        "alternative-network demand pressure",
+        "road or substitute-service congestion",
+        "observable travel-time deterioration"
+      ],
+      "drivers": [
+        {
+          "type": "confirmed_precursor",
+          "label": "Weitere Informationen:",
+          "event_type": "rail_transport_disruption",
+          "support_score": 0.93,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "last_observed_at": "2026-08-26T07:16:13.702855"
+        }
+      ],
+      "watch_next": [
+        "public-transport capacity loss",
+        "signal observable correspondant à une étape intermédiaire du mécanisme",
+        "matérialisation indépendante du résultat projeté"
+      ],
+      "probability_up_if": [
+        "un signal correspondant à l'étape suivante apparaît : public-transport capacity loss",
+        "une source indépendante confirme une conséquence intermédiaire du mécanisme",
+        "le graphe HORIZON ajoute un précurseur amont cohérent dans la même zone et fenêtre temporelle"
+      ],
+      "probability_down_if": [
+        "les indicateurs intermédiaires attendus restent absents",
+        "des observations indépendantes montrent que la pression se résorbe",
+        "la fenêtre expire sans matérialisation observable de : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times."
+      ],
+      "falsification": "Le scénario est considéré comme raté si le signal observable correspondant à « A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times. » n'apparaît pas dans la fenêtre déclarée (du 26/08 06:10 au 27/08 06:10 UTC), ou si les observations indépendantes contredisent la trajectoire avant l'échéance.",
+      "evidence": [
+        {
+          "kind": "confirmed_event",
+          "title": "Weitere Informationen:",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "observed_at": "2026-08-26T07:16:13.702855",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "corroboration_score": 0.93,
+          "corroboration_score_is_probability": false
+        }
+      ],
+      "model_components": {
+        "precursor_confirmed": true,
+        "source_reliability": 0.93,
+        "source_diversity": 1,
+        "persistence_hours": 1.1,
+        "pattern_confidence": 0.56,
+        "graph_dependency_support": 0.0,
+        "pattern_support_count": 0,
+        "pattern_contradiction_count": 0,
+        "pattern_empirically_calibrated": false,
+        "component_scores_are_probabilities": false
+      },
+      "probability_history": [
+        {
+          "at": "2026-08-26T07:27:02.880806+00:00",
+          "percent": 44,
+          "interval_percent": [
+            26,
+            62
+          ],
+          "fact_status": "forecast_from_confirmed_event"
+        }
+      ],
+      "probability_delta_points": null,
+      "probability_direction": "new"
+    },
+    {
+      "scenario_key": "6e825f2d267e750df21a70a6",
+      "candidate_id": null,
+      "event_id": 9700,
+      "domain": "transport_mobility",
+      "domain_label": "Transport & mobility",
+      "event_type": "rail_transport_disruption",
+      "headline": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "outcome": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "fact_status": "forecast_from_confirmed_event",
+      "trajectory": "forming",
+      "probability": {
+        "type": "model_estimate",
+        "estimate": 0.4386,
+        "percent": 44,
+        "interval_low": 0.255,
+        "interval_mid": 0.4386,
+        "interval_high": 0.6222,
+        "interval_percent": [
+          26,
+          62
+        ],
+        "method": "evidence-log-odds-v0.2",
+        "calibration_status": "uncalibrated_model_estimate",
+        "empirically_calibrated": false,
+        "can_be_read_as_empirical_frequency": false,
+        "evidence_quality": 0.6025
+      },
+      "time_window": {
+        "kind": "absolute_after_confirmed_precursor",
+        "low_hours": 0.0,
+        "high_hours": 24.0,
+        "start_at": "2026-08-26T06:11:00Z",
+        "end_at": "2026-08-27T06:11:00Z",
+        "human": "du 26/08 06:11 au 27/08 06:11 UTC",
+        "absolute_dates_claimed": true,
+        "expired": false
+      },
+      "why_now": "Le précurseur « Weitere Informationen: » est désormais enregistré comme événement confirmé ou dérivé par HORIZON. Sa source principale est sncf-service-alerts avec une fiabilité déclarée de 93/100. Le moteur projette maintenant la conséquence suivante : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times..",
+      "causal_chain": [
+        "public-transport capacity loss",
+        "traveler route and mode substitution",
+        "alternative-network demand pressure",
+        "road or substitute-service congestion",
+        "observable travel-time deterioration"
+      ],
+      "drivers": [
+        {
+          "type": "confirmed_precursor",
+          "label": "Weitere Informationen:",
+          "event_type": "rail_transport_disruption",
+          "support_score": 0.93,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "last_observed_at": "2026-08-26T07:16:13.702855"
+        }
+      ],
+      "watch_next": [
+        "public-transport capacity loss",
+        "signal observable correspondant à une étape intermédiaire du mécanisme",
+        "matérialisation indépendante du résultat projeté"
+      ],
+      "probability_up_if": [
+        "un signal correspondant à l'étape suivante apparaît : public-transport capacity loss",
+        "une source indépendante confirme une conséquence intermédiaire du mécanisme",
+        "le graphe HORIZON ajoute un précurseur amont cohérent dans la même zone et fenêtre temporelle"
+      ],
+      "probability_down_if": [
+        "les indicateurs intermédiaires attendus restent absents",
+        "des observations indépendantes montrent que la pression se résorbe",
+        "la fenêtre expire sans matérialisation observable de : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times."
+      ],
+      "falsification": "Le scénario est considéré comme raté si le signal observable correspondant à « A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times. » n'apparaît pas dans la fenêtre déclarée (du 26/08 06:11 au 27/08 06:11 UTC), ou si les observations indépendantes contredisent la trajectoire avant l'échéance.",
+      "evidence": [
+        {
+          "kind": "confirmed_event",
+          "title": "Weitere Informationen:",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "observed_at": "2026-08-26T07:16:13.702855",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "corroboration_score": 0.93,
+          "corroboration_score_is_probability": false
+        }
+      ],
+      "model_components": {
+        "precursor_confirmed": true,
+        "source_reliability": 0.93,
+        "source_diversity": 1,
+        "persistence_hours": 1.09,
+        "pattern_confidence": 0.56,
+        "graph_dependency_support": 0.0,
+        "pattern_support_count": 0,
+        "pattern_contradiction_count": 0,
+        "pattern_empirically_calibrated": false,
+        "component_scores_are_probabilities": false
+      },
+      "probability_history": [
+        {
+          "at": "2026-08-26T07:27:02.880806+00:00",
+          "percent": 44,
+          "interval_percent": [
+            26,
+            62
+          ],
+          "fact_status": "forecast_from_confirmed_event"
+        }
+      ],
+      "probability_delta_points": null,
+      "probability_direction": "new"
+    },
+    {
+      "scenario_key": "9a72c92379670843dfff8470",
+      "candidate_id": null,
+      "event_id": 9690,
+      "domain": "transport_mobility",
+      "domain_label": "Transport & mobility",
+      "event_type": "rail_transport_disruption",
+      "headline": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "outcome": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "fact_status": "forecast_from_confirmed_event",
+      "trajectory": "forming",
+      "probability": {
+        "type": "model_estimate",
+        "estimate": 0.4383,
+        "percent": 44,
+        "interval_low": 0.2547,
+        "interval_mid": 0.4383,
+        "interval_high": 0.6219,
+        "interval_percent": [
+          25,
+          62
+        ],
+        "method": "evidence-log-odds-v0.2",
+        "calibration_status": "uncalibrated_model_estimate",
+        "empirically_calibrated": false,
+        "can_be_read_as_empirical_frequency": false,
+        "evidence_quality": 0.6023
+      },
+      "time_window": {
+        "kind": "absolute_after_confirmed_precursor",
+        "low_hours": 0.0,
+        "high_hours": 24.0,
+        "start_at": "2026-08-26T06:12:00Z",
+        "end_at": "2026-08-27T06:12:00Z",
+        "human": "du 26/08 06:12 au 27/08 06:12 UTC",
+        "absolute_dates_claimed": true,
+        "expired": false
+      },
+      "why_now": "Le précurseur « Weitere Informationen: » est désormais enregistré comme événement confirmé ou dérivé par HORIZON. Sa source principale est sncf-service-alerts avec une fiabilité déclarée de 93/100. Le moteur projette maintenant la conséquence suivante : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times..",
+      "causal_chain": [
+        "public-transport capacity loss",
+        "traveler route and mode substitution",
+        "alternative-network demand pressure",
+        "road or substitute-service congestion",
+        "observable travel-time deterioration"
+      ],
+      "drivers": [
+        {
+          "type": "confirmed_precursor",
+          "label": "Weitere Informationen:",
+          "event_type": "rail_transport_disruption",
+          "support_score": 0.93,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "last_observed_at": "2026-08-26T07:16:13.702855"
+        }
+      ],
+      "watch_next": [
+        "public-transport capacity loss",
+        "signal observable correspondant à une étape intermédiaire du mécanisme",
+        "matérialisation indépendante du résultat projeté"
+      ],
+      "probability_up_if": [
+        "un signal correspondant à l'étape suivante apparaît : public-transport capacity loss",
+        "une source indépendante confirme une conséquence intermédiaire du mécanisme",
+        "le graphe HORIZON ajoute un précurseur amont cohérent dans la même zone et fenêtre temporelle"
+      ],
+      "probability_down_if": [
+        "les indicateurs intermédiaires attendus restent absents",
+        "des observations indépendantes montrent que la pression se résorbe",
+        "la fenêtre expire sans matérialisation observable de : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times."
+      ],
+      "falsification": "Le scénario est considéré comme raté si le signal observable correspondant à « A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times. » n'apparaît pas dans la fenêtre déclarée (du 26/08 06:12 au 27/08 06:12 UTC), ou si les observations indépendantes contredisent la trajectoire avant l'échéance.",
+      "evidence": [
+        {
+          "kind": "confirmed_event",
+          "title": "Weitere Informationen:",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "observed_at": "2026-08-26T07:16:13.702855",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "corroboration_score": 0.93,
+          "corroboration_score_is_probability": false
+        }
+      ],
+      "model_components": {
+        "precursor_confirmed": true,
+        "source_reliability": 0.93,
+        "source_diversity": 1,
+        "persistence_hours": 1.07,
+        "pattern_confidence": 0.56,
+        "graph_dependency_support": 0.0,
+        "pattern_support_count": 0,
+        "pattern_contradiction_count": 0,
+        "pattern_empirically_calibrated": false,
+        "component_scores_are_probabilities": false
+      },
+      "probability_history": [
+        {
+          "at": "2026-08-26T07:27:02.880806+00:00",
+          "percent": 44,
+          "interval_percent": [
+            25,
+            62
+          ],
+          "fact_status": "forecast_from_confirmed_event"
+        }
+      ],
+      "probability_delta_points": null,
+      "probability_direction": "new"
+    },
+    {
+      "scenario_key": "9b53bba5ee31e9ed321b8796",
+      "candidate_id": null,
+      "event_id": 9688,
+      "domain": "transport_mobility",
+      "domain_label": "Transport & mobility",
+      "event_type": "rail_transport_disruption",
+      "headline": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "outcome": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "fact_status": "forecast_from_confirmed_event",
+      "trajectory": "forming",
+      "probability": {
+        "type": "model_estimate",
+        "estimate": 0.438,
+        "percent": 44,
+        "interval_low": 0.2543,
+        "interval_mid": 0.438,
+        "interval_high": 0.6216,
+        "interval_percent": [
+          25,
+          62
+        ],
+        "method": "evidence-log-odds-v0.2",
+        "calibration_status": "uncalibrated_model_estimate",
+        "empirically_calibrated": false,
+        "can_be_read_as_empirical_frequency": false,
+        "evidence_quality": 0.6021
+      },
+      "time_window": {
+        "kind": "absolute_after_confirmed_precursor",
+        "low_hours": 0.0,
+        "high_hours": 24.0,
+        "start_at": "2026-08-26T06:13:00Z",
+        "end_at": "2026-08-27T06:13:00Z",
+        "human": "du 26/08 06:13 au 27/08 06:13 UTC",
+        "absolute_dates_claimed": true,
+        "expired": false
+      },
+      "why_now": "Le précurseur « Ihr Zug hat Verspätung. » est désormais enregistré comme événement confirmé ou dérivé par HORIZON. Sa source principale est sncf-service-alerts avec une fiabilité déclarée de 93/100. Le moteur projette maintenant la conséquence suivante : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times..",
+      "causal_chain": [
+        "public-transport capacity loss",
+        "traveler route and mode substitution",
+        "alternative-network demand pressure",
+        "road or substitute-service congestion",
+        "observable travel-time deterioration"
+      ],
+      "drivers": [
+        {
+          "type": "confirmed_precursor",
+          "label": "Ihr Zug hat Verspätung.",
+          "event_type": "rail_transport_disruption",
+          "support_score": 0.93,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "last_observed_at": "2026-08-26T07:16:13.702855"
+        }
+      ],
+      "watch_next": [
+        "public-transport capacity loss",
+        "signal observable correspondant à une étape intermédiaire du mécanisme",
+        "matérialisation indépendante du résultat projeté"
+      ],
+      "probability_up_if": [
+        "un signal correspondant à l'étape suivante apparaît : public-transport capacity loss",
+        "une source indépendante confirme une conséquence intermédiaire du mécanisme",
+        "le graphe HORIZON ajoute un précurseur amont cohérent dans la même zone et fenêtre temporelle"
+      ],
+      "probability_down_if": [
+        "les indicateurs intermédiaires attendus restent absents",
+        "des observations indépendantes montrent que la pression se résorbe",
+        "la fenêtre expire sans matérialisation observable de : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times."
+      ],
+      "falsification": "Le scénario est considéré comme raté si le signal observable correspondant à « A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times. » n'apparaît pas dans la fenêtre déclarée (du 26/08 06:13 au 27/08 06:13 UTC), ou si les observations indépendantes contredisent la trajectoire avant l'échéance.",
+      "evidence": [
+        {
+          "kind": "confirmed_event",
+          "title": "Ihr Zug hat Verspätung.",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "observed_at": "2026-08-26T07:16:13.702855",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "corroboration_score": 0.93,
+          "corroboration_score_is_probability": false
+        }
+      ],
+      "model_components": {
+        "precursor_confirmed": true,
+        "source_reliability": 0.93,
+        "source_diversity": 1,
+        "persistence_hours": 1.05,
+        "pattern_confidence": 0.56,
+        "graph_dependency_support": 0.0,
+        "pattern_support_count": 0,
+        "pattern_contradiction_count": 0,
+        "pattern_empirically_calibrated": false,
+        "component_scores_are_probabilities": false
+      },
+      "probability_history": [
+        {
+          "at": "2026-08-26T07:27:02.880806+00:00",
+          "percent": 44,
+          "interval_percent": [
+            25,
+            62
+          ],
+          "fact_status": "forecast_from_confirmed_event"
+        }
+      ],
+      "probability_delta_points": null,
+      "probability_direction": "new"
+    },
+    {
+      "scenario_key": "8cfedf9070578b347151ed18",
+      "candidate_id": null,
+      "event_id": 9702,
+      "domain": "transport_mobility",
+      "domain_label": "Transport & mobility",
+      "event_type": "rail_transport_disruption",
+      "headline": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "outcome": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "fact_status": "forecast_from_confirmed_event",
+      "trajectory": "forming",
+      "probability": {
+        "type": "model_estimate",
+        "estimate": 0.4373,
+        "percent": 44,
+        "interval_low": 0.2536,
+        "interval_mid": 0.4373,
+        "interval_high": 0.621,
+        "interval_percent": [
+          25,
+          62
+        ],
+        "method": "evidence-log-odds-v0.2",
+        "calibration_status": "uncalibrated_model_estimate",
+        "empirically_calibrated": false,
+        "can_be_read_as_empirical_frequency": false,
+        "evidence_quality": 0.6017
+      },
+      "time_window": {
+        "kind": "absolute_after_confirmed_precursor",
+        "low_hours": 0.0,
+        "high_hours": 24.0,
+        "start_at": "2026-08-26T06:15:00Z",
+        "end_at": "2026-08-27T06:15:00Z",
+        "human": "du 26/08 06:15 au 27/08 06:15 UTC",
+        "absolute_dates_claimed": true,
+        "expired": false
+      },
+      "why_now": "Le précurseur « Perturbation - Retard » est désormais enregistré comme événement confirmé ou dérivé par HORIZON. Sa source principale est sncf-service-alerts avec une fiabilité déclarée de 93/100. Le moteur projette maintenant la conséquence suivante : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times..",
+      "causal_chain": [
+        "public-transport capacity loss",
+        "traveler route and mode substitution",
+        "alternative-network demand pressure",
+        "road or substitute-service congestion",
+        "observable travel-time deterioration"
+      ],
+      "drivers": [
+        {
+          "type": "confirmed_precursor",
+          "label": "Perturbation - Retard",
+          "event_type": "rail_transport_disruption",
+          "support_score": 0.93,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "last_observed_at": "2026-08-26T07:16:13.702855"
+        }
+      ],
+      "watch_next": [
+        "public-transport capacity loss",
+        "signal observable correspondant à une étape intermédiaire du mécanisme",
+        "matérialisation indépendante du résultat projeté"
+      ],
+      "probability_up_if": [
+        "un signal correspondant à l'étape suivante apparaît : public-transport capacity loss",
+        "une source indépendante confirme une conséquence intermédiaire du mécanisme",
+        "le graphe HORIZON ajoute un précurseur amont cohérent dans la même zone et fenêtre temporelle"
+      ],
+      "probability_down_if": [
+        "les indicateurs intermédiaires attendus restent absents",
+        "des observations indépendantes montrent que la pression se résorbe",
+        "la fenêtre expire sans matérialisation observable de : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times."
+      ],
+      "falsification": "Le scénario est considéré comme raté si le signal observable correspondant à « A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times. » n'apparaît pas dans la fenêtre déclarée (du 26/08 06:15 au 27/08 06:15 UTC), ou si les observations indépendantes contredisent la trajectoire avant l'échéance.",
       "evidence": [
         {
           "kind": "confirmed_event",
           "title": "Perturbation - Retard",
           "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-26T07:16:13.702855"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-26T07:16:13.702855"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-26T07:16:13.702855"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Störung – Verspätung",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-26T07:16:13.702855"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-26T07:16:13.702855"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-26T07:16:13.702855"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-26T07:16:13.702855"
-        },
-        {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-26T07:16:13.702855"
+          "source_classes": [
+            "sncf-service-alerts"
+          ],
+          "observed_at": "2026-08-26T07:16:13.702855",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "corroboration_score": 0.93,
+          "corroboration_score_is_probability": false
         }
       ],
-      "solution_scan": {
-        "status": "scanned",
-        "assessment": {
-          "successful_source_count": 3,
-          "minimum_sources_for_gap_assessment": 3,
-          "coverage_sufficient_for_gap_assessment": true,
-          "relevant_match_count": 7,
-          "ecosystems_with_relevant_matches": [
-            "github",
-            "openalex"
+      "model_components": {
+        "precursor_confirmed": true,
+        "source_reliability": 0.93,
+        "source_diversity": 1,
+        "persistence_hours": 1.02,
+        "pattern_confidence": 0.56,
+        "graph_dependency_support": 0.0,
+        "pattern_support_count": 0,
+        "pattern_contradiction_count": 0,
+        "pattern_empirically_calibrated": false,
+        "component_scores_are_probabilities": false
+      },
+      "probability_history": [
+        {
+          "at": "2026-08-26T07:27:02.880806+00:00",
+          "percent": 44,
+          "interval_percent": [
+            25,
+            62
           ],
-          "gap_status": "related_work_found",
-          "explanation": "Existing work is visible, but this scan does not establish whether it solves the observed human friction end-to-end. Compare mechanisms and user outcomes before rejecting the opportunity.",
-          "global_novelty_verified": false,
-          "existing_solution_effectiveness_verified": false
-        },
-        "sources": [
-          {
-            "source": "github",
-            "label": "Open-source / developer projects",
-            "status": "ok",
-            "result_count": 1
-          },
-          {
-            "source": "openalex",
-            "label": "Academic research",
-            "status": "ok",
-            "result_count": 8
-          },
-          {
-            "source": "hackernews",
-            "label": "Startup / technology community",
-            "status": "ok",
-            "result_count": 1
-          },
-          {
-            "source": "gdelt",
-            "label": "Public web & media coverage",
-            "status": "error",
-            "result_count": 0
-          }
-        ],
-        "matches": [
-          {
-            "ecosystem": "openalex",
-            "title": "Impact Estimation of Unplanned Urban Rail Disruptions on Public Transport Passengers: A Multi-Agent Based Simulation Approach",
-            "url": "https://doi.org/10.3390/ijerph19159052",
-            "published_at": "2022-07-25",
-            "relevance_score": 55,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "rail",
-              "transport"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "openalex",
-            "title": "Reliability of the intermodal transport network under disrupted conditions in the rail freight transport",
-            "url": "https://doi.org/10.1016/j.rtbm.2021.100686",
-            "published_at": "2021-06-22",
-            "relevance_score": 55,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "rail",
-              "transport"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "openalex",
-            "title": "Modelling the resilience of rail passenger transport networks affected by large-scale disruptive events: the case of HSR (high speed rail)",
-            "url": "https://doi.org/10.1007/s11116-018-9875-6",
-            "published_at": "2018-04-18",
-            "relevance_score": 55,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "rail",
-              "transport"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "openalex",
-            "title": "The impact of flooding on road transport: A depth-disruption function",
-            "url": "https://doi.org/10.1016/j.trd.2017.06.020",
-            "published_at": "2017-06-24",
-            "relevance_score": 55,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "disruption",
-              "transport"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "openalex",
-            "title": "The impacts of the 28 June 2012 storms on UK road and rail transport",
-            "url": "https://doi.org/10.1002/met.1477",
-            "published_at": "2014-11-03",
-            "relevance_score": 55,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "rail",
-              "transport"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "openalex",
-            "title": "Freight Transport Regulation: Equity, Efficiency, and Competition in the Rail and Trucking Industries",
-            "url": "http://ci.nii.ac.jp/ncid/BA00766343",
-            "published_at": "1981-01-31",
-            "relevance_score": 55,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "rail",
-              "transport"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "github",
-            "title": "kintscher/swiss-rail-mcp",
-            "url": "https://github.com/kintscher/swiss-rail-mcp",
-            "published_at": "2026-05-14T22:45:07Z",
-            "relevance_score": 50,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "rail",
-              "transport"
-            ],
-            "is_relevant": true
-          }
-        ]
-      }
+          "fact_status": "forecast_from_confirmed_event"
+        }
+      ],
+      "probability_delta_points": null,
+      "probability_direction": "new"
     },
     {
-      "problem_key": "natural_hazards:wildfire",
-      "domain": "natural_hazards",
-      "domain_label": "Natural hazards",
-      "event_type": "wildfire",
-      "problem_statement": "Repeated or independently supported signals around ‘Forest fires in Russian Federation’ may indicate a recurring human decision, coordination or access problem worth testing.",
-      "signal_strength": {
-        "label": "emerging_signal",
-        "diagnostic_score": 59,
-        "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 0,
-        "emerging_hypothesis_count": 188,
-        "independent_source_keys": [
-          "official_multilateral"
+      "scenario_key": "bff6b64754b6488565df3865",
+      "candidate_id": null,
+      "event_id": 9683,
+      "domain": "transport_mobility",
+      "domain_label": "Transport & mobility",
+      "event_type": "rail_transport_disruption",
+      "headline": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "outcome": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "fact_status": "forecast_from_confirmed_event",
+      "trajectory": "forming",
+      "probability": {
+        "type": "model_estimate",
+        "estimate": 0.4366,
+        "percent": 44,
+        "interval_low": 0.2528,
+        "interval_mid": 0.4366,
+        "interval_high": 0.6204,
+        "interval_percent": [
+          25,
+          62
         ],
-        "source_diversity_count": 1,
-        "persistence_hours": 3.7,
-        "domain_maturity": "live_multi_source",
-        "max_corroboration_score": 0.6733,
-        "corroboration_score_is_probability": false
+        "method": "evidence-log-odds-v0.2",
+        "calibration_status": "uncalibrated_model_estimate",
+        "empirically_calibrated": false,
+        "can_be_read_as_empirical_frequency": false,
+        "evidence_quality": 0.6012
       },
-      "unresolvedness": {
-        "status": "needs_solution_scan",
-        "claim": "The engine has evidence of the underlying signal, but it has not yet established that existing solutions fail or that the problem is globally unresolved.",
-        "solution_absence_verified": false
+      "time_window": {
+        "kind": "absolute_after_confirmed_precursor",
+        "low_hours": 0.0,
+        "high_hours": 24.0,
+        "start_at": "2026-08-26T06:17:00Z",
+        "end_at": "2026-08-27T06:17:00Z",
+        "human": "du 26/08 06:17 au 27/08 06:17 UTC",
+        "absolute_dates_claimed": true,
+        "expired": false
       },
-      "novelty": {
-        "status": "not_assessed",
-        "globally_unique_claim": false,
-        "reason": "Novelty requires a separate scan of products, public services, research, patents and community work; absence cannot be inferred from the news or event stream."
-      },
-      "candidate_action": {
-        "type": "tool_or_workflow_experiment",
-        "tool_archetype": "local exposure and continuity assistant",
-        "mechanism": "Combine verified hazard signals with exposure, fallback routes and a time-bounded action plan.",
-        "first_build": "Prototype a narrow local exposure and continuity assistant for the wildfire case. It must consume verified HORIZON evidence, expose uncertainty, and produce one measurable next action rather than another feed of alerts."
-      },
-      "validation": {
-        "hypothesis": "People exposed to repeated wildfire signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
-        "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
-        "reject_if": "Reject the opportunity if 10 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
-        "domain": "natural_hazards",
-        "episode_target": 10
-      },
-      "evidence": [
+      "why_now": "Le précurseur « Ihr Zug hat Verspätung. » est désormais enregistré comme événement confirmé ou dérivé par HORIZON. Sa source principale est sncf-service-alerts avec une fiabilité déclarée de 93/100. Le moteur projette maintenant la conséquence suivante : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times..",
+      "causal_chain": [
+        "public-transport capacity loss",
+        "traveler route and mode substitution",
+        "alternative-network demand pressure",
+        "road or substitute-service congestion",
+        "observable travel-time deterioration"
+      ],
+      "drivers": [
         {
-          "kind": "emerging_hypothesis",
-          "title": "Forest fires in Russian Federation",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
+          "type": "confirmed_precursor",
+          "label": "Ihr Zug hat Verspätung.",
+          "event_type": "rail_transport_disruption",
+          "support_score": 0.93,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
           "source_classes": [
-            "official_multilateral"
+            "sncf-service-alerts"
           ],
-          "source_url": null,
-          "observed_at": "2026-08-26T07:15:17.083875"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Forest fires in Brazil",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T07:15:17.083875"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Forest fires in Brazil",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T07:15:17.083875"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Forest fires in Brazil",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T07:15:17.083875"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Forest fires in Indonesia",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T07:15:17.083875"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Forest fires in Indonesia",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T07:15:17.083875"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Forest fires in Mozambique",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T07:15:17.083875"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Forest fires in Mozambique",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T07:15:17.083875"
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "last_observed_at": "2026-08-26T07:16:13.702855"
         }
       ],
-      "solution_scan": {
-        "status": "scanned",
-        "assessment": {
-          "successful_source_count": 3,
-          "minimum_sources_for_gap_assessment": 3,
-          "coverage_sufficient_for_gap_assessment": true,
-          "relevant_match_count": 20,
-          "ecosystems_with_relevant_matches": [
-            "github",
-            "hackernews",
-            "openalex"
+      "watch_next": [
+        "public-transport capacity loss",
+        "signal observable correspondant à une étape intermédiaire du mécanisme",
+        "matérialisation indépendante du résultat projeté"
+      ],
+      "probability_up_if": [
+        "un signal correspondant à l'étape suivante apparaît : public-transport capacity loss",
+        "une source indépendante confirme une conséquence intermédiaire du mécanisme",
+        "le graphe HORIZON ajoute un précurseur amont cohérent dans la même zone et fenêtre temporelle"
+      ],
+      "probability_down_if": [
+        "les indicateurs intermédiaires attendus restent absents",
+        "des observations indépendantes montrent que la pression se résorbe",
+        "la fenêtre expire sans matérialisation observable de : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times."
+      ],
+      "falsification": "Le scénario est considéré comme raté si le signal observable correspondant à « A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times. » n'apparaît pas dans la fenêtre déclarée (du 26/08 06:17 au 27/08 06:17 UTC), ou si les observations indépendantes contredisent la trajectoire avant l'échéance.",
+      "evidence": [
+        {
+          "kind": "confirmed_event",
+          "title": "Ihr Zug hat Verspätung.",
+          "fact_status": "confirmed_or_derived_event",
+          "source_classes": [
+            "sncf-service-alerts"
           ],
-          "gap_status": "substantial_existing_work_found",
-          "explanation": "Related work appears across several independent ecosystems. The opportunity is more likely an integration, workflow or underserved-segment gap than a blank space.",
-          "global_novelty_verified": false,
-          "existing_solution_effectiveness_verified": false
-        },
-        "sources": [
-          {
-            "source": "github",
-            "label": "Open-source / developer projects",
-            "status": "ok",
-            "result_count": 8
-          },
-          {
-            "source": "openalex",
-            "label": "Academic research",
-            "status": "ok",
-            "result_count": 8
-          },
-          {
-            "source": "hackernews",
-            "label": "Startup / technology community",
-            "status": "ok",
-            "result_count": 8
-          },
-          {
-            "source": "gdelt",
-            "label": "Public web & media coverage",
-            "status": "error",
-            "result_count": 0
-          }
-        ],
-        "matches": [
-          {
-            "ecosystem": "github",
-            "title": "SUSTech-data/wildfire.nvim",
-            "url": "https://github.com/SUSTech-data/wildfire.nvim",
-            "published_at": "2023-08-10T03:31:55Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "wildfire"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "hackernews",
-            "title": "B.C. government hit tweet limit amid wildfire evacuations",
-            "url": "https://www.vancouverisawesome.com/highlights/bc-government-hit-tweet-limit-amid-wildfire-evacuations-7268169",
-            "published_at": "2023-07-13T13:09:24Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "wildfire"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "hackernews",
-            "title": "California will begin backing intentional burns to control wildfire",
-            "url": "https://www.freethink.com/science/prescribed-and-cultural-burns",
-            "published_at": "2023-06-23T14:12:33Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "wildfire"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "hackernews",
-            "title": "Wildfire restored a Yosemite watershed",
-            "url": "https://news.berkeley.edu/2021/08/09/how-wildfire-restored-a-yosemite-watershed/",
-            "published_at": "2021-08-09T18:33:46Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "wildfire"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "github",
-            "title": "bradtraversy/wildfire-tracker",
-            "url": "https://github.com/bradtraversy/wildfire-tracker",
-            "published_at": "2020-11-20T14:38:18Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "wildfire"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "hackernews",
-            "title": "2,000-year-old redwoods survive wildfire at California's oldest state park",
-            "url": "https://www.nbcnews.com/news/us-news/2-000-year-old-redwoods-survive-wildfire-california-s-oldest-n1237949",
-            "published_at": "2020-08-25T04:19:26Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "wildfire"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "openalex",
-            "title": "Observed Impacts of Anthropogenic Climate Change on Wildfire in California",
-            "url": "https://doi.org/10.1029/2019ef001210",
-            "published_at": "2019-07-15",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "wildfire"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "hackernews",
-            "title": "Verizon throttled fire department’s “unlimited” data during wildfire",
-            "url": "https://arstechnica.com/tech-policy/2018/08/verizon-throttled-fire-departments-unlimited-data-during-calif-wildfire/",
-            "published_at": "2018-08-21T20:22:39Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "wildfire"
-            ],
-            "is_relevant": true
-          }
-        ]
-      }
+          "observed_at": "2026-08-26T07:16:13.702855",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "corroboration_score": 0.93,
+          "corroboration_score_is_probability": false
+        }
+      ],
+      "model_components": {
+        "precursor_confirmed": true,
+        "source_reliability": 0.93,
+        "source_diversity": 1,
+        "persistence_hours": 0.99,
+        "pattern_confidence": 0.56,
+        "graph_dependency_support": 0.0,
+        "pattern_support_count": 0,
+        "pattern_contradiction_count": 0,
+        "pattern_empirically_calibrated": false,
+        "component_scores_are_probabilities": false
+      },
+      "probability_history": [
+        {
+          "at": "2026-08-26T07:27:02.880806+00:00",
+          "percent": 44,
+          "interval_percent": [
+            25,
+            62
+          ],
+          "fact_status": "forecast_from_confirmed_event"
+        }
+      ],
+      "probability_delta_points": null,
+      "probability_direction": "new"
     },
     {
-      "problem_key": "natural_hazards:flood",
-      "domain": "natural_hazards",
-      "domain_label": "Natural hazards",
-      "event_type": "flood",
-      "problem_statement": "Repeated or independently supported signals around ‘Flood in Thailand’ may indicate a recurring human decision, coordination or access problem worth testing.",
-      "signal_strength": {
-        "label": "emerging_signal",
-        "diagnostic_score": 59,
-        "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 0,
-        "emerging_hypothesis_count": 6,
-        "independent_source_keys": [
-          "official_multilateral"
+      "scenario_key": "9bfe62c71925990e9c6494c2",
+      "candidate_id": null,
+      "event_id": 9689,
+      "domain": "transport_mobility",
+      "domain_label": "Transport & mobility",
+      "event_type": "rail_transport_disruption",
+      "headline": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "outcome": "A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times.",
+      "fact_status": "forecast_from_confirmed_event",
+      "trajectory": "forming",
+      "probability": {
+        "type": "model_estimate",
+        "estimate": 0.4363,
+        "percent": 44,
+        "interval_low": 0.2524,
+        "interval_mid": 0.4363,
+        "interval_high": 0.6201,
+        "interval_percent": [
+          25,
+          62
         ],
-        "source_diversity_count": 1,
-        "persistence_hours": 2.2,
-        "domain_maturity": "live_multi_source",
-        "max_corroboration_score": 0.6733,
-        "corroboration_score_is_probability": false
+        "method": "evidence-log-odds-v0.2",
+        "calibration_status": "uncalibrated_model_estimate",
+        "empirically_calibrated": false,
+        "can_be_read_as_empirical_frequency": false,
+        "evidence_quality": 0.601
       },
-      "unresolvedness": {
-        "status": "needs_solution_scan",
-        "claim": "The engine has evidence of the underlying signal, but it has not yet established that existing solutions fail or that the problem is globally unresolved.",
-        "solution_absence_verified": false
+      "time_window": {
+        "kind": "absolute_after_confirmed_precursor",
+        "low_hours": 0.0,
+        "high_hours": 24.0,
+        "start_at": "2026-08-26T06:18:00Z",
+        "end_at": "2026-08-27T06:18:00Z",
+        "human": "du 26/08 06:18 au 27/08 06:18 UTC",
+        "absolute_dates_claimed": true,
+        "expired": false
       },
-      "novelty": {
-        "status": "not_assessed",
-        "globally_unique_claim": false,
-        "reason": "Novelty requires a separate scan of products, public services, research, patents and community work; absence cannot be inferred from the news or event stream."
-      },
-      "candidate_action": {
-        "type": "tool_or_workflow_experiment",
-        "tool_archetype": "local exposure and continuity assistant",
-        "mechanism": "Combine verified hazard signals with exposure, fallback routes and a time-bounded action plan.",
-        "first_build": "Prototype a narrow local exposure and continuity assistant for the flood case. It must consume verified HORIZON evidence, expose uncertainty, and produce one measurable next action rather than another feed of alerts."
-      },
-      "validation": {
-        "hypothesis": "People exposed to repeated flood signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
-        "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
-        "reject_if": "Reject the opportunity if 8 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
-        "domain": "natural_hazards",
-        "episode_target": 8
-      },
-      "evidence": [
+      "why_now": "Le précurseur « Ihr Zug hat Verspätung. » est désormais enregistré comme événement confirmé ou dérivé par HORIZON. Sa source principale est sncf-service-alerts avec une fiabilité déclarée de 93/100. Le moteur projette maintenant la conséquence suivante : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times..",
+      "causal_chain": [
+        "public-transport capacity loss",
+        "traveler route and mode substitution",
+        "alternative-network demand pressure",
+        "road or substitute-service congestion",
+        "observable travel-time deterioration"
+      ],
+      "drivers": [
         {
-          "kind": "emerging_hypothesis",
-          "title": "Flood in Thailand",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
+          "type": "confirmed_precursor",
+          "label": "Ihr Zug hat Verspätung.",
+          "event_type": "rail_transport_disruption",
+          "support_score": 0.93,
+          "support_score_is_probability": false,
+          "relation": null,
+          "causal_proof": null,
           "source_classes": [
-            "official_multilateral"
+            "sncf-service-alerts"
           ],
-          "source_url": null,
-          "observed_at": "2026-08-26T07:15:17.083875"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Flood in Thailand",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T05:54:59.029884"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Flood in Peru",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T05:54:59.029884"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Flood in United States",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T05:01:50.139744"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Flood in Thailand",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T05:01:50.139744"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Flood in Mexico",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T05:01:50.139744"
+          "fact_status": "confirmed_or_derived_event",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "last_observed_at": "2026-08-26T07:16:13.702855"
         }
       ],
-      "solution_scan": {
-        "status": "not_scanned_in_this_cycle"
-      }
-    },
-    {
-      "problem_key": "natural_hazards:tropical_cyclone",
-      "domain": "natural_hazards",
-      "domain_label": "Natural hazards",
-      "event_type": "tropical_cyclone",
-      "problem_statement": "Repeated or independently supported signals around ‘Tropical Cyclone SAUDEL-26’ may indicate a recurring human decision, coordination or access problem worth testing.",
-      "signal_strength": {
-        "label": "emerging_signal",
-        "diagnostic_score": 59,
-        "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 0,
-        "emerging_hypothesis_count": 5,
-        "independent_source_keys": [
-          "official_multilateral"
-        ],
-        "source_diversity_count": 1,
-        "persistence_hours": 2.2,
-        "domain_maturity": "live_multi_source",
-        "max_corroboration_score": 0.6733,
-        "corroboration_score_is_probability": false
-      },
-      "unresolvedness": {
-        "status": "needs_solution_scan",
-        "claim": "The engine has evidence of the underlying signal, but it has not yet established that existing solutions fail or that the problem is globally unresolved.",
-        "solution_absence_verified": false
-      },
-      "novelty": {
-        "status": "not_assessed",
-        "globally_unique_claim": false,
-        "reason": "Novelty requires a separate scan of products, public services, research, patents and community work; absence cannot be inferred from the news or event stream."
-      },
-      "candidate_action": {
-        "type": "tool_or_workflow_experiment",
-        "tool_archetype": "local exposure and continuity assistant",
-        "mechanism": "Combine verified hazard signals with exposure, fallback routes and a time-bounded action plan.",
-        "first_build": "Prototype a narrow local exposure and continuity assistant for the tropical cyclone case. It must consume verified HORIZON evidence, expose uncertainty, and produce one measurable next action rather than another feed of alerts."
-      },
-      "validation": {
-        "hypothesis": "People exposed to repeated tropical cyclone signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
-        "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
-        "reject_if": "Reject the opportunity if 7 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
-        "domain": "natural_hazards",
-        "episode_target": 7
-      },
+      "watch_next": [
+        "public-transport capacity loss",
+        "signal observable correspondant à une étape intermédiaire du mécanisme",
+        "matérialisation indépendante du résultat projeté"
+      ],
+      "probability_up_if": [
+        "un signal correspondant à l'étape suivante apparaît : public-transport capacity loss",
+        "une source indépendante confirme une conséquence intermédiaire du mécanisme",
+        "le graphe HORIZON ajoute un précurseur amont cohérent dans la même zone et fenêtre temporelle"
+      ],
+      "probability_down_if": [
+        "les indicateurs intermédiaires attendus restent absents",
+        "des observations indépendantes montrent que la pression se résorbe",
+        "la fenêtre expire sans matérialisation observable de : A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times."
+      ],
+      "falsification": "Le scénario est considéré comme raté si le signal observable correspondant à « A substantial public-transport disruption can push some travelers toward substitute routes and modes, which may increase road congestion, crowd alternative services and lengthen door-to-door travel times. » n'apparaît pas dans la fenêtre déclarée (du 26/08 06:18 au 27/08 06:18 UTC), ou si les observations indépendantes contredisent la trajectoire avant l'échéance.",
       "evidence": [
         {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone SAUDEL-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
+          "kind": "confirmed_event",
+          "title": "Ihr Zug hat Verspätung.",
+          "fact_status": "confirmed_or_derived_event",
           "source_classes": [
-            "official_multilateral"
+            "sncf-service-alerts"
           ],
-          "source_url": null,
-          "observed_at": "2026-08-26T07:15:17.083875"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone LALA-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T07:15:17.083875"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone SAUDEL-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T05:54:59.029884"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone SAUDEL-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T05:01:50.139744"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone ISELLE-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T05:01:50.139744"
+          "observed_at": "2026-08-26T07:16:13.702855",
+          "first_observed_at": "2026-08-26T07:16:13.702855",
+          "corroboration_score": 0.93,
+          "corroboration_score_is_probability": false
         }
       ],
-      "solution_scan": {
-        "status": "not_scanned_in_this_cycle"
-      }
-    },
-    {
-      "problem_key": "natural_hazards:earthquake",
-      "domain": "natural_hazards",
-      "domain_label": "Natural hazards",
-      "event_type": "earthquake",
-      "problem_statement": "Repeated or independently supported signals around ‘Earthquake in Southwest Of Africa’ may indicate a recurring human decision, coordination or access problem worth testing.",
-      "signal_strength": {
-        "label": "weak_signal",
-        "diagnostic_score": 27,
-        "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 0,
-        "emerging_hypothesis_count": 1,
-        "independent_source_keys": [
-          "official_multilateral"
-        ],
-        "source_diversity_count": 1,
-        "persistence_hours": 0.0,
-        "domain_maturity": "live_multi_source",
-        "max_corroboration_score": 0.6733,
-        "corroboration_score_is_probability": false
+      "model_components": {
+        "precursor_confirmed": true,
+        "source_reliability": 0.93,
+        "source_diversity": 1,
+        "persistence_hours": 0.97,
+        "pattern_confidence": 0.56,
+        "graph_dependency_support": 0.0,
+        "pattern_support_count": 0,
+        "pattern_contradiction_count": 0,
+        "pattern_empirically_calibrated": false,
+        "component_scores_are_probabilities": false
       },
-      "unresolvedness": {
-        "status": "needs_solution_scan",
-        "claim": "The engine has evidence of the underlying signal, but it has not yet established that existing solutions fail or that the problem is globally unresolved.",
-        "solution_absence_verified": false
-      },
-      "novelty": {
-        "status": "not_assessed",
-        "globally_unique_claim": false,
-        "reason": "Novelty requires a separate scan of products, public services, research, patents and community work; absence cannot be inferred from the news or event stream."
-      },
-      "candidate_action": {
-        "type": "tool_or_workflow_experiment",
-        "tool_archetype": "local exposure and continuity assistant",
-        "mechanism": "Combine verified hazard signals with exposure, fallback routes and a time-bounded action plan.",
-        "first_build": "Prototype a narrow local exposure and continuity assistant for the earthquake case. It must consume verified HORIZON evidence, expose uncertainty, and produce one measurable next action rather than another feed of alerts."
-      },
-      "validation": {
-        "hypothesis": "People exposed to repeated earthquake signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
-        "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
-        "reject_if": "Reject the opportunity if 3 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
-        "domain": "natural_hazards",
-        "episode_target": 3
-      },
-      "evidence": [
+      "probability_history": [
         {
-          "kind": "emerging_hypothesis",
-          "title": "Earthquake in Southwest Of Africa",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
+          "at": "2026-08-26T07:27:02.880806+00:00",
+          "percent": 44,
+          "interval_percent": [
+            25,
+            62
           ],
-          "source_url": null,
-          "observed_at": "2026-08-26T07:15:17.083875"
+          "fact_status": "forecast_from_confirmed_event"
         }
       ],
-      "solution_scan": {
-        "status": "not_scanned_in_this_cycle"
-      }
+      "probability_delta_points": null,
+      "probability_direction": "new"
     }
   ],
   "critical_semantics": {
     "public_world_evidence_only": true,
     "personal_data_included": false,
     "api_key_included": false,
-    "diagnostic_score_is_probability": false,
-    "anomaly_index_is_probability": false,
-    "no_match_means_global_novelty": false,
-    "solution_scan_scope_is_limited": true,
-    "human_validation_required_before_build": true
+    "model_probability_is_certainty": false,
+    "model_probability_is_empirical_frequency": false,
+    "empirical_probability_calibration_enabled": false,
+    "unconfirmed_candidates_remain_unconfirmed": true,
+    "confirmed_precursor_confirms_outcome": false,
+    "dependency_edge_is_causal_proof": false,
+    "forecasts_are_time_bounded": true,
+    "every_forecast_has_falsification_rule": true,
+    "probability_history_is_model_repricing_history": true
   }
 }
