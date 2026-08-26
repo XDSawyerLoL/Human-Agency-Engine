@@ -77,21 +77,23 @@ jobs:
         shell: bash
         env:
           METEOFRANCE_APPLICATION_ID: ${{ secrets.METEOFRANCE_APPLICATION_ID || vars.METEOFRANCE_APPLICATION_ID }}
-          WINDY_POINT_FORECAST_API_KEY: ${{ secrets.WINDY_POINT_FORECAST_API_KEY || vars.WINDY_POINT_FORECAST_API_KEY || secrets.POINT_API_KEY || vars.POINT_API_KEY || secrets.WINDY_KEY || vars.WINDY_KEY }}
+          WINDY_POINT_FORECAST_API_KEY: ${{ secrets.WINDY_POINT_FORECAST_API_KEY || vars.WINDY_POINT_FORECAST_API_KEY || secrets.WINDY_KEY || vars.WINDY_KEY }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY || vars.FRED_API_KEY }}
           METACULUS_API_KEY: ${{ secrets.METACULUS_API_KEY || vars.METACULUS_API_KEY }}
           COPERNICUS_API_KEY: ${{ secrets.COPERNICUS_API_KEY || vars.COPERNICUS_API_KEY }}
           FORECAST_API_KEY: ${{ secrets.FORECAST_API_KEY || vars.FORECAST_API_KEY || secrets.FORESCAST_API_KEY || vars.FORESCAST_API_KEY }}
+          POINT_API_KEY: ${{ secrets.POINT_API_KEY || vars.POINT_API_KEY }}
           HORIZON_COLLECTOR_WINDY_POINTS_JSON: ${{ vars.HORIZON_COLLECTOR_WINDY_POINTS_JSON }}
         run: |
           set -euo pipefail
           for entry in \
             "Meteo-France:$METEOFRANCE_APPLICATION_ID" \
-            "Windy/Point:$WINDY_POINT_FORECAST_API_KEY" \
+            "Windy:$WINDY_POINT_FORECAST_API_KEY" \
             "FRED:$FRED_API_KEY" \
             "Metaculus:$METACULUS_API_KEY" \
             "Copernicus:$COPERNICUS_API_KEY" \
-            "Forecast alias:$FORECAST_API_KEY"; do
+            "ForecastAPI:$FORECAST_API_KEY" \
+            "Point Knowledge:$POINT_API_KEY"; do
             label="${entry%%:*}"; value="${entry#*:}"
             if [ -n "$value" ]; then echo "$label credential: configured"; else echo "$label credential: missing"; fi
           done
@@ -101,6 +103,7 @@ jobs:
             echo "Windy collection points: default France watch grid will be used"
           fi
           echo "Metaculus is reference-only until its data-use terms explicitly permit model use."
+          echo "Point Knowledge is kept separate from Windy and reserved for evidence/reference enrichment."
           echo "Secret values are intentionally never printed."
 
       - name: Restore previous GitHub-only state
@@ -158,11 +161,12 @@ jobs:
           DATABASE_URL: sqlite:///./horizon-github.db
           API_KEY: change-me
           METEOFRANCE_APPLICATION_ID: ${{ secrets.METEOFRANCE_APPLICATION_ID || vars.METEOFRANCE_APPLICATION_ID }}
-          WINDY_POINT_FORECAST_API_KEY: ${{ secrets.WINDY_POINT_FORECAST_API_KEY || vars.WINDY_POINT_FORECAST_API_KEY || secrets.POINT_API_KEY || vars.POINT_API_KEY || secrets.WINDY_KEY || vars.WINDY_KEY }}
+          WINDY_POINT_FORECAST_API_KEY: ${{ secrets.WINDY_POINT_FORECAST_API_KEY || vars.WINDY_POINT_FORECAST_API_KEY || secrets.WINDY_KEY || vars.WINDY_KEY }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY || vars.FRED_API_KEY }}
           METACULUS_API_KEY: ${{ secrets.METACULUS_API_KEY || vars.METACULUS_API_KEY }}
           COPERNICUS_API_KEY: ${{ secrets.COPERNICUS_API_KEY || vars.COPERNICUS_API_KEY }}
           FORECAST_API_KEY: ${{ secrets.FORECAST_API_KEY || vars.FORECAST_API_KEY || secrets.FORESCAST_API_KEY || vars.FORESCAST_API_KEY }}
+          POINT_API_KEY: ${{ secrets.POINT_API_KEY || vars.POINT_API_KEY }}
           HORIZON_COLLECTOR_ENABLED: 'true'
           HORIZON_COLLECTOR_MAX_SOURCES_PER_CYCLE: '10'
           HORIZON_COLLECTOR_METEOALARM_ALL_EUROPE: 'true'
