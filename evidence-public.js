@@ -1,8 +1,7 @@
 (() => {
   "use strict";
 
-  const REPO = "XDSawyerLoL/Human-Agency-Engine";
-  const SNAPSHOT_URL = `https://raw.githubusercontent.com/${REPO}/evidence-live-data/evidence-live.json`;
+  const SNAPSHOT_URL = "/data/evidence-live.json";
   const $ = (selector) => document.querySelector(selector);
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"})[c]);
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -87,27 +86,7 @@
   }
   function primaryHtml(f){
     const p=probability(f),[lo,hi]=interval(f),d=deltaData(f),c=f?.consolidation||{},score=Number(c.score),level=c.level||"en cours",count=fusionCount(f);
-    return `<article class="forecast-hero">
-      <div class="forecast-main">
-        <div class="forecast-copy">
-          <div class="forecast-meta"><span class="pill hot">${esc(trajectory(f))}</span><span class="pill">${esc(origin(f))}</span><span class="pill">${esc(DOMAIN_LABELS[f.domain]||f.domain_label||f.domain||"Monde")}</span>${count>1?`<span class="pill warn">${count} alertes fusionnées</span>`:""}</div>
-          <h3>${esc(f.headline||f.outcome||"Scénario en formation")}</h3>
-          <p class="why">${esc(f.why_now||"Le moteur consolide encore l’explication de ce scénario.")}</p>
-          <div class="window-box"><small>FENÊTRE DE MATÉRIALISATION</small><strong>${esc(f?.time_window?.human||"Fenêtre encore indéterminée")}</strong></div>
-          <div class="trend-line">${sparkline(f)}<div class="trend-copy"><b>${esc(trendText(f))}</b><small>évolution de l’estimation au fil des cycles</small></div></div>
-        </div>
-        <div class="probability-panel"><div class="probability-ring" style="--p:${p}"><span><strong>${p}</strong><em>%</em></span></div><small>ESTIMATION ÉVIDENCE</small><p>Intervalle ${lo}–${hi} %</p><span class="delta ${d.cls}">${esc(d.label)}</span></div>
-        <aside class="consolidation-panel">
-          <div class="consolidation-head"><div><small>CONSOLIDATION</small><strong>${esc(level)}</strong></div><div class="consolidation-score">${Number.isFinite(score)?Math.round(score):"—"}<small>/100</small></div></div>
-          <div class="source-chips">${sourceChips(c)}</div><div class="dimension-list">${dimensions(c)}</div>
-          <p class="probability-note">Le ${p}% vient du modèle Évidence. Le score de consolidation mesure la solidité des entrées : <strong>ce n’est pas une seconde probabilité.</strong>${count>1?` ${count} alertes compatibles ont été fusionnées sans multiplier le pourcentage.`:""}</p>
-        </aside>
-      </div>
-      <div class="forecast-explain">
-        <div class="evidence-story"><div class="subhead">COMMENT LE SCÉNARIO SE CONSTRUIT</div><div class="causal-chain">${chainHtml(f)}</div><div class="evidence-columns"><div class="evidence-box good"><strong>CE QUI LE RENFORCE</strong><ul>${list([...(c.strengths||[]),...(f.probability_up_if||[])].slice(0,5),"Aucun renforcement supplémentaire publié.")}</ul></div><div class="evidence-box bad"><strong>CE QUI LE FRAGILISE</strong><ul>${list([...(c.weaknesses||[]),...(f.probability_down_if||[])].slice(0,5),"Aucune faiblesse supplémentaire publiée.")}</ul></div></div></div>
-        <aside class="scenario-panel"><div class="subhead">DEUX ISSUES POUR CETTE FENÊTRE</div>${competitionHtml(f)}${divergenceHtml(f)}<div class="falsification"><small>CONDITION D’INVALIDATION</small><p>${esc(f.falsification||"La règle d’invalidation n’est pas encore publiée.")}</p></div></aside>
-      </div>
-    </article>`;
+    return `<article class="forecast-hero"><div class="forecast-main"><div class="forecast-copy"><div class="forecast-meta"><span class="pill hot">${esc(trajectory(f))}</span><span class="pill">${esc(origin(f))}</span><span class="pill">${esc(DOMAIN_LABELS[f.domain]||f.domain_label||f.domain||"Monde")}</span>${count>1?`<span class="pill warn">${count} alertes fusionnées</span>`:""}</div><h3>${esc(f.headline||f.outcome||"Scénario en formation")}</h3><p class="why">${esc(f.why_now||"Le moteur consolide encore l’explication de ce scénario.")}</p><div class="window-box"><small>FENÊTRE DE MATÉRIALISATION</small><strong>${esc(f?.time_window?.human||"Fenêtre encore indéterminée")}</strong></div><div class="trend-line">${sparkline(f)}<div class="trend-copy"><b>${esc(trendText(f))}</b><small>évolution de l’estimation au fil des cycles</small></div></div></div><div class="probability-panel"><div class="probability-ring" style="--p:${p}"><span><strong>${p}</strong><em>%</em></span></div><small>ESTIMATION ÉVIDENCE</small><p>Intervalle ${lo}–${hi} %</p><span class="delta ${d.cls}">${esc(d.label)}</span></div><aside class="consolidation-panel"><div class="consolidation-head"><div><small>CONSOLIDATION</small><strong>${esc(level)}</strong></div><div class="consolidation-score">${Number.isFinite(score)?Math.round(score):"—"}<small>/100</small></div></div><div class="source-chips">${sourceChips(c)}</div><div class="dimension-list">${dimensions(c)}</div><p class="probability-note">Le ${p}% vient du modèle Évidence. Le score de consolidation mesure la solidité des entrées : <strong>ce n’est pas une seconde probabilité.</strong>${count>1?` ${count} alertes compatibles ont été fusionnées sans multiplier le pourcentage.`:""}</p></aside></div><div class="forecast-explain"><div class="evidence-story"><div class="subhead">COMMENT LE SCÉNARIO SE CONSTRUIT</div><div class="causal-chain">${chainHtml(f)}</div><div class="evidence-columns"><div class="evidence-box good"><strong>CE QUI LE RENFORCE</strong><ul>${list([...(c.strengths||[]),...(f.probability_up_if||[])].slice(0,5),"Aucun renforcement supplémentaire publié.")}</ul></div><div class="evidence-box bad"><strong>CE QUI LE FRAGILISE</strong><ul>${list([...(c.weaknesses||[]),...(f.probability_down_if||[])].slice(0,5),"Aucune faiblesse supplémentaire publiée.")}</ul></div></div></div><aside class="scenario-panel"><div class="subhead">DEUX ISSUES POUR CETTE FENÊTRE</div>${competitionHtml(f)}${divergenceHtml(f)}<div class="falsification"><small>CONDITION D’INVALIDATION</small><p>${esc(f.falsification||"La règle d’invalidation n’est pas encore publiée.")}</p></div></aside></div></article>`;
   }
   function cardHtml(f){
     const p=probability(f),d=deltaData(f),c=f?.consolidation||{},count=fusionCount(f);
@@ -115,19 +94,12 @@
   }
   function render(snapshot){
     const forecasts=[...(snapshot?.forecasts||[])].sort((a,b)=>probability(b)-probability(a));
-    $("#metricEvidence").textContent=snapshot?.summary?.evidence_items_considered??"—";
-    $("#metricForecasts").textContent=forecasts.length;
-    $("#metricSources").textContent=snapshot?.summary?.source_families??"—";
-    $("#metricRising").textContent=forecasts.filter(f=>f?.probability_direction==="rising").length;
-    $("#metricTop").textContent=forecasts.length?`${probability(forecasts[0])}%`:"—";
-    $("#snapshotState").textContent=snapshot?.summary?.scenario_fusion_enabled?"Évidence fusion prédictive active":snapshot?.engine?.includes("v0.3")?"Évidence multi-source actif":"Évidence prédictif actif";
-    $("#snapshotTime").textContent=snapshot?.generated_at?`snapshot ${relativeTime(snapshot.generated_at)}`:"snapshot sans horodatage";
-    $("#liveBadge").dataset.state="live";$("#liveText").textContent="flux actif";
+    $("#metricEvidence").textContent=snapshot?.summary?.evidence_items_considered??"—";$("#metricForecasts").textContent=forecasts.length;$("#metricSources").textContent=snapshot?.summary?.source_families??"—";$("#metricRising").textContent=forecasts.filter(f=>f?.probability_direction==="rising").length;$("#metricTop").textContent=forecasts.length?`${probability(forecasts[0])}%`:"—";$("#snapshotState").textContent=snapshot?.summary?.scenario_fusion_enabled?"Évidence fusion prédictive active":snapshot?.engine?.includes("v0.3")?"Évidence multi-source actif":"Évidence prédictif actif";$("#snapshotTime").textContent=snapshot?.generated_at?`snapshot ${relativeTime(snapshot.generated_at)}`:"snapshot sans horodatage";$("#liveBadge").dataset.state="live";$("#liveText").textContent="flux Hostinger actif";
     if(!forecasts.length){$("#primaryForecast").innerHTML=`<div class="empty-state"><strong>Aucun scénario assez solide à publier.</strong><p>Le moteur fonctionne, mais il refuse de fabriquer une prévision uniquement pour remplir le tableau de bord. Les prochains cycles réévalueront les signaux.</p></div>`;$("#forecastGrid").innerHTML="";return;}
     $("#primaryForecast").innerHTML=primaryHtml(forecasts[0]);$("#forecastGrid").innerHTML=forecasts.slice(1).map(cardHtml).join("");
   }
   async function load(){
-    try{const r=await fetch(`${SNAPSHOT_URL}?t=${Date.now()}`,{cache:"no-store"});if(!r.ok)throw new Error(`HTTP ${r.status}`);const snapshot=await r.json();if(!Array.isArray(snapshot?.forecasts))throw new Error("snapshot prédictif pas encore publié");render(snapshot)}catch(err){$("#liveBadge").dataset.state="error";$("#liveText").textContent="flux en transition";$("#snapshotState").textContent="Publication prédictive en transition";$("#snapshotTime").textContent=String(err.message||err);$("#primaryForecast").innerHTML=`<div class="empty-state"><strong>Le nouveau flux prédictif n’est pas encore disponible.</strong><p>Le cockpit n’affiche pas l’ancien radar de problèmes comme s’il s’agissait de prédictions. Il attend le snapshot Évidence v2/v0.3.</p></div>`;}
+    try{const r=await fetch(`${SNAPSHOT_URL}?t=${Date.now()}`,{cache:"no-store"});if(!r.ok)throw new Error(`HTTP ${r.status}`);const snapshot=await r.json();if(!Array.isArray(snapshot?.forecasts))throw new Error("snapshot prédictif pas encore publié");render(snapshot)}catch(err){$("#liveBadge").dataset.state="error";$("#liveText").textContent="flux Hostinger en transition";$("#snapshotState").textContent="Publication prédictive Hostinger en transition";$("#snapshotTime").textContent=String(err.message||err);$("#primaryForecast").innerHTML=`<div class="empty-state"><strong>Le flux prédictif Hostinger n’est pas encore disponible.</strong><p>Le cockpit attend /data/evidence-live.json sur ce même hébergement et ne retombe plus sur GitHub pour les données.</p></div>`;}
   }
   load();setInterval(load,5*60*1000);
 })();
