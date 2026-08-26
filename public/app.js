@@ -3,6 +3,7 @@
   const $ = s => document.querySelector(s);
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const clamp = (v,a,b) => Math.max(a,Math.min(b,Number(v)||0));
+  const SNAPSHOT_ENDPOINTS = ['./data/evidence-live.json', '/api/snapshot'];
 
   const DOMAIN = {
     natural_hazards:'Risques naturels', weather_climate:'Météo & climat', cyber_technology:'Cyber & espace',
@@ -155,7 +156,19 @@
 
   async function load() {
     try {
-      const r=await fetch(`/api/snapshot?t=${Date.now()}`,{cache:'no-store'}); if(!r.ok) throw new Error(`HTTP ${r.status}`); const data=await r.json(); if(!Array.isArray(data?.forecasts)) throw new Error('snapshot invalide'); render(data);
+      let data=null, lastError=null;
+      for (const endpoint of SNAPSHOT_ENDPOINTS) {
+        try {
+          const separator=endpoint.includes('?')?'&':'?';
+          const r=await fetch(`${endpoint}${separator}t=${Date.now()}`,{cache:'no-store'});
+          if(!r.ok) throw new Error(`HTTP ${r.status}`);
+          const candidate=await r.json();
+          if(!Array.isArray(candidate?.forecasts)) throw new Error('snapshot invalide');
+          data=candidate; break;
+        } catch(error) { lastError=error; }
+      }
+      if(!data) throw lastError||new Error('snapshot indisponible');
+      render(data);
     } catch(e) {
       $('#liveDot').dataset.state='error'; $('#snapshotTime').textContent='reconnexion';
       $('#primaryForecast').innerHTML=`<div class="loading-card error"><div><strong>Le champ prédictif se reconnecte.</strong><small>${esc(e.message)}</small></div></div>`;

@@ -1,6 +1,15 @@
 name: Redeploy HORIZON to Hostinger
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - public/**
+      - Dockerfile.evidence-web
+      - docker-compose.hostinger.yml
+      - hostinger/evidence-nginx.conf
+      - .github/workflows/deploy-hostinger.yml
   workflow_dispatch:
 
 jobs:
