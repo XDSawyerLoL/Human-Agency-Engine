@@ -11,6 +11,7 @@ import httpx
 
 from app.db import SessionLocal
 from app.horizon_event_graph_schemas import HorizonEventGraphBuildRequest
+from app.services.evidence_consolidation import EvidenceConsolidator
 from app.services.evidence_forecast_engine import EvidenceForecastEngine
 from app.services.horizon_briefing import HorizonWorldBriefingService
 from app.services.horizon_event_graph import HorizonEventGraphService
@@ -51,7 +52,7 @@ def _clean_evidence(item: dict[str, Any]) -> dict[str, Any]:
 
 def sanitize_forecast(item: dict[str, Any]) -> dict[str, Any]:
     probability = dict(item.get("probability") or {})
-    return {
+    sanitized = {
         "scenario_key": item.get("scenario_key"),
         "candidate_id": item.get("candidate_id"),
         "event_id": item.get("event_id"),
@@ -87,6 +88,15 @@ def sanitize_forecast(item: dict[str, Any]) -> dict[str, Any]:
         "evidence": [_clean_evidence(evidence) for evidence in item.get("evidence") or []][:8],
         "model_components": dict(item.get("model_components") or {}),
     }
+    consensus = item.get("consensus_reference")
+    if isinstance(consensus, dict) and consensus.get("authorized") is True:
+        sanitized["consensus_reference"] = {
+            "authorized": True,
+            "type": consensus.get("type"),
+            "label": consensus.get("label"),
+            "percent": consensus.get("percent"),
+        }
+    return sanitized
 
 
 def _load_snapshot(path: Path | None) -> dict[str, Any]:
@@ -153,8 +163,7 @@ def _attach_probability_history(
         current_point = _history_point(forecast, generated_at)
         if current_point.get("percent") is not None:
             history.append(current_point)
-        history = history[-MAX_HISTORY_POINTS:]
-        forecast["probability_history"] = history
+        forecast["probability_history"] = history[-MAX_HISTORY_POINTS:]
 
         current_percent = (forecast.get("probability") or {}).get("percent")
         if current_percent is None or previous_percent is None:
@@ -229,6 +238,10 @@ def build_snapshot(
 
     generated_at = datetime.now(timezone.utc).isoformat()
     public_forecasts = [sanitize_forecast(item) for item in result.get("forecasts") or []]
+    consolidator = EvidenceConsolidator()
+    for forecast in public_forecasts:
+        forecast["consolidation"] = consolidator.consolidate(forecast)
+
     _attach_probability_history(
         public_forecasts,
         previous_snapshot=previous_snapshot or {},
@@ -236,15 +249,19 @@ def build_snapshot(
     )
     summary = dict(result.get("summary") or {})
     source_families = {
-        source
+        str(source.get("key"))
         for forecast in public_forecasts
-        for driver in forecast.get("drivers") or []
-        for source in driver.get("source_classes") or []
+        for source in (forecast.get("consolidation") or {}).get("source_families") or []
+        if source.get("key")
     }
+    external_consensus_enabled = any(
+        bool(((forecast.get("consolidation") or {}).get("divergence") or {}).get("external_consensus_available"))
+        for forecast in public_forecasts
+    )
 
     return {
         "schema": "evidence-public-snapshot-v2",
-        "engine": "evidence-predictive-public-v0.2",
+        "engine": "evidence-predictive-public-v0.3",
         "generated_at": generated_at,
         "runtime_mode": "remote-horizon" if remote else "github-only-horizon",
         "status": "live",
@@ -259,9 +276,13 @@ def build_snapshot(
             "empirically_calibrated_predictions": summary.get("empirically_calibrated_predictions", 0),
             "dependency_edges_considered": summary.get("dependency_edges_considered", 0),
             "source_families": len(source_families),
+            "active_source_families": sorted(source_families),
             "probability_history_enabled": True,
             "probability_history_max_points": MAX_HISTORY_POINTS,
             "numeric_model_estimates_enabled": True,
+            "consolidation_explanation_enabled": True,
+            "scenario_competition_enabled": True,
+            "external_consensus_enabled": external_consensus_enabled,
             "empirical_probability_calibration_enabled": False,
         },
         "forecasts": public_forecasts,
@@ -271,6 +292,7 @@ def build_snapshot(
             "api_key_included": False,
             "model_probability_is_certainty": False,
             "model_probability_is_empirical_frequency": False,
+            "consolidation_score_is_probability": False,
             "empirical_probability_calibration_enabled": False,
             "unconfirmed_candidates_remain_unconfirmed": True,
             "confirmed_precursor_confirms_outcome": False,
@@ -278,6 +300,7 @@ def build_snapshot(
             "forecasts_are_time_bounded": True,
             "every_forecast_has_falsification_rule": True,
             "probability_history_is_model_repricing_history": True,
+            "external_consensus_requires_explicit_authorization": True,
         },
     }
 
@@ -287,7 +310,6 @@ def main() -> None:
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--previous", default=None)
     parser.add_argument("--forecast-limit", type=int, default=None)
-    # Legacy flags remain accepted so older workflow invocations do not break mid-deploy.
     parser.add_argument("--opportunity-limit", type=int, default=None, help=argparse.SUPPRESS)
     parser.add_argument("--solution-scan-top", type=int, default=None, help=argparse.SUPPRESS)
     args = parser.parse_args()
@@ -313,6 +335,7 @@ def main() -> None:
                 "runtime_mode": snapshot["runtime_mode"],
                 "forecasts": len(snapshot["forecasts"]),
                 "history_enabled": snapshot["summary"]["probability_history_enabled"],
+                "consolidation_enabled": snapshot["summary"]["consolidation_explanation_enabled"],
                 "calibrated": snapshot["summary"]["empirically_calibrated_predictions"],
             },
             ensure_ascii=False,
