@@ -1,14 +1,14 @@
 {
   "schema": "evidence-public-snapshot-v1",
   "engine": "evidence-human-signal-public-v1",
-  "generated_at": "2026-08-26T03:36:02.141348+00:00",
+  "generated_at": "2026-08-26T05:05:40.853807+00:00",
   "runtime_mode": "github-only-horizon",
   "status": "live",
   "summary": {
     "evidence_items_considered": 400,
-    "opportunities_returned": 5,
-    "strong_signals": 1,
-    "emerging_signals": 4,
+    "opportunities_returned": 6,
+    "strong_signals": 2,
+    "emerging_signals": 3,
     "solution_scans_attempted": 3,
     "diagnostic_scores_are_probabilities": false,
     "solution_absence_verified": false,
@@ -20,12 +20,12 @@
       "domain": "supply_fuel",
       "domain_label": "Supply chains & fuel",
       "event_type": "fuel_supply_disruption",
-      "problem_statement": "Repeated or independently supported signals around ‘Ruptures temporaires de SP98 — département 95 (19/104)’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘Ruptures temporaires de SP98 — département 95 (20/105)’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
         "label": "strong_signal",
         "diagnostic_score": 100,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 198,
+        "confirmed_evidence_count": 157,
         "emerging_hypothesis_count": 0,
         "independent_source_keys": [
           "fr-fuel-ruptures-live"
@@ -62,12 +62,12 @@
       "evidence": [
         {
           "kind": "confirmed_event",
-          "title": "Ruptures temporaires de SP98 — département 95 (19/104)",
+          "title": "Ruptures temporaires de SP98 — département 95 (20/105)",
           "fact_status": "confirmed_or_derived_event",
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T03:31:01.612880"
+          "observed_at": "2026-08-26T05:02:13.330739"
         },
         {
           "kind": "confirmed_event",
@@ -76,7 +76,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T03:31:01.612880"
+          "observed_at": "2026-08-26T05:02:13.330739"
         },
         {
           "kind": "confirmed_event",
@@ -85,7 +85,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T03:31:01.612880"
+          "observed_at": "2026-08-26T05:02:13.330739"
         },
         {
           "kind": "confirmed_event",
@@ -94,7 +94,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T03:31:01.612880"
+          "observed_at": "2026-08-26T05:02:13.330739"
         },
         {
           "kind": "confirmed_event",
@@ -103,7 +103,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T03:31:01.612880"
+          "observed_at": "2026-08-26T05:02:13.330739"
         },
         {
           "kind": "confirmed_event",
@@ -112,7 +112,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T03:31:01.612880"
+          "observed_at": "2026-08-26T05:02:13.330739"
         },
         {
           "kind": "confirmed_event",
@@ -121,7 +121,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T03:31:01.612880"
+          "observed_at": "2026-08-26T05:02:13.330739"
         },
         {
           "kind": "confirmed_event",
@@ -130,7 +130,7 @@
           "source": "fr-fuel-ruptures-live",
           "source_classes": [],
           "source_url": "https://donnees.roulez-eco.fr/opendata/instantane_ruptures",
-          "observed_at": "2026-08-26T03:31:01.612880"
+          "observed_at": "2026-08-26T05:02:13.330739"
         }
       ],
       "solution_scan": {
@@ -274,22 +274,277 @@
       }
     },
     {
+      "problem_key": "transport_mobility:rail_transport_disruption",
+      "domain": "transport_mobility",
+      "domain_label": "Transport & mobility",
+      "event_type": "rail_transport_disruption",
+      "problem_statement": "Repeated or independently supported signals around ‘Paris Nord - St Quentin Fin de perturbation publiée à 06:53’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "signal_strength": {
+        "label": "strong_signal",
+        "diagnostic_score": 100,
+        "diagnostic_score_is_probability": false,
+        "confirmed_evidence_count": 43,
+        "emerging_hypothesis_count": 0,
+        "independent_source_keys": [
+          "sncf-service-alerts"
+        ],
+        "source_diversity_count": 1,
+        "persistence_hours": 1.3,
+        "domain_maturity": "live_single_source",
+        "max_corroboration_score": 0.0,
+        "corroboration_score_is_probability": false
+      },
+      "unresolvedness": {
+        "status": "needs_solution_scan",
+        "claim": "The engine has evidence of the underlying signal, but it has not yet established that existing solutions fail or that the problem is globally unresolved.",
+        "solution_absence_verified": false
+      },
+      "novelty": {
+        "status": "not_assessed",
+        "globally_unique_claim": false,
+        "reason": "Novelty requires a separate scan of products, public services, research, patents and community work; absence cannot be inferred from the news or event stream."
+      },
+      "candidate_action": {
+        "type": "tool_or_workflow_experiment",
+        "tool_archetype": "mobility continuity assistant",
+        "mechanism": "Aggregate disruption evidence, estimate practical exposure and propose verified fallback options.",
+        "first_build": "Prototype a narrow mobility continuity assistant for the rail transport disruption case. It must consume verified HORIZON evidence, expose uncertainty, and produce one measurable next action rather than another feed of alerts."
+      },
+      "validation": {
+        "hypothesis": "People exposed to repeated rail transport disruption signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
+        "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
+        "reject_if": "Reject the opportunity if 10 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
+        "domain": "transport_mobility",
+        "episode_target": 10
+      },
+      "evidence": [
+        {
+          "kind": "confirmed_event",
+          "title": "Paris Nord - St Quentin Fin de perturbation publiée à 06:53",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-26T05:02:19.665897"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Weitere Informationen:",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-26T05:02:19.665897"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Ihr Zug hat Verspätung.",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-26T05:02:19.665897"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Weitere Informationen:",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-26T05:02:19.665897"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Ihr Zug hat Verspätung.",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-26T05:02:19.665897"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "Limitation du parcours du train.",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-26T05:02:19.665897"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "20.08.,La Baule,Störung einer Anlage im Bahnhof",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-26T05:02:19.665897"
+        },
+        {
+          "kind": "confirmed_event",
+          "title": "861363 : gare(s) non desservie(s).",
+          "fact_status": "confirmed_or_derived_event",
+          "source": "sncf-service-alerts",
+          "source_classes": [],
+          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
+          "observed_at": "2026-08-26T05:02:19.665897"
+        }
+      ],
+      "solution_scan": {
+        "status": "scanned",
+        "assessment": {
+          "successful_source_count": 3,
+          "minimum_sources_for_gap_assessment": 3,
+          "coverage_sufficient_for_gap_assessment": true,
+          "relevant_match_count": 7,
+          "ecosystems_with_relevant_matches": [
+            "github",
+            "openalex"
+          ],
+          "gap_status": "related_work_found",
+          "explanation": "Existing work is visible, but this scan does not establish whether it solves the observed human friction end-to-end. Compare mechanisms and user outcomes before rejecting the opportunity.",
+          "global_novelty_verified": false,
+          "existing_solution_effectiveness_verified": false
+        },
+        "sources": [
+          {
+            "source": "github",
+            "label": "Open-source / developer projects",
+            "status": "ok",
+            "result_count": 1
+          },
+          {
+            "source": "openalex",
+            "label": "Academic research",
+            "status": "ok",
+            "result_count": 8
+          },
+          {
+            "source": "hackernews",
+            "label": "Startup / technology community",
+            "status": "ok",
+            "result_count": 1
+          },
+          {
+            "source": "gdelt",
+            "label": "Public web & media coverage",
+            "status": "error",
+            "result_count": 0
+          }
+        ],
+        "matches": [
+          {
+            "ecosystem": "openalex",
+            "title": "Impact Estimation of Unplanned Urban Rail Disruptions on Public Transport Passengers: A Multi-Agent Based Simulation Approach",
+            "url": "https://doi.org/10.3390/ijerph19159052",
+            "published_at": "2022-07-25",
+            "relevance_score": 55,
+            "relevance_score_is_probability": false,
+            "matched_terms": [
+              "rail",
+              "transport"
+            ],
+            "is_relevant": true
+          },
+          {
+            "ecosystem": "openalex",
+            "title": "Reliability of the intermodal transport network under disrupted conditions in the rail freight transport",
+            "url": "https://doi.org/10.1016/j.rtbm.2021.100686",
+            "published_at": "2021-06-22",
+            "relevance_score": 55,
+            "relevance_score_is_probability": false,
+            "matched_terms": [
+              "rail",
+              "transport"
+            ],
+            "is_relevant": true
+          },
+          {
+            "ecosystem": "openalex",
+            "title": "Modelling the resilience of rail passenger transport networks affected by large-scale disruptive events: the case of HSR (high speed rail)",
+            "url": "https://doi.org/10.1007/s11116-018-9875-6",
+            "published_at": "2018-04-18",
+            "relevance_score": 55,
+            "relevance_score_is_probability": false,
+            "matched_terms": [
+              "rail",
+              "transport"
+            ],
+            "is_relevant": true
+          },
+          {
+            "ecosystem": "openalex",
+            "title": "The impact of flooding on road transport: A depth-disruption function",
+            "url": "https://doi.org/10.1016/j.trd.2017.06.020",
+            "published_at": "2017-06-24",
+            "relevance_score": 55,
+            "relevance_score_is_probability": false,
+            "matched_terms": [
+              "disruption",
+              "transport"
+            ],
+            "is_relevant": true
+          },
+          {
+            "ecosystem": "openalex",
+            "title": "The impacts of the 28 June 2012 storms on UK road and rail transport",
+            "url": "https://doi.org/10.1002/met.1477",
+            "published_at": "2014-11-03",
+            "relevance_score": 55,
+            "relevance_score_is_probability": false,
+            "matched_terms": [
+              "rail",
+              "transport"
+            ],
+            "is_relevant": true
+          },
+          {
+            "ecosystem": "openalex",
+            "title": "Freight Transport Regulation: Equity, Efficiency, and Competition in the Rail and Trucking Industries",
+            "url": "http://ci.nii.ac.jp/ncid/BA00766343",
+            "published_at": "1981-01-31",
+            "relevance_score": 55,
+            "relevance_score_is_probability": false,
+            "matched_terms": [
+              "rail",
+              "transport"
+            ],
+            "is_relevant": true
+          },
+          {
+            "ecosystem": "github",
+            "title": "kintscher/swiss-rail-mcp",
+            "url": "https://github.com/kintscher/swiss-rail-mcp",
+            "published_at": "2026-05-14T22:45:07Z",
+            "relevance_score": 50,
+            "relevance_score_is_probability": false,
+            "matched_terms": [
+              "rail",
+              "transport"
+            ],
+            "is_relevant": true
+          }
+        ]
+      }
+    },
+    {
       "problem_key": "natural_hazards:wildfire",
       "domain": "natural_hazards",
       "domain_label": "Natural hazards",
       "event_type": "wildfire",
-      "problem_statement": "Repeated or independently supported signals around ‘Forest fires in Angola’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_statement": "Repeated or independently supported signals around ‘Forest fires in Brazil’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
         "label": "emerging_signal",
         "diagnostic_score": 59,
         "diagnostic_score_is_probability": false,
         "confirmed_evidence_count": 0,
-        "emerging_hypothesis_count": 189,
+        "emerging_hypothesis_count": 187,
         "independent_source_keys": [
           "official_multilateral"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 3.7,
+        "persistence_hours": 2.9,
         "domain_maturity": "live_multi_source",
         "max_corroboration_score": 0.6733,
         "corroboration_score_is_probability": false
@@ -320,47 +575,14 @@
       "evidence": [
         {
           "kind": "emerging_hypothesis",
-          "title": "Forest fires in Angola",
+          "title": "Forest fires in Brazil",
           "fact_status": "unconfirmed_emerging_event",
           "source": null,
           "source_classes": [
             "official_multilateral"
           ],
           "source_url": null,
-          "observed_at": "2026-08-26T03:30:27.232509"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Forest fires in The Democratic Republic of Congo, Zambia",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T03:30:27.232509"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Forest fires in Angola",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T03:30:27.232509"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Forest fires in Namibia",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T03:30:27.232509"
+          "observed_at": "2026-08-26T05:01:50.139744"
         },
         {
           "kind": "emerging_hypothesis",
@@ -371,7 +593,40 @@
             "official_multilateral"
           ],
           "source_url": null,
-          "observed_at": "2026-08-26T03:30:27.232509"
+          "observed_at": "2026-08-26T05:01:50.139744"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Forest fires in The Democratic Republic of Congo",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-26T05:01:50.139744"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Forest fires in The Democratic Republic of Congo",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-26T05:01:50.139744"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Forest fires in The Democratic Republic of Congo",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-26T05:01:50.139744"
         },
         {
           "kind": "emerging_hypothesis",
@@ -382,7 +637,7 @@
             "official_multilateral"
           ],
           "source_url": null,
-          "observed_at": "2026-08-26T03:30:27.232509"
+          "observed_at": "2026-08-26T05:01:50.139744"
         },
         {
           "kind": "emerging_hypothesis",
@@ -393,18 +648,18 @@
             "official_multilateral"
           ],
           "source_url": null,
-          "observed_at": "2026-08-26T03:30:27.232509"
+          "observed_at": "2026-08-26T05:01:50.139744"
         },
         {
           "kind": "emerging_hypothesis",
-          "title": "Forest fires in Bosnia and Herzegovina, Croatia",
+          "title": "Forest fires in Indonesia",
           "fact_status": "unconfirmed_emerging_event",
           "source": null,
           "source_classes": [
             "official_multilateral"
           ],
           "source_url": null,
-          "observed_at": "2026-08-26T03:30:27.232509"
+          "observed_at": "2026-08-26T05:01:50.139744"
         }
       ],
       "solution_scan": {
@@ -551,261 +806,6 @@
       }
     },
     {
-      "problem_key": "natural_hazards:earthquake",
-      "domain": "natural_hazards",
-      "domain_label": "Natural hazards",
-      "event_type": "earthquake",
-      "problem_statement": "Repeated or independently supported signals around ‘Earthquake in Indonesia’ may indicate a recurring human decision, coordination or access problem worth testing.",
-      "signal_strength": {
-        "label": "emerging_signal",
-        "diagnostic_score": 59,
-        "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 0,
-        "emerging_hypothesis_count": 6,
-        "independent_source_keys": [
-          "official_multilateral"
-        ],
-        "source_diversity_count": 1,
-        "persistence_hours": 1.4,
-        "domain_maturity": "live_multi_source",
-        "max_corroboration_score": 0.6733,
-        "corroboration_score_is_probability": false
-      },
-      "unresolvedness": {
-        "status": "needs_solution_scan",
-        "claim": "The engine has evidence of the underlying signal, but it has not yet established that existing solutions fail or that the problem is globally unresolved.",
-        "solution_absence_verified": false
-      },
-      "novelty": {
-        "status": "not_assessed",
-        "globally_unique_claim": false,
-        "reason": "Novelty requires a separate scan of products, public services, research, patents and community work; absence cannot be inferred from the news or event stream."
-      },
-      "candidate_action": {
-        "type": "tool_or_workflow_experiment",
-        "tool_archetype": "local exposure and continuity assistant",
-        "mechanism": "Combine verified hazard signals with exposure, fallback routes and a time-bounded action plan.",
-        "first_build": "Prototype a narrow local exposure and continuity assistant for the earthquake case. It must consume verified HORIZON evidence, expose uncertainty, and produce one measurable next action rather than another feed of alerts."
-      },
-      "validation": {
-        "hypothesis": "People exposed to repeated earthquake signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
-        "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
-        "reject_if": "Reject the opportunity if 8 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
-        "domain": "natural_hazards",
-        "episode_target": 8
-      },
-      "evidence": [
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Earthquake in Indonesia",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T03:30:27.232509"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Earthquake in Indonesia",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T03:30:27.232509"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Earthquake in Indonesia",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T03:30:27.232509"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Earthquake in Indonesia",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T03:30:27.232509"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Earthquake in Afghanistan",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T03:30:27.232509"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Earthquake in Afghanistan",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T02:05:26.835747"
-        }
-      ],
-      "solution_scan": {
-        "status": "scanned",
-        "assessment": {
-          "successful_source_count": 3,
-          "minimum_sources_for_gap_assessment": 3,
-          "coverage_sufficient_for_gap_assessment": true,
-          "relevant_match_count": 17,
-          "ecosystems_with_relevant_matches": [
-            "github",
-            "hackernews",
-            "openalex"
-          ],
-          "gap_status": "substantial_existing_work_found",
-          "explanation": "Related work appears across several independent ecosystems. The opportunity is more likely an integration, workflow or underserved-segment gap than a blank space.",
-          "global_novelty_verified": false,
-          "existing_solution_effectiveness_verified": false
-        },
-        "sources": [
-          {
-            "source": "github",
-            "label": "Open-source / developer projects",
-            "status": "ok",
-            "result_count": 8
-          },
-          {
-            "source": "openalex",
-            "label": "Academic research",
-            "status": "ok",
-            "result_count": 8
-          },
-          {
-            "source": "hackernews",
-            "label": "Startup / technology community",
-            "status": "ok",
-            "result_count": 8
-          },
-          {
-            "source": "gdelt",
-            "label": "Public web & media coverage",
-            "status": "error",
-            "result_count": 0
-          }
-        ],
-        "matches": [
-          {
-            "ecosystem": "hackernews",
-            "title": "7.1 Earthquake in Japan",
-            "url": "https://www.data.jma.go.jp/multi/quake/quake_detail.html?eventID=20260728163528&lang=en",
-            "published_at": "2026-07-28T07:44:24Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "earthquake"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "hackernews",
-            "title": "M8.7 earthquake in Western Pacific, tsunami warning issued",
-            "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000qw60/executive",
-            "published_at": "2025-07-30T00:38:25Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "earthquake"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "hackernews",
-            "title": "CCTV footage captures video of an earthquake fault in motion",
-            "url": "https://www.smithsonianmag.com/smart-news/cctv-footage-captures-the-first-ever-video-of-an-earthquake-fault-in-motion-shining-a-rare-light-on-seismic-dynamics-180987034/",
-            "published_at": "2025-07-26T02:54:43Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "earthquake"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "hackernews",
-            "title": "M 4.8 – 2024 Whitehouse Station, New Jersey Earthquake",
-            "url": "https://earthquake.usgs.gov/earthquakes/eventpage/at00sbh3yv/executive",
-            "published_at": "2024-04-05T14:34:13Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "earthquake"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "hackernews",
-            "title": "7.4 earthquake in Taiwan, 34km depth",
-            "url": "https://earthquake.usgs.gov/earthquakes/map/?extent=16.34123,-246.42334&extent=28.51697,-223.43994",
-            "published_at": "2024-04-03T00:24:56Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "earthquake"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "hackernews",
-            "title": "Twitter restricted in Turkey in aftermath of earthquake",
-            "url": "https://netblocks.org/reports/twitter-restricted-in-turkey-in-aftermath-of-earthquake-oy9LJ9B3",
-            "published_at": "2023-02-08T13:51:14Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "earthquake"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "github",
-            "title": "jugyo/earthquake",
-            "url": "https://github.com/jugyo/earthquake",
-            "published_at": "2011-03-16T14:40:28Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "earthquake"
-            ],
-            "is_relevant": true
-          },
-          {
-            "ecosystem": "hackernews",
-            "title": "Patio11's perspective on the Japan Earthquake",
-            "url": "http://www.kalzumeus.com/2011/03/13/some-perspective-on-the-japan-earthquake/",
-            "published_at": "2011-03-13T17:06:29Z",
-            "relevance_score": 100,
-            "relevance_score_is_probability": false,
-            "matched_terms": [
-              "earthquake"
-            ],
-            "is_relevant": true
-          }
-        ]
-      }
-    },
-    {
       "problem_key": "natural_hazards:tropical_cyclone",
       "domain": "natural_hazards",
       "domain_label": "Natural hazards",
@@ -821,7 +821,7 @@
           "official_multilateral"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 1.4,
+        "persistence_hours": 1.5,
         "domain_maturity": "live_multi_source",
         "max_corroboration_score": 0.6733,
         "corroboration_score_is_probability": false
@@ -859,6 +859,28 @@
             "official_multilateral"
           ],
           "source_url": null,
+          "observed_at": "2026-08-26T05:01:50.139744"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Tropical Cyclone ISELLE-26",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-26T05:01:50.139744"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Tropical Cyclone SAUDEL-26",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
           "observed_at": "2026-08-26T03:30:27.232509"
         },
         {
@@ -882,28 +904,6 @@
           ],
           "source_url": null,
           "observed_at": "2026-08-26T03:30:27.232509"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone SAUDEL-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T02:05:26.835747"
-        },
-        {
-          "kind": "emerging_hypothesis",
-          "title": "Tropical Cyclone LALA-26",
-          "fact_status": "unconfirmed_emerging_event",
-          "source": null,
-          "source_classes": [
-            "official_multilateral"
-          ],
-          "source_url": null,
-          "observed_at": "2026-08-26T02:05:26.835747"
         }
       ],
       "solution_scan": {
@@ -911,24 +911,24 @@
       }
     },
     {
-      "problem_key": "transport_mobility:rail_transport_disruption",
-      "domain": "transport_mobility",
-      "domain_label": "Transport & mobility",
-      "event_type": "rail_transport_disruption",
-      "problem_statement": "Repeated or independently supported signals around ‘Weitere Informationen:’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "problem_key": "natural_hazards:earthquake",
+      "domain": "natural_hazards",
+      "domain_label": "Natural hazards",
+      "event_type": "earthquake",
+      "problem_statement": "Repeated or independently supported signals around ‘Earthquake in Indonesia’ may indicate a recurring human decision, coordination or access problem worth testing.",
       "signal_strength": {
         "label": "emerging_signal",
-        "diagnostic_score": 58,
+        "diagnostic_score": 59,
         "diagnostic_score_is_probability": false,
-        "confirmed_evidence_count": 2,
-        "emerging_hypothesis_count": 0,
+        "confirmed_evidence_count": 0,
+        "emerging_hypothesis_count": 5,
         "independent_source_keys": [
-          "sncf-service-alerts"
+          "official_multilateral"
         ],
         "source_diversity_count": 1,
-        "persistence_hours": 1.0,
-        "domain_maturity": "live_single_source",
-        "max_corroboration_score": 0.0,
+        "persistence_hours": 0.0,
+        "domain_maturity": "live_multi_source",
+        "max_corroboration_score": 0.6733,
         "corroboration_score_is_probability": false
       },
       "unresolvedness": {
@@ -943,35 +943,155 @@
       },
       "candidate_action": {
         "type": "tool_or_workflow_experiment",
-        "tool_archetype": "mobility continuity assistant",
-        "mechanism": "Aggregate disruption evidence, estimate practical exposure and propose verified fallback options.",
-        "first_build": "Prototype a narrow mobility continuity assistant for the rail transport disruption case. It must consume verified HORIZON evidence, expose uncertainty, and produce one measurable next action rather than another feed of alerts."
+        "tool_archetype": "local exposure and continuity assistant",
+        "mechanism": "Combine verified hazard signals with exposure, fallback routes and a time-bounded action plan.",
+        "first_build": "Prototype a narrow local exposure and continuity assistant for the earthquake case. It must consume verified HORIZON evidence, expose uncertainty, and produce one measurable next action rather than another feed of alerts."
       },
       "validation": {
-        "hypothesis": "People exposed to repeated rail transport disruption signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
+        "hypothesis": "People exposed to repeated earthquake signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
         "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
-        "reject_if": "Reject the opportunity if 4 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
-        "domain": "transport_mobility",
-        "episode_target": 4
+        "reject_if": "Reject the opportunity if 7 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
+        "domain": "natural_hazards",
+        "episode_target": 7
       },
       "evidence": [
         {
-          "kind": "confirmed_event",
-          "title": "Weitere Informationen:",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-26T03:31:08.700405"
+          "kind": "emerging_hypothesis",
+          "title": "Earthquake in Indonesia",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-26T03:30:27.232509"
         },
         {
-          "kind": "confirmed_event",
-          "title": "Der hintere Wagen Ihres TER879604 ist für Reisende gesperrt; der Zugang erfolgt über den vorderen Teil des Zugs",
-          "fact_status": "confirmed_or_derived_event",
-          "source": "sncf-service-alerts",
-          "source_classes": [],
-          "source_url": "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-situation-exchange",
-          "observed_at": "2026-08-26T03:31:08.700405"
+          "kind": "emerging_hypothesis",
+          "title": "Earthquake in Indonesia",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-26T03:30:27.232509"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Earthquake in Indonesia",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-26T03:30:27.232509"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Earthquake in Indonesia",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-26T03:30:27.232509"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Earthquake in Afghanistan",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-26T03:30:27.232509"
+        }
+      ],
+      "solution_scan": {
+        "status": "not_scanned_in_this_cycle"
+      }
+    },
+    {
+      "problem_key": "natural_hazards:flood",
+      "domain": "natural_hazards",
+      "domain_label": "Natural hazards",
+      "event_type": "flood",
+      "problem_statement": "Repeated or independently supported signals around ‘Flood in United States’ may indicate a recurring human decision, coordination or access problem worth testing.",
+      "signal_strength": {
+        "label": "weak_signal",
+        "diagnostic_score": 43,
+        "diagnostic_score_is_probability": false,
+        "confirmed_evidence_count": 0,
+        "emerging_hypothesis_count": 3,
+        "independent_source_keys": [
+          "official_multilateral"
+        ],
+        "source_diversity_count": 1,
+        "persistence_hours": 0.0,
+        "domain_maturity": "live_multi_source",
+        "max_corroboration_score": 0.6733,
+        "corroboration_score_is_probability": false
+      },
+      "unresolvedness": {
+        "status": "needs_solution_scan",
+        "claim": "The engine has evidence of the underlying signal, but it has not yet established that existing solutions fail or that the problem is globally unresolved.",
+        "solution_absence_verified": false
+      },
+      "novelty": {
+        "status": "not_assessed",
+        "globally_unique_claim": false,
+        "reason": "Novelty requires a separate scan of products, public services, research, patents and community work; absence cannot be inferred from the news or event stream."
+      },
+      "candidate_action": {
+        "type": "tool_or_workflow_experiment",
+        "tool_archetype": "local exposure and continuity assistant",
+        "mechanism": "Combine verified hazard signals with exposure, fallback routes and a time-bounded action plan.",
+        "first_build": "Prototype a narrow local exposure and continuity assistant for the flood case. It must consume verified HORIZON evidence, expose uncertainty, and produce one measurable next action rather than another feed of alerts."
+      },
+      "validation": {
+        "hypothesis": "People exposed to repeated flood signals have a recurring decision or coordination friction that existing responses do not remove reliably.",
+        "fast_test": "For the next observed episodes, record the decision users had to make, the time lost, the workaround used and whether an existing tool already solved the problem end-to-end.",
+        "reject_if": "Reject the opportunity if 5 comparable episodes show no repeated friction, or if affected users consistently solve it with an existing response without meaningful delay or loss.",
+        "domain": "natural_hazards",
+        "episode_target": 5
+      },
+      "evidence": [
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Flood in United States",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-26T05:01:50.139744"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Flood in Thailand",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-26T05:01:50.139744"
+        },
+        {
+          "kind": "emerging_hypothesis",
+          "title": "Flood in Mexico",
+          "fact_status": "unconfirmed_emerging_event",
+          "source": null,
+          "source_classes": [
+            "official_multilateral"
+          ],
+          "source_url": null,
+          "observed_at": "2026-08-26T05:01:50.139744"
         }
       ],
       "solution_scan": {
