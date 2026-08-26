@@ -1,0 +1,18 @@
+{
+  "name": "evidence-world-eye",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ÉVIDENCE / HORIZON — moteur public de scénarios prédictifs Node.js pour Hostinger",
+  "type": "module",
+  "engines": { "node": ">=22 <25" },
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check src/config.js && node --check src/store.js && node --check src/sources.js && node --check src/predictor.js && node --check public/app.js"
+  },
+  "dependencies": {
+    "compression": "^1.8.1",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "mysql2": "^3.14.4"
+  }
+}
