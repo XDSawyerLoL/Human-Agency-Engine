@@ -27,10 +27,11 @@ from .horizon_sncf import HorizonSncfService
 from .horizon_vigicrues import HorizonVigicruesService
 from .horizon_weather_chain import HorizonWeatherChainService
 from .horizon_windy import HorizonWindyService
+from .horizon_world_pulse import HorizonWorldPulseService
 
 
 class HorizonLiveConvergenceService:
-    ENGINE_VERSION = "horizon-live-convergence-fabric-v0.3"
+    ENGINE_VERSION = "horizon-live-convergence-fabric-v0.4-world-pulse"
 
     def __init__(self, db: Session):
         self.db = db
@@ -39,7 +40,7 @@ class HorizonLiveConvergenceService:
     def _safe_call(name: str, fn) -> dict:
         try:
             return {"source": name, "ok": True, "result": fn()}
-        except Exception as exc:  # source isolation is intentional at the orchestrator boundary
+        except Exception as exc:
             return {"source": name, "ok": False, "error": str(exc)[:500]}
 
     def poll(self, request: HorizonLiveConvergencePollRequest) -> dict:
@@ -113,6 +114,12 @@ class HorizonLiveConvergenceService:
                 lambda: HorizonSncfService(self.db).poll(request.sncf),
             ))
 
+        if request.include_world_pulse:
+            results.append(self._safe_call(
+                "world-pulse",
+                lambda: HorizonWorldPulseService(self.db).poll(fred_api_key=settings.fred_api_key),
+            ))
+
         if request.windy_points:
             if settings.windy_point_forecast_api_key:
                 for index, point in enumerate(request.windy_points):
@@ -142,7 +149,7 @@ class HorizonLiveConvergenceService:
             provisional = self._safe_call(
                 "provisional-candidate-refresh",
                 lambda: HorizonProvisionalService(self.db).refresh(
-                    HorizonProvisionalRefreshRequest(max_candidates=1000)
+                    HorizonProvisionalRefreshRequest(max_candidates=2000)
                 ),
             )
 
@@ -180,9 +187,9 @@ class HorizonLiveConvergenceService:
                     HorizonEventGraphBuildRequest(
                         as_of=now,
                         lookback_hours=request.event_graph_lookback_hours,
-                        max_events=500,
-                        max_candidates=500,
-                        max_signals=2000,
+                        max_events=800,
+                        max_candidates=800,
+                        max_signals=3000,
                     )
                 ),
             )
@@ -212,6 +219,7 @@ class HorizonLiveConvergenceService:
                 "convergence_score_is_probability": False,
                 "event_graph_dependency_is_causal_proof": False,
                 "gated_sources_are_not_faked": True,
+                "world_pulse_enabled": True,
                 "numeric_probabilities_enabled": False,
             },
         }
