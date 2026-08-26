@@ -12,12 +12,14 @@ import { buildBreadthForecasts } from './src/breadth_predictor.js';
 import { buildDeepForecasts } from './src/deep_predictor.js';
 import { selectPublicForecasts } from './src/public_selection.js';
 import { getWorldEye } from './src/world_eye.js';
+import { moduleCatalog, runLabModule, collectResearchModuleCandidates } from './src/lab_modules.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const store = new EvidenceStore();
 let refreshing = null;
 let lastError = null;
+const moduleRuns = new Map();
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
@@ -49,6 +51,10 @@ function sourceCatalog(collected, activeKeys) {
     { key:'forecastapi', label:'ForecastAPI', role:'Projection statistique secondaire', active:active('forecastapi'), model_input:true },
     { key:'gdelt-doc-2', label:'GDELT', role:'Convergence médias mondiaux', active:active('gdelt-doc-2'), model_input:true },
     { key:'gdelt-breadth-radar', label:'GDELT · radar thématique', role:'Détection de signaux émergents', active:active('gdelt-breadth-radar'), model_input:true },
+    { key:'pubmed-module', label:'PubMed', role:'Frontière scientifique biomédicale', active:active('pubmed-module'), model_input:true },
+    { key:'arxiv-module', label:'arXiv', role:'Frontière scientifique et technologique', active:active('arxiv-module'), model_input:true },
+    { key:'polymarket-reference', label:'Polymarket', role:'Consensus de marché externe · hors calcul ÉVIDENCE', active:true, model_input:false },
+    { key:'google-trends-reference', label:'Google Trends', role:'Attention collective · hors calcul seul', active:true, model_input:false },
     { key:'metaculus-reference', label:'Metaculus', role:'Référence externe · hors calcul de probabilité', active:Boolean(configured.metaculus_reference_only), model_input:false },
     { key:'point-reference', label:'Point', role:'Référence documentaire · hors calcul de probabilité', active:Boolean(configured.point_reference_only), model_input:false },
     { key:'windy-reference', label:'Windy', role:'Configuration présente · données test non utilisées en preuve', active:Boolean(configured.windy_configured_not_used_as_production_evidence), model_input:false }
@@ -60,20 +66,26 @@ async function refreshWorld() {
   refreshing = (async () => {
     const generatedAt = new Date().toISOString();
     try {
-      const [collected, breadth] = await Promise.all([collectWorldSignals(), collectBreadthSignals()]);
+      const [collected, breadth, research] = await Promise.all([
+        collectWorldSignals(),
+        collectBreadthSignals(),
+        collectResearchModuleCandidates()
+      ]);
       collected.signals.push(...breadth.signals);
-      collected.source_status.push(breadth.status);
+      collected.source_status.push(breadth.status, ...(research.statuses ?? []));
       collected.duration_ms = Math.max(collected.duration_ms, breadth.status.duration_ms ?? 0);
 
-      // Large internal pool first; public selection then removes duplicates and balances domains/horizons.
-      const coreCandidates = buildForecasts(collected.signals, Math.max(config.maxForecasts * 3, 96));
+      // Large internal pool first; public selection removes duplicates and balances domains/horizons.
+      const coreCandidates = buildForecasts(collected.signals, Math.max(config.maxForecasts * 3, 120));
       const breadthCandidates = buildBreadthForecasts(breadth.signals);
       const deepCandidates = buildDeepForecasts(collected.signals);
-      const allCandidates = [...coreCandidates, ...breadthCandidates, ...deepCandidates];
+      const researchCandidates = research.forecasts ?? [];
+      const allCandidates = [...coreCandidates, ...breadthCandidates, ...deepCandidates, ...researchCandidates];
       const forecasts = selectPublicForecasts(allCandidates, config.maxForecasts);
 
       await store.appendHistory(forecasts, generatedAt);
       await store.attachHistory(forecasts);
+      await store.recordForecastRegistry(forecasts, generatedAt);
       for (const f of forecasts) {
         const history = f.probability_history ?? [];
         if (history.length >= 2) {
@@ -85,8 +97,8 @@ async function refreshWorld() {
           f.probability_direction = 'new';
         }
       }
-      const sourceProviders = new Set(forecasts.flatMap(f => f.consolidation.source_providers.map(s => s.key)));
-      const sourceFamilies = new Set(forecasts.flatMap(f => f.consolidation.source_families.map(s => s.key)));
+      const sourceProviders = new Set(forecasts.flatMap(f => (f.consolidation?.source_providers ?? []).map(s => s.key)));
+      const sourceFamilies = new Set(forecasts.flatMap(f => (f.consolidation?.source_families ?? []).map(s => s.key)));
       const domainCounts = forecasts.reduce((acc, f) => {
         acc[f.domain] = (acc[f.domain] ?? 0) + 1;
         return acc;
@@ -97,8 +109,8 @@ async function refreshWorld() {
       }, {});
       const catalog = sourceCatalog(collected, sourceProviders);
       const snapshot = {
-        schema: 'evidence-node-world-eye-v3',
-        engine: 'evidence-node-predictive-public-v3-world-eye',
+        schema: 'evidence-node-world-eye-v5',
+        engine: 'evidence-node-predictive-public-v5-lab',
         generated_at: generatedAt,
         runtime_mode: 'hostinger-node-managed',
         status: 'live',
@@ -106,6 +118,7 @@ async function refreshWorld() {
           signals_considered: collected.signals.length,
           raw_candidate_forecasts: allCandidates.length,
           predictions_returned: forecasts.length,
+          research_candidate_forecasts: researchCandidates.length,
           source_families: sourceFamilies.size,
           source_providers: sourceProviders.size,
           active_source_providers: [...sourceProviders],
@@ -115,11 +128,14 @@ async function refreshWorld() {
           domain_distribution: domainCounts,
           horizon_distribution: horizonCounts,
           probability_history_enabled: true,
+          forecast_registry_enabled: true,
+          modular_lab_enabled: true,
           numeric_model_estimates_enabled: true,
           duplicate_probability_inflation_prevented: true,
           public_semantic_dedup_enabled: true,
           environmental_public_cap_enabled: true,
           breadth_radar_enabled: true,
+          research_frontier_enabled: researchCandidates.length > 0,
           long_range_5_plus_enabled: deepCandidates.length > 0,
           public_french_localization_enabled: true,
           second_order_only: true,
@@ -133,6 +149,7 @@ async function refreshWorld() {
           probability_is_certainty: false,
           consolidation_is_probability: false,
           current_event_is_not_forecast: true,
+          external_consensus_is_model_probability: false,
           falsification_required: true,
           expired_forecasts_must_resolve: true,
           duplicate_public_scenarios_allowed: false,
@@ -141,7 +158,7 @@ async function refreshWorld() {
       };
       await store.saveSnapshot(snapshot);
       lastError = null;
-      console.log(JSON.stringify({ event: 'world_refresh', signals: collected.signals.length, forecasts: forecasts.length, domains: domainCounts, horizons: horizonCounts, sources: collected.source_status }));
+      console.log(JSON.stringify({ event: 'world_refresh', signals: collected.signals.length, forecasts: forecasts.length, candidates:allCandidates.length, domains: domainCounts, horizons: horizonCounts, sources: collected.source_status }));
       return snapshot;
     } catch (error) {
       lastError = { at: new Date().toISOString(), message: error.message };
@@ -183,6 +200,31 @@ app.get('/api/snapshot', async (_req, res) => {
   const built = await refreshWorld();
   if (!built) return res.status(503).json({ status: 'warming', error: lastError?.message ?? 'initialisation' });
   res.json(built);
+});
+
+app.get('/api/modules', (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=60');
+  res.json({ generated_at:new Date().toISOString(), modules:moduleCatalog() });
+});
+
+app.post('/api/modules/:key/run', async (req, res) => {
+  const key = String(req.params.key || '').toLowerCase();
+  const client = String(req.ip || req.socket?.remoteAddress || 'anonymous');
+  const rateKey = `${client}:${key}`;
+  const previous = moduleRuns.get(rateKey) || 0;
+  if (Date.now() - previous < 4000) return res.status(429).json({ error:'module_too_fast', retry_after_seconds:4 });
+  moduleRuns.set(rateKey, Date.now());
+  try {
+    const result = await runLabModule(key, { theme:String(req.body?.theme || '') });
+    res.json({ status:'ok', generated_at:new Date().toISOString(), ...result });
+  } catch (error) {
+    res.status(502).json({ status:'error', module:key, error:String(error?.message || error).slice(0,240) });
+  }
+});
+
+app.get('/api/track-record', async (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=30');
+  res.json(await store.getTrackRecord());
 });
 
 app.post('/api/refresh', async (req, res) => {
