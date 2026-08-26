@@ -16,8 +16,8 @@ export const config = {
   // Hostinger Web Apps reverse-proxy server-side Node apps to port 3000.
   port: 3000,
   refreshMs: int('EVIDENCE_REFRESH_SECONDS', 600, 120, 3600) * 1000,
-  // Large public future field: hours, weeks, months and years, while per-domain caps prevent flooding.
-  maxForecasts: int('EVIDENCE_FORECAST_LIMIT', 44, 8, 60),
+  // Large public future field. Selection still enforces semantic dedup and diversity caps.
+  maxForecasts: int('EVIDENCE_FORECAST_LIMIT', 60, 12, 90),
   fredApiKey: value('FRED_API_KEY'),
   forecastApiKey: value('FORECAST_API_KEY', 'FORESCAST_API_KEY'),
   windyApiKey: value('WINDY_POINT_FORECAST_API_KEY', 'WINDY_KEY'),
