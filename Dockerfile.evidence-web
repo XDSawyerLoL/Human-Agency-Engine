@@ -5,7 +5,10 @@ COPY index.html /usr/share/nginx/html/index.html
 COPY evidence-public.css /usr/share/nginx/html/evidence-public.css
 COPY evidence-public.js /usr/share/nginx/html/evidence-public.js
 
-RUN mkdir -p /usr/share/nginx/html/data
+# Hostinger serves the generated snapshot locally. The source repository keeps
+# the legacy GitHub URL only for backwards compatibility with old Pages builds.
+RUN sed -i 's#const SNAPSHOT_URL = .*#const SNAPSHOT_URL = "./data/evidence-live.json";#' /usr/share/nginx/html/evidence-public.js \
+    && mkdir -p /usr/share/nginx/html/data
 
 EXPOSE 80
 
