@@ -20,6 +20,7 @@ const store = new EvidenceStore();
 let refreshing = null;
 let lastError = null;
 const moduleRuns = new Map();
+const RESEARCH_DEADLINE_MS = 9_000;
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
@@ -61,6 +62,23 @@ function sourceCatalog(collected, activeKeys) {
   ];
 }
 
+async function collectResearchWithDeadline() {
+  let timer;
+  try {
+    return await Promise.race([
+      collectResearchModuleCandidates(),
+      new Promise(resolve => {
+        timer = setTimeout(() => resolve({
+          forecasts: [],
+          statuses: [{ source:'research-frontier', ok:false, deferred:true, error:`deadline ${RESEARCH_DEADLINE_MS}ms; snapshot principal prioritaire` }]
+        }), RESEARCH_DEADLINE_MS);
+      })
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 async function refreshWorld() {
   if (refreshing) return refreshing;
   refreshing = (async () => {
@@ -69,7 +87,7 @@ async function refreshWorld() {
       const [collected, breadth, research] = await Promise.all([
         collectWorldSignals(),
         collectBreadthSignals(),
-        collectResearchModuleCandidates()
+        collectResearchWithDeadline()
       ]);
       collected.signals.push(...breadth.signals);
       collected.source_status.push(breadth.status, ...(research.statuses ?? []));
@@ -119,6 +137,7 @@ async function refreshWorld() {
           raw_candidate_forecasts: allCandidates.length,
           predictions_returned: forecasts.length,
           research_candidate_forecasts: researchCandidates.length,
+          research_deadline_ms: RESEARCH_DEADLINE_MS,
           source_families: sourceFamilies.size,
           source_providers: sourceProviders.size,
           active_source_providers: [...sourceProviders],
