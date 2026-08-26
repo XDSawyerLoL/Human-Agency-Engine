@@ -3,62 +3,77 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#06070b">
-  <meta name="description" content="ÉVIDENCE observe les signaux du monde et publie des scénarios futurs probabilistes, datés et réfutables.">
-  <title>ÉVIDENCE — L’œil du monde de demain</title>
+  <meta name="theme-color" content="#05070c">
+  <meta name="description" content="ÉVIDENCE observe les signaux mondiaux et projette les futurs probables, des prochaines heures aux prochaines années.">
+  <title>ÉVIDENCE — Ce qui devient probable</title>
   <link rel="stylesheet" href="/app.css">
 </head>
 <body>
-  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <div class="noise"></div><div class="glow glow-a"></div><div class="glow glow-b"></div>
   <header class="topbar">
-    <a class="brand" href="#top"><span class="brand-eye"><i></i></span><span><strong>ÉVIDENCE</strong><small>WORLD FORESIGHT / HORIZON</small></span></a>
-    <nav><a href="#predictions">Prédictions</a><a href="#signals">Radar mondial</a><a href="#method">Méthode</a></nav>
-    <div class="live" id="live"><span></span><div><b>ŒIL MONDIAL</b><small id="liveText">initialisation</small></div></div>
+    <a class="brand" href="#top" aria-label="ÉVIDENCE, accueil">
+      <span class="eye"><i></i></span>
+      <span><strong>ÉVIDENCE</strong><small>HORIZON / WORLD FORESIGHT</small></span>
+    </a>
+    <nav><a href="#radar">Radar</a><a href="#horizons">Horizons</a><a href="#about">À propos</a></nav>
+    <div class="live" id="live" data-state="loading"><span></span><div><b>ŒIL MONDIAL</b><small id="liveText">connexion</small></div></div>
   </header>
 
   <main id="top">
     <section class="hero shell">
-      <div class="eyebrow"><span></span> LE MONDE AVANT QU’IL NE DEVIENNE ÉVIDENT</div>
-      <h1>Voir <em>demain</em><br>se former aujourd’hui.</h1>
-      <p>ÉVIDENCE ne résume pas l’actualité. Le moteur relie des signaux mondiaux, cherche les précurseurs et publie <strong>ce qui pourrait arriver ensuite</strong> — avec une probabilité, une fenêtre, une chaîne causale et une condition d’échec.</p>
-      <div class="hero-actions"><a class="cta" href="#predictions">Explorer le futur <b>↓</b></a><div class="pulse"><i></i><span><b id="snapshotState">Connexion au monde</b><small id="snapshotTime">—</small></span></div></div>
-    </section>
-
-    <section class="metrics shell" id="signals">
-      <article><span>SIGNAUX MONDIAUX</span><strong id="metricSignals">—</strong><small>analysés maintenant</small></article>
-      <article><span>FUTURS ACTIFS</span><strong id="metricForecasts">—</strong><small>scénarios réfutables</small></article>
-      <article><span>SOURCES ACTIVES</span><strong id="metricSources">—</strong><small>dans les scénarios</small></article>
-      <article><span>EN RENFORCEMENT</span><strong id="metricRising">—</strong><small>depuis le cycle précédent</small></article>
-      <article class="accent"><span>PLUS FORTE ESTIMATION</span><strong id="metricTop">—</strong><small>modèle Évidence</small></article>
-    </section>
-
-    <section class="section shell" id="predictions">
-      <div class="section-head"><div><span>LIVE / FUTURE FIELD</span><h2>Les futurs qui se forment</h2></div><p>Le signal observé est séparé de la conséquence projetée. Une carte n’apparaît que si le moteur peut expliquer <em>ce qui vient après</em>.</p></div>
-      <div id="primaryForecast"><div class="loading"><i></i><div><b>ÉVIDENCE observe le monde…</b><small>Les sources sont interrogées et les mécanismes sont consolidés.</small></div></div></div>
-      <div class="grid" id="forecastGrid"></div>
-    </section>
-
-    <section class="section shell method" id="method">
-      <div class="section-head"><div><span>COMMENT ÇA MARCHE</span><h2>Un Minority Report qui accepte d’avoir tort.</h2></div><p>Le spectaculaire n’a d’intérêt que si la prédiction peut être testée ensuite.</p></div>
-      <div class="steps">
-        <article><b>01</b><span>OBSERVER</span><h3>Le monde émet des signaux.</h3><p>Sources officielles, statistiques, modèles et agrégateurs publics.</p></article>
-        <article><b>02</b><span>RELIER</span><h3>HORIZON cherche les précurseurs.</h3><p>Fraîcheur, qualité, diversité, géographie et mécanismes de propagation.</p></article>
-        <article><b>03</b><span>PROJETER</span><h3>ÉVIDENCE formule le prochain effet.</h3><p>Pas « ce qui se passe », mais la conséquence encore non évidente.</p></article>
-        <article><b>04</b><span>RÉFUTER</span><h3>Le temps tranche.</h3><p>Une fenêtre expire. Si le résultat n’arrive pas, la prédiction perd.</p></article>
+      <div class="eyebrow"><span></span> INTELLIGENCE PRÉDICTIVE MONDIALE</div>
+      <h1>Le futur laisse<br><em>des traces.</em></h1>
+      <p>ÉVIDENCE suit les signaux faibles du monde pour projeter ce qui pourrait arriver <strong>dans quelques heures, quelques semaines, quelques mois ou quelques années.</strong></p>
+      <div class="hero-row">
+        <a class="cta" href="#radar">Ouvrir le radar du futur <b>↓</b></a>
+        <div class="pulse"><i></i><span><b id="snapshotState">HORIZON observe</b><small id="snapshotTime">—</small></span></div>
       </div>
+      <div class="promise"><span>PROCHAINES HEURES</span><i>→</i><span>SEMAINES</span><i>→</i><span>MOIS</span><i>→</i><span>ANNÉES</span></div>
     </section>
 
-    <section class="section shell contract">
-      <div><span class="label">CONTRAT DE PRÉDICTION</span><h2>On vend l’accès au futur probable.<br>Pas une certitude inventée.</h2></div>
-      <div class="contract-grid">
-        <article><b>PROBABILITÉ</b><p>Estimation du moteur. Elle évolue avec les signaux et n’est pas présentée comme certitude.</p></article>
-        <article><b>CONSOLIDATION</b><p>Qualité des entrées qui soutiennent le scénario. Ce score n’est jamais une deuxième probabilité.</p></article>
-        <article><b>INVALIDATION</b><p>Chaque scénario affiche ce qui doit se produire pour être renforcé — et ce qui le ferait échouer.</p></article>
+    <section class="metrics shell" id="radar">
+      <article><span>SCÉNARIOS ACTIFS</span><strong id="metricForecasts">—</strong><small>futurs actuellement suivis</small></article>
+      <article><span>TRÈS PROCHE</span><strong id="metricImmediate">—</strong><small>≤ 72 heures</small></article>
+      <article><span>MOIS À VENIR</span><strong id="metricMedium">—</strong><small>1–12 mois</small></article>
+      <article><span>LONG TERME</span><strong id="metricLong">—</strong><small>au-delà d’un an</small></article>
+      <article class="accent"><span>PLUS FORTE PROBABILITÉ</span><strong id="metricTop">—</strong><small>estimation ÉVIDENCE</small></article>
+    </section>
+
+    <section class="section shell spotlight">
+      <div class="section-head compact"><div><span>À SURVEILLER MAINTENANT</span><h2>Le futur le plus pressant</h2></div><p>Le scénario qui combine proximité, probabilité et solidité des signaux.</p></div>
+      <div id="spotlight"><div class="loading"><i></i><div><b>ÉVIDENCE cherche la trajectoire dominante…</b><small>Connexion aux observateurs mondiaux.</small></div></div></div>
+    </section>
+
+    <section class="section shell" id="horizons">
+      <div class="section-head"><div><span>FUTURE FIELD</span><h2>Explorer ce qui vient ensuite</h2></div><p>La méthodologie reste accessible dans chaque carte. Ici, l’écran montre d’abord le futur : <strong>quoi, où, quand, combien.</strong></p></div>
+      <div class="filters">
+        <div class="horizon-tabs" id="horizonTabs">
+          <button class="active" data-horizon="all">Tous</button>
+          <button data-horizon="immediate">≤ 72 h</button>
+          <button data-horizon="near">Jours & semaines</button>
+          <button data-horizon="medium">Mois</button>
+          <button data-horizon="long">1–3 ans</button>
+          <button data-horizon="strategic">3–5 ans</button>
+        </div>
+        <div class="filter-right">
+          <input id="search" type="search" placeholder="Rechercher : énergie, santé, France…" autocomplete="off">
+          <select id="domainFilter"><option value="all">Tous les domaines</option></select>
+        </div>
+      </div>
+      <div id="futureSections"><div class="loading"><i></i><div><b>Le champ prédictif se construit…</b><small>Les scénarios seront classés par horizon.</small></div></div></div>
+    </section>
+
+    <section class="section shell manifesto" id="about">
+      <div class="manifesto-copy"><span>ÉVIDENCE / HORIZON</span><h2>Voir avant de savoir.</h2><p>Le monde change rarement sans précurseurs. ÉVIDENCE transforme ces traces en scénarios datés et probabilisés. L’expérience est volontairement spectaculaire ; la prédiction, elle, garde une condition d’échec.</p></div>
+      <div class="manifesto-grid">
+        <article><b>01</b><h3>Le futur d’abord</h3><p>Les cartes montrent d’abord l’événement attendu, son horizon et sa probabilité.</p></article>
+        <article><b>02</b><h3>Plusieurs horizons</h3><p>Un même précurseur peut former plusieurs conséquences différentes dans le temps.</p></article>
+        <article><b>03</b><h3>La preuve à la demande</h3><p>Sources, chaîne causale et invalidation restent disponibles dans le détail — pas répétées partout.</p></article>
       </div>
     </section>
   </main>
 
-  <footer class="footer shell"><div><strong>ÉVIDENCE</strong><span>Powered by HORIZON · World Foresight Engine</span></div><p>Probabiliste · réfutable · traçable · données publiques</p></footer>
+  <footer class="footer shell"><div><strong>ÉVIDENCE</strong><span>L’œil du monde de demain · Powered by HORIZON</span></div><p>Les probabilités sont des estimations de modèle, pas des certitudes.</p></footer>
   <script src="/app.js" defer></script>
 </body>
 </html>
