@@ -3,6 +3,9 @@ const logit=p=>Math.log(clamp(p,.01,.99)/(1-clamp(p,.01,.99)));
 const sigmoid=x=>1/(1+Math.exp(-x));
 
 export function attachShadowEnsemble(f){
+  if(Array.isArray(f.probability_history)) {
+    f.probability_history.sort((a,b)=>Date.parse(a?.at||0)-Date.parse(b?.at||0));
+  }
   const p=clamp(Number(f.probability?.estimate ?? Number(f.probability?.percent||0)/100),.03,.97);
   const confidence=clamp(Number(f.confidence_breakdown?.score||f.confidence||50)/100,.2,.98);
   const delta=clamp(Number(f.probability_delta_points||0)/100,-.2,.2);
