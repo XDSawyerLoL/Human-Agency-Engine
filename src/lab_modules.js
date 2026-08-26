@@ -2,28 +2,31 @@ import { config } from './config.js';
 import { buildForecasts } from './predictor.js';
 import { buildBreadthForecasts } from './breadth_predictor.js';
 import { selectPublicForecasts } from './public_selection.js';
+import { getFutureEngineReferenceForecasts, getFutureEngineCatalogStats } from './future_engine_reference.js';
 
-const UA = 'Evidence-World-Eye/1.0 (+modular predictive lab)';
-const HOUR = 3600_000;
+const UA = 'Evidence-World-Eye/1.1 (+functional modular predictive lab)';
+const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const memo = new Map();
 
 const GDELT_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
 const PUBMED_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 const POLYMARKET_BASE = 'https://gamma-api.polymarket.com';
+const FORECAST_API = 'https://forecastapi.com/v2/forecast';
+const WINDY_EMBED = 'https://embed.windy.com/embed2.html?lat=25&lon=10&zoom=2&level=surface&overlay=wind&menu=&message=&marker=&calendar=now&pressure=true&type=map&location=coordinates&detail=&metricWind=default&metricTemp=%C2%B0C&radarRange=-1';
 
 const GDELT_THEMES = {
-  cyber: { label:'Cyber & infrastructures', type:'media_cyber_disruption', query:'("cyberattack" OR ransomware OR "critical infrastructure cyber")' },
-  conflit: { label:'Conflits & escalade', type:'media_conflict_escalation', query:'("military escalation" OR "cross-border strike" OR "armed clashes")' },
-  industrie: { label:'Industrie & emploi', type:'media_industrial_stress', query:'("factory closure" OR "plant closure" OR "mass layoffs" OR restructuring)' },
-  energie: { label:'Électricité & réseaux', type:'media_energy_grid_stress', query:'("power outage" OR blackout OR "grid emergency" OR "electricity shortage")' },
-  alimentation: { label:'Agriculture & alimentation', type:'media_food_supply_signal', query:'("crop failure" OR "food shortage" OR "grain export" OR "agricultural losses")' },
-  regulation: { label:'Régulation IA & numérique', type:'media_technology_regulation', query:'("AI regulation" OR "artificial intelligence regulation" OR "tech regulation" OR "digital regulation")' },
-  ia: { label:'IA, puces & data centers', type:'media_ai_investment', query:'("AI investment" OR "data center investment" OR "AI chips demand" OR "semiconductor investment")' },
-  logistique: { label:'Commerce & logistique', type:'media_supply_chain_signal', query:'("port closure" OR "shipping disruption" OR "supply disruption")' },
-  social: { label:'Mouvements sociaux', type:'media_civil_disruption', query:'("general strike" OR "mass protest" OR "transport strike")' },
-  commerce: { label:'Sanctions & commerce', type:'media_geopolitical_trade', query:'("export ban" OR sanctions OR "trade restriction" OR tariff)' },
-  finance: { label:'Banques & liquidité', type:'media_financial_stress', query:'("bank run" OR "liquidity crisis" OR "bank stress")' }
+  cyber: { label:'Cyber & infrastructures', type:'media_cyber_disruption', query:'("cyberattack" OR ransomware OR "critical infrastructure cyber")', fallback:'cyberattack' },
+  conflit: { label:'Conflits & escalade', type:'media_conflict_escalation', query:'("military escalation" OR "cross-border strike" OR "armed clashes")', fallback:'military escalation' },
+  industrie: { label:'Industrie & emploi', type:'media_industrial_stress', query:'("factory closure" OR "plant closure" OR "mass layoffs" OR restructuring)', fallback:'mass layoffs' },
+  energie: { label:'Électricité & réseaux', type:'media_energy_grid_stress', query:'("power outage" OR blackout OR "grid emergency" OR "electricity shortage")', fallback:'power outage' },
+  alimentation: { label:'Agriculture & alimentation', type:'media_food_supply_signal', query:'("crop failure" OR "food shortage" OR "grain export" OR "agricultural losses")', fallback:'food shortage' },
+  regulation: { label:'Régulation IA & numérique', type:'media_technology_regulation', query:'("AI regulation" OR "artificial intelligence regulation" OR "tech regulation" OR "digital regulation")', fallback:'AI regulation' },
+  ia: { label:'IA, puces & data centers', type:'media_ai_investment', query:'("AI investment" OR "data center investment" OR "AI chips demand" OR "semiconductor investment")', fallback:'AI investment' },
+  logistique: { label:'Commerce & logistique', type:'media_supply_chain_signal', query:'("port closure" OR "shipping disruption" OR "supply disruption")', fallback:'shipping disruption' },
+  social: { label:'Mouvements sociaux', type:'media_civil_disruption', query:'("general strike" OR "mass protest" OR "transport strike")', fallback:'general strike' },
+  commerce: { label:'Sanctions & commerce', type:'media_geopolitical_trade', query:'("export ban" OR sanctions OR "trade restriction" OR tariff)', fallback:'sanctions' },
+  finance: { label:'Banques & liquidité', type:'media_financial_stress', query:'("bank run" OR "liquidity crisis" OR "bank stress")', fallback:'bank stress' }
 };
 
 const PUBMED_TOPICS = [
@@ -77,48 +80,55 @@ function sourceSignal({key,label,family='public_research',trust=.72,type,title,u
   return { source_key:key,source_label:label,source_family:family,source_trust:trust,observed_at:now,event_at:eventAt||now,external_key:`${key}:${hash(`${title}|${eventAt||now}`)}`,event_type:type,title,geography,severity,url,facts };
 }
 
-async function gdeltTheme(themeKey) {
-  const spec = GDELT_THEMES[themeKey];
-  if (!spec) throw new Error('thème GDELT inconnu');
+async function gdeltRequest(query) {
   const url = new URL(GDELT_ENDPOINT);
-  url.searchParams.set('query',spec.query);
+  url.searchParams.set('query',query);
   url.searchParams.set('mode','ArtList');
   url.searchParams.set('format','json');
   url.searchParams.set('maxrecords','75');
   url.searchParams.set('timespan','12h');
   url.searchParams.set('sort','DateDesc');
-  const payload = await fetchJson(url,{},22_000);
-  const articles = Array.isArray(payload?.articles) ? payload.articles : [];
+  return fetchJson(url,{},18_000);
+}
+
+async function gdeltTheme(themeKey) {
+  const spec = GDELT_THEMES[themeKey];
+  if (!spec) throw new Error('thème GDELT inconnu');
+  let payload, usedQuery=spec.query, fallbackUsed=false;
+  try { payload=await gdeltRequest(spec.query); }
+  catch { payload=await gdeltRequest(spec.fallback); usedQuery=spec.fallback; fallbackUsed=true; }
+  let articles = Array.isArray(payload?.articles) ? payload.articles : [];
+  if (!articles.length && !fallbackUsed) {
+    try { payload=await gdeltRequest(spec.fallback); articles=Array.isArray(payload?.articles)?payload.articles:[]; usedQuery=spec.fallback; fallbackUsed=true; } catch {}
+  }
   const domains = new Set(articles.map(a=>a.domain).filter(Boolean));
   const signal = articles.length >= 5 && domains.size >= 3 ? sourceSignal({
     key:'gdelt-module-radar',label:'GDELT · analyse à la demande',family:'global_media_aggregator',trust:.64,type:spec.type,
     title:`Convergence médiatique : ${spec.label}`,url:articles[0]?.url||'',severity:Math.min(.80,.34+articles.length/130+domains.size/110),
-    facts:{theme:themeKey,article_count:articles.length,domain_count:domains.size,sample_titles:articles.slice(0,8).map(a=>text(a.title)),on_demand_analysis:true}
+    facts:{theme:themeKey,article_count:articles.length,domain_count:domains.size,sample_titles:articles.slice(0,8).map(a=>text(a.title)),on_demand_analysis:true,fallback_used:fallbackUsed}
   }) : null;
   const signals = signal ? [signal] : [];
   const forecasts = selectPublicForecasts([...buildForecasts(signals,16),...buildBreadthForecasts(signals)],12);
-  return {key:'gdelt',label:'Analyse GDELT',theme:themeKey,theme_label:spec.label,items:articles.slice(0,12).map(a=>({title:text(a.title),domain:a.domain||'',url:a.url||'',seen_at:a.seendate||null})),signals,forecasts,meta:{article_count:articles.length,domain_count:domains.size}};
+  return {key:'gdelt',label:'Analyse GDELT',theme:themeKey,theme_label:spec.label,items:articles.slice(0,20).map(a=>({title:text(a.title),domain:a.domain||'',url:a.url||'',seen_at:a.seendate||null})),signals,forecasts,meta:{article_count:articles.length,domain_count:domains.size,query:usedQuery,fallback_used:fallbackUsed},notice:articles.length?'':'Aucun article suffisamment récent sur cette requête ; le module fonctionne mais le signal est actuellement vide.'};
 }
 
 async function pubmedTopic(topic) {
-  const sres = await fetchJson(`${PUBMED_BASE}/esearch.fcgi?db=pubmed&term=${encodeURIComponent(topic.query)}&retmax=5&sort=date&retmode=json`,{},16_000);
+  const sres = await fetchJson(`${PUBMED_BASE}/esearch.fcgi?db=pubmed&term=${encodeURIComponent(topic.query)}&retmax=5&sort=date&retmode=json`,{},12_000);
   const ids = sres?.esearchresult?.idlist || [];
   if (!ids.length) return [];
-  const sum = await fetchJson(`${PUBMED_BASE}/esummary.fcgi?db=pubmed&id=${ids.join(',')}&retmode=json`,{},16_000);
+  const sum = await fetchJson(`${PUBMED_BASE}/esummary.fcgi?db=pubmed&id=${ids.join(',')}&retmode=json`,{},12_000);
   return ids.map(uid=>sum?.result?.[uid]).filter(Boolean).map(rec=>({uid:rec.uid||'',title:text(rec.title),date:rec.sortpubdate||rec.pubdate||'',url:`https://pubmed.ncbi.nlm.nih.gov/${rec.uid}/`}));
 }
 
 async function pubmedModule() {
-  const groups=[];
-  for (const topic of PUBMED_TOPICS) {
-    try { groups.push({topic,items:await pubmedTopic(topic)}); } catch { groups.push({topic,items:[]}); }
-  }
-  const forecasts = groups.filter(g=>g.items.length).map(g=>researchForecast(g.topic,g.items,'PubMed','pubmed-research-frontier',.74,.39,[1440,13140]));
-  return {key:'pubmed',label:'Radar PubMed',items:groups.flatMap(g=>g.items.slice(0,3).map(x=>({...x,topic:g.topic.label}))),forecasts};
+  const settled=await Promise.allSettled(PUBMED_TOPICS.map(async topic=>({topic,items:await pubmedTopic(topic)})));
+  const groups=settled.map((r,i)=>r.status==='fulfilled'?r.value:{topic:PUBMED_TOPICS[i],items:[]});
+  const forecasts=groups.filter(g=>g.items.length).map(g=>researchForecast(g.topic,g.items,'PubMed','pubmed-research-frontier',.74,.39,[1440,13140]));
+  return {key:'pubmed',label:'Radar PubMed',items:groups.flatMap(g=>g.items.slice(0,4).map(x=>({...x,topic:g.topic.label}))),forecasts,meta:{topics:PUBMED_TOPICS.length,topics_ok:groups.filter(g=>g.items.length).length}};
 }
 
 async function arxivTopic(topic) {
-  const xml = await fetchText(`https://export.arxiv.org/api/query?search_query=${encodeURIComponent(topic.query)}&max_results=5&sortBy=submittedDate&sortOrder=descending`,{},18_000);
+  const xml = await fetchText(`https://export.arxiv.org/api/query?search_query=${encodeURIComponent(topic.query)}&max_results=5&sortBy=submittedDate&sortOrder=descending`,{},14_000);
   return xml.split('<entry>').slice(1).map(entry=>{
     const title=text((entry.match(/<title>([\s\S]*?)<\/title>/)||[])[1]);
     const rawId=text((entry.match(/<id>([\s\S]*?)<\/id>/)||[])[1]);
@@ -129,12 +139,10 @@ async function arxivTopic(topic) {
 }
 
 async function arxivModule() {
-  const groups=[];
-  for (const topic of ARXIV_TOPICS) {
-    try { groups.push({topic,items:await arxivTopic(topic)}); } catch { groups.push({topic,items:[]}); }
-  }
-  const forecasts = groups.filter(g=>g.items.length).map(g=>researchForecast(g.topic,g.items,'arXiv','arxiv-research-frontier',.64,.34,[2160,17520]));
-  return {key:'arxiv',label:'Radar arXiv',items:groups.flatMap(g=>g.items.slice(0,3).map(x=>({...x,topic:g.topic.label}))),forecasts};
+  const settled=await Promise.allSettled(ARXIV_TOPICS.map(async topic=>({topic,items:await arxivTopic(topic)})));
+  const groups=settled.map((r,i)=>r.status==='fulfilled'?r.value:{topic:ARXIV_TOPICS[i],items:[]});
+  const forecasts=groups.filter(g=>g.items.length).map(g=>researchForecast(g.topic,g.items,'arXiv','arxiv-research-frontier',.64,.34,[2160,17520]));
+  return {key:'arxiv',label:'Radar arXiv',items:groups.flatMap(g=>g.items.slice(0,4).map(x=>({...x,topic:g.topic.label}))),forecasts,meta:{topics:ARXIV_TOPICS.length,topics_ok:groups.filter(g=>g.items.length).length}};
 }
 
 function horizonMeta(hours) {
@@ -168,67 +176,117 @@ function researchForecast(topic, items, label, eventType, trust, prior, hours) {
 }
 
 async function polymarketModule() {
-  const params=new URLSearchParams({closed:'false',order:'volume',ascending:'false',limit:'24'});
-  const markets=await fetchJson(`${POLYMARKET_BASE}/markets?${params.toString()}`,{},18_000);
+  const params=new URLSearchParams({closed:'false',order:'volume',ascending:'false',limit:'40'});
+  const markets=await fetchJson(`${POLYMARKET_BASE}/markets?${params.toString()}`,{},15_000);
   const items=(Array.isArray(markets)?markets:[]).map(m=>{
-    let probability=null;
-    try { const prices=typeof m.outcomePrices==='string'?JSON.parse(m.outcomePrices):m.outcomePrices; if(Array.isArray(prices)&&Number.isFinite(Number(prices[0]))) probability=Math.round(Number(prices[0])*100); } catch {}
-    return {question:text(m.question),probability,volume:Number(m.volume||0),end_date:m.endDate||null,url:`https://polymarket.com/event/${m.slug||m.id}`};
+    let probability=null, outcome='Oui';
+    try {
+      const prices=typeof m.outcomePrices==='string'?JSON.parse(m.outcomePrices):m.outcomePrices;
+      const outcomes=typeof m.outcomes==='string'?JSON.parse(m.outcomes):m.outcomes;
+      if(Array.isArray(prices)) {
+        let idx=0;
+        if(Array.isArray(outcomes)) { const yes=outcomes.findIndex(x=>/^yes|oui$/i.test(String(x))); if(yes>=0){idx=yes;outcome=String(outcomes[yes]);} }
+        if(Number.isFinite(Number(prices[idx]))) probability=Math.round(Number(prices[idx])*100);
+      }
+    } catch {}
+    return {question:text(m.question),probability,outcome,volume:Number(m.volume||0),liquidity:Number(m.liquidity||0),end_date:m.endDate||null,url:`https://polymarket.com/event/${m.slug||m.id}`};
   }).filter(x=>x.question&&Number.isFinite(x.probability));
-  return {key:'polymarket',label:'Consensus Polymarket',items,forecasts:[],notice:'Consensus de marché externe. Ces pourcentages ne sont jamais présentés comme une probabilité calculée par ÉVIDENCE.'};
+  return {key:'polymarket',label:'Consensus Polymarket',items:items.slice(0,30),forecasts:[],notice:'Consensus de marché externe. Ces pourcentages ne sont jamais présentés comme une probabilité calculée par ÉVIDENCE.'};
+}
+
+function xmlValue(block, tag) {
+  const m=String(block||'').match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`,'i'));
+  return text((m?.[1]||'').replace(/<!\[CDATA\[|\]\]>/g,''));
 }
 
 async function googleTrendsModule() {
-  const raw=await fetchText('https://trends.google.com/trends/api/dailytrends?hl=fr&geo=',{},18_000);
-  const json=JSON.parse(raw.replace(/^[^{]*\{/,'{'));
-  const days=json?.default?.trendingSearchesDays||[];
+  let raw='';
+  try { raw=await fetchText('https://trends.google.com/trending/rss?geo=FR',{},12_000); } catch {}
   const items=[];
-  for(const day of days.slice(0,2)) for(const row of (day.trendingSearches||[])) {
-    const query=text(row?.title?.query); if(!query) continue;
-    items.push({query,traffic:row?.formattedTraffic||'',url:row?.articles?.[0]?.url||'https://trends.google.com/trends/'});
+  for(const block of raw.split(/<item>/i).slice(1,31)) {
+    const query=xmlValue(block,'title');
+    if(!query) continue;
+    const traffic=xmlValue(block,'ht:approx_traffic')||xmlValue(block,'approx_traffic');
+    const link=xmlValue(block,'link')||`https://trends.google.com/trending?geo=FR&hl=fr`;
+    items.push({query,traffic,url:link});
   }
-  return {key:'trends',label:'Google Trends',items:items.slice(0,20),forecasts:[],notice:'Signal d’attention collective uniquement. Une hausse de recherches n’est pas, à elle seule, une prédiction.'};
+  if(!items.length) items.push({query:'Tendances Google France',traffic:'ouvrir le flux actuel',url:'https://trends.google.com/trending?geo=FR&hl=fr'});
+  return {key:'trends',label:'Google Trends',items,forecasts:[],notice:'Signal d’attention collective uniquement. Une hausse de recherches n’est jamais une preuve suffisante de matérialisation.'};
+}
+
+function weeklySeries(observations) {
+  return [...observations].reverse().filter(x=>Number.isFinite(x.value)).slice(-52).map(x=>({date:x.date,value:x.value}));
+}
+
+async function forecastApiSeries(identifier, observations) {
+  if(!config.forecastApiKey || observations.length<8) return null;
+  const body={identifier,data:weeklySeries(observations),periods:4,frequency:'W',data_type:'standard',confidence_level:.8};
+  const payload=await fetchJson(FORECAST_API,{method:'POST',headers:{authorization:`Bearer ${config.forecastApiKey}`,'content-type':'application/json'},body:JSON.stringify(body)},22_000);
+  const rows=Array.isArray(payload?.forecast)?payload.forecast:Array.isArray(payload?.forecasts)?payload.forecasts:[];
+  return {identifier,forecast:rows.slice(0,8),model_info:payload?.model_info||null};
 }
 
 async function fredModule() {
   if(!config.fredApiKey) return {key:'fred',label:'FRED + ForecastAPI',items:[],forecasts:[],notice:'Clé FRED non configurée.'};
   const series=[['VIXCLS','Volatilité VIX'],['BAMLH0A0HYM2','Spreads crédit HY'],['DCOILWTICO','Pétrole WTI'],['ICSA','Inscriptions chômage US']];
-  const items=[];
-  for(const [id,label] of series){
-    try{
-      const u=new URL('https://api.stlouisfed.org/fred/series/observations'); u.searchParams.set('series_id',id);u.searchParams.set('api_key',config.fredApiKey);u.searchParams.set('file_type','json');u.searchParams.set('sort_order','desc');u.searchParams.set('limit','8');
-      const data=await fetchJson(u,{},16_000); const obs=(data?.observations||[]).map(x=>({date:x.date,value:Number(x.value)})).filter(x=>Number.isFinite(x.value));
-      if(obs.length) items.push({series:id,label,latest:obs[0].value,previous:obs[1]?.value??null,date:obs[0].date,url:`https://fred.stlouisfed.org/series/${id}`});
-    }catch{}
-  }
-  return {key:'fred',label:'FRED + ForecastAPI',items,forecasts:[],notice:'Les trajectoires statistiques FRED/ForecastAPI alimentent déjà le moteur principal lorsqu’elles franchissent les seuils de mouvement.'};
+  const settled=await Promise.allSettled(series.map(async([id,label])=>{
+    const u=new URL('https://api.stlouisfed.org/fred/series/observations'); u.searchParams.set('series_id',id);u.searchParams.set('api_key',config.fredApiKey);u.searchParams.set('file_type','json');u.searchParams.set('sort_order','desc');u.searchParams.set('limit','60');
+    const data=await fetchJson(u,{},13_000); const obs=(data?.observations||[]).map(x=>({date:x.date,value:Number(x.value)})).filter(x=>Number.isFinite(x.value));
+    let projection=null; try { projection=await forecastApiSeries(id,obs); } catch(error){ projection={error:String(error?.message||error).slice(0,120)}; }
+    return {series:id,label,latest:obs[0]?.value??null,previous:obs[1]?.value??null,date:obs[0]?.date||null,url:`https://fred.stlouisfed.org/series/${id}`,projection};
+  }));
+  const items=settled.filter(x=>x.status==='fulfilled').map(x=>x.value);
+  return {key:'fred',label:'FRED + ForecastAPI',items,forecasts:[],meta:{fred:true,forecastapi:Boolean(config.forecastApiKey),quota_guard:'cache 24 h'},notice:config.forecastApiKey?'Les intervalles ForecastAPI sont des intervalles de valeurs futures, pas des probabilités d’événement.':'FRED actif ; ForecastAPI non configuré.'};
+}
+
+function localReferenceItems(source) {
+  return getFutureEngineReferenceForecasts({activeOnly:true})
+    .filter(f=>(f.consolidation?.source_providers||[]).some(s=>String(s.label).toLowerCase().includes(String(source).toLowerCase())))
+    .map(f=>({title:f.title,question:f.title,probability:f.probability?.percent,target_date:f.target_date,region:f.region,url:f.reference_url,origin:'Catalogue Future Engine',summary:f.summary}));
+}
+
+async function metaculusModule() {
+  const items=localReferenceItems('Metaculus');
+  return {key:'metaculus',label:'Metaculus + FutureEval',items,forecasts:[],meta:{api_key_detected:Boolean(config.metaculusApiKey),live_api_ingestion:false,local_reference_questions:items.length},links:[{label:'Metaculus',url:'https://www.metaculus.com/'},{label:'FutureEval',url:'https://www.metaculus.com/futureeval/'}],notice:'Module fonctionnel en mode référence : il expose les questions Metaculus déjà présentes dans le catalogue Future Engine et FutureEval. L’API Metaculus live reste volontairement hors ingestion commerciale sans accord écrit adapté.'};
+}
+
+async function windyModule() {
+  const items=localReferenceItems('Windy');
+  return {key:'windy',label:'Windy + World Weather Eye',items,forecasts:[],map_embed_url:WINDY_EMBED,meta:{api_key_detected:Boolean(config.windyApiKey),production_evidence:false,legacy_alerts:items.length},links:[{label:'Carte météo ÉVIDENCE',url:'/intelligence/'},{label:'Windy',url:'https://www.windy.com/'}],notice:'Carte Windy active comme visualisation. Les anciennes cartes Windy du catalogue Future Engine restent des références ; les alertes HORIZON actuelles reposent sur les sources autorisées/officielles.'};
+}
+
+async function futureEngineCatalogModule() {
+  const forecasts=getFutureEngineReferenceForecasts({activeOnly:true});
+  return {key:'future-engine',label:'Catalogue Future Engine',items:forecasts.map(f=>({title:f.title,probability:f.probability?.percent,target_date:f.target_date,region:f.region,url:f.reference_url,source:(f.consolidation?.source_providers||[]).map(s=>s.label).join(', ')})),forecasts:[],meta:getFutureEngineCatalogStats(),notice:'Catalogue importé comme référence. Ses probabilités historiques ne sont pas rebaptisées probabilités ÉVIDENCE.'};
 }
 
 export const moduleCatalog = () => [
+  {key:'future-engine',label:'Catalogue Future Engine',category:'référence',status:'actif',actionable:true,core_input:false,description:'Parcourt les prédictions de l’ancien moteur importées dans ÉVIDENCE, sans réécrire leur origine.'},
   {key:'gdelt',label:'Analyse GDELT',category:'monde',status:'actif',actionable:true,core_input:true,description:'Lance un scan thématique des médias mondiaux et transforme une convergence en scénarios réfutables.',themes:Object.entries(GDELT_THEMES).map(([key,v])=>({key,label:v.label}))},
   {key:'pubmed',label:'Radar PubMed',category:'science',status:'actif',actionable:true,core_input:true,description:'Surveille les fronts de recherche biomédicale et projette les étapes de validation ou d’adoption.'},
   {key:'arxiv',label:'Radar arXiv',category:'science',status:'actif',actionable:true,core_input:true,description:'Repère les fronts de recherche IA, machine learning, bio-informatique et systèmes sociaux.'},
-  {key:'polymarket',label:'Consensus Polymarket',category:'consensus',status:'référence',actionable:true,core_input:false,description:'Affiche le consensus de marché comme référence externe, séparé du calcul ÉVIDENCE.'},
-  {key:'trends',label:'Google Trends',category:'attention',status:'référence',actionable:true,core_input:false,description:'Détecte les pics d’attention collective. Signal exploratoire, jamais preuve suffisante seul.'},
-  {key:'fred',label:'FRED + ForecastAPI',category:'macro',status:config.fredApiKey?'actif':'à configurer',actionable:true,core_input:true,description:'Indicateurs macro officiels et trajectoires statistiques secondaires.'},
-  {key:'metaculus',label:'Metaculus',category:'consensus',status:config.metaculusApiKey?'référence configurée':'référence',actionable:false,core_input:false,description:'Référence externe uniquement. Pas injectée dans la probabilité ÉVIDENCE sans autorisation/licence adaptée.'},
-  {key:'windy',label:'Windy',category:'météo',status:config.windyApiKey?'référence configurée':'référence',actionable:false,core_input:false,description:'Visualisation/référence météo. Les données de test Windy ne servent pas de preuve de production.'}
+  {key:'polymarket',label:'Consensus Polymarket',category:'consensus',status:'actif · référence',actionable:true,core_input:false,description:'Affiche les marchés ouverts et leur consensus, séparés de la probabilité ÉVIDENCE.'},
+  {key:'trends',label:'Google Trends',category:'attention',status:'actif · référence',actionable:true,core_input:false,description:'Lit les tendances de recherche françaises actuelles comme signal d’attention collective.'},
+  {key:'fred',label:'FRED + ForecastAPI',category:'macro',status:config.fredApiKey?'actif':'à configurer',actionable:true,core_input:true,description:'Lit les séries macro officielles FRED et calcule des trajectoires ForecastAPI lorsque la clé est présente.'},
+  {key:'metaculus',label:'Metaculus + FutureEval',category:'benchmark',status:config.metaculusApiKey?'référence configurée':'référence locale',actionable:true,core_input:false,description:'Expose les questions Metaculus du catalogue importé et FutureEval sans injecter le consensus externe dans notre probabilité.'},
+  {key:'windy',label:'Windy + Weather Eye',category:'météo',status:'actif · référence',actionable:true,core_input:false,description:'Affiche la carte Windy et les anciennes alertes météo du catalogue ; HORIZON garde ses preuves météo autorisées séparées.'}
 ];
 
 export async function runLabModule(key, options={}) {
+  if(key==='future-engine') return cached('future-engine-catalog',6*HOUR,futureEngineCatalogModule);
   if(key==='gdelt') return cached(`gdelt:${options.theme||'cyber'}`,20*60_000,()=>gdeltTheme(options.theme||'cyber'));
-  if(key==='pubmed') return cached('pubmed',12*HOUR,pubmedModule);
-  if(key==='arxiv') return cached('arxiv',12*HOUR,arxivModule);
-  if(key==='polymarket') return cached('polymarket',HOUR,polymarketModule);
-  if(key==='trends') return cached('trends',6*HOUR,googleTrendsModule);
-  if(key==='fred') return cached('fred-module',6*HOUR,fredModule);
-  if(key==='metaculus') return {key,label:'Metaculus',items:[],forecasts:[],notice:'Référence externe configurée, volontairement hors calcul de probabilité.'};
-  if(key==='windy') return {key,label:'Windy',items:[],forecasts:[],notice:'Référence météo uniquement ; non utilisée comme preuve de production.'};
+  if(key==='pubmed') return cached('pubmed',6*HOUR,pubmedModule);
+  if(key==='arxiv') return cached('arxiv',6*HOUR,arxivModule);
+  if(key==='polymarket') return cached('polymarket',30*60_000,polymarketModule);
+  if(key==='trends') return cached('trends',30*60_000,googleTrendsModule);
+  if(key==='fred') return cached('fred-module',24*HOUR,fredModule);
+  if(key==='metaculus') return cached('metaculus-reference',6*HOUR,metaculusModule);
+  if(key==='windy') return cached('windy-reference',60*60_000,windyModule);
   throw new Error('module inconnu');
 }
 
 export async function collectResearchModuleCandidates() {
-  const [pubmed,arxiv]=await Promise.allSettled([cached('pubmed',12*HOUR,pubmedModule),cached('arxiv',12*HOUR,arxivModule)]);
+  const [pubmed,arxiv]=await Promise.allSettled([cached('pubmed',6*HOUR,pubmedModule),cached('arxiv',6*HOUR,arxivModule)]);
   const forecasts=[]; const statuses=[];
   for(const [key,result] of [['pubmed',pubmed],['arxiv',arxiv]]){
     if(result.status==='fulfilled'){ forecasts.push(...(result.value.forecasts||[])); statuses.push({source:key,ok:true,forecasts:result.value.forecasts?.length||0}); }
