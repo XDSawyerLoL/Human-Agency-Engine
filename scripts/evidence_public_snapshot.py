@@ -13,12 +13,16 @@ from app.db import SessionLocal
 from app.horizon_event_graph_schemas import HorizonEventGraphBuildRequest
 from app.services.evidence_consolidation import EvidenceConsolidator
 from app.services.evidence_forecast_engine import EvidenceForecastEngine
+from app.services.evidence_scenario_fusion import EvidenceScenarioFusion
 from app.services.horizon_briefing import HorizonWorldBriefingService
 from app.services.horizon_event_graph import HorizonEventGraphService
 
 
 DEFAULT_OUTPUT = Path("evidence-live.json")
 MAX_HISTORY_POINTS = 48
+RAW_FORECAST_MULTIPLIER = 5
+MIN_RAW_FORECAST_POOL = 30
+MAX_RAW_FORECAST_POOL = 100
 
 
 def _clean_driver(item: dict[str, Any]) -> dict[str, Any]:
@@ -52,6 +56,7 @@ def _clean_evidence(item: dict[str, Any]) -> dict[str, Any]:
 
 def sanitize_forecast(item: dict[str, Any]) -> dict[str, Any]:
     probability = dict(item.get("probability") or {})
+    fusion = dict(item.get("fusion") or {})
     sanitized = {
         "scenario_key": item.get("scenario_key"),
         "candidate_id": item.get("candidate_id"),
@@ -61,6 +66,7 @@ def sanitize_forecast(item: dict[str, Any]) -> dict[str, Any]:
         "event_type": item.get("event_type"),
         "headline": item.get("headline"),
         "outcome": item.get("outcome"),
+        "public_language": item.get("public_language") or "mixed",
         "fact_status": item.get("fact_status"),
         "trajectory": item.get("trajectory"),
         "probability": {
@@ -80,13 +86,29 @@ def sanitize_forecast(item: dict[str, Any]) -> dict[str, Any]:
         "time_window": dict(item.get("time_window") or {}),
         "why_now": item.get("why_now"),
         "causal_chain": list(item.get("causal_chain") or []),
-        "drivers": [_clean_driver(driver) for driver in item.get("drivers") or []][:8],
+        "drivers": [_clean_driver(driver) for driver in item.get("drivers") or []][:16],
         "watch_next": list(item.get("watch_next") or [])[:6],
         "probability_up_if": list(item.get("probability_up_if") or [])[:6],
         "probability_down_if": list(item.get("probability_down_if") or [])[:6],
         "falsification": item.get("falsification"),
-        "evidence": [_clean_evidence(evidence) for evidence in item.get("evidence") or []][:8],
+        "evidence": [_clean_evidence(evidence) for evidence in item.get("evidence") or []][:16],
         "model_components": dict(item.get("model_components") or {}),
+        "fusion": {
+            "engine": fusion.get("engine"),
+            "raw_forecast_count": fusion.get("raw_forecast_count", 1),
+            "supporting_event_ids": list(fusion.get("supporting_event_ids") or []),
+            "supporting_candidate_ids": list(fusion.get("supporting_candidate_ids") or []),
+            "source_keys": list(fusion.get("source_keys") or []),
+            "duplicate_probability_inflation_prevented": bool(
+                fusion.get("duplicate_probability_inflation_prevented", True)
+            ),
+            "probability_merge_method": fusion.get("probability_merge_method"),
+            "probability_recomputed_after_fusion": bool(
+                fusion.get("probability_recomputed_after_fusion", False)
+            ),
+            "geography_aware_grouping": bool(fusion.get("geography_aware_grouping", False)),
+            "group_time_bucket": fusion.get("group_time_bucket"),
+        },
     }
     consensus = item.get("consensus_reference")
     if isinstance(consensus, dict) and consensus.get("authorized") is True:
@@ -230,14 +252,21 @@ def build_snapshot(
     api_key: str | None = None,
     previous_snapshot: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    public_limit = max(1, min(int(forecast_limit), 20))
+    raw_limit = max(MIN_RAW_FORECAST_POOL, public_limit * RAW_FORECAST_MULTIPLIER)
+    raw_limit = min(raw_limit, MAX_RAW_FORECAST_POOL)
+
     remote = bool(engine_url and api_key)
     if remote:
-        result = _remote_forecasts(engine_url or "", api_key or "", forecast_limit)
+        result = _remote_forecasts(engine_url or "", api_key or "", raw_limit)
     else:
-        result = _local_forecasts(forecast_limit)
+        result = _local_forecasts(raw_limit)
 
+    raw_forecasts = list(result.get("forecasts") or [])
+    fused_forecasts = EvidenceScenarioFusion().fuse(raw_forecasts, limit=public_limit)
     generated_at = datetime.now(timezone.utc).isoformat()
-    public_forecasts = [sanitize_forecast(item) for item in result.get("forecasts") or []]
+    public_forecasts = [sanitize_forecast(item) for item in fused_forecasts]
+
     consolidator = EvidenceConsolidator()
     for forecast in public_forecasts:
         forecast["consolidation"] = consolidator.consolidate(forecast)
@@ -254,10 +283,21 @@ def build_snapshot(
         for source in (forecast.get("consolidation") or {}).get("source_families") or []
         if source.get("key")
     }
+    source_providers = {
+        str(source.get("key"))
+        for forecast in public_forecasts
+        for source in (forecast.get("consolidation") or {}).get("source_providers") or []
+        if source.get("key")
+    }
     external_consensus_enabled = any(
         bool(((forecast.get("consolidation") or {}).get("divergence") or {}).get("external_consensus_available"))
         for forecast in public_forecasts
     )
+    confirmed_count = sum(
+        1 for item in public_forecasts if item.get("fact_status") == "forecast_from_confirmed_event"
+    )
+    emerging_count = len(public_forecasts) - confirmed_count
+    raw_support_rows = sum(int((item.get("fusion") or {}).get("raw_forecast_count") or 1) for item in public_forecasts)
 
     return {
         "schema": "evidence-public-snapshot-v2",
@@ -269,17 +309,24 @@ def build_snapshot(
             "evidence_items_considered": summary.get("evidence_items_considered", 0),
             "confirmed_events_considered": summary.get("confirmed_events_considered", 0),
             "emerging_signals_considered": summary.get("emerging_signals_considered", 0),
+            "raw_predictions_considered": len(raw_forecasts),
+            "raw_support_rows_in_published_scenarios": raw_support_rows,
             "predictions_returned": len(public_forecasts),
-            "confirmed_precursor_predictions": summary.get("confirmed_precursor_predictions", 0),
-            "emerging_precursor_predictions": summary.get("emerging_precursor_predictions", 0),
-            "model_probability_estimates": summary.get("model_probability_estimates", len(public_forecasts)),
-            "empirically_calibrated_predictions": summary.get("empirically_calibrated_predictions", 0),
+            "scenario_groups_collapsed": max(0, len(raw_forecasts) - len(public_forecasts)),
+            "confirmed_precursor_predictions": confirmed_count,
+            "emerging_precursor_predictions": emerging_count,
+            "model_probability_estimates": len(public_forecasts),
+            "empirically_calibrated_predictions": 0,
             "dependency_edges_considered": summary.get("dependency_edges_considered", 0),
             "source_families": len(source_families),
+            "source_providers": len(source_providers),
             "active_source_families": sorted(source_families),
             "probability_history_enabled": True,
             "probability_history_max_points": MAX_HISTORY_POINTS,
             "numeric_model_estimates_enabled": True,
+            "scenario_fusion_enabled": True,
+            "duplicate_probability_inflation_prevented": True,
+            "public_french_localization_enabled": True,
             "consolidation_explanation_enabled": True,
             "scenario_competition_enabled": True,
             "external_consensus_enabled": external_consensus_enabled,
@@ -293,6 +340,8 @@ def build_snapshot(
             "model_probability_is_certainty": False,
             "model_probability_is_empirical_frequency": False,
             "consolidation_score_is_probability": False,
+            "duplicate_alert_count_multiplies_probability": False,
+            "fusion_recomputes_probability": False,
             "empirical_probability_calibration_enabled": False,
             "unconfirmed_candidates_remain_unconfirmed": True,
             "confirmed_precursor_confirms_outcome": False,
@@ -334,6 +383,8 @@ def main() -> None:
                 "status": snapshot["status"],
                 "runtime_mode": snapshot["runtime_mode"],
                 "forecasts": len(snapshot["forecasts"]),
+                "raw_forecasts": snapshot["summary"]["raw_predictions_considered"],
+                "collapsed": snapshot["summary"]["scenario_groups_collapsed"],
                 "history_enabled": snapshot["summary"]["probability_history_enabled"],
                 "consolidation_enabled": snapshot["summary"]["consolidation_explanation_enabled"],
                 "calibrated": snapshot["summary"]["empirically_calibrated_predictions"],
