@@ -1,4 +1,5 @@
 /* Dense cockpit view: more futures per screen without shrinking readability into a mini-dashboard. */
+.v4-estimate em{display:none}
 body[data-page="predictions"] .page-shell.v4,
 body[data-page="horizons"] .page-shell.v4{width:min(1640px,calc(100% - 36px))}
 body[data-page="predictions"] .v4-page-hero,
