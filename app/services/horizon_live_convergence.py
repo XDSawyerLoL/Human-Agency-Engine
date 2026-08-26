@@ -24,6 +24,7 @@ from .horizon_normalizer import HorizonMeteoFranceNormalizer
 from .horizon_provisional import HorizonProvisionalService
 from .horizon_rte_realtime import HorizonRteRealtimeService
 from .horizon_sncf import HorizonSncfService
+from .horizon_statistical_foresight import HorizonStatisticalForesightService
 from .horizon_vigicrues import HorizonVigicruesService
 from .horizon_weather_chain import HorizonWeatherChainService
 from .horizon_windy import HorizonWindyService
@@ -32,7 +33,7 @@ from .horizon_world_pulse import HorizonWorldPulseService
 
 
 class HorizonLiveConvergenceService:
-    ENGINE_VERSION = "horizon-live-convergence-fabric-v0.5-world-observers"
+    ENGINE_VERSION = "horizon-live-convergence-fabric-v0.6-statistical-foresight"
 
     def __init__(self, db: Session):
         self.db = db
@@ -124,6 +125,21 @@ class HorizonLiveConvergenceService:
                 "world-observers",
                 lambda: HorizonWorldObserverService(self.db).poll(),
             ))
+            if settings.fred_api_key and settings.forecast_api_key:
+                results.append(self._safe_call(
+                    "statistical-foresight",
+                    lambda: HorizonStatisticalForesightService(self.db).poll(
+                        fred_api_key=settings.fred_api_key,
+                        forecast_api_key=settings.forecast_api_key,
+                    ),
+                ))
+            else:
+                results.append({
+                    "source": "statistical-foresight",
+                    "ok": False,
+                    "skipped": True,
+                    "reason": "FRED_API_KEY and FORECAST_API_KEY/FORESCAST_API_KEY are required together",
+                })
 
         if request.windy_points:
             if settings.windy_point_forecast_api_key:
@@ -228,6 +244,8 @@ class HorizonLiveConvergenceService:
                 "world_pulse_enabled": True,
                 "who_outbreak_observer_enabled": True,
                 "nasa_eonet_observer_enabled": True,
+                "forecastapi_statistical_foresight_enabled_when_configured": True,
+                "forecastapi_value_interval_is_event_probability": False,
                 "numeric_probabilities_enabled": False,
             },
         }
