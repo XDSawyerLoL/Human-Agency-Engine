@@ -13,7 +13,8 @@ const value = (...names) => {
 };
 
 export const config = {
-  port: int('PORT', 3000, 1, 65535),
+  // Hostinger Web Apps reverse-proxy server-side Node apps to port 3000.
+  port: 3000,
   refreshMs: int('EVIDENCE_REFRESH_SECONDS', 600, 120, 3600) * 1000,
   maxForecasts: int('EVIDENCE_FORECAST_LIMIT', 20, 5, 30),
   fredApiKey: value('FRED_API_KEY'),
