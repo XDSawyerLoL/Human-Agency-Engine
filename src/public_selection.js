@@ -9,7 +9,7 @@ const DOMAIN_CAPS = {
   energy:5, economy_labor:6, supply_fuel:6, social_collective_behavior:4, geopolitics_security:6,
   regulation_policy:5, transport_mobility:4
 };
-const HORIZON_CAPS = { immediate:8, near:11, medium:12, long:8, strategic:5 };
+const HORIZON_CAPS = { immediate:8, near:11, medium:12, long:8, strategic:6, deep:4 };
 
 function score(row){
   return Number(row?.probability?.percent||0) + Number(row?.consolidation?.score||row?.confidence||0)*.20 + Number(row?.commercial_priority||.5)*10 - Number(row?.horizon_order||0)*1.1;
@@ -59,8 +59,8 @@ export function selectPublicForecasts(rows, limit=44){
   for(const row of unique) if(!bestByDomain.has(row.domain)) bestByDomain.set(row.domain,row);
   for(const row of bestByDomain.values()) if(selected.length<limit && canAdd(row)) add(row);
 
-  // Pass 2: make sure every time horizon appears when candidates exist.
-  for(const h of ['immediate','near','medium','long','strategic']){
+  // Pass 2: every horizon gets a public representative when a candidate exists.
+  for(const h of ['immediate','near','medium','long','strategic','deep']){
     const row=unique.find(r=>r.horizon_tier===h && !selectedKeys.has(r.scenario_key) && canAdd(r));
     if(row && selected.length<limit) add(row);
   }
