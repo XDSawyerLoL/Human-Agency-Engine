@@ -1,14 +1,14 @@
 {
   "name": "evidence-world-eye",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
-  "description": "ÉVIDENCE / HORIZON — moteur public de scénarios prédictifs et Decision Intelligence Node.js pour Hostinger",
+  "description": "ÉVIDENCE / HORIZON — moteur public de scénarios prédictifs, références Future Engine et Decision Intelligence Node.js pour Hostinger",
   "type": "module",
   "main": "server.js",
   "engines": { "node": "22.x" },
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check src/config.js && node --check src/store.js && node --check src/sources.js && node --check src/breadth_sources.js && node --check src/predictor.js && node --check src/breadth_predictor.js && node --check src/deep_predictor.js && node --check src/public_selection.js && node --check src/world_eye.js && node --check src/lab_modules.js && node --check src/decision_intelligence.js && node --check src/forecast_reasoning.js && node --check src/calibration_labs.js && node --check public/app.js && node --check public/card-decision-v6.js && node --check public/modules/modules.js && node --check public/intelligence/intelligence.js && node --check public/intelligence/deeplink.js && node --check public/track-record/track-record.js && node --check public/cameras/cameras.js && node scripts/test-public-selection.mjs && node scripts/test-lab-modules.mjs && node scripts/test-track-record.mjs && node scripts/test-decision-intelligence.mjs && node scripts/test-live-cameras.mjs"
+    "check": "node --check server.js && node --check src/config.js && node --check src/store.js && node --check src/sources.js && node --check src/breadth_sources.js && node --check src/predictor.js && node --check src/breadth_predictor.js && node --check src/deep_predictor.js && node --check src/public_selection.js && node --check src/world_eye.js && node --check src/lab_modules.js && node --check src/future_engine_reference.js && node --check src/decision_intelligence.js && node --check src/forecast_reasoning.js && node --check src/calibration_labs.js && node --check public/app.js && node --check public/card-decision-v6.js && node --check public/reference-v7.js && node --check public/modules/modules.js && node --check public/intelligence/intelligence.js && node --check public/intelligence/deeplink.js && node --check public/track-record/track-record.js && node --check public/cameras/cameras.js && node scripts/test-public-selection.mjs && node scripts/test-lab-modules.mjs && node scripts/test-track-record.mjs && node scripts/test-decision-intelligence.mjs && node scripts/test-live-cameras.mjs"
   },
   "dependencies": {
     "compression": "^1.8.1",
