@@ -1,0 +1,76 @@
+name: ÉVIDENCE Zero-Cost Live
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: evidence-zero-cost-live
+  cancel-in-progress: true
+
+jobs:
+  world-eye:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout predictive engine
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Validate snapshot generator
+        run: |
+          node --check scripts/evidence_zero_cost_snapshot.mjs
+          node --check src/config.js
+          node --check src/sources.js
+          node --check src/predictor.js
+
+      - name: Build current-world snapshot
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          FORECAST_API_KEY: ${{ secrets.FORECAST_API_KEY || secrets.FORESCAST_API_KEY }}
+          COPERNICUS_API_KEY: ${{ secrets.COPERNICUS_API_KEY }}
+          METACULUS_API_KEY: ${{ secrets.METACULUS_API_KEY }}
+          POINT_API_KEY: ${{ secrets.POINT_API_KEY }}
+          WINDY_KEY: ${{ secrets.WINDY_KEY }}
+          EVIDENCE_FORECAST_LIMIT: '20'
+          EVIDENCE_OUTPUT: evidence-live.json
+        run: node scripts/evidence_zero_cost_snapshot.mjs
+
+      - name: Validate public payload
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const data = JSON.parse(fs.readFileSync('evidence-live.json','utf8'));
+          if (data.runtime_mode !== 'github-actions-stateless-node') throw new Error('wrong runtime mode');
+          if (!Array.isArray(data.forecasts)) throw new Error('forecasts missing');
+          if (Buffer.byteLength(JSON.stringify(data)) > 1500000) throw new Error('snapshot unexpectedly large');
+          for (const row of data.forecasts) {
+            if (!row.scenario_key || !row.falsification || !row.time_window) throw new Error('forecast contract incomplete');
+          }
+          console.log(`snapshot ok: ${data.forecasts.length} forecasts`);
+          NODE
+
+      - name: Publish one-commit data branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm -rf /tmp/evidence-live-data
+          mkdir -p /tmp/evidence-live-data
+          cp evidence-live.json /tmp/evidence-live-data/evidence-live.json
+          cd /tmp/evidence-live-data
+          git init -q
+          git checkout -q -b evidence-live-data
+          git config user.name 'evidence-world-eye[bot]'
+          git config user.email 'evidence-world-eye[bot]@users.noreply.github.com'
+          git add evidence-live.json
+          git commit -q -m "ÉVIDENCE live $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin evidence-live-data
