@@ -46,19 +46,25 @@ jobs:
           if (!rows.some(r => r.horizon_tier === 'strategic')) throw new Error('strategic horizon missing');
           console.log(rows.map(r => `${r.horizon_tier}:${r.probability.percent}%:${r.headline}`).join('\n'));
           NODE
-      - name: Start Express and verify V5 Hostinger endpoints
+      - name: Start Express and verify V8 Hostinger endpoints
         run: |
           npm start >/tmp/evidence-node.log 2>&1 &
           pid=$!
           trap 'kill $pid 2>/dev/null || true; cat /tmp/evidence-node.log' EXIT
           ok=0
-          for i in $(seq 1 24); do
+          for i in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:3000/api/health >/tmp/health.json; then ok=1; break; fi
             sleep 0.5
           done
           test "$ok" = "1"
-          node -e "const x=require('/tmp/health.json'); if(x.service!=='evidence-world-eye-node'||x.port!==3000) process.exit(1); console.log(x)"
+          node -e "const x=require('/tmp/health.json'); if(x.service!=='evidence-world-eye-node'||x.port!==3000) process.exit(1); console.log('health endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/modules >/tmp/modules.json
           node -e "const x=require('/tmp/modules.json'); const keys=new Set((x.modules||[]).map(m=>m.key)); for(const k of ['gdelt','pubmed','arxiv','polymarket','trends','fred','metaculus','windy']) if(!keys.has(k)) process.exit(1); console.log('modules endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/track-record >/tmp/track.json
-          node -e "const x=require('/tmp/track.json'); if(typeof x.tracked_scenarios!=='number'||x.brier_score!==null) process.exit(1); console.log('track record endpoint ok')"
+          node -e "const x=require('/tmp/track.json'); if(typeof x.tracked_scenarios!=='number'||!x.calibration||!x.resolution) process.exit(1); console.log('track record V8 endpoint ok')"
+          curl -fsS http://127.0.0.1:3000/api/calibration >/tmp/calibration.json
+          node -e "const x=require('/tmp/calibration.json'); if(typeof x.scorable_resolutions!=='number'||!x.global||!Array.isArray(x.buckets)) process.exit(1); console.log('calibration endpoint ok')"
+          curl -fsS http://127.0.0.1:3000/api/resolutions >/tmp/resolutions.json
+          node -e "const x=require('/tmp/resolutions.json'); if(!Array.isArray(x.queue)||typeof x.states!=='object') process.exit(1); console.log('resolution endpoint ok')"
+          curl -fsS http://127.0.0.1:3000/api/storage >/tmp/storage.json
+          node -e "const x=require('/tmp/storage.json'); if(typeof x.persistent!=='boolean'||!Array.isArray(x.required_environment)) process.exit(1); console.log('storage readiness endpoint ok')"
