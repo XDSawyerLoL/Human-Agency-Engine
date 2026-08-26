@@ -49,6 +49,7 @@ class HorizonLiveConvergencePollRequest(BaseModel):
     include_rte_realtime: bool = True
     include_vigicrues: bool = True
     include_sncf: bool = True
+    include_world_pulse: bool = True
     windy_points: list[HorizonWindyPoint] = Field(default_factory=list, max_length=20)
     refresh_provisional_candidates: bool = True
     snapshot_recent_active_events: bool = True
