@@ -38,3 +38,15 @@ jobs:
           if (!rows[0].falsification) throw new Error('falsification missing');
           console.log(rows[0].headline, rows[0].probability.percent);
           NODE
+      - name: Start Express and verify Hostinger health endpoint
+        run: |
+          npm start >/tmp/evidence-node.log 2>&1 &
+          pid=$!
+          trap 'kill $pid 2>/dev/null || true; cat /tmp/evidence-node.log' EXIT
+          ok=0
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:3000/api/health >/tmp/health.json; then ok=1; break; fi
+            sleep 0.5
+          done
+          test "$ok" = "1"
+          node -e "const x=require('/tmp/health.json'); if(x.service!=='evidence-world-eye-node'||x.port!==3000) process.exit(1); console.log(x)"
