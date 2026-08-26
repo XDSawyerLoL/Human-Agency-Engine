@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     metaculus_api_key: str = ""
     copernicus_api_key: str = ""
     forecast_api_key: str = ""
+    point_api_key: str = ""
 
     horizon_collector_enabled: bool = True
     horizon_collector_tick_seconds: int = 30
