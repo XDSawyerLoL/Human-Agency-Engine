@@ -46,7 +46,7 @@ jobs:
           if (!rows.some(r => r.horizon_tier === 'strategic')) throw new Error('strategic horizon missing');
           console.log(rows.map(r => `${r.horizon_tier}:${r.probability.percent}%:${r.headline}`).join('\n'));
           NODE
-      - name: Start Express and verify V9 Hostinger endpoints
+      - name: Start Express and verify V10 Hostinger endpoints
         run: |
           npm start >/tmp/evidence-node.log 2>&1 &
           pid=$!
@@ -57,15 +57,21 @@ jobs:
             sleep 0.5
           done
           test "$ok" = "1"
-          node -e "const x=require('/tmp/health.json'); if(x.service!=='evidence-world-eye-node'||x.port!==3000) process.exit(1); console.log('health endpoint ok')"
+          node -e "const x=require('/tmp/health.json'); if(x.service!=='evidence-world-eye-node'||x.port!==3000||typeof x.causal_world_ready!=='boolean') process.exit(1); console.log('health V10 endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/modules >/tmp/modules.json
           node -e "const x=require('/tmp/modules.json'); const keys=new Set((x.modules||[]).map(m=>m.key)); for(const k of ['gdelt','pubmed','arxiv','polymarket','trends','fred','metaculus','windy']) if(!keys.has(k)) process.exit(1); console.log('modules endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/track-record >/tmp/track.json
-          node -e "const x=require('/tmp/track.json'); if(typeof x.tracked_scenarios!=='number'||!x.calibration||!x.resolution||!x.ensemble) process.exit(1); console.log('track record V9 endpoint ok')"
+          node -e "const x=require('/tmp/track.json'); if(typeof x.tracked_scenarios!=='number'||!x.calibration||!x.resolution||!x.ensemble) process.exit(1); console.log('track record V10 endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/calibration >/tmp/calibration.json
           node -e "const x=require('/tmp/calibration.json'); if(typeof x.scorable_resolutions!=='number'||!x.global||!Array.isArray(x.buckets)) process.exit(1); console.log('calibration endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/ensemble >/tmp/ensemble.json
           node -e "const x=require('/tmp/ensemble.json'); if(!Array.isArray(x.by_component)||!x.live_backtest||typeof x.promotion_ready!=='boolean') process.exit(1); console.log('adaptive ensemble endpoint ok')"
+          curl -fsS http://127.0.0.1:3000/api/causal-graph >/tmp/causal.json
+          node -e "const x=require('/tmp/causal.json'); if(x.schema!=='evidence-causal-world-v1'||!Array.isArray(x.nodes)||!Array.isArray(x.edges)||!x.metrics) process.exit(1); console.log('causal world endpoint ok')"
+          curl -fsS -X POST http://127.0.0.1:3000/api/scenario-lab -H 'Content-Type: application/json' -d '{"interventions":[{"target":"domain:natural_hazards","direction":"up","strength":1}],"max_hops":4}' >/tmp/scenario.json
+          node -e "const x=require('/tmp/scenario.json'); if(x.schema!=='evidence-scenario-lab-v1'||!Array.isArray(x.affected_forecasts)||x.guardrails?.is_causal_proof!==false) process.exit(1); console.log('scenario lab endpoint ok')"
+          curl -fsS http://127.0.0.1:3000/causal/ >/tmp/causal-page.html
+          grep -q 'SCENARIO LAB' /tmp/causal-page.html
           curl -fsS http://127.0.0.1:3000/api/resolutions >/tmp/resolutions.json
           node -e "const x=require('/tmp/resolutions.json'); if(!Array.isArray(x.queue)||typeof x.states!=='object') process.exit(1); console.log('resolution endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/storage >/tmp/storage.json

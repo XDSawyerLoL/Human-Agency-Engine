@@ -18,6 +18,7 @@ import { enrichForecastIntelligence, buildCycleSignalSummary, buildSnapshotAnaly
 import { attachShadowEnsemble, counterfactualSensitivity } from './src/forecast_reasoning.js';
 import { attachAdaptiveEnsemble } from './src/adaptive_ensemble.js';
 import { compileForecastQuestion } from './src/forecast_compiler.js';
+import { buildCausalWorldModel, attachCausalContext, simulateCausalScenario } from './src/causal_world_model.js';
 import { sportsCalibrationLab, benchmarkRoadmap } from './src/calibration_labs.js';
 import { buildResolutionAssessments } from './src/resolution_engine.js';
 import {
@@ -125,7 +126,6 @@ async function refreshWorld() {
       const signalCycle = buildCycleSignalSummary(collected.signals, generatedAt);
       await store.recordSignalCycle(signalCycle);
 
-      // Résoudre d'abord les anciennes prévisions avec les signaux actuels : la V9 n'apprend que du passé résolu.
       const resolutionCycle = await runResolutionCycle(collected.signals, generatedAt);
       const learning = await getLearningReport(store);
 
@@ -154,7 +154,9 @@ async function refreshWorld() {
         attachShadowEnsemble(f);
         attachAdaptiveEnsemble(f, learning);
       }
-      // Le premier ensemble publié est persisté après calcul afin de pouvoir être backtesté sans look-ahead.
+
+      const causalWorld = buildCausalWorldModel(forecasts);
+      attachCausalContext(forecasts, causalWorld);
       await recordForecastMetadata(store, forecasts, generatedAt);
 
       const memoryPublished = forecasts.filter(f => f?.memory?.recomputed).length;
@@ -167,8 +169,8 @@ async function refreshWorld() {
       const catalog = sourceCatalog(collected, sourceProviders);
       const signalAnalytics = await store.getSignalAnalytics();
       const snapshot = {
-        schema: 'evidence-node-world-eye-v9',
-        engine: 'evidence-node-predictive-public-v9-adaptive-forecast-os',
+        schema: 'evidence-node-world-eye-v10',
+        engine: 'evidence-node-predictive-public-v10-causal-forecast-os',
         generated_at: generatedAt,
         runtime_mode: 'hostinger-node-managed',
         status: 'live',
@@ -205,6 +207,11 @@ async function refreshWorld() {
           adaptive_ensemble_learning_resolutions: learning.ensemble.live_backtest.n,
           adaptive_ensemble_promotion_ready: learning.ensemble.promotion_ready,
           forecast_compiler_enabled: true,
+          causal_world_model_enabled: true,
+          causal_world_nodes: causalWorld.metrics.nodes,
+          causal_world_edges: causalWorld.metrics.edges,
+          causal_world_evidence_edges: causalWorld.metrics.evidence_backed_edges,
+          scenario_lab_enabled: true,
           sports_calibration_lab_enabled: true,
           resolution_engine_enabled: true,
           resolution_due: resolutionCycle.due,
@@ -238,9 +245,10 @@ async function refreshWorld() {
           adaptive_ensemble_promotion_ready: learning.ensemble.promotion_ready,
           resolution_states: learning.resolution.states
         },
+        causal_world: causalWorld,
         forecasts,
         contract: {
-          product_promise: 'Anticiper des conséquences plausibles, mesurer leur impact, décider quoi préparer puis vérifier objectivement la prévision.',
+          product_promise: 'Anticiper des conséquences plausibles, mesurer leur impact, relier leurs mécanismes, tester des hypothèses puis vérifier objectivement la prévision.',
           probability_is_certainty: false,
           consolidation_is_probability: false,
           confidence_is_probability: false,
@@ -252,6 +260,9 @@ async function refreshWorld() {
           adaptive_ensemble_is_public_probability: false,
           adaptive_ensemble_requires_live_track_record: true,
           forecast_compiler_can_invent_probability: false,
+          causal_graph_is_causal_proof: false,
+          structural_priors_are_observed_facts: false,
+          scenario_lab_replaces_public_probability: false,
           falsification_required: true,
           expired_forecasts_must_resolve: true,
           ambiguous_forecasts_auto_scored: false,
@@ -263,7 +274,7 @@ async function refreshWorld() {
       snapshot.analytics = buildSnapshotAnalytics(snapshot, signalAnalytics);
       await store.saveSnapshot(snapshot);
       lastError = null;
-      console.log(JSON.stringify({ event:'world_refresh', signals:collected.signals.length, forecasts:forecasts.length, live:livePublished, memory:memoryPublished, candidates:allCandidates.length, resolution:resolutionCycle, calibration_n:learning.calibration.scorable_resolutions, ensemble_n:learning.ensemble.live_backtest.n, domains:domainCounts, horizons:horizonCounts, sources:collected.source_status }));
+      console.log(JSON.stringify({ event:'world_refresh', signals:collected.signals.length, forecasts:forecasts.length, live:livePublished, memory:memoryPublished, candidates:allCandidates.length, resolution:resolutionCycle, calibration_n:learning.calibration.scorable_resolutions, ensemble_n:learning.ensemble.live_backtest.n, causal_nodes:causalWorld.metrics.nodes, causal_edges:causalWorld.metrics.edges, domains:domainCounts, horizons:horizonCounts, sources:collected.source_status }));
       return snapshot;
     } catch (error) {
       lastError = { at: new Date().toISOString(), message: error.message };
@@ -285,6 +296,7 @@ app.get('/api/health', async (_req, res) => {
     storage: store.mode,
     learning_ready: learningReady,
     persistent_learning: storage.persistent,
+    causal_world_ready:Boolean(snapshot?.causal_world?.nodes?.length),
     port: config.port,
     last_snapshot: snapshot?.generated_at ?? null,
     last_error: lastError,
@@ -368,6 +380,27 @@ app.get('/api/ensemble', async (_req, res) => {
   res.set('Cache-Control', 'public, max-age=30');
   const learning = await getLearningReport(store);
   res.json({generated_at:new Date().toISOString(),...learning.ensemble});
+});
+
+app.get('/api/causal-graph', async (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
+  const snapshot=await store.getSnapshot() || await refreshWorld();
+  if(!snapshot) return res.status(503).json({status:'warming'});
+  const graph=snapshot.causal_world || buildCausalWorldModel(snapshot.forecasts||[]);
+  res.json(graph);
+});
+
+app.post('/api/scenario-lab', async (req, res) => {
+  try {
+    const snapshot=await store.getSnapshot() || await refreshWorld();
+    if(!snapshot) return res.status(503).json({status:'warming'});
+    const graph=snapshot.causal_world || buildCausalWorldModel(snapshot.forecasts||[]);
+    res.json(simulateCausalScenario(graph,snapshot.forecasts||[],req.body?.interventions||[],{max_hops:req.body?.max_hops}));
+  } catch(error) {
+    const message=String(error?.message||error);
+    const clientError=['intervention_required','causal_graph_unavailable'].includes(message);
+    res.status(clientError?400:500).json({status:'error',error:message});
+  }
 });
 
 app.get('/api/resolutions', async (_req, res) => {
