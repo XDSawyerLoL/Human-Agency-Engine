@@ -74,13 +74,14 @@ jobs:
           const a=require('/tmp/sports-league.json'),b=require('/tmp/sports-alt.json');
           if(a.schema!=='evidence-sports-intelligence-v4'||a.competition?.country!=='England'||typeof a.historical?.multiclass_brier!=='number'||a.model?.trained_only_on_prior_matches!==true) process.exit(1);
           if(a.upcoming?.provider!=='OpenFootball'||!Array.isArray(a.upcoming?.fixtures)||a.upcoming.fixtures.length<=20||a.upcoming.complete_schedule!==true||a.track_record?.schema!=='evidence-sports-track-record-v1') process.exit(1);
-          if(a.upcoming.total_future!==a.upcoming.fixtures.length) process.exit(1);
+          if(a.upcoming.total_future!==a.upcoming.fixtures.length||a.upcoming.track_window_days!==21||a.upcoming.official_frozen<1||a.upcoming.preview_recalculable<1) process.exit(1);
           if(a.model?.production_model?.independent_of_selected_backtest_season!==true||a.model.production_model.id!==b.model?.production_model?.id) process.exit(1);
           const f=a.upcoming.fixtures[0],g=(b.upcoming?.fixtures||[]).find(x=>x.fixture_key===f.fixture_key);
           if(!g||JSON.stringify(f.probabilities)!==JSON.stringify(g.probabilities)||f.model_id!==g.model_id) process.exit(1);
           if(!f.explanation||typeof f.explanation.home_rating!=='number'||f.explanation.home_advantage_elo!==72||typeof f.explanation.league_draw_prior_percent!=='number') process.exit(1);
-          if((a.upcoming.fixtures||[]).some(x=>x.trackable!==true||Date.parse(x.utc_date)<=Date.now())) process.exit(1);
-          console.log('sports complete explainable future slate ok',a.upcoming.provider,a.upcoming.fixtures.length,f.model_id);
+          if((a.upcoming.fixtures||[]).some(x=>Date.parse(x.utc_date)<=Date.now()||x.prediction_frozen!==x.trackable)) process.exit(1);
+          if(!(a.upcoming.fixtures||[]).some(x=>x.prediction_frozen===false&&x.track_status==='preview_recalculable')) process.exit(1);
+          console.log('sports complete explainable schedule ok',a.upcoming.provider,a.upcoming.fixtures.length,'frozen',a.upcoming.official_frozen,'previews',a.upcoming.preview_recalculable,f.model_id);
           NODE
           curl -fsS http://127.0.0.1:3000/sports/ >/tmp/sports-page.html
           grep -q 'TRACK RECORD RÉEL' /tmp/sports-page.html
