@@ -13,13 +13,14 @@ async function loadGraph(){
   const res=await fetch('/api/causal-graph',{cache:'no-store'});
   if(!res.ok) throw new Error(`HTTP ${res.status}`);
   graph=await res.json();
-  $('#causalStatus').textContent=`Graphe · ${new Date(graph.generated_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`;
+  const learned=Number(graph.learning?.active_transitions||0);
+  $('#causalStatus').textContent=`Graphe · ${learned} lien${learned>1?'s':''} en apprentissage · ${new Date(graph.generated_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`;
   renderMetrics(); populateControls(); renderLeverage(); renderGraph();
 }
 
 function renderMetrics(){
   const m=graph.metrics||{};
-  const values=[m.nodes,m.edges,m.forecast_nodes,m.evidence_backed_edges];
+  const values=[m.nodes,m.edges,m.forecast_nodes,m.learned_structural_edges];
   [...document.querySelectorAll('#causalMetrics strong')].forEach((el,i)=>el.textContent=fmt(values[i]));
 }
 
@@ -43,22 +44,10 @@ function visibleSet(){
   const q=$('#graphSearch').value.trim().toLowerCase();
   const nodes=graph.nodes||[],edges=graph.edges||[];
   let ids=new Set(nodes.filter(n=>(!domain||n.domain===domain||n.type==='source')&&(!q||String(n.label).toLowerCase().includes(q))).map(n=>n.id));
-  if(q){
-    const expanded=new Set(ids);
-    for(const e of edges) if(ids.has(e.from)||ids.has(e.to)){expanded.add(e.from);expanded.add(e.to)}
-    ids=expanded;
-  }
-  if(domain){
-    const expanded=new Set(ids);
-    for(const e of edges) if(ids.has(e.from)||ids.has(e.to)){expanded.add(e.from);expanded.add(e.to)}
-    ids=expanded;
-  }
+  if(q){const expanded=new Set(ids);for(const e of edges) if(ids.has(e.from)||ids.has(e.to)){expanded.add(e.from);expanded.add(e.to)}ids=expanded;}
+  if(domain){const expanded=new Set(ids);for(const e of edges) if(ids.has(e.from)||ids.has(e.to)){expanded.add(e.from);expanded.add(e.to)}ids=expanded;}
   const leverageIds=new Set((graph.metrics?.top_leverage||[]).map(x=>x.node_id));
-  const ordered=nodes.filter(n=>ids.has(n.id)).sort((a,b)=>{
-    const pa=(a.type==='forecast'?3:a.type==='source'?2:leverageIds.has(a.id)?2:1);
-    const pb=(b.type==='forecast'?3:b.type==='source'?2:leverageIds.has(b.id)?2:1);
-    return pb-pa;
-  }).slice(0,150);
+  const ordered=nodes.filter(n=>ids.has(n.id)).sort((a,b)=>{const pa=(a.type==='forecast'?3:a.type==='source'?2:leverageIds.has(a.id)?2:1);const pb=(b.type==='forecast'?3:b.type==='source'?2:leverageIds.has(b.id)?2:1);return pb-pa;}).slice(0,150);
   return new Set(ordered.map(n=>n.id));
 }
 
@@ -84,7 +73,7 @@ function renderGraph(){
   const edges=(graph.edges||[]).filter(e=>ids.has(e.from)&&ids.has(e.to));
   const domains=[...new Set(nodes.filter(n=>n.type!=='source'&&n.domain).map(n=>n.domain))];
   const pos=new Map(nodes.map(n=>[n.id,positionNode(n,domains)]));
-  const lines=edges.slice(0,320).map(e=>{const a=pos.get(e.from),b=pos.get(e.to);if(!a||!b)return'';return `<line class="${edgeClass(e)}" data-from="${esc(e.from)}" data-to="${esc(e.to)}" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"><title>${esc(e.rationale||e.type)}</title></line>`}).join('');
+  const lines=edges.slice(0,320).map(e=>{const a=pos.get(e.from),b=pos.get(e.to);if(!a||!b)return'';const learned=e.learning?.active?' · appris sur '+e.learning.samples+' résolutions':'';return `<line class="${edgeClass(e)}" data-from="${esc(e.from)}" data-to="${esc(e.to)}" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"><title>${esc((e.rationale||e.type)+learned)}</title></line>`}).join('');
   const circles=nodes.map(n=>{const p=pos.get(n.id);const r=n.type==='forecast'?7:n.type==='source'?5:5.5;const label=n.type==='forecast'?String(n.label).slice(0,34):'';return `<g data-node-group="${esc(n.id)}"><circle class="node-circle ${nodeClass(n)}" data-node="${esc(n.id)}" cx="${p.x}" cy="${p.y}" r="${r}"><title>${esc(n.label)}</title></circle>${label?`<text class="node-label" x="${p.x+10}" y="${p.y+3}">${esc(label)}</text>`:''}</g>`}).join('');
   svg.setAttribute('viewBox','0 0 1200 620');
   svg.innerHTML=`<g class="edges">${lines}</g><g class="nodes">${circles}</g>`;
@@ -97,9 +86,11 @@ function inspectNode(id,setTarget){
   selectedNode=id;
   const n=(graph.nodes||[]).find(x=>x.id===id);if(!n)return;
   const inEdges=(graph.edges||[]).filter(e=>e.to===id),outEdges=(graph.edges||[]).filter(e=>e.from===id);
+  const learned=[...inEdges,...outEdges].filter(e=>e.learning?.active);
   const kind=n.type==='forecast'?'Scénario prédictif':n.type==='source'?'Source observée':'Mécanisme causal hypothétique';
   const detail=n.type==='forecast'?`${n.probability_percent}% · ${domainLabels[n.domain]||n.domain} · ${n.horizon_tier||'horizon non défini'}`:`${inEdges.length} liens entrants · ${outEdges.length} liens sortants`;
-  $('#nodeInspector').innerHTML=`<small>${esc(kind.toUpperCase())}</small><strong>${esc(n.label)}</strong><p>${esc(detail)}. ${n.type==='forecast'?'La probabilité affichée reste celle du moteur public, pas celle d’une simulation.':'Les arêtes structurelles sont des hypothèses et restent distinguées des preuves observées.'}</p>`;
+  const learningText=learned.length?` ${learned.length} lien(s) voisin(s) ont déjà une force ajustée par l’historique résolu.`:'';
+  $('#nodeInspector').innerHTML=`<small>${esc(kind.toUpperCase())}</small><strong>${esc(n.label)}</strong><p>${esc(detail)}.${esc(learningText)} ${n.type==='forecast'?'La probabilité affichée reste celle du moteur public, pas celle d’une simulation.':'Une association apprise reste distincte d’une preuve causale.'}</p>`;
   if(setTarget){const opt=[...$('#scenarioTarget').options].find(o=>o.value===id);if(opt)$('#scenarioTarget').value=id;}
   highlight(id);
 }
@@ -128,14 +119,11 @@ async function runScenario(ev){
 
 function renderScenario(data){
   const s=data.summary||{};
-  $('#scenarioSummary').innerHTML=`<p><strong>${fmt(s.affected)} scénarios affectés</strong> · ${fmt(s.second_order_effects)} effets de second ordre · déplacement maximal ${fmt(s.max_absolute_delta_points)} points. Les valeurs simulées restent hors Track Record.</p>`;
+  const learning=data.learning?.active_transitions?` · ${data.learning.active_transitions} transitions apprenantes`:'';
+  $('#scenarioSummary').innerHTML=`<p><strong>${fmt(s.affected)} scénarios affectés</strong> · ${fmt(s.second_order_effects)} effets de second ordre · déplacement maximal ${fmt(s.max_absolute_delta_points)} points${esc(learning)}. Les valeurs simulées restent hors Track Record.</p>`;
   $('#resultMeta').textContent=`${data.max_hops} niveaux · ${data.mode}`;
   const rows=data.affected_forecasts||[];
-  $('#scenarioResults').innerHTML=rows.length?rows.slice(0,16).map(x=>{
-    const up=x.delta_points>=0;const path=x.paths?.[0];
-    const pathText=path?.path?.map(p=>p.label).join(' → ')||'Intervention directe';
-    return `<article class="result-card"><header><h3>${esc(x.title)}</h3><span class="delta ${up?'up':'down'}">${x.delta_points>0?'+':''}${x.delta_points} pts</span></header><div class="prob-shift"><b>${x.base_probability_percent}%</b><span>→</span><b>${x.simulated_probability_percent}%</b></div><div class="path-box"><b>${path?.hops||0} niveau(x)</b> · ${esc(pathText)}</div></article>`
-  }).join(''):'<div class="causal-empty">Cette intervention ne produit pas de déplacement mesurable dans la profondeur choisie.</div>';
+  $('#scenarioResults').innerHTML=rows.length?rows.slice(0,16).map(x=>{const up=x.delta_points>=0;const path=x.paths?.[0];const pathText=path?.path?.map(p=>p.label).join(' → ')||'Intervention directe';return `<article class="result-card"><header><h3>${esc(x.title)}</h3><span class="delta ${up?'up':'down'}">${x.delta_points>0?'+':''}${x.delta_points} pts</span></header><div class="prob-shift"><b>${x.base_probability_percent}%</b><span>→</span><b>${x.simulated_probability_percent}%</b></div><div class="path-box"><b>${path?.hops||0} niveau(x)</b> · ${esc(pathText)}</div></article>`}).join(''):'<div class="causal-empty">Cette intervention ne produit pas de déplacement mesurable dans la profondeur choisie.</div>';
 }
 
 $('#domainFilter').addEventListener('change',renderGraph);
