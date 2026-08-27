@@ -2,90 +2,39 @@
   'use strict';
   const root=document.documentElement;
   root.classList.add('providence-v11','providence-v12');
-  const css=[
-    '/providence-v12.css?v=providence-v12-1',
-    '/providence-v12-responsive.css?v=providence-v12-1',
-    '/providence-v12-1.css?v=providence-v12-1'
-  ];
+  const css=['/providence-v12.css?v=providence-v12-1','/providence-v12-responsive.css?v=providence-v12-1','/providence-v12-1.css?v=providence-v12-1'];
   for(const href of css){if(!document.querySelector(`link[href^="${href.split('?')[0]}"]`)){const link=document.createElement('link');link.rel='stylesheet';link.href=href;document.head.appendChild(link);}}
-
   const path=location.pathname.replace(/\/+$/,'')||'/';
   const rawPage=document.body.dataset.page||'';
   const infer=()=>{if(path==='/')return'home';for(const k of ['predictions','horizons','causal','sports','intelligence','track-record','modules','sources','cameras'])if(path.includes(`/${k}`))return k;return rawPage||'home';};
-  const page=infer();
-  document.body.dataset.pv12Theme=page;
-  document.body.classList.add('pv12-command-center');
-
-  const nav=[
-    ['home','/','⌾','Vue d’ensemble'],
-    ['predictions','/predictions/','◈','Prédictions'],
-    ['horizons','/horizons/','◷','Horizons'],
-    ['causal','/causal/','⌘','Causal World'],
-    ['sports','/sports/','⚽','Sports Calibration'],
-    ['intelligence','/intelligence/','◆','Décision Intelligence'],
-    ['track-record','/track-record/','▥','Track Record'],
-    ['modules','/modules/','⬡','Modules & Modèles'],
-    ['sources','/sources/','≋','Sources & Données'],
-    ['cameras','/cameras/','◉','Monde en direct']
-  ];
+  const page=infer();document.body.dataset.pv12Theme=page;document.body.classList.add('pv12-command-center');
+  const nav=[['home','/','⌾','Vue d’ensemble'],['predictions','/predictions/','◈','Prédictions'],['horizons','/horizons/','◷','Horizons'],['causal','/causal/','⌘','Causal World'],['sports','/sports/','⚽','Sports Calibration'],['intelligence','/intelligence/','◆','Décision Intelligence'],['track-record','/track-record/','▥','Track Record'],['modules','/modules/','⬡','Modules & Modèles'],['sources','/sources/','≋','Sources & Données'],['cameras','/cameras/','◉','Monde en direct']];
   const navLinks=compact=>nav.map(([key,href,icon,label])=>`<a href="${href}" class="${key===page?'active':''}" ${key===page?'aria-current="page"':''}>${compact?'':`<span class="pv12-side-icon">${icon}</span>`}<span>${label}</span></a>`).join('');
+  for(const topNav of document.querySelectorAll('.v4-nav,.topbar nav')){topNav.innerHTML=navLinks(true);topNav.setAttribute('aria-label','Navigation Providence');}
+  if(!document.querySelector('.pv12-sidebar')){const aside=document.createElement('aside');aside.className='pv12-sidebar';aside.setAttribute('aria-label','Navigation Providence');aside.innerHTML=`<a class="pv12-side-brand" href="/"><span class="pv12-side-mark"></span><span><strong>PROVIDENCE</strong><small>VOIR · CALIBRER · COMPRENDRE</small></span></a><nav class="pv12-side-nav">${navLinks(false)}</nav><div class="pv12-mission"><div class="pv12-mission-orb">◉</div><strong>NOTRE MISSION</strong><p>Mesurer la réalité.<br>Améliorer la prédiction.<br>Réduire l’incertitude.</p></div><div class="pv12-side-foot">PROVIDENCE V12.1 · Unified Command Center</div>`;document.body.prepend(aside);}
+  if(!document.querySelector('.pv12-scene')){const scene=document.createElement('div');scene.className='pv12-scene';scene.setAttribute('aria-hidden','true');scene.innerHTML='<div class="globe"></div><div class="orbit"></div><div class="horizon"></div><div class="scan"></div>';document.body.prepend(scene);}
 
-  /* Remove the architectural bug: every page gets the exact same navigation source. */
-  for(const topNav of document.querySelectorAll('.v4-nav,.topbar nav')){
-    topNav.innerHTML=navLinks(true);
-    topNav.setAttribute('aria-label','Navigation Providence');
-  }
+  const hero=document.querySelector('main>section:first-child');
+  const art={
+    home:{label:'WORLD SIGNAL MAP',svg:'<circle cx="160" cy="92" r="70"/><ellipse cx="160" cy="92" rx="70" ry="25"/><path d="M90 92h140M160 22c-20 22-28 46-28 70s8 48 28 70M160 22c20 22 28 46 28 70s-8 48-28 70"/><circle cx="216" cy="54" r="5" class="hot"/><circle cx="108" cy="126" r="4" class="hot2"/>'},
+    predictions:{label:'PROBABILITY FIELD',svg:'<path d="M45 138C84 125 100 67 137 82s48 45 78 18 45-50 70-52"/><path d="M45 151C92 147 120 114 153 120s49 20 76 4 39-37 58-41" class="muted"/><circle cx="137" cy="82" r="7" class="hot"/><circle cx="215" cy="100" r="6" class="hot2"/><path d="M56 46h230M56 76h230M56 106h230M56 136h230" class="grid"/>'},
+    horizons:{label:'TEMPORAL HORIZONS',svg:'<path d="M113 24h94M113 160h94M124 28c6 39 38 40 38 64s-32 27-38 64M196 28c-6 39-38 40-38 64s32 27 38 64"/><path d="M70 92h180" class="muted"/><circle cx="58" cy="92" r="5" class="hot"/><circle cx="268" cy="92" r="5" class="hot2"/>'},
+    causal:{label:'CAUSAL WORLD GRAPH',svg:'<path d="M74 117L137 63l66 38 58-48M137 63l12 84 54-46 37 54M74 117l75 30M203 101l58-48"/><circle cx="74" cy="117" r="12"/><circle cx="137" cy="63" r="14" class="hot"/><circle cx="149" cy="147" r="10"/><circle cx="203" cy="101" r="16" class="hot2"/><circle cx="261" cy="53" r="10"/><circle cx="240" cy="155" r="9"/>'},
+    sports:{label:'LIVE SPORTS CALIBRATION',svg:'<rect x="54" y="32" width="212" height="120" rx="8"/><path d="M160 32v120M54 92h212"/><circle cx="160" cy="92" r="25"/><rect x="54" y="61" width="27" height="62"/><rect x="239" y="61" width="27" height="62"/><path d="M92 168l34-17 35 10 32-26 38 8 30-36" class="hot"/><circle cx="261" cy="107" r="5" class="hot2"/>'},
+    intelligence:{label:'DECISION ENGINE',svg:'<path d="M54 92h56M210 92h56M110 92l50-54 50 54-50 54z"/><path d="M160 38v108M110 92h100" class="muted"/><circle cx="54" cy="92" r="8"/><circle cx="266" cy="92" r="8" class="hot"/><path d="M235 54l31 38-31 38" class="hot2"/>'},
+    'track-record':{label:'CALIBRATION TRUTH',svg:'<path d="M48 151L278 39" class="muted"/><path d="M48 149c30-9 44-31 72-37s47 3 69-19 32-44 52-49 26-4 37-5"/><circle cx="120" cy="112" r="6"/><circle cx="189" cy="93" r="6" class="hot"/><circle cx="241" cy="44" r="6" class="hot2"/><path d="M48 38v113h230" class="grid"/>'},
+    modules:{label:'ANALYSIS MODULES',svg:'<path d="M82 45l35-20 35 20v40l-35 20-35-20zM168 84l35-20 35 20v40l-35 20-35-20zM89 121l35-20 35 20v40l-35 20-35-20"/><path d="M152 65l27 21M149 119l25-13" class="hot"/><circle cx="260" cy="52" r="8" class="hot2"/>'},
+    sources:{label:'SOURCE PIPELINE',svg:'<circle cx="55" cy="92" r="16"/><circle cx="119" cy="92" r="16"/><circle cx="183" cy="92" r="16"/><circle cx="247" cy="92" r="16" class="hot"/><path d="M71 92h32M135 92h32M199 92h32"/><path d="M55 57v-21h192v21M55 127v21h192v-21" class="muted"/><circle cx="151" cy="36" r="5" class="hot2"/>'},
+    cameras:{label:'WORLD EYE',svg:'<path d="M45 92c34-48 73-67 115-67s81 19 115 67c-34 48-73 67-115 67S79 140 45 92z"/><circle cx="160" cy="92" r="42"/><circle cx="160" cy="92" r="16" class="hot"/><path d="M160 28v19M160 137v19M96 92h19M205 92h19" class="hot2"/>'}
+  };
+  if(hero&&!hero.querySelector('.pv12-hero-visual')){const v=art[page]||art.home;const box=document.createElement('div');box.className='pv12-hero-visual';box.setAttribute('aria-hidden','true');box.innerHTML=`<small>${v.label}</small><svg viewBox="0 0 320 190" fill="none" xmlns="http://www.w3.org/2000/svg">${v.svg}</svg><span>PROVIDENCE / ${page.toUpperCase()}</span>`;hero.appendChild(box);}
 
-  if(!document.querySelector('.pv12-sidebar')){
-    const aside=document.createElement('aside');
-    aside.className='pv12-sidebar';
-    aside.setAttribute('aria-label','Navigation Providence');
-    aside.innerHTML=`<a class="pv12-side-brand" href="/"><span class="pv12-side-mark"></span><span><strong>PROVIDENCE</strong><small>VOIR · CALIBRER · COMPRENDRE</small></span></a><nav class="pv12-side-nav">${navLinks(false)}</nav><div class="pv12-mission"><div class="pv12-mission-orb">◉</div><strong>NOTRE MISSION</strong><p>Mesurer la réalité.<br>Améliorer la prédiction.<br>Réduire l’incertitude.</p></div><div class="pv12-side-foot">PROVIDENCE V12.1 · Unified Command Center</div>`;
-    document.body.prepend(aside);
-  }
-
-  if(!document.querySelector('.pv12-scene')){
-    const scene=document.createElement('div');
-    scene.className='pv12-scene';
-    scene.setAttribute('aria-hidden','true');
-    scene.innerHTML='<div class="globe"></div><div class="orbit"></div><div class="horizon"></div><div class="scan"></div>';
-    document.body.prepend(scene);
-  }
-
-  const topbar=document.querySelector('.v4-topbar');
-  if(topbar&&!topbar.querySelector('.pv12-profile')){
-    const profile=document.createElement('div');
-    profile.className='pv12-profile';
-    profile.innerHTML='<span class="avatar">P</span><span><strong>Providence Live</strong><small>V12.1 · Unified Shell</small></span>';
-    const live=topbar.querySelector('.v4-live');
-    if(live)topbar.insertBefore(profile,live);else topbar.append(profile);
-  }
-  const brandStrong=document.querySelector('.v4-brand strong,.topbar .brand strong');if(brandStrong)brandStrong.textContent='PROVIDENCE';
-  const themeMeta=document.querySelector('meta[name="theme-color"]');if(themeMeta)themeMeta.content='#02060d';
-
+  const topbar=document.querySelector('.v4-topbar');if(topbar&&!topbar.querySelector('.pv12-profile')){const profile=document.createElement('div');profile.className='pv12-profile';profile.innerHTML='<span class="avatar">P</span><span><strong>Providence Live</strong><small>V12.1 · Unified Shell</small></span>';const live=topbar.querySelector('.v4-live');if(live)topbar.insertBefore(profile,live);else topbar.append(profile);}
+  const brandStrong=document.querySelector('.v4-brand strong,.topbar .brand strong');if(brandStrong)brandStrong.textContent='PROVIDENCE';const themeMeta=document.querySelector('meta[name="theme-color"]');if(themeMeta)themeMeta.content='#02060d';
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  const canvas=document.createElement('canvas');
-  canvas.className='providence-atmosphere';
-  canvas.setAttribute('aria-hidden','true');
-  document.body.prepend(canvas);
-  const ctx=canvas.getContext('2d',{alpha:true});
-  let w=0,h=0,dpr=1,points=[],mouse={x:.5,y:.35};
-  const palette={home:[70,184,255],predictions:[140,104,255],horizons:[63,220,255],causal:[181,92,255],sports:[52,180,255],intelligence:[66,226,210],'track-record':[62,175,255],modules:[65,215,255],sources:[82,231,186],cameras:[56,200,255]};
-  const secondary={home:[112,92,255],predictions:[222,91,255],horizons:[255,196,79],causal:[255,84,194],sports:[92,239,136],intelligence:[255,202,82],'track-record':[82,239,173],modules:[255,95,202],sources:[255,204,77],cameras:[97,104,255]};
-  const rgb=palette[page]||palette.home, rgb2=secondary[page]||secondary.home;
+  const canvas=document.createElement('canvas');canvas.className='providence-atmosphere';canvas.setAttribute('aria-hidden','true');document.body.prepend(canvas);const ctx=canvas.getContext('2d',{alpha:true});let w=0,h=0,dpr=1,points=[],mouse={x:.5,y:.35};
+  const palette={home:[70,184,255],predictions:[140,104,255],horizons:[63,220,255],causal:[181,92,255],sports:[52,180,255],intelligence:[66,226,210],'track-record':[62,175,255],modules:[65,215,255],sources:[82,231,186],cameras:[56,200,255]};const secondary={home:[112,92,255],predictions:[222,91,255],horizons:[255,196,79],causal:[255,84,194],sports:[92,239,136],intelligence:[255,202,82],'track-record':[82,239,173],modules:[255,95,202],sources:[255,204,77],cameras:[97,104,255]};const rgb=palette[page]||palette.home,rgb2=secondary[page]||secondary.home;
   function resize(){dpr=Math.min(devicePixelRatio||1,2);w=innerWidth;h=innerHeight;canvas.width=w*dpr;canvas.height=h*dpr;canvas.style.width=`${w}px`;canvas.style.height=`${h}px`;ctx.setTransform(dpr,0,0,dpr,0,0);const n=Math.max(44,Math.min(128,Math.floor(w*h/15000)));points=Array.from({length:n},()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.1,vy:(Math.random()-.5)*.1,r:.45+Math.random()*1.5,p:Math.random()*Math.PI*2}));}
-  addEventListener('resize',resize,{passive:true});
-  addEventListener('pointermove',e=>{mouse.x=e.clientX/Math.max(w,1);mouse.y=e.clientY/Math.max(h,1)},{passive:true});
-  resize();
-  function frame(t){
-    ctx.clearRect(0,0,w,h);
-    let glow=ctx.createRadialGradient(w*(.58+(mouse.x-.5)*.08),h*(.14+(mouse.y-.5)*.05),0,w*.55,h*.18,Math.max(w,h)*.72);
-    glow.addColorStop(0,`rgba(${rgb.join(',')},.095)`);glow.addColorStop(.42,`rgba(${rgb2.join(',')},.035)`);glow.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);
-    const glow2=ctx.createRadialGradient(w*.84,h*.58,0,w*.84,h*.58,Math.max(w,h)*.35);glow2.addColorStop(0,`rgba(${rgb2.join(',')},.026)`);glow2.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=glow2;ctx.fillRect(0,0,w,h);
-    for(const p of points){p.x+=p.vx;p.y+=p.vy;if(p.x<-5)p.x=w+5;if(p.x>w+5)p.x=-5;if(p.y<-5)p.y=h+5;if(p.y>h+5)p.y=-5;const pulse=.45+.35*Math.sin(t*.00045+p.p);ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(${rgb.join(',')},${.16*pulse})`;ctx.fill();}
-    ctx.lineWidth=.55;
-    for(let i=0;i<points.length;i++){for(let j=i+1;j<Math.min(points.length,i+13);j++){const a=points[i],b=points[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy);if(d<132){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=`rgba(${rgb.join(',')},${(1-d/132)*.045})`;ctx.stroke();}}}
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
+  addEventListener('resize',resize,{passive:true});addEventListener('pointermove',e=>{mouse.x=e.clientX/Math.max(w,1);mouse.y=e.clientY/Math.max(h,1)},{passive:true});resize();
+  function frame(t){ctx.clearRect(0,0,w,h);let glow=ctx.createRadialGradient(w*(.58+(mouse.x-.5)*.08),h*(.14+(mouse.y-.5)*.05),0,w*.55,h*.18,Math.max(w,h)*.72);glow.addColorStop(0,`rgba(${rgb.join(',')},.095)`);glow.addColorStop(.42,`rgba(${rgb2.join(',')},.035)`);glow.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);const glow2=ctx.createRadialGradient(w*.84,h*.58,0,w*.84,h*.58,Math.max(w,h)*.35);glow2.addColorStop(0,`rgba(${rgb2.join(',')},.026)`);glow2.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=glow2;ctx.fillRect(0,0,w,h);for(const p of points){p.x+=p.vx;p.y+=p.vy;if(p.x<-5)p.x=w+5;if(p.x>w+5)p.x=-5;if(p.y<-5)p.y=h+5;if(p.y>h+5)p.y=-5;const pulse=.45+.35*Math.sin(t*.00045+p.p);ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(${rgb.join(',')},${.16*pulse})`;ctx.fill();}ctx.lineWidth=.55;for(let i=0;i<points.length;i++){for(let j=i+1;j<Math.min(points.length,i+13);j++){const a=points[i],b=points[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy);if(d<132){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=`rgba(${rgb.join(',')},${(1-d/132)*.045})`;ctx.stroke();}}}requestAnimationFrame(frame);}requestAnimationFrame(frame);
 })();
