@@ -48,7 +48,7 @@ jobs:
           if (!rows.some(r => r.horizon_tier === 'strategic')) throw new Error('strategic horizon missing');
           console.log(rows.map(r => `${r.horizon_tier}:${r.probability.percent}%:${r.headline}`).join('\n'));
           NODE
-      - name: Start Express and verify Providence V13 endpoints
+      - name: Start Express and verify Providence V13.1 endpoints and pages
         run: |
           npm start >/tmp/evidence-node.log 2>&1 &
           pid=$!
@@ -84,7 +84,18 @@ jobs:
           console.log('sports complete explainable schedule ok',a.upcoming.provider,a.upcoming.fixtures.length,'frozen',a.upcoming.official_frozen,'previews',a.upcoming.preview_recalculable,f.model_id);
           NODE
           curl -fsS http://127.0.0.1:3000/sports/ >/tmp/sports-page.html
-          grep -q 'TRACK RECORD RÉEL' /tmp/sports-page.html
+          grep -q 'Sports Calibration' /tmp/sports-page.html
+          grep -q '/matches/' /tmp/sports-page.html
+          for page in '' 'matches/' 'track-record/' 'backtest/' 'sources/' 'alerts/' 'settings/'; do curl -fsS "http://127.0.0.1:3000/$page" >/tmp/page.html; grep -q 'PROVIDENCE' /tmp/page.html; done
+          curl -fsS http://127.0.0.1:3000/matches/ >/tmp/matches-page.html
+          grep -q 'Prochains matchs' /tmp/matches-page.html
+          curl -fsS http://127.0.0.1:3000/backtest/ >/tmp/backtest-page.html
+          grep -q 'Historique & Backtest' /tmp/backtest-page.html
+          curl -fsS http://127.0.0.1:3000/alerts/ >/tmp/alerts-page.html
+          grep -q 'Alertes & Suivi' /tmp/alerts-page.html
+          curl -fsS http://127.0.0.1:3000/settings/ >/tmp/settings-page.html
+          grep -q 'Paramètres' /tmp/settings-page.html
+          echo 'reference cockpit pages ok'
           curl -fsS http://127.0.0.1:3000/api/supabase >/tmp/supabase.json
           node -e "const x=require('/tmp/supabase.json'); if(typeof x.configured!=='boolean'||typeof x.connected!=='boolean') process.exit(1); console.log('supabase bridge status ok')"
           curl -fsS http://127.0.0.1:3000/api/storage >/tmp/storage.json
