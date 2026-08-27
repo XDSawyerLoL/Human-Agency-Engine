@@ -16,6 +16,8 @@ for(const token of ['.pv12-sidebar','.pv12-scene','data-pv12-theme','fixture-car
 for(const token of ['providence-v12-1.css','providence-v12-1-art.css','document.querySelectorAll(\'.v4-nav,.topbar nav\')','Vue d’ensemble','Prédictions','Horizons','Causal World','Sports Calibration','Décision Intelligence','Track Record','Modules & Modèles','Sources & Données','Monde en direct','pv12-hero-visual'])if(!js.includes(token))throw new Error(`V12.1 shell JS missing ${token}`);
 for(const token of ['.v4-horizon-jump','position:relative!important','width:auto!important','.fixture-probs>div:nth-child(1)'])if(!fix.includes(token))throw new Error(`V12.1 stabilization CSS missing ${token}`);
 for(const token of ['.pv12-hero-visual','svg .hot','@media(max-width:760px)'])if(!art.includes(token))throw new Error(`V12.1 hero art CSS missing ${token}`);
-const navCount=(js.match(/\['(?:home|predictions|horizons|causal|sports|intelligence|track-record|modules|sources|cameras)'/g)||[]).length;
+const navBlock=js.match(/const nav=\[(.*?)\];\s*const navLinks/s)?.[1]||'';
+const navCount=(navBlock.match(/\['/g)||[]).length;
 if(navCount!==10)throw new Error(`Unified nav must contain exactly 10 destinations, found ${navCount}`);
+for(const href of ['/','/predictions/','/horizons/','/causal/','/sports/','/intelligence/','/track-record/','/modules/','/sources/','/cameras/'])if(!navBlock.includes(`'${href}'`))throw new Error(`Unified nav missing ${href}`);
 console.log(JSON.stringify({ok:true,pages:pages.length,nav_destinations:navCount,design_system:'providence-v12-1-unified-command-center'}));
