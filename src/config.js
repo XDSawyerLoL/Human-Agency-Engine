@@ -18,13 +18,7 @@ function mysqlUrlConfig() {
   try {
     const u=new URL(raw);
     if(!['mysql:','mariadb:'].includes(u.protocol)) return null;
-    return {
-      host:u.hostname,
-      port:Number.parseInt(u.port||'3306',10)||3306,
-      user:decodeURIComponent(u.username||''),
-      password:decodeURIComponent(u.password||''),
-      database:decodeURIComponent(String(u.pathname||'').replace(/^\//,''))
-    };
+    return {host:u.hostname,port:Number.parseInt(u.port||'3306',10)||3306,user:decodeURIComponent(u.username||''),password:decodeURIComponent(u.password||''),database:decodeURIComponent(String(u.pathname||'').replace(/^\//,''))};
   } catch { return null; }
 }
 
@@ -32,10 +26,8 @@ const mysqlUrl=mysqlUrlConfig();
 const mysqlPortRaw=value('MYSQL_PORT','DB_PORT');
 
 export const config = {
-  // Hostinger Web Apps reverse-proxy server-side Node apps to port 3000.
   port: 3000,
   refreshMs: int('EVIDENCE_REFRESH_SECONDS', 600, 120, 3600) * 1000,
-  // Commercial cockpit must stay broad even if an old Hostinger variable still says 20.
   maxForecasts: int('EVIDENCE_FORECAST_LIMIT', 72, 48, 100),
   fredApiKey: value('FRED_API_KEY'),
   forecastApiKey: value('FORECAST_API_KEY', 'FORESCAST_API_KEY'),
@@ -47,7 +39,6 @@ export const config = {
   theSportsDbApiKey: value('THESPORTSDB_API_KEY') || '123',
   supabase: {
     url: value('SUPABASE_URL','SUPABASE_PUBLIC_URL'),
-    // Prefer the new server-only sb_secret_ key. Legacy service_role remains supported.
     secretKey: value('SUPABASE_SECRET_KEY','SUPABASE_SERVICE_ROLE_KEY')
   },
   mysql: {
@@ -69,6 +60,6 @@ export const providerState = () => ({
   PointReferenceOnly: Boolean(config.pointApiKey),
   FootballDataFixtures: Boolean(config.footballDataApiKey),
   TheSportsDBFallback: Boolean(config.theSportsDbApiKey),
-  SupabasePersistentMirror: Boolean(config.supabase.url && config.supabase.secretKey),
-  PersistentLearningConfigured: Boolean(config.mysql.host && config.mysql.user && config.mysql.database) || Boolean(config.supabase.url && config.supabase.secretKey)
+  SupabaseDurableMirrorConfigured: Boolean(config.supabase.url && config.supabase.secretKey),
+  PersistentLearningConfigured: Boolean(config.mysql.host && config.mysql.user && config.mysql.database)
 });
