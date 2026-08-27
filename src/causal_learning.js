@@ -19,48 +19,107 @@ const PRIOR_MEAN={
 
 function normalizedRow(row){
   const meta=row?.meta?.forecast||{};
+  const eventAt=meta.target_date||row.target_at||row.resolved_at||null;
+  const t=eventAt?Date.parse(eventAt):NaN;
   return {
-    scenario_key:row.scenario_key,
+    scenario_key:String(row.scenario_key||''),
     domain:String(row.domain||meta.domain||''),
     horizon_tier:String(row.horizon_tier||meta.horizon_tier||''),
     horizon_order:horizonOrder(row.horizon_tier||meta.horizon_tier),
     outcome:Number(row.outcome),
     origin_group:String(row.origin_group||meta.origin_group||''),
-    region:String(meta.region||''),
+    region:String(meta.region||row.region||''),
+    event_at:Number.isFinite(t)?t:null,
+    event_at_iso:Number.isFinite(t)?new Date(t).toISOString():null,
     resolved_at:row.resolved_at||null
   };
 }
 
+function contextKey(r){
+  if(r.origin_group)return `origin:${r.origin_group}`;
+  if(r.region&&!/^monde$/i.test(r.region))return `region:${r.region}`;
+  return '';
+}
+
 function sameContext(a,b){
-  if(a.origin_group&&b.origin_group&&a.origin_group===b.origin_group) return true;
-  if(a.region&&b.region&&a.region===b.region&&!/^monde$/i.test(a.region)) return true;
-  return false;
+  const ca=contextKey(a),cb=contextKey(b);
+  return Boolean(ca&&cb&&ca===cb);
+}
+
+function orderedBefore(a,b){
+  if(a.event_at!==null&&b.event_at!==null)return a.event_at<=b.event_at;
+  return a.horizon_order<=b.horizon_order;
+}
+
+function observationBucket(b){
+  const context=contextKey(b);
+  if(!context)return null;
+  if(b.event_at!==null){
+    const d=new Date(b.event_at);
+    const week=Math.floor((b.event_at-Date.UTC(d.getUTCFullYear(),0,1))/604800000);
+    return `${context}|${d.getUTCFullYear()}-w${String(week).padStart(2,'0')}`;
+  }
+  // Sans date exploitable, rester conservateur : un seul échantillon par contexte.
+  return `${context}|undated`;
 }
 
 export function buildCausalLearning(resolvedRows=[]){
-  const rows=(resolvedRows||[]).map(normalizedRow).filter(r=>r.domain&&[0,1].includes(r.outcome));
-  const stats=new Map();
-  for(let i=0;i<rows.length;i++) for(let j=0;j<rows.length;j++){
-    if(i===j) continue;
-    const a=rows[i],b=rows[j];
-    if(a.outcome!==1||a.horizon_order>b.horizon_order||!sameContext(a,b)) continue;
-    const key=`${a.domain}>${b.domain}`;
-    if(!(key in PRIOR_MEAN)) continue;
-    const s=stats.get(key)||{key,from_domain:a.domain,to_domain:b.domain,conditional_samples:0,downstream_occurrences:0};
-    s.conditional_samples++;
-    s.downstream_occurrences+=b.outcome===1?1:0;
-    stats.set(key,s);
+  const rows=(resolvedRows||[]).map(normalizedRow).filter(r=>r.scenario_key&&r.domain&&[0,1].includes(r.outcome));
+  const transitionObservations=new Map();
+
+  for(const key of Object.keys(PRIOR_MEAN)){
+    const [fromDomain,toDomain]=key.split('>');
+    const grouped=new Map();
+    for(const b of rows){
+      if(b.domain!==toDomain)continue;
+      const bucket=observationBucket(b);
+      if(!bucket)continue;
+      const upstream=rows.filter(a=>
+        a.scenario_key!==b.scenario_key&&
+        a.domain===fromDomain&&
+        a.outcome===1&&
+        a.horizon_order<=b.horizon_order&&
+        sameContext(a,b)&&
+        orderedBefore(a,b)
+      );
+      if(!upstream.length)continue;
+      const observationKey=`${key}|${bucket}`;
+      const g=grouped.get(observationKey)||{outcomes:[],downstream_keys:new Set(),upstream_keys:new Set(),context:contextKey(b),bucket};
+      if(!g.downstream_keys.has(b.scenario_key)){
+        g.downstream_keys.add(b.scenario_key);
+        g.outcomes.push(b.outcome);
+      }
+      // Une multitude de prévisions amont dans le même contexte ne crée jamais de nouveaux échantillons.
+      upstream.forEach(a=>g.upstream_keys.add(a.scenario_key));
+      grouped.set(observationKey,g);
+    }
+    transitionObservations.set(key,[...grouped.values()]);
   }
 
   const transitions=Object.entries(PRIOR_MEAN).map(([key,prior])=>{
-    const s=stats.get(key)||{key,from_domain:key.split('>')[0],to_domain:key.split('>')[1],conditional_samples:0,downstream_occurrences:0};
+    const [fromDomain,toDomain]=key.split('>');
+    const observations=transitionObservations.get(key)||[];
+    const conditionalSamples=observations.length;
+    const downstreamOccurrences=observations.reduce((sum,g)=>sum+(g.outcomes.reduce((a,b)=>a+b,0)/Math.max(1,g.outcomes.length)),0);
     const priorStrength=10;
-    const posterior=(prior*priorStrength+s.downstream_occurrences)/(priorStrength+s.conditional_samples);
-    const shrink=clamp(s.conditional_samples/24,0,1);
+    const posterior=(prior*priorStrength+downstreamOccurrences)/(priorStrength+conditionalSamples);
+    const shrink=clamp(conditionalSamples/24,0,1);
     const learned=prior*(1-shrink)+posterior*shrink;
     const multiplier=clamp(learned/Math.max(.05,prior),.65,1.35);
-    return {...s,prior_strength:round(prior,3),observed_rate:s.conditional_samples?round(s.downstream_occurrences/s.conditional_samples,3):null,posterior_strength:round(posterior,3),learned_strength:round(learned,3),multiplier:round(multiplier,3),learning_active:s.conditional_samples>=8};
+    return {
+      key,from_domain:fromDomain,to_domain:toDomain,
+      conditional_samples:conditionalSamples,
+      downstream_occurrences:round(downstreamOccurrences,3),
+      independent_context_buckets:conditionalSamples,
+      prior_strength:round(prior,3),
+      observed_rate:conditionalSamples?round(downstreamOccurrences/conditionalSamples,3):null,
+      posterior_strength:round(posterior,3),
+      learned_strength:round(learned,3),
+      multiplier:round(multiplier,3),
+      learning_active:conditionalSamples>=8
+    };
   });
+
   const active=transitions.filter(x=>x.learning_active);
   return {
     schema:'evidence-causal-learning-v1',
@@ -68,9 +127,16 @@ export function buildCausalLearning(resolvedRows=[]){
     resolved_forecasts:rows.length,
     active_transitions:active.length,
     minimum_samples_per_transition:8,
+    sample_definition:'one independent context/time bucket per transition; duplicate upstream/downstream forecasts are collapsed',
     by_transition:transitions,
     strongest_updates:[...active].sort((a,b)=>Math.abs(b.multiplier-1)-Math.abs(a.multiplier-1)).slice(0,12),
-    guardrails:{causal_proof:false,learns_conditional_association_not_intervention_effect:true,shrunk_to_structural_prior:true},
-    note:'Le moteur ajuste progressivement la force des liens structurels selon les scénarios résolus dans un même contexte. Cela apprend des associations temporelles conditionnelles, pas une causalité expérimentale.'
+    guardrails:{
+      causal_proof:false,
+      learns_conditional_association_not_intervention_effect:true,
+      shrunk_to_structural_prior:true,
+      temporal_order_required_when_dates_exist:true,
+      duplicate_forecast_pairs_count_as_independent_samples:false
+    },
+    note:'Le moteur ajuste progressivement la force des liens structurels à partir d’observations dédupliquées et temporellement ordonnées. Cela apprend des associations conditionnelles, pas une causalité expérimentale.'
   };
 }
