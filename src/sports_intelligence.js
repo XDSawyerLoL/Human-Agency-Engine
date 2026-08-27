@@ -27,7 +27,6 @@ function outcomeOf(m){
   if(!Number.isFinite(h)||!Number.isFinite(a)) return null;
   return h>a?'home':h===a?'draw':'away';
 }
-function teamName(value){return value?.home_team_name||value?.away_team_name||value?.name||String(value||'');}
 function statsBombTeam(m,side){return String(m?.[`${side}_team`]?.[`${side}_team_name`]||'');}
 function brier3(pred,outcome){
   const y=outcome==='home'?[1,0,0]:outcome==='draw'?[0,1,0]:[0,0,1];
@@ -123,19 +122,40 @@ async function nextFixturesFootballData(competitionName){
   return (data.matches||[]).slice(0,12).map(m=>({id:String(m.id),utc_date:m.utcDate,home:m.homeTeam?.name||'—',away:m.awayTeam?.name||'—',competition:data.competition?.name||competitionName,source:'football-data.org'}));
 }
 
+function leagueNames(row){
+  return [row?.strLeague,...String(row?.strLeagueAlternate||'').split(/[,;/|]/g)].map(normalize).filter(Boolean);
+}
+
+export function sportsLeagueMatchScore(row,competitionName){
+  const target=normalize(competitionName);
+  if(!target)return 0;
+  const targetTokens=new Set(target.split(' ').filter(x=>x.length>1));
+  let best=0;
+  for(const name of leagueNames(row)){
+    if(name===target)best=Math.max(best,1);
+    else if(name.includes(target)||target.includes(name))best=Math.max(best,.85);
+    else{
+      const tokens=new Set(name.split(' ').filter(x=>x.length>1));
+      let common=0;for(const t of targetTokens)if(tokens.has(t))common++;
+      const overlap=common/Math.max(1,Math.min(targetTokens.size,tokens.size));
+      best=Math.max(best,overlap*.7);
+    }
+  }
+  return round(best,3)||0;
+}
+
 async function nextFixturesSportsDb(country,competitionName){
   const key=encodeURIComponent(config.theSportsDbApiKey||'123');
   const c=encodeURIComponent(country||'England');
   const leagues=await fetchJson(`https://www.thesportsdb.com/api/v1/json/${key}/search_all_leagues.php?c=${c}&s=Soccer`,{timeoutMs:9_000});
   const rows=leagues?.countries||leagues?.leagues||[];
-  const target=[...rows].sort((a,b)=>{
-    const sa=normalize(a.strLeague||a.strLeagueAlternate).includes(normalize(competitionName))?1:0;
-    const sb=normalize(b.strLeague||b.strLeagueAlternate).includes(normalize(competitionName))?1:0;
-    return sb-sa;
-  })[0];
-  if(!target?.idLeague)return [];
+  const ranked=rows.map(row=>({row,score:sportsLeagueMatchScore(row,competitionName)})).sort((a,b)=>b.score-a.score);
+  const best=ranked[0];
+  // Aucun nom suffisamment proche : mieux vaut zéro fixture qu'une autre compétition présentée comme la bonne.
+  if(!best?.row?.idLeague||best.score<.55)return [];
+  const target=best.row;
   const data=await fetchJson(`https://www.thesportsdb.com/api/v1/json/${key}/eventsnextleague.php?id=${encodeURIComponent(target.idLeague)}`,{timeoutMs:9_000});
-  return (data.events||[]).slice(0,8).map(e=>({id:String(e.idEvent||''),utc_date:e.strTimestamp||`${e.dateEvent||''}T${e.strTime||'00:00:00'}Z`,home:e.strHomeTeam||'—',away:e.strAwayTeam||'—',competition:e.strLeague||competitionName,source:'TheSportsDB'}));
+  return (data.events||[]).slice(0,8).map(e=>({id:String(e.idEvent||''),utc_date:e.strTimestamp||`${e.dateEvent||''}T${e.strTime||'00:00:00'}Z`,home:e.strHomeTeam||'—',away:e.strAwayTeam||'—',competition:e.strLeague||competitionName,source:'TheSportsDB',league_match_score:best.score}));
 }
 
 async function upcomingFixtures(country,competitionName){
@@ -145,7 +165,7 @@ async function upcomingFixtures(country,competitionName){
   }catch(error){console.warn('[sports] football-data',String(error?.message||error));}
   try{
     const fallback=await nextFixturesSportsDb(country,competitionName);
-    return {provider:'TheSportsDB',coverage:'free_fallback_limited',fixtures:fallback};
+    return {provider:'TheSportsDB',coverage:fallback.length?'free_fallback_limited':'no_verified_league_match',fixtures:fallback};
   }catch(error){
     return {provider:'unavailable',coverage:'none',fixtures:[],error:String(error?.message||error)};
   }
@@ -192,7 +212,7 @@ export async function sportsLeagueIntelligence(options={}){
     teams:{count:teams.length,top_ratings:teams.slice(0,12)},
     upcoming:{provider:fixtures.provider,coverage:fixtures.coverage,fixtures:upcoming,error:fixtures.error||null},
     interpretation:'Le sport sert de banc d’essai à résolution rapide pour mesurer la calibration probabiliste. Les pronostics futurs restent expérimentaux et ne sont pas des conseils de pari.',
-    guardrails:{gambling_advice:false,guaranteed_outcomes:false,historical_calibration_is_general_forecasting_proof:false}
+    guardrails:{gambling_advice:false,guaranteed_outcomes:false,historical_calibration_is_general_forecasting_proof:false,unmatched_fixture_league_is_rejected:true}
   };
   memo.set(cacheKey,{at:Date.now(),value});return {...value,cached:false};
 }
