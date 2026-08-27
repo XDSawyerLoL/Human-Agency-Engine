@@ -1,12 +1,17 @@
-# Providence V11 — Supabase durable mirror
+# Providence V11.1 — Supabase durable mirror & Sports Track Record
 
-Providence keeps MySQL as the complete relational learning store when it is available. Supabase is added in V11 as a server-side durable mirror and restart fallback for the latest world snapshot, causal-learning state and last Sports Intelligence analysis.
+Providence keeps MySQL as the complete relational learning store when it is available. Supabase is the server-side durable mirror for world state and, in V11.1, the immutable pre-match Sports Track Record.
 
-## 1. Create the table
+## 1. Create / upgrade the tables
 
-Run `supabase/schema.sql` once in the Supabase SQL editor.
+Run `supabase/schema.sql` in the Supabase SQL editor after deploying V11.1, even if the V11 schema had already been executed.
 
-The table is deliberately protected by RLS and has no anonymous/browser write policy.
+It creates or upgrades:
+
+- `evidence_runtime_state` — latest world snapshot, causal-learning state and Sports Intelligence state;
+- `evidence_sports_forecasts` — first published probabilities for future matches, canonical model identity, kickoff, final result, correctness and Brier score.
+
+Both tables are protected by RLS and intentionally have no anonymous/browser write policy.
 
 ## 2. Hostinger environment variables
 
@@ -17,24 +22,36 @@ SUPABASE_URL=https://<project-ref>.supabase.co
 SUPABASE_API_KEY=sb_secret_...
 ```
 
-Providence also accepts `SUPABASE_SECRET_KEY` and, for legacy projects, `SUPABASE_SERVICE_ROLE_KEY`. `SUPABASE_API_KEY` is supported specifically so the Hostinger/Supabase integration can keep its existing variable name.
+Providence also accepts `SUPABASE_SECRET_KEY` and, for legacy projects, `SUPABASE_SERVICE_ROLE_KEY`.
 
-Optional Sports Intelligence provider:
+No paid sports key is required for the main European live proof loop. Providence uses OpenFootball for current/previous-season schedules and final results on supported leagues, and StatsBomb Open Data for selectable historical backtests. `FOOTBALL_DATA_API_KEY` remains an optional secondary fixture provider.
 
-```text
-FOOTBALL_DATA_API_KEY=...
-```
+## 3. What V11.1 persists
 
-Without that key, Providence falls back to the free TheSportsDB endpoint for upcoming fixtures when possible. Historical calibration remains based on StatsBomb Open Data.
+For each trackable future match Providence stores the first canonical pre-match forecast only:
 
-## 3. Runtime verification
+- stable `fixture_key`;
+- `model_id` of the canonical production model;
+- home/draw/away probabilities;
+- predicted pick and confidence;
+- prediction timestamp and kickoff;
+- later: final score, objective outcome, correct/incorrect verdict and multiclass Brier score.
+
+Duplicate inserts use `ignore-duplicates`, so a later page request cannot rewrite the probability after the fact. Matches whose kickoff has already passed are rejected from the registry. Fallback fixtures without a reliable result source can be displayed as exploratory but are excluded from the official Track Record.
+
+## 4. Automatic collection
+
+The Hostinger Node process seeds and resolves the main supported leagues automatically after boot and then once per hour. The calibration corpus therefore continues to grow even when nobody has the Sports page open.
+
+## 5. Runtime verification
 
 After deployment:
 
-- `GET /api/supabase` should report `configured: true` and `connected: true`.
-- `GET /api/storage` exposes both the primary learning-store state and the Supabase mirror state.
-- After a world refresh, rows named `latest_snapshot` and `causal_learning` should exist in `evidence_runtime_state`.
-- Opening a Sports Intelligence league mirrors `sports_intelligence` as well.
+- `GET /api/supabase` should report `configured: true` and `connected: true`;
+- `GET /api/storage` exposes both primary storage and the Supabase mirror state;
+- `evidence_runtime_state` should contain `latest_snapshot` and `causal_learning` after refresh;
+- `evidence_sports_forecasts` should begin receiving `pending` future matches, then convert them to `resolved` after results are published;
+- `/sports/` displays the live count, live Brier, live top-pick accuracy and recent verdicts separately from the historical StatsBomb backtest.
 
 ## Security boundary
 

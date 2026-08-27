@@ -1,218 +1,96 @@
 import { config } from './config.js';
+import { SupabaseBridge } from './supabase_bridge.js';
+import { SportsTrackRecord } from './sports_track_record.js';
 
 const memo=new Map();
-const UA='Evidence-Providence/11 (+sports-intelligence)';
+const sportsTrack=new SportsTrackRecord(new SupabaseBridge());
+const UA='Evidence-Providence/11.1 (+sports-track-record)';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
 const round=(v,n=4)=>Number.isFinite(Number(v))?Number(Number(v).toFixed(n)):null;
-const normalize=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+export const normalizeSportsText=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
 const sigmoid=x=>1/(1+Math.exp(-x));
+const day=v=>String(v||'').slice(0,10);
+const teamKey=v=>normalizeSportsText(v).split(' ').filter(x=>!['fc','afc','cf','sc','club','calcio'].includes(x)).join(' ');
+export const sportsFixtureKey=({country='',competition='',utc_date='',date_local='',home='',away=''})=>`${normalizeSportsText(country)}|${normalizeSportsText(competition)}|${day(date_local||utc_date)}|${teamKey(home)}|${teamKey(away)}`.slice(0,240);
 
-const FOOTBALL_DATA_CODES=[
-  [/premier league/i,'PL'],[/ligue 1/i,'FL1'],[/bundesliga/i,'BL1'],[/serie a/i,'SA'],[/la liga|laliga/i,'PD'],
-  [/champions league/i,'CL'],[/primeira liga/i,'PPL'],[/eredivisie/i,'DED'],[/championship/i,'ELC'],[/campeonato brasileiro|brasileir/i,'BSA']
+const FOOTBALL_DATA_CODES=[[/premier league/i,'PL'],[/ligue 1/i,'FL1'],[/bundesliga/i,'BL1'],[/serie a/i,'SA'],[/la liga|laliga/i,'PD'],[/champions league/i,'CL'],[/primeira liga/i,'PPL'],[/eredivisie/i,'DED'],[/championship/i,'ELC'],[/campeonato brasileiro|brasileir/i,'BSA']];
+const OPENFOOTBALL=[
+  {country:/england/i,league:/premier league/i,countryName:'England',leagueName:'Premier League',file:'en.1.json',timezone:'Europe/London'},
+  {country:/germany/i,league:/bundesliga/i,countryName:'Germany',leagueName:'1. Bundesliga',file:'de.1.json',timezone:'Europe/Berlin'},
+  {country:/spain/i,league:/la liga|primera/i,countryName:'Spain',leagueName:'La Liga',file:'es.1.json',timezone:'Europe/Madrid'},
+  {country:/france/i,league:/ligue 1/i,countryName:'France',leagueName:'Ligue 1',file:'fr.1.json',timezone:'Europe/Paris'},
+  {country:/italy/i,league:/serie a/i,countryName:'Italy',leagueName:'Serie A',file:'it.1.json',timezone:'Europe/Rome'},
+  {country:/netherlands/i,league:/eredivisie/i,countryName:'Netherlands',leagueName:'Eredivisie',file:'nl.1.json',timezone:'Europe/Amsterdam'},
+  {country:/portugal/i,league:/primeira/i,countryName:'Portugal',leagueName:'Primeira Liga',file:'pt.1.json',timezone:'Europe/Lisbon'}
 ];
+const AUTO_TRACK=OPENFOOTBALL.slice(0,5);
 
 async function fetchJson(url,{timeoutMs=10_000,headers={}}={}){
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),timeoutMs);
-  try{
-    const r=await fetch(url,{signal:controller.signal,headers:{'user-agent':UA,accept:'application/json',...headers}});
-    if(!r.ok) throw new Error(`HTTP ${r.status}`);
-    return await r.json();
-  } finally { clearTimeout(timer); }
+  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{const r=await fetch(url,{signal:controller.signal,headers:{'user-agent':UA,accept:'application/json',...headers}});if(!r.ok)throw new Error(`HTTP ${r.status}`);return await r.json();}
+  finally{clearTimeout(timer);}
 }
-
-function outcomeOf(m){
-  const h=Number(m.home_score),a=Number(m.away_score);
-  if(!Number.isFinite(h)||!Number.isFinite(a)) return null;
-  return h>a?'home':h===a?'draw':'away';
-}
+function currentSeasonFolder(now=new Date()){const y=now.getUTCFullYear(),m=now.getUTCMonth()+1,start=m>=7?y:y-1;return `${start}-${String(start+1).slice(-2)}`;}
+function previousSeasonFolder(now=new Date()){const current=currentSeasonFolder(now),start=Number(current.slice(0,4))-1;return `${start}-${String(start+1).slice(-2)}`;}
+function outcomeOf(m){const h=Number(m.home_score),a=Number(m.away_score);if(!Number.isFinite(h)||!Number.isFinite(a))return null;return h>a?'home':h===a?'draw':'away';}
 function statsBombTeam(m,side){return String(m?.[`${side}_team`]?.[`${side}_team_name`]||'');}
-function brier3(pred,outcome){
-  const y=outcome==='home'?[1,0,0]:outcome==='draw'?[0,1,0]:[0,0,1];
-  return ((pred[0]-y[0])**2+(pred[1]-y[1])**2+(pred[2]-y[2])**2)/3;
-}
+function openFootballScore(m){if(Array.isArray(m?.score?.ft))return m.score.ft;if(Array.isArray(m?.score))return m.score;return null;}
+export function sportsBrier3(pred,outcome){const y=outcome==='home'?[1,0,0]:outcome==='draw'?[0,1,0]:[0,0,1];return ((pred[0]-y[0])**2+(pred[1]-y[1])**2+(pred[2]-y[2])**2)/3;}
 function resultLabel(o){return o==='home'?'1':o==='draw'?'N':'2';}
-
 function newModel(){return {ratings:new Map(),home:1,draw:1,away:1,played:0,forms:new Map()};}
-function rating(model,team){return model.ratings.get(normalize(team))??1500;}
-function form(model,team){return model.forms.get(normalize(team))??[];}
-function leaguePrior(model){
-  const total=model.home+model.draw+model.away;
-  return [model.home/total,model.draw/total,model.away/total];
-}
+function rating(model,team){return model.ratings.get(teamKey(team))??1500;}
+function form(model,team){return model.forms.get(teamKey(team))??[];}
+function leaguePrior(model){const total=model.home+model.draw+model.away;return [model.home/total,model.draw/total,model.away/total];}
 function predictMatch(model,homeTeam,awayTeam){
-  const prior=leaguePrior(model);
-  const rh=rating(model,homeTeam),ra=rating(model,awayTeam);
-  const draw=clamp(prior[1],.16,.36);
-  const homeDecisive=sigmoid(((rh+72)-ra)/185);
-  let pHome=(1-draw)*homeDecisive;
-  let pAway=(1-draw)*(1-homeDecisive);
-  const hf=form(model,homeTeam),af=form(model,awayTeam);
-  const formDelta=(hf.reduce((a,b)=>a+b,0)/Math.max(1,hf.length))-(af.reduce((a,b)=>a+b,0)/Math.max(1,af.length));
-  const shift=clamp(formDelta*.018,-.045,.045);
-  pHome=clamp(pHome+shift,.05,.85);pAway=clamp(pAway-shift,.05,.85);
-  const total=pHome+draw+pAway;
-  return [pHome/total,draw/total,pAway/total];
+  const prior=leaguePrior(model),rh=rating(model,homeTeam),ra=rating(model,awayTeam),draw=clamp(prior[1],.16,.36),homeDecisive=sigmoid(((rh+72)-ra)/185);let pHome=(1-draw)*homeDecisive,pAway=(1-draw)*(1-homeDecisive);
+  const hf=form(model,homeTeam),af=form(model,awayTeam),formDelta=(hf.reduce((a,b)=>a+b,0)/Math.max(1,hf.length))-(af.reduce((a,b)=>a+b,0)/Math.max(1,af.length)),shift=clamp(formDelta*.018,-.045,.045);pHome=clamp(pHome+shift,.05,.85);pAway=clamp(pAway-shift,.05,.85);const total=pHome+draw+pAway;return [pHome/total,draw/total,pAway/total];
 }
-function updateModel(model,m){
-  const outcome=outcomeOf(m);if(!outcome)return;
-  const home=statsBombTeam(m,'home'),away=statsBombTeam(m,'away');
-  const pred=predictMatch(model,home,away);
-  const actual=outcome==='home'?1:outcome==='draw'?.5:0;
-  const expected=pred[0]+.5*pred[1];
-  const k=24;
-  const delta=k*(actual-expected);
-  model.ratings.set(normalize(home),rating(model,home)+delta);
-  model.ratings.set(normalize(away),rating(model,away)-delta);
-  model[outcome]++;model.played++;
-  const hp=outcome==='home'?3:outcome==='draw'?1:0,ap=outcome==='away'?3:outcome==='draw'?1:0;
-  model.forms.set(normalize(home),[...form(model,home),hp].slice(-5));
-  model.forms.set(normalize(away),[...form(model,away),ap].slice(-5));
+function updateNamedResult(model,home,away,outcome){if(!['home','draw','away'].includes(outcome)||!home||!away)return;const pred=predictMatch(model,home,away),actual=outcome==='home'?1:outcome==='draw'?.5:0,expected=pred[0]+.5*pred[1],delta=24*(actual-expected);model.ratings.set(teamKey(home),rating(model,home)+delta);model.ratings.set(teamKey(away),rating(model,away)-delta);model[outcome]++;model.played++;const hp=outcome==='home'?3:outcome==='draw'?1:0,ap=outcome==='away'?3:outcome==='draw'?1:0;model.forms.set(teamKey(home),[...form(model,home),hp].slice(-5));model.forms.set(teamKey(away),[...form(model,away),ap].slice(-5));}
+function updateModel(model,m){updateNamedResult(model,statsBombTeam(m,'home'),statsBombTeam(m,'away'),outcomeOf(m));}
+function calibrationBuckets(rows){const defs=[[0,.4,'<40%'],[.4,.5,'40–49%'],[.5,.6,'50–59%'],[.6,.7,'60–69%'],[.7,1.01,'≥70%']];return defs.map(([lo,hi,label])=>{const picked=rows.filter(r=>r.top_probability>=lo&&r.top_probability<hi),hits=picked.filter(r=>r.correct).length;return {label,n:picked.length,mean_confidence:picked.length?round(picked.reduce((a,r)=>a+r.top_probability,0)/picked.length,3):null,observed_accuracy:picked.length?round(hits/picked.length,3):null};}).filter(x=>x.n);}
+async function competitionCatalogRaw(){const key='statsbomb_catalog',cached=memo.get(key);if(cached&&Date.now()-cached.at<12*3600_000)return cached.value;const rows=await fetchJson('https://raw.githubusercontent.com/statsbomb/open-data/master/data/competitions.json',{timeoutMs:12_000});const value=(Array.isArray(rows)?rows:[]).filter(x=>String(x.competition_gender||'').toLowerCase()==='male');memo.set(key,{at:Date.now(),value});return value;}
+export async function sportsCatalog(){const comps=await competitionCatalogRaw(),countries=new Map();for(const c of comps){const country=String(c.country_name||'International'),arr=countries.get(country)||[];arr.push({competition_id:c.competition_id,season_id:c.season_id,competition_name:c.competition_name,season_name:c.season_name,match_updated:c.match_updated||null});countries.set(country,arr);}const out=[...countries.entries()].map(([country,seasons])=>{const byLeague=new Map();for(const s of seasons){const arr=byLeague.get(s.competition_name)||[];arr.push(s);byLeague.set(s.competition_name,arr);}return {country,leagues:[...byLeague.entries()].map(([name,rows])=>({name,seasons:rows.sort((a,b)=>String(b.season_name).localeCompare(String(a.season_name)))})).sort((a,b)=>a.name.localeCompare(b.name))};}).sort((a,b)=>a.country.localeCompare(b.country));return {schema:'evidence-sports-catalog-v2',provider:'StatsBomb Open Data',countries:out,competition_seasons:comps.length};}
+function chooseCompetition(comps,{country='',competitionId=null,seasonId=null,league=''}){let rows=[...comps];if(competitionId!==null&&competitionId!==undefined&&String(competitionId)!=='')rows=rows.filter(c=>String(c.competition_id)===String(competitionId));if(country)rows=rows.filter(c=>normalizeSportsText(c.country_name)===normalizeSportsText(country));if(league)rows=rows.filter(c=>normalizeSportsText(c.competition_name).includes(normalizeSportsText(league))||normalizeSportsText(league).includes(normalizeSportsText(c.competition_name)));if(seasonId!==null&&seasonId!==undefined&&String(seasonId)!=='')rows=rows.filter(c=>String(c.season_id)===String(seasonId));return rows.sort((a,b)=>String(b.season_name||'').localeCompare(String(a.season_name||'')))[0]||null;}
+async function nextFixturesFootballData(country,competitionName){if(!config.footballDataApiKey)return null;const code=(FOOTBALL_DATA_CODES.find(([re])=>re.test(competitionName))||[])[1];if(!code)return null;const data=await fetchJson(`https://api.football-data.org/v4/competitions/${code}/matches?status=SCHEDULED`,{headers:{'X-Auth-Token':config.footballDataApiKey},timeoutMs:10_000});const trackable=Boolean(openFootballDescriptor(country,competitionName));return (data.matches||[]).slice(0,20).map(m=>{const f={id:String(m.id),utc_date:m.utcDate,date_local:String(m.utcDate||'').slice(0,10),home:m.homeTeam?.name||'—',away:m.awayTeam?.name||'—',competition:data.competition?.name||competitionName,country,source:'football-data.org',trackable};return {...f,fixture_key:sportsFixtureKey(f),status:'scheduled'};});}
+function openFootballDescriptor(country,competitionName){return OPENFOOTBALL.find(x=>x.country.test(country)&&x.league.test(competitionName))||null;}
+async function fetchOpenFootballJson(season,file){
+  const cacheKey=`openfootball:${season}:${file}`,cached=memo.get(cacheKey);if(cached&&Date.now()-cached.at<5*60_000)return cached.value;
+  const raw=`https://raw.githubusercontent.com/openfootball/football.json/master/${season}/${file}`,jsdelivr=`https://cdn.jsdelivr.net/gh/openfootball/football.json@master/${season}/${file}`;let lastError=null;
+  for(const url of [raw,jsdelivr]){try{const value=await fetchJson(url,{timeoutMs:10_000});memo.set(cacheKey,{at:Date.now(),value});return value;}catch(error){lastError=error;}}
+  try{const api=`https://api.github.com/repos/openfootball/football.json/contents/${encodeURIComponent(season)}/${encodeURIComponent(file)}?ref=master`,meta=await fetchJson(api,{timeoutMs:10_000,headers:{'X-GitHub-Api-Version':'2022-11-28'}});if(meta?.content){const value=JSON.parse(Buffer.from(String(meta.content).replace(/\s/g,''),'base64').toString('utf8'));memo.set(cacheKey,{at:Date.now(),value});return value;}}catch(error){lastError=error;}
+  throw lastError||new Error('openfootball_unavailable');
 }
-
-function calibrationBuckets(rows){
-  const defs=[[0,.4,'<40%'],[.4,.5,'40–49%'],[.5,.6,'50–59%'],[.6,.7,'60–69%'],[.7,1.01,'≥70%']];
-  return defs.map(([lo,hi,label])=>{
-    const picked=rows.filter(r=>r.top_probability>=lo&&r.top_probability<hi);
-    const hits=picked.filter(r=>r.correct).length;
-    return {label,n:picked.length,mean_confidence:picked.length?round(picked.reduce((a,r)=>a+r.top_probability,0)/picked.length,3):null,observed_accuracy:picked.length?round(hits/picked.length,3):null};
-  }).filter(x=>x.n);
+export function zonedKickoffToUtc(dateLocal,timeLocal,timeZone){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(dateLocal||'')))return null;const time=/^\d{1,2}:\d{2}$/.test(String(timeLocal||''))?String(timeLocal):'12:00',guess=Date.parse(`${dateLocal}T${time}:00Z`);if(!Number.isFinite(guess))return null;
+  const offsetAt=ms=>{const parts=new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date(ms)),v=Object.fromEntries(parts.map(p=>[p.type,p.value]));return Date.UTC(Number(v.year),Number(v.month)-1,Number(v.day),Number(v.hour),Number(v.minute),Number(v.second))-ms;};
+  let actual=guess-offsetAt(guess);actual=guess-offsetAt(actual);return new Date(actual).toISOString();
 }
-
-async function competitionCatalogRaw(){
-  const key='statsbomb_catalog';const cached=memo.get(key);
-  if(cached&&Date.now()-cached.at<12*3600_000)return cached.value;
-  const rows=await fetchJson('https://raw.githubusercontent.com/statsbomb/open-data/master/data/competitions.json',{timeoutMs:12_000});
-  const value=(Array.isArray(rows)?rows:[]).filter(x=>String(x.competition_gender||'').toLowerCase()==='male');
-  memo.set(key,{at:Date.now(),value});return value;
+function openFootballRows(data,{season,desc,country,league}){return (data?.matches||[]).map((m,i)=>{const ft=openFootballScore(m),dateLocal=String(m.date||''),timeLocal=String(m.time||''),home=String(m.team1||''),away=String(m.team2||''),utc=zonedKickoffToUtc(dateLocal,timeLocal,desc.timezone),base={id:`openfootball:${season}:${desc.file}:${i}`,date_local:dateLocal,time_local:timeLocal,timezone:desc.timezone,utc_date:utc||dateLocal,home,away,competition:league,country,source:'OpenFootball',round:m.round||null,trackable:true},fixture_key=sportsFixtureKey(base);if(ft&&Number.isFinite(Number(ft[0]))&&Number.isFinite(Number(ft[1]))){const hs=Number(ft[0]),as=Number(ft[1]),outcome=hs>as?'home':hs===as?'draw':'away';return {...base,fixture_key,status:'finished',home_score:hs,away_score:as,outcome};}return {...base,fixture_key,status:'scheduled'};});}
+export async function currentSportsSchedule({country='',league='',now=new Date()}={}){
+  const desc=openFootballDescriptor(country,league);if(!desc)return {provider:'OpenFootball',coverage:'unsupported_league',upcoming:[],results:[]};const season=currentSeasonFolder(now),data=await fetchOpenFootballJson(season,desc.file),rows=openFootballRows(data,{season,desc,country,league}),nowMs=now.getTime();
+  const upcoming=rows.filter(x=>x.status==='scheduled'&&Number.isFinite(Date.parse(x.utc_date))&&Date.parse(x.utc_date)>nowMs).sort((a,b)=>Date.parse(a.utc_date)-Date.parse(b.utc_date)).slice(0,20),results=rows.filter(x=>x.status==='finished').sort((a,b)=>Date.parse(b.utc_date)-Date.parse(a.utc_date)).slice(0,100);return {provider:'OpenFootball',coverage:'current_season_public_domain',season,source_url:`https://github.com/openfootball/football.json/blob/master/${season}/${desc.file}`,upcoming,results};
 }
-
-export async function sportsCatalog(){
-  const comps=await competitionCatalogRaw();
-  const countries=new Map();
-  for(const c of comps){
-    const country=String(c.country_name||'International');
-    const arr=countries.get(country)||[];
-    arr.push({competition_id:c.competition_id,season_id:c.season_id,competition_name:c.competition_name,season_name:c.season_name,match_updated:c.match_updated||null});
-    countries.set(country,arr);
-  }
-  const out=[...countries.entries()].map(([country,seasons])=>{
-    const byLeague=new Map();
-    for(const s of seasons){const arr=byLeague.get(s.competition_name)||[];arr.push(s);byLeague.set(s.competition_name,arr);}
-    return {country,leagues:[...byLeague.entries()].map(([name,rows])=>({name,seasons:rows.sort((a,b)=>String(b.season_name).localeCompare(String(a.season_name)))})).sort((a,b)=>a.name.localeCompare(b.name))};
-  }).sort((a,b)=>a.country.localeCompare(b.country));
-  return {schema:'evidence-sports-catalog-v2',provider:'StatsBomb Open Data',countries:out,competition_seasons:comps.length};
+async function canonicalProductionModel(country,league,now=new Date()){
+  const desc=openFootballDescriptor(country,league);if(!desc)throw new Error('canonical_live_model_unavailable');const seasons=[previousSeasonFolder(now),currentSeasonFolder(now)],model=newModel(),training=[];
+  for(const season of seasons){try{const data=await fetchOpenFootballJson(season,desc.file),rows=openFootballRows(data,{season,desc,country,league}).filter(x=>x.status==='finished').sort((a,b)=>Date.parse(a.utc_date)-Date.parse(b.utc_date));for(const r of rows){updateNamedResult(model,r.home,r.away,r.outcome);training.push(r);}}catch(error){console.warn('[sports] canonical season',season,String(error?.message||error));}}
+  if(model.played<20)throw new Error('canonical_live_model_too_sparse');return {model,id:`providence-sports-live-v1|${normalizeSportsText(country)}|${normalizeSportsText(league)}|${seasons.join('+')}`,source:'OpenFootball',seasons,training_matches:model.played,generated_at:new Date().toISOString()};
 }
-
-function chooseCompetition(comps,{country='',competitionId=null,seasonId=null,league=''}){
-  let rows=[...comps];
-  if(competitionId!==null&&competitionId!==undefined&&String(competitionId)!=='') rows=rows.filter(c=>String(c.competition_id)===String(competitionId));
-  if(country) rows=rows.filter(c=>normalize(c.country_name)===normalize(country));
-  if(league) rows=rows.filter(c=>normalize(c.competition_name).includes(normalize(league))||normalize(league).includes(normalize(c.competition_name)));
-  if(seasonId!==null&&seasonId!==undefined&&String(seasonId)!=='') rows=rows.filter(c=>String(c.season_id)===String(seasonId));
-  return rows.sort((a,b)=>String(b.season_name||'').localeCompare(String(a.season_name||'')))[0]||null;
-}
-
-async function nextFixturesFootballData(competitionName){
-  if(!config.footballDataApiKey)return null;
-  const code=(FOOTBALL_DATA_CODES.find(([re])=>re.test(competitionName))||[])[1];
-  if(!code)return null;
-  const data=await fetchJson(`https://api.football-data.org/v4/competitions/${code}/matches?status=SCHEDULED`,{headers:{'X-Auth-Token':config.footballDataApiKey},timeoutMs:10_000});
-  return (data.matches||[]).slice(0,12).map(m=>({id:String(m.id),utc_date:m.utcDate,home:m.homeTeam?.name||'—',away:m.awayTeam?.name||'—',competition:data.competition?.name||competitionName,source:'football-data.org'}));
-}
-
-function leagueNames(row){
-  return [row?.strLeague,...String(row?.strLeagueAlternate||'').split(/[,;/|]/g)].map(normalize).filter(Boolean);
-}
-
-export function sportsLeagueMatchScore(row,competitionName){
-  const target=normalize(competitionName);
-  if(!target)return 0;
-  const targetTokens=new Set(target.split(' ').filter(x=>x.length>1));
-  let best=0;
-  for(const name of leagueNames(row)){
-    if(name===target)best=Math.max(best,1);
-    else if(name.includes(target)||target.includes(name))best=Math.max(best,.85);
-    else{
-      const tokens=new Set(name.split(' ').filter(x=>x.length>1));
-      let common=0;for(const t of targetTokens)if(tokens.has(t))common++;
-      const overlap=common/Math.max(1,Math.min(targetTokens.size,tokens.size));
-      best=Math.max(best,overlap*.7);
-    }
-  }
-  return round(best,3)||0;
-}
-
-async function nextFixturesSportsDb(country,competitionName){
-  const key=encodeURIComponent(config.theSportsDbApiKey||'123');
-  const c=encodeURIComponent(country||'England');
-  const leagues=await fetchJson(`https://www.thesportsdb.com/api/v1/json/${key}/search_all_leagues.php?c=${c}&s=Soccer`,{timeoutMs:9_000});
-  const rows=leagues?.countries||leagues?.leagues||[];
-  const ranked=rows.map(row=>({row,score:sportsLeagueMatchScore(row,competitionName)})).sort((a,b)=>b.score-a.score);
-  const best=ranked[0];
-  // Aucun nom suffisamment proche : mieux vaut zéro fixture qu'une autre compétition présentée comme la bonne.
-  if(!best?.row?.idLeague||best.score<.55)return [];
-  const target=best.row;
-  const data=await fetchJson(`https://www.thesportsdb.com/api/v1/json/${key}/eventsnextleague.php?id=${encodeURIComponent(target.idLeague)}`,{timeoutMs:9_000});
-  return (data.events||[]).slice(0,8).map(e=>({id:String(e.idEvent||''),utc_date:e.strTimestamp||`${e.dateEvent||''}T${e.strTime||'00:00:00'}Z`,home:e.strHomeTeam||'—',away:e.strAwayTeam||'—',competition:e.strLeague||competitionName,source:'TheSportsDB',league_match_score:best.score}));
-}
-
+function leagueNames(row){return [row?.strLeague,...String(row?.strLeagueAlternate||'').split(/[,;/|]/g)].map(normalizeSportsText).filter(Boolean);}
+export function sportsLeagueMatchScore(row,competitionName){const target=normalizeSportsText(competitionName);if(!target)return 0;const targetTokens=new Set(target.split(' ').filter(x=>x.length>1));let best=0;for(const name of leagueNames(row)){if(name===target)best=Math.max(best,1);else if(name.includes(target)||target.includes(name))best=Math.max(best,.85);else{const tokens=new Set(name.split(' ').filter(x=>x.length>1));let common=0;for(const t of targetTokens)if(tokens.has(t))common++;best=Math.max(best,(common/Math.max(1,Math.min(targetTokens.size,tokens.size)))*.7);}}return round(best,3)||0;}
+async function nextFixturesSportsDb(country,competitionName){const key=encodeURIComponent(config.theSportsDbApiKey||'123'),c=encodeURIComponent(country||'England'),leagues=await fetchJson(`https://www.thesportsdb.com/api/v1/json/${key}/search_all_leagues.php?c=${c}&s=Soccer`,{timeoutMs:9_000}),rows=leagues?.countries||leagues?.leagues||[],best=rows.map(row=>({row,score:sportsLeagueMatchScore(row,competitionName)})).sort((a,b)=>b.score-a.score)[0];if(!best?.row?.idLeague||best.score<.55)return [];const data=await fetchJson(`https://www.thesportsdb.com/api/v1/json/${key}/eventsnextleague.php?id=${encodeURIComponent(best.row.idLeague)}`,{timeoutMs:9_000});return (data.events||[]).slice(0,8).map(e=>{const f={id:String(e.idEvent||''),utc_date:e.strTimestamp||`${e.dateEvent||''}T${e.strTime||'00:00:00'}Z`,date_local:e.dateEvent||String(e.strTimestamp||'').slice(0,10),home:e.strHomeTeam||'—',away:e.strAwayTeam||'—',competition:e.strLeague||competitionName,country,source:'TheSportsDB',league_match_score:best.score,status:'scheduled',trackable:false};return {...f,fixture_key:sportsFixtureKey(f)};});}
 async function upcomingFixtures(country,competitionName){
-  try{
-    const full=await nextFixturesFootballData(competitionName);
-    if(full?.length)return {provider:'football-data.org',coverage:'full_free_tier_when_configured',fixtures:full};
-  }catch(error){console.warn('[sports] football-data',String(error?.message||error));}
-  try{
-    const fallback=await nextFixturesSportsDb(country,competitionName);
-    return {provider:'TheSportsDB',coverage:fallback.length?'free_fallback_limited':'no_verified_league_match',fixtures:fallback};
-  }catch(error){
-    return {provider:'unavailable',coverage:'none',fixtures:[],error:String(error?.message||error)};
-  }
+  try{const full=await nextFixturesFootballData(country,competitionName);if(full?.length){const open=await currentSportsSchedule({country,league:competitionName}).catch(()=>({results:[]}));return {provider:'football-data.org',coverage:'full_free_tier_when_configured',fixtures:full,result_source:open.results?'OpenFootball':null,results:open.results||[]};}}catch(error){console.warn('[sports] football-data',String(error?.message||error));}
+  try{const open=await currentSportsSchedule({country,league:competitionName});if(open.upcoming.length)return {provider:'OpenFootball',coverage:open.coverage,fixtures:open.upcoming,result_source:'OpenFootball',results:open.results};}catch(error){console.warn('[sports] openfootball',String(error?.message||error));}
+  try{const fallback=await nextFixturesSportsDb(country,competitionName);return {provider:'TheSportsDB',coverage:fallback.length?'exploratory_untracked_fallback':'no_verified_league_match',fixtures:fallback,result_source:null,results:[]};}catch(error){return {provider:'unavailable',coverage:'none',fixtures:[],error:String(error?.message||error),result_source:null,results:[]};}
 }
-
-function fixturePredictions(fixtures,model){
-  return (fixtures||[]).map(f=>{
-    const p=predictMatch(model,f.home,f.away);
-    const labels=['1','N','2'];const best=p.indexOf(Math.max(...p));
-    return {...f,probabilities:{home:round(p[0],3),draw:round(p[1],3),away:round(p[2],3),home_percent:Math.round(p[0]*100),draw_percent:Math.round(p[1]*100),away_percent:Math.round(p[2]*100)},model_pick:labels[best],model_confidence_percent:Math.round(p[best]*100),known_home_team:model.ratings.has(normalize(f.home)),known_away_team:model.ratings.has(normalize(f.away))};
-  });
-}
-
+function fixturePredictions(fixtures,production){return (fixtures||[]).map(f=>{const p=predictMatch(production.model,f.home,f.away),labels=['1','N','2'],best=p.indexOf(Math.max(...p));return {...f,probabilities:{home:round(p[0],3),draw:round(p[1],3),away:round(p[2],3),home_percent:Math.round(p[0]*100),draw_percent:Math.round(p[1]*100),away_percent:Math.round(p[2]*100)},model_pick:labels[best],model_outcome:['home','draw','away'][best],model_confidence_percent:Math.round(p[best]*100),known_home_team:production.model.ratings.has(teamKey(f.home)),known_away_team:production.model.ratings.has(teamKey(f.away)),prediction_frozen:f.trackable!==false,model_id:production.id,production_training_matches:production.training_matches};});}
 export async function sportsLeagueIntelligence(options={}){
-  const comps=await competitionCatalogRaw();
-  const chosen=chooseCompetition(comps,options)||chooseCompetition(comps,{country:'England',league:'Premier League'});
-  if(!chosen)throw new Error('sports_competition_not_found');
-  const cacheKey=`league:${chosen.competition_id}:${chosen.season_id}`;const cached=memo.get(cacheKey);
-  if(cached&&Date.now()-cached.at<90*60_000)return {...cached.value,cached:true};
-  const base='https://raw.githubusercontent.com/statsbomb/open-data/master/data';
-  const matches=await fetchJson(`${base}/matches/${chosen.competition_id}/${chosen.season_id}.json`,{timeoutMs:12_000});
-  const ordered=(Array.isArray(matches)?matches:[]).filter(m=>outcomeOf(m)).sort((a,b)=>Date.parse(a.match_date||0)-Date.parse(b.match_date||0));
-  if(ordered.length<16)throw new Error('sports_history_too_small');
-  const cut=Math.max(12,Math.floor(ordered.length*.7));
-  const model=newModel();ordered.slice(0,cut).forEach(m=>updateModel(model,m));
-  const testRows=[];
-  for(const m of ordered.slice(cut)){
-    const home=statsBombTeam(m,'home'),away=statsBombTeam(m,'away'),outcome=outcomeOf(m),p=predictMatch(model,home,away);
-    const top=Math.max(...p),pick=['home','draw','away'][p.indexOf(top)];
-    testRows.push({date:m.match_date,home,away,outcome,prediction:pick,prediction_label:resultLabel(pick),probabilities:{home:round(p[0],3),draw:round(p[1],3),away:round(p[2],3)},top_probability:top,correct:pick===outcome,brier:brier3(p,outcome)});
-    updateModel(model,m);
-  }
-  const brier=testRows.reduce((a,r)=>a+r.brier,0)/Math.max(1,testRows.length);
-  const accuracy=testRows.filter(r=>r.correct).length/Math.max(1,testRows.length);
-  const prior=leaguePrior(model);
-  const fixtures=await upcomingFixtures(chosen.country_name,chosen.competition_name);
-  const upcoming=fixturePredictions(fixtures.fixtures,model);
-  const teams=[...model.ratings.entries()].map(([key,rating])=>({key,rating:Math.round(rating),form_points:form(model,key).reduce((a,b)=>a+b,0),form_matches:form(model,key).length})).sort((a,b)=>b.rating-a.rating);
-  const value={
-    schema:'evidence-sports-intelligence-v2',status:'ok',generated_at:new Date().toISOString(),
-    competition:{country:chosen.country_name,name:chosen.competition_name,competition_id:chosen.competition_id,season:chosen.season_name,season_id:chosen.season_id},
-    historical:{provider:'StatsBomb Open Data',matches:ordered.length,training_matches:cut,test_matches:testRows.length,multiclass_brier:round(brier,4),top_pick_accuracy:round(accuracy,3),league_outcome_rates:{home:round(prior[0],3),draw:round(prior[1],3),away:round(prior[2],3)},calibration_buckets:calibrationBuckets(testRows),recent_test_matches:testRows.slice(-20).reverse()},
-    model:{name:'Providence Sports Elo-Cal v1',features:['chronological Elo','home advantage','rolling draw prior','5-match form'],lookahead_prevented:true,trained_only_on_prior_matches:true},
-    teams:{count:teams.length,top_ratings:teams.slice(0,12)},
-    upcoming:{provider:fixtures.provider,coverage:fixtures.coverage,fixtures:upcoming,error:fixtures.error||null},
-    interpretation:'Le sport sert de banc d’essai à résolution rapide pour mesurer la calibration probabiliste. Les pronostics futurs restent expérimentaux et ne sont pas des conseils de pari.',
-    guardrails:{gambling_advice:false,guaranteed_outcomes:false,historical_calibration_is_general_forecasting_proof:false,unmatched_fixture_league_is_rejected:true}
-  };
-  memo.set(cacheKey,{at:Date.now(),value});return {...value,cached:false};
+  const comps=await competitionCatalogRaw();let chosen=chooseCompetition(comps,options);if(!chosen&&!options.country&&!options.league&&!options.competitionId&&!options.seasonId)chosen=chooseCompetition(comps,{country:'England',league:'Premier League'});if(!chosen)throw new Error('sports_competition_not_found');const cacheKey=`league:${chosen.competition_id}:${chosen.season_id}`,cached=memo.get(cacheKey);if(cached&&Date.now()-cached.at<15*60_000)return {...cached.value,cached:true};
+  const base='https://raw.githubusercontent.com/statsbomb/open-data/master/data',matches=await fetchJson(`${base}/matches/${chosen.competition_id}/${chosen.season_id}.json`,{timeoutMs:12_000}),ordered=(Array.isArray(matches)?matches:[]).filter(m=>outcomeOf(m)).sort((a,b)=>Date.parse(a.match_date||0)-Date.parse(b.match_date||0));if(ordered.length<16)throw new Error('sports_history_too_small');const cut=Math.max(12,Math.floor(ordered.length*.7)),backtestModel=newModel();ordered.slice(0,cut).forEach(m=>updateModel(backtestModel,m));const testRows=[];
+  for(const m of ordered.slice(cut)){const home=statsBombTeam(m,'home'),away=statsBombTeam(m,'away'),outcome=outcomeOf(m),p=predictMatch(backtestModel,home,away),top=Math.max(...p),pick=['home','draw','away'][p.indexOf(top)];testRows.push({date:m.match_date,home,away,outcome,prediction:pick,prediction_label:resultLabel(pick),probabilities:{home:round(p[0],3),draw:round(p[1],3),away:round(p[2],3)},top_probability:top,correct:pick===outcome,brier:sportsBrier3(p,outcome)});updateModel(backtestModel,m);}
+  const brier=testRows.reduce((a,r)=>a+r.brier,0)/Math.max(1,testRows.length),accuracy=testRows.filter(r=>r.correct).length/Math.max(1,testRows.length),prior=leaguePrior(backtestModel),fixtures=await upcomingFixtures(chosen.country_name,chosen.competition_name),production=await canonicalProductionModel(chosen.country_name,chosen.competition_name),upcoming=fixturePredictions(fixtures.fixtures,production),teams=[...production.model.ratings.entries()].map(([key,rating])=>({key,rating:Math.round(rating),form_points:form(production.model,key).reduce((a,b)=>a+b,0),form_matches:form(production.model,key).length})).sort((a,b)=>b.rating-a.rating),competition={country:chosen.country_name,name:chosen.competition_name,competition_id:chosen.competition_id,season:chosen.season_name,season_id:chosen.season_id};
+  await sportsTrack.recordPredictions(competition,upcoming.filter(x=>x.trackable!==false));await sportsTrack.resolveResults(fixtures.results||[]);const trackRecord=await sportsTrack.report({country:competition.country,league:competition.name});
+  const value={schema:'evidence-sports-intelligence-v3',status:'ok',generated_at:new Date().toISOString(),competition,historical:{provider:'StatsBomb Open Data',matches:ordered.length,training_matches:cut,test_matches:testRows.length,multiclass_brier:round(brier,4),top_pick_accuracy:round(accuracy,3),league_outcome_rates:{home:round(prior[0],3),draw:round(prior[1],3),away:round(prior[2],3)},calibration_buckets:calibrationBuckets(testRows),recent_test_matches:testRows.slice(-20).reverse()},model:{name:'Providence Sports Elo-Cal v1.1',features:['chronological Elo','home advantage','rolling draw prior','5-match form'],lookahead_prevented:true,trained_only_on_prior_matches:true,backtest_selected_season:chosen.season_name,production_model:{id:production.id,source:production.source,seasons:production.seasons,training_matches:production.training_matches,independent_of_selected_backtest_season:true}},teams:{count:teams.length,top_ratings:teams.slice(0,12)},upcoming:{provider:fixtures.provider,coverage:fixtures.coverage,result_source:fixtures.result_source,fixtures:upcoming,error:fixtures.error||null},track_record:trackRecord,interpretation:'Le backtest sélectionné reste séparé du modèle canonique qui publie les probabilités futures. Seules les prévisions émises avant le coup d’envoi et résolubles entrent au Track Record.',guardrails:{gambling_advice:false,guaranteed_outcomes:false,historical_calibration_is_general_forecasting_proof:false,future_predictions_must_be_frozen_before_kickoff:true,production_model_is_canonical:true,unresolvable_fallbacks_are_not_tracked:true}};memo.set(cacheKey,{at:Date.now(),value});return {...value,cached:false};
 }
+export async function refreshSportsTrackRecord(){const results=[];for(const item of AUTO_TRACK){try{const x=await sportsLeagueIntelligence({country:item.countryName,league:item.leagueName});results.push({country:item.countryName,league:item.leagueName,ok:true,upcoming:x.upcoming?.fixtures?.filter(f=>f.trackable!==false).length||0,resolved:x.track_record?.resolved_matches||0,model_id:x.model?.production_model?.id||null});}catch(error){results.push({country:item.countryName,league:item.leagueName,ok:false,error:String(error?.message||error)});}}return {schema:'evidence-sports-refresh-v1',generated_at:new Date().toISOString(),leagues:results,tracked:results.filter(x=>x.ok).length};}
+export async function sportsLiveTrackRecord(scope={}){return sportsTrack.report(scope);}
