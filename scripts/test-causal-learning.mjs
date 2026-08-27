@@ -3,17 +3,26 @@ import { buildCausalWorldModel } from '../src/causal_world_model.js';
 
 const rows=[];
 for(let i=0;i<10;i++){
-  rows.push({scenario_key:`s${i}`,domain:'supply_fuel',horizon_tier:'near',outcome:1,origin_group:'shock-france',meta:{forecast:{domain:'supply_fuel',horizon_tier:'near',origin_group:'shock-france',region:'France'}}});
+  const day=String(i+1).padStart(2,'0');
+  const origin=`shock-france-${i}`;
+  rows.push({scenario_key:`s${i}`,domain:'supply_fuel',horizon_tier:'near',outcome:1,origin_group:origin,resolved_at:`2026-01-${day}T08:00:00Z`,meta:{forecast:{domain:'supply_fuel',horizon_tier:'near',origin_group:origin,region:'France',target_date:`2026-01-${day}T08:00:00Z`}}});
+  // Duplicate upstream forecast in the same context must not inflate samples.
+  rows.push({scenario_key:`s${i}-dup`,domain:'supply_fuel',horizon_tier:'near',outcome:1,origin_group:origin,resolved_at:`2026-01-${day}T09:00:00Z`,meta:{forecast:{domain:'supply_fuel',horizon_tier:'near',origin_group:origin,region:'France',target_date:`2026-01-${day}T09:00:00Z`}}});
+  rows.push({scenario_key:`e${i}`,domain:'economy_labor',horizon_tier:'medium',outcome:i<9?1:0,origin_group:origin,resolved_at:`2026-01-${day}T18:00:00Z`,meta:{forecast:{domain:'economy_labor',horizon_tier:'medium',origin_group:origin,region:'France',target_date:`2026-01-${day}T18:00:00Z`}}});
 }
-for(let i=0;i<10;i++){
-  rows.push({scenario_key:`e${i}`,domain:'economy_labor',horizon_tier:'medium',outcome:i<9?1:0,origin_group:'shock-france',meta:{forecast:{domain:'economy_labor',horizon_tier:'medium',origin_group:'shock-france',region:'France'}}});
-}
+// A downstream outcome that predates its upstream signal must not count.
+rows.push({scenario_key:'late-upstream',domain:'supply_fuel',horizon_tier:'near',outcome:1,origin_group:'reverse-order',resolved_at:'2026-03-02T00:00:00Z',meta:{forecast:{domain:'supply_fuel',horizon_tier:'near',origin_group:'reverse-order',region:'France',target_date:'2026-03-02T00:00:00Z'}}});
+rows.push({scenario_key:'early-downstream',domain:'economy_labor',horizon_tier:'medium',outcome:1,origin_group:'reverse-order',resolved_at:'2026-03-01T00:00:00Z',meta:{forecast:{domain:'economy_labor',horizon_tier:'medium',origin_group:'reverse-order',region:'France',target_date:'2026-03-01T00:00:00Z'}}});
+
 const learning=buildCausalLearning(rows);
 if(learning.schema!=='evidence-causal-learning-v1') throw new Error('causal learning schema missing');
 const transition=learning.by_transition.find(x=>x.key==='supply_fuel>economy_labor');
 if(!transition?.learning_active) throw new Error('expected supply → economy learning to activate');
-if(transition.conditional_samples<8) throw new Error('causal learning sample guardrail broken');
+if(transition.conditional_samples!==10) throw new Error(`expected 10 independent samples, got ${transition.conditional_samples}`);
+if(transition.independent_context_buckets!==10) throw new Error('independent context accounting missing');
 if(!(transition.learned_strength>transition.prior_strength)) throw new Error('high observed downstream rate should strengthen prior');
+if(learning.guardrails.duplicate_forecast_pairs_count_as_independent_samples!==false) throw new Error('duplicate-pair guardrail broken');
+if(learning.guardrails.temporal_order_required_when_dates_exist!==true) throw new Error('temporal ordering guardrail broken');
 if(learning.guardrails.causal_proof!==false||learning.guardrails.learns_conditional_association_not_intervention_effect!==true) throw new Error('causal learning guardrails broken');
 
 const forecasts=[
