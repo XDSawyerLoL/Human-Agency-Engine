@@ -39,7 +39,7 @@ export const config = {
   theSportsDbApiKey: value('THESPORTSDB_API_KEY') || '123',
   supabase: {
     url: value('SUPABASE_URL','SUPABASE_PUBLIC_URL'),
-    secretKey: value('SUPABASE_SECRET_KEY','SUPABASE_SERVICE_ROLE_KEY')
+    secretKey: value('SUPABASE_API_KEY','SUPABASE_SECRET_KEY','SUPABASE_SERVICE_ROLE_KEY')
   },
   mysql: {
     host: value('MYSQL_HOST', 'DB_HOST') || mysqlUrl?.host || '',
