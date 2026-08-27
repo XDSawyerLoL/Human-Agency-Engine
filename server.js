@@ -20,6 +20,8 @@ import { attachAdaptiveEnsemble } from './src/adaptive_ensemble.js';
 import { compileForecastQuestion } from './src/forecast_compiler.js';
 import { buildCausalWorldModel, attachCausalContext, simulateCausalScenario } from './src/causal_world_model.js';
 import { sportsCalibrationLab, benchmarkRoadmap } from './src/calibration_labs.js';
+import { sportsCatalog, sportsLeagueIntelligence } from './src/sports_intelligence.js';
+import { SupabaseBridge, mirrorV11State } from './src/supabase_bridge.js';
 import { buildResolutionAssessments } from './src/resolution_engine.js';
 import {
   initLearningStore,
@@ -34,9 +36,11 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const store = new EvidenceStore();
+const supabase = new SupabaseBridge();
 let refreshing = null;
 let lastError = null;
 let learningReady = false;
+let persistedCausalLearning = null;
 const moduleRuns = new Map();
 const RESEARCH_DEADLINE_MS = 9_000;
 
@@ -109,6 +113,12 @@ async function runResolutionCycle(signals, generatedAt) {
   }
 }
 
+function effectiveCausalLearning(learning){
+  const live=learning?.causal;
+  if(Number(live?.resolved_forecasts||0)>0 || Number(live?.active_transitions||0)>0) return live;
+  return persistedCausalLearning || live || null;
+}
+
 async function refreshWorld() {
   if (refreshing) return refreshing;
   refreshing = (async () => {
@@ -128,6 +138,7 @@ async function refreshWorld() {
 
       const resolutionCycle = await runResolutionCycle(collected.signals, generatedAt);
       const learning = await getLearningReport(store);
+      const causalLearning = effectiveCausalLearning(learning);
 
       const coreCandidates = buildForecasts(collected.signals, Math.max(config.maxForecasts * 3, 160));
       const breadthCandidates = buildBreadthForecasts(breadth.signals);
@@ -155,7 +166,7 @@ async function refreshWorld() {
         attachAdaptiveEnsemble(f, learning);
       }
 
-      const causalWorld = buildCausalWorldModel(forecasts);
+      const causalWorld = buildCausalWorldModel(forecasts, causalLearning);
       attachCausalContext(forecasts, causalWorld);
       await recordForecastMetadata(store, forecasts, generatedAt);
 
@@ -169,8 +180,8 @@ async function refreshWorld() {
       const catalog = sourceCatalog(collected, sourceProviders);
       const signalAnalytics = await store.getSignalAnalytics();
       const snapshot = {
-        schema: 'evidence-node-world-eye-v10',
-        engine: 'evidence-node-predictive-public-v10-causal-forecast-os',
+        schema: 'evidence-node-world-eye-v11',
+        engine: 'evidence-node-predictive-public-v11-providence-learning-os',
         generated_at: generatedAt,
         runtime_mode: 'hostinger-node-managed',
         status: 'live',
@@ -208,11 +219,17 @@ async function refreshWorld() {
           adaptive_ensemble_promotion_ready: learning.ensemble.promotion_ready,
           forecast_compiler_enabled: true,
           causal_world_model_enabled: true,
+          causal_learning_enabled: true,
+          causal_learning_resolutions: Number(causalLearning?.resolved_forecasts||0),
+          causal_learning_active_transitions: Number(causalLearning?.active_transitions||0),
           causal_world_nodes: causalWorld.metrics.nodes,
           causal_world_edges: causalWorld.metrics.edges,
           causal_world_evidence_edges: causalWorld.metrics.evidence_backed_edges,
+          causal_world_learned_edges: causalWorld.metrics.learned_structural_edges,
           scenario_lab_enabled: true,
+          sports_intelligence_enabled: true,
           sports_calibration_lab_enabled: true,
+          supabase_mirror_configured: supabase.enabled,
           resolution_engine_enabled: true,
           resolution_due: resolutionCycle.due,
           resolution_assessed: resolutionCycle.assessed,
@@ -243,12 +260,13 @@ async function refreshWorld() {
           adaptive_ensemble_status: learning.ensemble.status,
           adaptive_ensemble_live_backtest: learning.ensemble.live_backtest,
           adaptive_ensemble_promotion_ready: learning.ensemble.promotion_ready,
+          causal_learning: causalLearning,
           resolution_states: learning.resolution.states
         },
         causal_world: causalWorld,
         forecasts,
         contract: {
-          product_promise: 'Anticiper des conséquences plausibles, mesurer leur impact, relier leurs mécanismes, tester des hypothèses puis vérifier objectivement la prévision.',
+          product_promise: 'Anticiper des conséquences plausibles, mesurer leur impact, apprendre des résolutions, relier leurs mécanismes, tester des hypothèses puis vérifier objectivement la prévision.',
           probability_is_certainty: false,
           consolidation_is_probability: false,
           confidence_is_probability: false,
@@ -261,8 +279,10 @@ async function refreshWorld() {
           adaptive_ensemble_requires_live_track_record: true,
           forecast_compiler_can_invent_probability: false,
           causal_graph_is_causal_proof: false,
+          causal_learning_proves_intervention_effect: false,
           structural_priors_are_observed_facts: false,
           scenario_lab_replaces_public_probability: false,
+          sports_prediction_is_betting_advice: false,
           falsification_required: true,
           expired_forecasts_must_resolve: true,
           ambiguous_forecasts_auto_scored: false,
@@ -273,8 +293,10 @@ async function refreshWorld() {
       };
       snapshot.analytics = buildSnapshotAnalytics(snapshot, signalAnalytics);
       await store.saveSnapshot(snapshot);
+      persistedCausalLearning = causalLearning || persistedCausalLearning;
+      void mirrorV11State(supabase,{snapshot,causalLearning}).catch(error=>console.error('[supabase-mirror]',error.message));
       lastError = null;
-      console.log(JSON.stringify({ event:'world_refresh', signals:collected.signals.length, forecasts:forecasts.length, live:livePublished, memory:memoryPublished, candidates:allCandidates.length, resolution:resolutionCycle, calibration_n:learning.calibration.scorable_resolutions, ensemble_n:learning.ensemble.live_backtest.n, causal_nodes:causalWorld.metrics.nodes, causal_edges:causalWorld.metrics.edges, domains:domainCounts, horizons:horizonCounts, sources:collected.source_status }));
+      console.log(JSON.stringify({ event:'world_refresh', signals:collected.signals.length, forecasts:forecasts.length, live:livePublished, memory:memoryPublished, candidates:allCandidates.length, resolution:resolutionCycle, calibration_n:learning.calibration.scorable_resolutions, ensemble_n:learning.ensemble.live_backtest.n, causal_learning_n:Number(causalLearning?.resolved_forecasts||0), causal_nodes:causalWorld.metrics.nodes, causal_edges:causalWorld.metrics.edges, domains:domainCounts, horizons:horizonCounts, sources:collected.source_status }));
       return snapshot;
     } catch (error) {
       lastError = { at: new Date().toISOString(), message: error.message };
@@ -293,10 +315,14 @@ app.get('/api/health', async (_req, res) => {
   res.json({
     status: snapshot ? 'ok' : 'warming',
     service: 'evidence-world-eye-node',
+    version:'v11',
     storage: store.mode,
     learning_ready: learningReady,
     persistent_learning: storage.persistent,
+    supabase_mirror_configured:supabase.enabled,
     causal_world_ready:Boolean(snapshot?.causal_world?.nodes?.length),
+    causal_learning_ready:Boolean(snapshot?.learning?.causal_learning),
+    sports_intelligence_ready:true,
     port: config.port,
     last_snapshot: snapshot?.generated_at ?? null,
     last_error: lastError,
@@ -344,11 +370,7 @@ app.post('/api/modules/:key/run', async (req, res) => {
     const result = await runLabModule(key, { theme:String(req.body?.theme || '') });
     res.json({ status:'ok', generated_at:new Date().toISOString(), ...result });
   } catch (error) {
-    res.json({
-      status:'degraded', module:key, key, label:key.toUpperCase(), items:[], forecasts:[],
-      generated_at:new Date().toISOString(),
-      notice:`La source distante est momentanément indisponible (${String(error?.message || error).slice(0,160)}). Le module reste actif et sera retenté.`
-    });
+    res.json({status:'degraded', module:key, key, label:key.toUpperCase(), items:[], forecasts:[],generated_at:new Date().toISOString(),notice:`La source distante est momentanément indisponible (${String(error?.message || error).slice(0,160)}). Le module reste actif et sera retenté.`});
   }
 });
 
@@ -356,18 +378,7 @@ app.get('/api/track-record', async (_req, res) => {
   res.set('Cache-Control', 'public, max-age=30');
   const [legacy, learning] = await Promise.all([store.getTrackRecord(), getLearningReport(store)]);
   const global = learning.calibration.global;
-  res.json({
-    ...legacy,
-    calibration_ready:learning.calibration.calibration_ready,
-    empirical_calibration_enabled:learning.calibration.calibration_ready,
-    brier_score:global.brier,
-    log_loss:global.log_loss,
-    hit_rate:global.hit_rate===null?null:Math.round(global.hit_rate*1000)/10,
-    calibration:learning.calibration,
-    ensemble:learning.ensemble,
-    resolution:learning.resolution,
-    persistent_learning:learning.persistent
-  });
+  res.json({...legacy,calibration_ready:learning.calibration.calibration_ready,empirical_calibration_enabled:learning.calibration.calibration_ready,brier_score:global.brier,log_loss:global.log_loss,hit_rate:global.hit_rate===null?null:Math.round(global.hit_rate*1000)/10,calibration:learning.calibration,ensemble:learning.ensemble,causal_learning:effectiveCausalLearning(learning),resolution:learning.resolution,persistent_learning:learning.persistent});
 });
 
 app.get('/api/calibration', async (_req, res) => {
@@ -382,11 +393,17 @@ app.get('/api/ensemble', async (_req, res) => {
   res.json({generated_at:new Date().toISOString(),...learning.ensemble});
 });
 
+app.get('/api/causal-learning', async (_req,res)=>{
+  res.set('Cache-Control','public, max-age=30');
+  const learning=await getLearningReport(store);
+  res.json(effectiveCausalLearning(learning)||{schema:'evidence-causal-learning-v1',status:'collecting',resolved_forecasts:0,active_transitions:0});
+});
+
 app.get('/api/causal-graph', async (_req, res) => {
   res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
   const snapshot=await store.getSnapshot() || await refreshWorld();
   if(!snapshot) return res.status(503).json({status:'warming'});
-  const graph=snapshot.causal_world || buildCausalWorldModel(snapshot.forecasts||[]);
+  const graph=snapshot.causal_world || buildCausalWorldModel(snapshot.forecasts||[],snapshot.learning?.causal_learning||persistedCausalLearning);
   res.json(graph);
 });
 
@@ -394,7 +411,7 @@ app.post('/api/scenario-lab', async (req, res) => {
   try {
     const snapshot=await store.getSnapshot() || await refreshWorld();
     if(!snapshot) return res.status(503).json({status:'warming'});
-    const graph=snapshot.causal_world || buildCausalWorldModel(snapshot.forecasts||[]);
+    const graph=snapshot.causal_world || buildCausalWorldModel(snapshot.forecasts||[],snapshot.learning?.causal_learning||persistedCausalLearning);
     res.json(simulateCausalScenario(graph,snapshot.forecasts||[],req.body?.interventions||[],{max_hops:req.body?.max_hops}));
   } catch(error) {
     const message=String(error?.message||error);
@@ -403,41 +420,42 @@ app.post('/api/scenario-lab', async (req, res) => {
   }
 });
 
+app.get('/api/sports/catalog',async(_req,res)=>{
+  res.set('Cache-Control','public, max-age=21600, stale-while-revalidate=86400');
+  try{res.json(await sportsCatalog());}catch(error){res.status(502).json({status:'error',error:String(error?.message||error)});}
+});
+
+app.get('/api/sports/league',async(req,res)=>{
+  res.set('Cache-Control','public, max-age=1800, stale-while-revalidate=7200');
+  try{
+    const result=await sportsLeagueIntelligence({country:String(req.query.country||''),league:String(req.query.league||''),competitionId:req.query.competition_id,seasonId:req.query.season_id});
+    void mirrorV11State(supabase,{sports:result}).catch(error=>console.error('[supabase-sports]',error.message));
+    res.json(result);
+  }catch(error){res.status(502).json({status:'error',error:String(error?.message||error)});}
+});
+
 app.get('/api/resolutions', async (_req, res) => {
   res.set('Cache-Control', 'public, max-age=30');
   const [queue, learning] = await Promise.all([getDueResolutionRows(store,{limit:100}),getLearningReport(store)]);
-  res.json({
-    generated_at:new Date().toISOString(),
-    queue:queue.map(r=>({
-      scenario_key:r.scenario_key,title:r.title,domain:r.domain,horizon_tier:r.horizon_tier,target_at:r.target_at,
-      first_probability:Number(r.first_probability),last_probability:Number(r.last_probability),resolution_status:r.resolution_status||'pending',
-      contract:r.meta?.resolution_contract||null
-    })),
-    states:learning.resolution.states,
-    recent:learning.resolution.recent
-  });
+  res.json({generated_at:new Date().toISOString(),queue:queue.map(r=>({scenario_key:r.scenario_key,title:r.title,domain:r.domain,horizon_tier:r.horizon_tier,target_at:r.target_at,first_probability:Number(r.first_probability),last_probability:Number(r.last_probability),resolution_status:r.resolution_status||'pending',contract:r.meta?.resolution_contract||null})),states:learning.resolution.states,recent:learning.resolution.recent});
 });
 
 app.post('/api/resolutions/:scenarioKey', async (req, res) => {
   if (!config.adminRefreshKey || req.get('x-evidence-admin-key') !== config.adminRefreshKey) return res.status(403).json({error:'forbidden'});
   try {
-    const result = await resolveForecast(store,String(req.params.scenarioKey),{
-      outcome:Number(req.body?.outcome),
-      note:String(req.body?.note||''),
-      evidence:Array.isArray(req.body?.evidence)?req.body.evidence.slice(0,20):[],
-      resolver:'manual_verified'
-    });
+    const result = await resolveForecast(store,String(req.params.scenarioKey),{outcome:Number(req.body?.outcome),note:String(req.body?.note||''),evidence:Array.isArray(req.body?.evidence)?req.body.evidence.slice(0,20):[],resolver:'manual_verified'});
     const learning = await getLearningReport(store);
-    res.json({status:'ok',resolution:result,calibration:learning.calibration,ensemble:learning.ensemble});
-  } catch (error) {
-    res.status(400).json({status:'error',error:String(error?.message||error)});
-  }
+    res.json({status:'ok',resolution:result,calibration:learning.calibration,ensemble:learning.ensemble,causal_learning:learning.causal});
+  } catch (error) {res.status(400).json({status:'error',error:String(error?.message||error)});}
 });
 
 app.get('/api/storage', async (_req, res) => {
   res.set('Cache-Control', 'no-store');
-  res.json(await storageReadiness(store));
+  const base=await storageReadiness(store);const sb=await supabase.health();
+  res.json({...base,supabase:sb,durable_snapshot_available:sb.connected});
 });
+
+app.get('/api/supabase',async(_req,res)=>{res.set('Cache-Control','no-store');res.json(await supabase.health());});
 
 app.get('/api/calibration/sports', async (_req, res) => {
   res.set('Cache-Control', 'public, max-age=21600, stale-while-revalidate=86400');
@@ -481,7 +499,7 @@ app.get('/{*path}', (_req, res) => {
 });
 
 const server = app.listen(config.port, '0.0.0.0', () => {
-  console.log(`[evidence] Node World Eye listening on 0.0.0.0:${config.port}; storage=${store.mode}`);
+  console.log(`[evidence] Providence V11 listening on 0.0.0.0:${config.port}; storage=${store.mode}; supabase=${supabase.enabled?'configured':'off'}`);
 });
 
 server.on('error', error => {
@@ -493,6 +511,13 @@ async function boot() {
   try {
     await store.init();
     await initLearningStore(store);
+    if(supabase.enabled){
+      try{
+        const [savedSnapshot,savedCausal]=await Promise.all([supabase.readState('latest_snapshot'),supabase.readState('causal_learning')]);
+        if(!store.snapshot&&savedSnapshot?.payload)store.snapshot=savedSnapshot.payload;
+        if(savedCausal?.payload)persistedCausalLearning=savedCausal.payload;
+      }catch(error){console.error('[supabase-restore]',String(error?.message||error));}
+    }
     learningReady = true;
   } catch (error) {
     console.error('[learning-init]', error.message);

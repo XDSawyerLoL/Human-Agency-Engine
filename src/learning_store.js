@@ -1,5 +1,6 @@
 import { buildCalibrationReport } from './calibration_engine.js';
 import { buildAdaptiveEnsembleLearning } from './adaptive_ensemble.js';
+import { buildCausalLearning } from './causal_learning.js';
 import { resolutionContract } from './resolution_engine.js';
 
 const memoryMeta = new Map();
@@ -169,6 +170,7 @@ export async function getLearningReport(store) {
   const rows=await resolvedRows(store);
   const calibration=buildCalibrationReport(rows);
   const ensemble=buildAdaptiveEnsembleLearning(rows);
+  const causal=buildCausalLearning(rows);
   let resolutionStates=[]; let stateCounts={};
   if(store?.pool){
     const [states]=await store.pool.query(`SELECT scenario_key,resolution_status,outcome,resolver,confidence,resolution_kind,evidence,note,checked_at,resolved_at
@@ -180,7 +182,7 @@ export async function getLearningReport(store) {
     resolutionStates=[...memoryResolution.values()].slice(-100).reverse();
     stateCounts=resolutionStates.reduce((a,r)=>{a[r.status||r.resolution_status]=(a[r.status||r.resolution_status]||0)+1;return a;},{});
   }
-  return {storage_mode:store?.mode||'memory',persistent:store?.mode==='mysql',calibration,ensemble,resolution:{states:stateCounts,recent:resolutionStates.slice(0,30)}};
+  return {storage_mode:store?.mode||'memory',persistent:store?.mode==='mysql',calibration,ensemble,causal,resolution:{states:stateCounts,recent:resolutionStates.slice(0,30)}};
 }
 
 export async function storageReadiness(store) {
@@ -188,6 +190,6 @@ export async function storageReadiness(store) {
     mode:store?.mode||'memory',persistent:store?.mode==='mysql',mysql_connected:Boolean(store?.pool),
     learning_tables_ready:Boolean(store?.pool),
     accepted_configuration:['MYSQL_URL','DATABASE_URL(mysql://...)','MYSQL_HOST + MYSQL_PORT + MYSQL_USER + MYSQL_PASSWORD + MYSQL_DATABASE'],
-    note:store?.pool?'Historique, résolutions, calibration et apprentissage de l’ensemble sont persistants.':'Le moteur fonctionne, mais l’apprentissage historique sera perdu au redémarrage tant que MySQL n’est pas connecté.'
+    note:store?.pool?'Historique, résolutions, calibration, ensemble adaptatif et causal learning sont persistants en MySQL.':'Le moteur fonctionne en mémoire ; V11 peut en plus conserver un miroir de snapshot et de causal learning dans Supabase lorsque le bridge serveur est configuré.'
   };
 }
