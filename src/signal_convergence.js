@@ -51,24 +51,34 @@ function hoursSince(v){const t=Date.parse(v||'');return Number.isFinite(t)?Math.
 function strengthRow(f,s){
   const r=relation(f,s),trust=clamp(s.source_trust??.55,0,1),severity=clamp(s.severity??.5,0,1),freshness=clamp(1-hoursSince(s.observed_at)/120,.18,1);
   const strength=clamp(r.score*(.42+.58*trust)*(.52+.48*severity)*freshness,0,1);
-  return {source_key:s.source_key,source_label:s.source_label||s.source_key,source_family:s.source_family||'unknown',event_type:s.event_type,title:s.title||s.event_type,geography:s.geography||'Monde',trust:Number(trust.toFixed(3)),severity:Number(severity.toFixed(3)),relation:r.kind,relevance:Number(r.score.toFixed(3)),strength:Number(strength.toFixed(3)),observed_at:s.observed_at,url:s.url||null};
+  return {source_key:s.source_key,source_label:s.source_label||s.source_key,source_family:s.source_family||'unknown',event_type:s.event_type,title:s.title||s.event_type,geography:s.geography||'Monde',trust:Number(trust.toFixed(3)),severity:Number(severity.toFixed(3)),relation:r.kind,relevance:Number(r.score.toFixed(3)),strength:Number(strength.toFixed(3)),observed_at:s.observed_at,event_at:s.event_at,url:s.url||null,facts:s.facts||null};
 }
 function uniqueFamilies(rows){const best=new Map();for(const r of rows){const k=r.source_family||r.source_key;if(!best.has(k)||best.get(k).strength<r.strength)best.set(k,r);}return [...best.values()].sort((a,b)=>b.strength-a.strength);}
+function asEvidence(r,tier){return {title:r.title,source_key:r.source_key,source_label:r.source_label,source_family:r.source_family,source_trust:r.trust,url:r.url,observed_at:r.observed_at,event_at:r.event_at,facts:r.facts,convergence_tier:tier,convergence_relation:r.relation,convergence_strength:r.strength};}
 export function applySignalConvergence(forecasts,signals){
   const all=Array.isArray(signals)?signals:[];
   for(const f of forecasts||[]){
-    const existing=new Set((f.evidence||[]).map(x=>x.source_key).filter(Boolean));
-    const rows=uniqueFamilies(all.filter(s=>!existing.has(s.source_key)).map(s=>strengthRow(f,s)).filter(r=>r.relevance>=.24));
+    const existingKeys=new Set((f.evidence||[]).map(x=>x.source_key).filter(Boolean));
+    const rows=uniqueFamilies(all.filter(s=>!existingKeys.has(s.source_key)).map(s=>strengthRow(f,s)).filter(r=>r.relevance>=.24));
     const strong=rows.filter(r=>r.strength>=.48&&['causal','semantic','direct','thematic'].includes(r.relation)).slice(0,6);
     const weak=rows.filter(r=>r.strength>=.22&&r.strength<.48).slice(0,8);
     const causalStrong=strong.filter(r=>r.relation==='causal'||r.relation==='semantic'||r.relation==='direct');
-    const support=causalStrong.reduce((a,r)=>a+r.strength,0);
-    const familyBonus=Math.min(1,causalStrong.length/3);
-    const delta=causalStrong.length>=2?clamp((support-0.9)*2.4+familyBonus*2.2,0,6):0;
+    const support=causalStrong.reduce((a,r)=>a+r.strength,0),familyBonus=Math.min(1,causalStrong.length/3);
+    const delta=causalStrong.length>=2?clamp((support-.9)*2.4+familyBonus*2.2,0,6):0;
     const old=clamp(f?.probability?.estimate??((f?.probability?.percent||0)/100),.02,.95),next=clamp(old+delta/100,.02,.94);
     if(f.probability&&delta>0){f.probability.base_percent=Math.round(old*100);f.probability.estimate=next;f.probability.percent=Math.round(next*100);f.probability.cross_signal_delta_points=Number(delta.toFixed(1));if(Array.isArray(f.probability.interval_percent)){f.probability.interval_percent=f.probability.interval_percent.map(x=>Math.min(97,Math.round(Number(x)+delta)));}if(Number.isFinite(f.probability.interval_low))f.probability.interval_low=clamp(f.probability.interval_low+delta/100,.01,.96);if(Number.isFinite(f.probability.interval_high))f.probability.interval_high=clamp(f.probability.interval_high+delta/100,.03,.98);}
-    const boost=Math.min(8,strong.length*1.4+weak.length*.35);if(f.consolidation){f.consolidation.score=Math.min(100,Math.round((f.consolidation.score||0)+boost));f.consolidation.dimensions=[...(f.consolidation.dimensions||[]).filter(x=>x.key!=='cross_signal_convergence'),{key:'cross_signal_convergence',label:'Convergence inter-domaines',score:Math.round(clamp(strong.reduce((a,r)=>a+r.strength,0)/Math.max(1,strong.length),0,1)*100)}];}
-    f.signal_convergence={engine:'providence-cross-signal-v1',strong_signals:strong,weak_signals:weak,independent_families:strong.length+weak.length,probability_delta_points:Number(delta.toFixed(1)),weak_signals_do_not_move_probability_alone:true,duplicate_family_capped:true,explanation:strong.length?`${strong.length} signal(s) indépendants fortement compatibles et ${weak.length} signal(s) faibles/contextuels ont été croisés avec cette trajectoire.`:`Aucun signal inter-domaine assez fort pour déplacer la probabilité; ${weak.length} signal(s) faibles restent sous surveillance.`};
+    const boost=Math.min(8,strong.length*1.4+weak.length*.35);
+    if(f.consolidation){
+      f.consolidation.score=Math.min(100,Math.round((f.consolidation.score||0)+boost));
+      f.consolidation.dimensions=[...(f.consolidation.dimensions||[]).filter(x=>x.key!=='cross_signal_convergence'),{key:'cross_signal_convergence',label:'Convergence inter-domaines',score:Math.round(clamp(strong.reduce((a,r)=>a+r.strength,0)/Math.max(1,strong.length),0,1)*100)}];
+      const providers=new Map((f.consolidation.source_providers||[]).map(x=>[x.key,x]));for(const r of [...strong,...weak])if(!providers.has(r.source_key))providers.set(r.source_key,{key:r.source_key,label:r.source_label,role:`${r.source_family} · ${r.relation}`});f.consolidation.source_providers=[...providers.values()];
+      const families=new Map((f.consolidation.source_families||[]).map(x=>[x.key,x]));for(const r of [...strong,...weak])if(!families.has(r.source_family))families.set(r.source_family,{key:r.source_family,label:r.source_family});f.consolidation.source_families=[...families.values()];
+    }
+    const evidence=[...(f.evidence||[])],evidenceSeen=new Set(evidence.map(x=>`${x.source_key}|${x.title}`));for(const [r,tier] of [...strong.map(x=>[x,'strong']),...weak.slice(0,4).map(x=>[x,'weak'])]){const key=`${r.source_key}|${r.title}`;if(!evidenceSeen.has(key)){evidence.push(asEvidence(r,tier));evidenceSeen.add(key);}}f.evidence=evidence;
+    const explanation=strong.length?`${strong.length} signal(s) indépendants fortement compatibles et ${weak.length} signal(s) faibles/contextuels ont été croisés avec cette trajectoire.`:`Aucun signal inter-domaine assez fort pour déplacer la probabilité; ${weak.length} signal(s) faibles restent sous surveillance.`;
+    f.signal_convergence={engine:'providence-cross-signal-v1',strong_signals:strong,weak_signals:weak,independent_families:new Set([...strong,...weak].map(x=>x.source_family)).size,probability_delta_points:Number(delta.toFixed(1)),base_probability_percent:Math.round(old*100),final_probability_percent:Math.round(next*100),weak_signals_do_not_move_probability_alone:true,duplicate_family_capped:true,explanation};
+    const suffix=delta>0?` La convergence inter-domaines ajoute ${Number(delta.toFixed(1))} point(s) à l’estimation de base.`:' Les signaux faibles seuls ne modifient pas la probabilité.';
+    f.why_now=`${String(f.why_now||f.what_we_know||'').trim()} ${explanation}${suffix}`.trim();
   }
   return forecasts;
 }
