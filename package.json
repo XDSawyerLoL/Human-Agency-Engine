@@ -1,8 +1,8 @@
 {
   "name": "evidence-world-eye",
-  "version": "1.12.0",
+  "version": "1.12.1",
   "private": true,
-  "description": "PROVIDENCE V12 — Forecast Command Center avec Causal Learning, Supabase, Sports Track Record live et design system multi-pages",
+  "description": "PROVIDENCE V12.1 — Unified Command Center, navigation stable, Horizon corrigé et identité visuelle renforcée",
   "type": "module",
   "main": "server.js",
   "engines": { "node": "22.x" },
