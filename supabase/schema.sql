@@ -17,6 +17,7 @@ create table if not exists public.evidence_sports_forecasts (
   country text not null,
   league text not null,
   external_id text,
+  model_id text,
   kickoff_at timestamptz,
   kickoff_date date,
   home_team text not null,
@@ -37,17 +38,22 @@ create table if not exists public.evidence_sports_forecasts (
   resolved_at timestamptz
 );
 
+-- Idempotent upgrade when the V11.1 table already existed before model identity was added.
+alter table public.evidence_sports_forecasts add column if not exists model_id text;
+
 create index if not exists evidence_sports_forecasts_status_idx on public.evidence_sports_forecasts (status, kickoff_date);
 create index if not exists evidence_sports_forecasts_league_idx on public.evidence_sports_forecasts (country, league, predicted_at desc);
+create index if not exists evidence_sports_forecasts_model_idx on public.evidence_sports_forecasts (model_id, predicted_at desc);
 create index if not exists evidence_sports_forecasts_resolved_idx on public.evidence_sports_forecasts (resolved_at desc) where status='resolved';
 
 alter table public.evidence_sports_forecasts enable row level security;
 
 -- No anonymous/browser policies on purpose. Hostinger writes with the server secret key.
--- Crucial sports rule: fixture_key is the primary key and inserts use ignore-duplicates,
--- therefore the first published probabilities are frozen and cannot be rewritten after a result.
+-- fixture_key is the primary key and inserts use ignore-duplicates: the first pre-match
+-- probability from the canonical production model is immutable. Result resolution updates
+-- only the outcome fields and never the original p_home / p_draw / p_away values.
 
 comment on table public.evidence_runtime_state is
   'Server-side durable mirror for ÉVIDENCE snapshots, causal learning and sports intelligence.';
 comment on table public.evidence_sports_forecasts is
-  'Frozen pre-match Providence probabilities and later objective match resolutions for live sports calibration.';
+  'Frozen canonical pre-match Providence probabilities and later objective match resolutions for live sports calibration.';
