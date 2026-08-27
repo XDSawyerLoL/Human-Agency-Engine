@@ -2,7 +2,7 @@
   'use strict';
   const root=document.documentElement;
   root.classList.add('providence-v11','providence-v12');
-  const css=document.createElement('link');css.rel='stylesheet';css.href='/providence-v12.css?v=providence-v12-command-center';document.head.appendChild(css);
+  for(const href of ['/providence-v12.css?v=providence-v12-command-center','/providence-v12-responsive.css?v=providence-v12-command-center']){const link=document.createElement('link');link.rel='stylesheet';link.href=href;document.head.appendChild(link);}
   const path=location.pathname.replace(/\/+$/,'')||'/';
   const rawPage=document.body.dataset.page||'';
   const infer=()=>{if(path==='/')return'home';for(const k of ['predictions','horizons','causal','sports','intelligence','track-record','modules','sources','cameras'])if(path.includes(`/${k}`))return k;return rawPage||'home';};
@@ -18,6 +18,7 @@
   if(!document.querySelector('.pv12-scene')){const scene=document.createElement('div');scene.className='pv12-scene';scene.setAttribute('aria-hidden','true');scene.innerHTML='<div class="globe"></div><div class="orbit"></div><div class="horizon"></div><div class="scan"></div>';document.body.prepend(scene);}
   const topbar=document.querySelector('.v4-topbar');
   if(topbar&&!topbar.querySelector('.pv12-profile')){const profile=document.createElement('div');profile.className='pv12-profile';profile.innerHTML='<span class="avatar">P</span><span><strong>Providence Live</strong><small>V12 · Command Center</small></span>';const live=topbar.querySelector('.v4-live');if(live)topbar.insertBefore(profile,live);else topbar.append(profile);}
+  const brandStrong=document.querySelector('.v4-brand strong');if(brandStrong)brandStrong.textContent='PROVIDENCE';
   const themeMeta=document.querySelector('meta[name="theme-color"]');if(themeMeta)themeMeta.content='#02060d';
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   const canvas=document.createElement('canvas');canvas.className='providence-atmosphere';canvas.setAttribute('aria-hidden','true');document.body.prepend(canvas);
