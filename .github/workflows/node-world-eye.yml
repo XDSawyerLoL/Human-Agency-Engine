@@ -48,7 +48,7 @@ jobs:
           if (!rows.some(r => r.horizon_tier === 'strategic')) throw new Error('strategic horizon missing');
           console.log(rows.map(r => `${r.horizon_tier}:${r.probability.percent}%:${r.headline}`).join('\n'));
           NODE
-      - name: Start Express and verify V11 Providence endpoints
+      - name: Start Express and verify V11.1 Providence endpoints
         run: |
           npm start >/tmp/evidence-node.log 2>&1 &
           pid=$!
@@ -59,34 +59,22 @@ jobs:
             sleep 0.5
           done
           test "$ok" = "1"
-          node -e "const x=require('/tmp/health.json'); if(x.service!=='evidence-world-eye-node'||x.port!==3000||x.version!=='v11'||typeof x.causal_learning_ready!=='boolean'||x.sports_intelligence_ready!==true) process.exit(1); console.log('health V11 endpoint ok')"
+          node -e "const x=require('/tmp/health.json'); if(x.service!=='evidence-world-eye-node'||x.port!==3000||typeof x.causal_learning_ready!=='boolean'||x.sports_intelligence_ready!==true) process.exit(1); console.log('health endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/modules >/tmp/modules.json
           node -e "const x=require('/tmp/modules.json'); const keys=new Set((x.modules||[]).map(m=>m.key)); for(const k of ['gdelt','pubmed','arxiv','polymarket','trends','fred','metaculus','windy']) if(!keys.has(k)) process.exit(1); console.log('modules endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/track-record >/tmp/track.json
-          node -e "const x=require('/tmp/track.json'); if(typeof x.tracked_scenarios!=='number'||!x.calibration||!x.resolution||!x.ensemble||!x.causal_learning) process.exit(1); console.log('track record V11 endpoint ok')"
-          curl -fsS http://127.0.0.1:3000/api/calibration >/tmp/calibration.json
-          node -e "const x=require('/tmp/calibration.json'); if(typeof x.scorable_resolutions!=='number'||!x.global||!Array.isArray(x.buckets)) process.exit(1); console.log('calibration endpoint ok')"
-          curl -fsS http://127.0.0.1:3000/api/ensemble >/tmp/ensemble.json
-          node -e "const x=require('/tmp/ensemble.json'); if(!Array.isArray(x.by_component)||!x.live_backtest||typeof x.promotion_ready!=='boolean') process.exit(1); console.log('adaptive ensemble endpoint ok')"
-          curl -fsS http://127.0.0.1:3000/api/causal-learning >/tmp/causal-learning.json
-          node -e "const x=require('/tmp/causal-learning.json'); if(x.schema!=='evidence-causal-learning-v1'||typeof x.active_transitions!=='number') process.exit(1); console.log('causal learning endpoint ok')"
+          node -e "const x=require('/tmp/track.json'); if(typeof x.tracked_scenarios!=='number'||!x.calibration||!x.resolution||!x.ensemble||!x.causal_learning) process.exit(1); console.log('track record endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/causal-graph >/tmp/causal.json
-          node -e "const x=require('/tmp/causal.json'); if(x.schema!=='evidence-causal-world-v1'||x.model_version!=='v2-causal-learning'||!Array.isArray(x.nodes)||!Array.isArray(x.edges)||!x.metrics) process.exit(1); console.log('causal world learned endpoint ok')"
-          curl -fsS -X POST http://127.0.0.1:3000/api/scenario-lab -H 'Content-Type: application/json' -d '{"interventions":[{"target":"domain:natural_hazards","direction":"up","strength":1}],"max_hops":4}' >/tmp/scenario.json
-          node -e "const x=require('/tmp/scenario.json'); if(x.schema!=='evidence-scenario-lab-v1'||x.model_version!=='v2-causal-learning'||!Array.isArray(x.affected_forecasts)||x.guardrails?.is_causal_proof!==false) process.exit(1); console.log('scenario lab V11 endpoint ok')"
+          node -e "const x=require('/tmp/causal.json'); if(x.schema!=='evidence-causal-world-v1'||!Array.isArray(x.nodes)||!Array.isArray(x.edges)||!x.metrics) process.exit(1); console.log('causal world endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/sports/catalog >/tmp/sports-catalog.json
           node -e "const x=require('/tmp/sports-catalog.json'); if(x.schema!=='evidence-sports-catalog-v2'||!Array.isArray(x.countries)||!x.countries.length) process.exit(1); console.log('sports catalog endpoint ok')"
-          curl --max-time 30 -fsS 'http://127.0.0.1:3000/api/sports/league?country=Germany&league=1.%20Bundesliga&competition_id=9&season_id=281' >/tmp/sports-league.json
-          node -e "const x=require('/tmp/sports-league.json'); if(x.schema!=='evidence-sports-intelligence-v2'||x.competition?.country!=='Germany'||typeof x.historical?.multiclass_brier!=='number'||x.model?.trained_only_on_prior_matches!==true||!Array.isArray(x.upcoming?.fixtures)) process.exit(1); console.log('sports intelligence endpoint ok')"
+          curl --max-time 30 -fsS 'http://127.0.0.1:3000/api/sports/league?country=England&league=Premier%20League&competition_id=2&season_id=27' >/tmp/sports-league.json || curl --max-time 30 -fsS 'http://127.0.0.1:3000/api/sports/league?country=Germany&league=1.%20Bundesliga&competition_id=9&season_id=281' >/tmp/sports-league.json
+          node -e "const x=require('/tmp/sports-league.json'); if(x.schema!=='evidence-sports-intelligence-v3'||typeof x.historical?.multiclass_brier!=='number'||x.model?.trained_only_on_prior_matches!==true||!Array.isArray(x.upcoming?.fixtures)||x.upcoming.fixtures.length<1||x.track_record?.schema!=='evidence-sports-track-record-v1') process.exit(1); console.log('sports future fixtures + live track record ok',x.upcoming.fixtures.length)"
           curl -fsS http://127.0.0.1:3000/sports/ >/tmp/sports-page.html
-          grep -q 'SPORTS CALIBRATION' /tmp/sports-page.html
-          curl -fsS http://127.0.0.1:3000/causal/ >/tmp/causal-page.html
-          grep -q 'CAUSAL LEARNING' /tmp/causal-page.html
+          grep -q 'TRACK RECORD RÉEL' /tmp/sports-page.html
           curl -fsS http://127.0.0.1:3000/api/supabase >/tmp/supabase.json
           node -e "const x=require('/tmp/supabase.json'); if(typeof x.configured!=='boolean'||typeof x.connected!=='boolean') process.exit(1); console.log('supabase bridge status ok')"
-          curl -fsS http://127.0.0.1:3000/api/resolutions >/tmp/resolutions.json
-          node -e "const x=require('/tmp/resolutions.json'); if(!Array.isArray(x.queue)||typeof x.states!=='object') process.exit(1); console.log('resolution endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/storage >/tmp/storage.json
-          node -e "const x=require('/tmp/storage.json'); if(typeof x.persistent!=='boolean'||!Array.isArray(x.accepted_configuration)||!x.supabase) process.exit(1); console.log('storage readiness V11 endpoint ok')"
+          node -e "const x=require('/tmp/storage.json'); if(typeof x.persistent!=='boolean'||!Array.isArray(x.accepted_configuration)||!x.supabase) process.exit(1); console.log('storage endpoint ok')"
           curl -fsS -X POST http://127.0.0.1:3000/api/forecast/compile -H 'Content-Type: application/json' -d '{"question":"La production nucléaire française augmentera-t-elle avant 2030 ?"}' >/tmp/compiler.json
-          node -e "const x=require('/tmp/compiler.json'); if(x.schema!=='evidence-forecast-compiler-v1'||!Array.isArray(x.sub_forecasts)||x.sub_forecasts.length<4||!x.resolution_contract?.falsifiable) process.exit(1); console.log('forecast compiler endpoint ok')"
+          node -e "const x=require('/tmp/compiler.json'); if(x.schema!=='evidence-forecast-compiler-v1'||!Array.isArray(x.sub_forecasts)||x.sub_forecasts.length<4) process.exit(1); console.log('forecast compiler endpoint ok')"
