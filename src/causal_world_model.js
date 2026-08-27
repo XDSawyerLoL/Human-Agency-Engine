@@ -11,8 +11,9 @@ const DOMAIN_LABELS={
 };
 
 // Priors structurels généraux. Ils servent à explorer des mécanismes plausibles, jamais à prétendre démontrer une causalité.
+// Les chocs naturels ne sautent pas directement vers l'économie : l'effet doit passer par un mécanisme intermédiaire observable (transport, approvisionnement, santé ou politique).
 const DOMAIN_TRANSITIONS={
-  natural_hazards:[['transport_mobility',.62],['supply_fuel',.60],['economy_labor',.55],['regulation_policy',.44],['public_health',.34]],
+  natural_hazards:[['transport_mobility',.62],['supply_fuel',.60],['regulation_policy',.44],['public_health',.34]],
   weather_climate:[['transport_mobility',.60],['energy',.54],['supply_fuel',.48],['economy_labor',.43],['regulation_policy',.40]],
   geopolitics_security:[['supply_fuel',.68],['energy',.61],['financial_stress',.54],['economy_labor',.50],['regulation_policy',.47]],
   supply_fuel:[['economy_labor',.70],['transport_mobility',.46],['financial_stress',.37],['regulation_policy',.34]],
