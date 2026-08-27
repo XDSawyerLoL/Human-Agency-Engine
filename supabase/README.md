@@ -14,10 +14,10 @@ Configure these in the Hostinger Node application environment, never in frontend
 
 ```text
 SUPABASE_URL=https://<project-ref>.supabase.co
-SUPABASE_SECRET_KEY=sb_secret_...
+SUPABASE_API_KEY=sb_secret_...
 ```
 
-Legacy projects can use `SUPABASE_SERVICE_ROLE_KEY` instead of `SUPABASE_SECRET_KEY`, but the new server secret key is preferred.
+Providence also accepts `SUPABASE_SECRET_KEY` and, for legacy projects, `SUPABASE_SERVICE_ROLE_KEY`. `SUPABASE_API_KEY` is supported specifically so the Hostinger/Supabase integration can keep its existing variable name.
 
 Optional Sports Intelligence provider:
 
@@ -38,4 +38,4 @@ After deployment:
 
 ## Security boundary
 
-The Supabase secret key is server-only and never sent to the browser. The public site only talks to Providence's own `/api/*` endpoints.
+The Supabase secret key is server-only and never sent to the browser. The public site only talks to Providence's own `/api/*` endpoints. Never commit the real key to GitHub, logs, screenshots or client-side JavaScript.
