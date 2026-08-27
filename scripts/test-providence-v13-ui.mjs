@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+const art=fs.readFileSync('public/providence-v12-1-art.css','utf8');
+const css=fs.readFileSync('public/providence-v13.css','utf8');
+const sports=fs.readFileSync('public/sports/sports.js','utf8');
+const causal=fs.readFileSync('public/causal/causal.js','utf8');
+const selection=fs.readFileSync('src/public_selection.js','utf8');
+const cards=fs.readFileSync('public/card-decision-v6.js','utf8');
+if(!art.includes('providence-v13.css'))throw new Error('V13 visual layer is not loaded globally');
+for(const token of ['fixture-round','fixture-why-grid','causal-flow-row','--v13-magenta','--v13-gold'])if(!css.includes(token))throw new Error(`V13 CSS missing ${token}`);
+for(const token of ['Pourquoi Providence donne ce résultat','ELO DOMICILE','total_future','renderFixtures'])if(!sports.includes(token))throw new Error(`Sports V13 UI missing ${token}`);
+for(const token of ['causal-flow-board','SOURCES / SIGNAUX','MÉCANISMES','CONSÉQUENCE PRÉDITE'])if(!causal.includes(token))throw new Error(`Causal V13 UI missing ${token}`);
+if(!selection.includes('applySignalConvergence(candidates,signalPool(candidates))'))throw new Error('public selection does not apply cross-domain convergence');
+if(!cards.includes('v13-convergence-badges'))throw new Error('prediction cards do not surface convergence');
+console.log(JSON.stringify({ok:true,visual:'cinematic-v13',sports:'explainable-complete',causal:'readable-lanes',predictions:'cross-domain-convergence'}));
