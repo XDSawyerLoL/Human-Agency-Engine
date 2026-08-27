@@ -43,6 +43,13 @@ export const config = {
   copernicusApiKey: value('COPERNICUS_API_KEY'),
   pointApiKey: value('POINT_API_KEY'),
   metaculusApiKey: value('METACULUS_API_KEY'),
+  footballDataApiKey: value('FOOTBALL_DATA_API_KEY'),
+  theSportsDbApiKey: value('THESPORTSDB_API_KEY') || '123',
+  supabase: {
+    url: value('SUPABASE_URL','SUPABASE_PUBLIC_URL'),
+    // Prefer the new server-only sb_secret_ key. Legacy service_role remains supported.
+    secretKey: value('SUPABASE_SECRET_KEY','SUPABASE_SERVICE_ROLE_KEY')
+  },
   mysql: {
     host: value('MYSQL_HOST', 'DB_HOST') || mysqlUrl?.host || '',
     port: mysqlPortRaw ? Math.max(1,Math.min(65535,Number.parseInt(mysqlPortRaw,10)||3306)) : (mysqlUrl?.port || 3306),
@@ -60,5 +67,8 @@ export const providerState = () => ({
   CopernicusPublic: true,
   MetaculusReferenceOnly: Boolean(config.metaculusApiKey),
   PointReferenceOnly: Boolean(config.pointApiKey),
-  PersistentLearningConfigured: Boolean(config.mysql.host && config.mysql.user && config.mysql.database)
+  FootballDataFixtures: Boolean(config.footballDataApiKey),
+  TheSportsDBFallback: Boolean(config.theSportsDbApiKey),
+  SupabasePersistentMirror: Boolean(config.supabase.url && config.supabase.secretKey),
+  PersistentLearningConfigured: Boolean(config.mysql.host && config.mysql.user && config.mysql.database) || Boolean(config.supabase.url && config.supabase.secretKey)
 });
