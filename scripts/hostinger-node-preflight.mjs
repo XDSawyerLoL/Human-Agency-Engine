@@ -4,11 +4,11 @@ const required = [
   'server.js',
   'src/config.js',
   'public/index.html',
-  'public/providence-v14.css',
-  'public/providence-v14-shell.js',
+  'public/providence-v15.css',
+  'public/providence-v15-shell.js',
+  'public/overview-v15.js',
   'public/predictions/index.html',
-  'public/predictions/predictions-v14-3.js',
-  'public/predictions/predictions-v14-3.css'
+  'public/predictions/predictions-v15.js'
 ];
 
 for (const file of required) {
@@ -25,5 +25,6 @@ console.log(JSON.stringify({
   default_port: 3000,
   port_env_supported: true,
   static_root: 'public',
-  version: '1.14.3'
+  visual_contract: 'providence-v15-exact-reference',
+  version: '1.15.0'
 }));
