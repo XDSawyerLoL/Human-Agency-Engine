@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+const must=(file,needle)=>{const s=fs.readFileSync(file,'utf8');if(!s.includes(needle))throw new Error(`${file} missing ${needle}`)};
+must('public/index.html','/providence-v15.css?v=15');
+must('public/index.html','L’AVANTAGE APPARTIENT');
+must('public/index.html','PRÉVISIONS PHARES');
+must('public/predictions/index.html','/providence-v15.css?v=15');
+must('public/predictions/index.html','p15-prediction-hero');
+must('public/predictions/index.html','POURQUOI CETTE PRÉVISION ?');
+must('public/providence-v15-shell.js','PREDICTIVE INTELLIGENCE');
+must('public/providence-v15.css','--p15-sidebar:242px');
+must('public/overview-v15.js','/api/snapshot');
+must('public/predictions/predictions-v15.js','/api/track-record');
+console.log(JSON.stringify({ok:true,version:'1.15.0',reference_contract:true,overview:true,predictions:true}));
