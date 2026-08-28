@@ -26,7 +26,7 @@ const mysqlUrl=mysqlUrlConfig();
 const mysqlPortRaw=value('MYSQL_PORT','DB_PORT');
 
 export const config = {
-  port: 3000,
+  port: int('PORT', 3000, 1, 65535),
   refreshMs: int('EVIDENCE_REFRESH_SECONDS', 600, 120, 3600) * 1000,
   maxForecasts: int('EVIDENCE_FORECAST_LIMIT', 72, 48, 100),
   fredApiKey: value('FRED_API_KEY'),
