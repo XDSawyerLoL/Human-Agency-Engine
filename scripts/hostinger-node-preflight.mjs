@@ -5,6 +5,7 @@ const required = [
   'src/config.js',
   'public/index.html',
   'public/providence-v15.css',
+  'public/providence-v15-compat.css',
   'public/providence-v15-shell.js',
   'public/overview-v15.js',
   'public/predictions/index.html',
@@ -26,5 +27,6 @@ console.log(JSON.stringify({
   port_env_supported: true,
   static_root: 'public',
   visual_contract: 'providence-v15-exact-reference',
+  sitewide_shell_compatibility: true,
   version: '1.15.0'
 }));
