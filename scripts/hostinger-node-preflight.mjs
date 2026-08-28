@@ -6,10 +6,20 @@ const required = [
   'public/index.html',
   'public/providence-v15.css',
   'public/providence-v15-compat.css',
+  'public/providence-v15-pages.css',
   'public/providence-v15-shell.js',
   'public/overview-v15.js',
   'public/predictions/index.html',
-  'public/predictions/predictions-v15.js'
+  'public/predictions/predictions-v15.js',
+  'public/horizons/index.html',
+  'public/causal/index.html',
+  'public/sports/index.html',
+  'public/matches/index.html',
+  'public/track-record/index.html',
+  'public/backtest/index.html',
+  'public/sources/index.html',
+  'public/alerts/index.html',
+  'public/settings/index.html'
 ];
 
 for (const file of required) {
@@ -28,5 +38,6 @@ console.log(JSON.stringify({
   static_root: 'public',
   visual_contract: 'providence-v15-exact-reference',
   sitewide_shell_compatibility: true,
+  primary_pages: 11,
   version: '1.15.0'
 }));
