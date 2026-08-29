@@ -2,7 +2,12 @@ import fs from 'node:fs';
 
 const required = [
   'server.js',
+  'server_core.js',
   'src/config.js',
+  'src/superposition_engine.js',
+  'src/providence_analyst.js',
+  'src/providence_extensions.js',
+  'src/providence_extensions_bootstrap.js',
   'public/index.html',
   'public/providence-v15.css',
   'public/providence-v15-fixes.css',
@@ -12,6 +17,9 @@ const required = [
   'public/overview-v15.js',
   'public/predictions/index.html',
   'public/predictions/predictions-v15.js',
+  'public/analyst/index.html',
+  'public/analyst/analyst.css',
+  'public/analyst/analyst.js',
   'public/horizons/index.html',
   'public/causal/index.html',
   'public/sports/index.html',
@@ -34,6 +42,7 @@ console.log(JSON.stringify({
   ok: true,
   target: 'hostinger-node-web-app',
   entry: 'server.js',
+  core_entry: 'server_core.js',
   default_port: 3000,
   port_env_supported: true,
   static_root: 'public',
@@ -41,6 +50,9 @@ console.log(JSON.stringify({
   sitewide_shell_compatibility: true,
   mobile_navigation: true,
   data_driven_gauges: true,
-  primary_pages: 11,
-  version: '1.15.0'
+  superposition_engine: true,
+  providence_analyst: true,
+  red_team_read_only: true,
+  primary_pages: 12,
+  version: '1.15.1'
 }));
