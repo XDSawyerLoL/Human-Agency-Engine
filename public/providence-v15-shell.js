@@ -2,6 +2,7 @@
 const page=(document.body.dataset.page||'home').trim();
 const navPrimary=[
  ['home','/','◉','Vue d’ensemble'],
+ ['analyst','/analyst/','△','Providence Analyst'],
  ['predictions','/predictions/','⌁','Prédictions'],
  ['horizons','/horizons/','⌛','Horizons'],
  ['causal','/causal/','⌘','Causes & Preuves'],
@@ -33,13 +34,13 @@ if(!document.querySelector('.p15-sidebar')){
  <div class="p15-nav-label">Système</div><nav class="p15-nav">${links(navSystem)}</nav>
  <div class="p15-sidebar-spacer"></div>
  <div class="p15-mission"><strong>Notre mission</strong>Transformer les signaux mondiaux en prédictions probabilistes fiables pour des décisions plus justes.<b>Voir avant. Décider mieux.</b></div>
- <div class="p15-usercard"><span class="avatar">△</span><span><b>Analyste Providence</b><small>◆ Niveau Élite</small></span></div>
+ <a class="p15-usercard" href="/analyst/"><span class="avatar">△</span><span><b>Analyste Providence</b><small>◆ Dialogue avec le moteur</small></span></a>
  <div class="p15-system"><span>●</span> Système en ligne</div>`;
  document.body.prepend(side);
 }
 const main=document.querySelector('main');if(main)main.classList.add('p15-main');
 if(main&&!main.querySelector('.p15-topbar')){
- const top=document.createElement('div');top.className='p15-topbar';top.innerHTML=`<div class="p15-search">⌕ Rechercher un signal, un scénario, une entité…</div><div class="p15-iconbtn">☼</div><div class="p15-iconbtn">♢</div><div class="p15-analyst"><span class="ring">△</span><span><b>Analyste Providence</b><small>◆ Niveau Élite</small></span></div>`;main.prepend(top);
+ const top=document.createElement('div');top.className='p15-topbar';top.innerHTML=`<div class="p15-search">⌕ Rechercher un signal, un scénario, une entité…</div><div class="p15-iconbtn">☼</div><div class="p15-iconbtn">♢</div><a class="p15-analyst" href="/analyst/"><span class="ring">△</span><span><b>Analyste Providence</b><small>◆ Parler au moteur</small></span></a>`;main.prepend(top);
 }
 if(!document.querySelector('.p15-mobilebar')){
  const bar=document.createElement('div');bar.className='p15-mobilebar';bar.innerHTML='<a class="p15-mobilebrand" href="/"><i></i><span>PROVIDENCE</span></a><button class="p15-mobile-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">☰</button>';
