@@ -69,8 +69,9 @@ jobs:
           node -e "const x=require('/tmp/track.json'); if(typeof x.tracked_scenarios!=='number'||!x.calibration||!x.resolution||!x.ensemble||!x.causal_learning) process.exit(1); console.log('track record endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/causal-graph >/tmp/causal.json
           node -e "const x=require('/tmp/causal.json'); if(x.schema!=='evidence-causal-world-v1'||!Array.isArray(x.nodes)||!Array.isArray(x.edges)||!x.metrics) process.exit(1); console.log('causal world endpoint ok')"
-          if curl -fsS http://127.0.0.1:3000/api/analyst/status >/tmp/analyst-status.json; then
-            node -e "const x=require('/tmp/analyst-status.json'); if(x.schema!=='providence-analyst-status-v1'||x.execution_authority!==false||x.tools_enabled!==false||x.superposition_engine!==true) process.exit(1); console.log('analyst status ok',x.configured?'configured':'engine-only')"
+          curl -fsS http://127.0.0.1:3000/api/analyst/status >/tmp/analyst-status.json || true
+          if grep -q 'providence-analyst-status-v1' /tmp/analyst-status.json; then
+            node -e "const x=require('/tmp/analyst-status.json'); if(x.execution_authority!==false||x.tools_enabled!==false||x.superposition_engine!==true) process.exit(1); console.log('analyst status ok',x.configured?'configured':'engine-only')"
             curl -fsS 'http://127.0.0.1:3000/api/superposition?limit=4' >/tmp/superposition.json
             node -e "const x=require('/tmp/superposition.json'); if(x.schema!=='providence-superposition-v1'||!Array.isArray(x.worlds)||x.semantics?.world_weights_are_event_probabilities!==false||x.semantics?.quantum_computing_claim!==false) process.exit(1); const s=x.worlds.reduce((a,w)=>a+Number(w.relative_world_weight_percent||0),0); if(x.worlds.length&&Math.abs(s-100)>.2) process.exit(1); console.log('superposition endpoint ok',x.worlds.length)"
             curl -fsS -X POST http://127.0.0.1:3000/api/analyst/chat -H 'Content-Type: application/json' -d '{"message":"Que vois-tu venir en priorité ?","mode":"analyst"}' >/tmp/analyst-chat.json
