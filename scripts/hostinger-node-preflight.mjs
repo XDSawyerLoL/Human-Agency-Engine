@@ -2,13 +2,33 @@ import fs from 'node:fs';
 
 const required = [
   'server.js',
+  'server_core.js',
   'src/config.js',
+  'src/superposition_engine.js',
+  'src/providence_analyst.js',
+  'src/providence_extensions.js',
+  'src/providence_extensions_bootstrap.js',
   'public/index.html',
-  'public/providence-v14.css',
-  'public/providence-v14-shell.js',
+  'public/providence-v15.css',
+  'public/providence-v15-fixes.css',
+  'public/providence-v15-compat.css',
+  'public/providence-v15-pages.css',
+  'public/providence-v15-shell.js',
+  'public/overview-v15.js',
   'public/predictions/index.html',
-  'public/predictions/predictions-v14-3.js',
-  'public/predictions/predictions-v14-3.css'
+  'public/predictions/predictions-v15.js',
+  'public/analyst/index.html',
+  'public/analyst/analyst.css',
+  'public/analyst/analyst.js',
+  'public/horizons/index.html',
+  'public/causal/index.html',
+  'public/sports/index.html',
+  'public/matches/index.html',
+  'public/track-record/index.html',
+  'public/backtest/index.html',
+  'public/sources/index.html',
+  'public/alerts/index.html',
+  'public/settings/index.html'
 ];
 
 for (const file of required) {
@@ -22,8 +42,17 @@ console.log(JSON.stringify({
   ok: true,
   target: 'hostinger-node-web-app',
   entry: 'server.js',
+  core_entry: 'server_core.js',
   default_port: 3000,
   port_env_supported: true,
   static_root: 'public',
-  version: '1.14.3'
+  visual_contract: 'providence-v15-exact-reference',
+  sitewide_shell_compatibility: true,
+  mobile_navigation: true,
+  data_driven_gauges: true,
+  superposition_engine: true,
+  providence_analyst: true,
+  red_team_read_only: true,
+  primary_pages: 12,
+  version: '1.15.1'
 }));

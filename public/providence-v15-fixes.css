@@ -1,0 +1,23 @@
+/* V15 review hardening: mobile navigation, live gauges, analyst catalogue. */
+.p15-mobilebar,.p15-mobile-drawer,.p15-mobile-overlay{display:none}
+.p15-gauge{background:conic-gradient(#29c8ff calc(var(--gauge,78)*1%),#173148 0)!important}
+/* Analyst Explorer rendered by app.js */
+#explorer .v4-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#explorer .v4-card{border:1px solid rgba(38,116,182,.36);border-radius:9px;background:linear-gradient(180deg,#071725,#04101e);padding:12px;box-shadow:var(--p15-shadow);min-width:0}
+#explorer .v4-card h3{font-size:.75rem;line-height:1.3;margin:7px 0;color:#f4f9ff}
+#explorer .v4-card p{font-size:.55rem;line-height:1.45;color:#8fa4b9}
+#explorer .v4-ring{border-color:#2ccaff!important;box-shadow:0 0 18px rgba(43,196,255,.12)}
+#explorer .v4-facts,#explorer .v4-meta,#explorer .v4-evidence{font-size:.5rem;color:#91a6bb}
+#explorer .v4-button,#explorer button{border:1px solid rgba(29,129,229,.45);background:#082543;color:#dff5ff;border-radius:6px}
+@media(max-width:1100px){#explorer .v4-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){
+  .p15-sidebar{display:none!important}.p15-topbar{display:none!important}.p15-main{margin-left:0!important;padding:64px 10px 16px!important}
+  .p15-mobilebar{display:flex;position:fixed;z-index:220;left:0;right:0;top:0;height:56px;align-items:center;justify-content:space-between;padding:0 10px 0 12px;background:rgba(2,9,20,.97);border-bottom:1px solid rgba(46,132,200,.32);backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .p15-mobilebrand{display:flex;align-items:center;gap:9px;font-size:.82rem;font-weight:900;letter-spacing:.02em}.p15-mobilebrand i{width:27px;height:30px;display:block;clip-path:polygon(50% 100%,0 0,100% 0);background:linear-gradient(180deg,#2ac8ff,#155cff 52%,#7658ff)}
+  .p15-mobile-toggle{width:40px;height:38px;border:1px solid rgba(49,139,207,.4);border-radius:8px;background:#071725;color:#eaf7ff;font-size:1.05rem;cursor:pointer}
+  .p15-mobile-overlay{display:block;position:fixed;z-index:218;inset:56px 0 0;background:rgba(0,4,10,.62);opacity:0;pointer-events:none;transition:opacity .2s ease}
+  .p15-mobile-drawer{display:block;position:fixed;z-index:219;left:0;top:56px;bottom:0;width:min(86vw,330px);padding:12px;background:linear-gradient(180deg,#020b17,#03111f);border-right:1px solid rgba(48,133,198,.36);overflow:auto;transform:translateX(-105%);transition:transform .22s ease;box-shadow:20px 0 50px rgba(0,0,0,.38)}
+  .p15-mobile-drawer .p15-nav{padding:4px 0 9px}.p15-mobile-drawer .p15-nav a{height:42px}.p15-mobile-drawer .p15-nav-label{margin-top:8px}
+  body.p15-menu-open .p15-mobile-drawer{transform:translateX(0)}body.p15-menu-open .p15-mobile-overlay{opacity:1;pointer-events:auto}
+  #explorer .v4-grid{grid-template-columns:1fr}
+}

@@ -5,6 +5,7 @@ on:
     paths:
       - 'package.json'
       - 'server.js'
+      - 'server_core.js'
       - 'src/**'
       - 'public/**'
       - 'supabase/**'
@@ -14,6 +15,7 @@ on:
     paths:
       - 'package.json'
       - 'server.js'
+      - 'server_core.js'
       - 'src/**'
       - 'public/**'
       - 'supabase/**'
@@ -29,6 +31,7 @@ jobs:
           node-version: '22'
       - run: npm install --ignore-scripts
       - run: npm run check
+      - run: npm run build
       - name: Smoke-test multi-horizon predictor without network
         run: |
           node --input-type=module <<'NODE'
@@ -48,7 +51,7 @@ jobs:
           if (!rows.some(r => r.horizon_tier === 'strategic')) throw new Error('strategic horizon missing');
           console.log(rows.map(r => `${r.horizon_tier}:${r.probability.percent}%:${r.headline}`).join('\n'));
           NODE
-      - name: Start Express and verify Providence V14 endpoints and pages
+      - name: Start Express and verify Providence V15.1 endpoints and pages
         run: |
           npm start >/tmp/evidence-node.log 2>&1 &
           pid=$!
@@ -66,6 +69,12 @@ jobs:
           node -e "const x=require('/tmp/track.json'); if(typeof x.tracked_scenarios!=='number'||!x.calibration||!x.resolution||!x.ensemble||!x.causal_learning) process.exit(1); console.log('track record endpoint ok')"
           curl -fsS http://127.0.0.1:3000/api/causal-graph >/tmp/causal.json
           node -e "const x=require('/tmp/causal.json'); if(x.schema!=='evidence-causal-world-v1'||!Array.isArray(x.nodes)||!Array.isArray(x.edges)||!x.metrics) process.exit(1); console.log('causal world endpoint ok')"
+          curl -fsS http://127.0.0.1:3000/api/analyst/status >/tmp/analyst-status.json
+          node -e "const x=require('/tmp/analyst-status.json'); if(x.schema!=='providence-analyst-status-v1'||x.execution_authority!==false||x.tools_enabled!==false||x.superposition_engine!==true) process.exit(1); console.log('analyst status ok',x.configured?'configured':'engine-only')"
+          curl -fsS 'http://127.0.0.1:3000/api/superposition?limit=4' >/tmp/superposition.json
+          node -e "const x=require('/tmp/superposition.json'); if(x.schema!=='providence-superposition-v1'||!Array.isArray(x.worlds)||x.semantics?.world_weights_are_event_probabilities!==false||x.semantics?.quantum_computing_claim!==false) process.exit(1); const s=x.worlds.reduce((a,w)=>a+Number(w.relative_world_weight_percent||0),0); if(x.worlds.length&&Math.abs(s-100)>.2) process.exit(1); console.log('superposition endpoint ok',x.worlds.length)"
+          curl -fsS -X POST http://127.0.0.1:3000/api/analyst/chat -H 'Content-Type: application/json' -d '{"message":"Que vois-tu venir en priorité ?","mode":"analyst"}' >/tmp/analyst-chat.json
+          node -e "const x=require('/tmp/analyst-chat.json'); if(x.schema!=='providence-analyst-response-v1'||typeof x.text!=='string'||!x.text.length||!x.superposition) process.exit(1); console.log('analyst chat ok',x.provider)"
           curl -fsS http://127.0.0.1:3000/api/sports/catalog >/tmp/sports-catalog.json
           node -e "const x=require('/tmp/sports-catalog.json'); if(x.schema!=='evidence-sports-catalog-v2'||!Array.isArray(x.countries)||!x.countries.length) process.exit(1); console.log('sports catalog endpoint ok')"
           curl --max-time 30 -fsS 'http://127.0.0.1:3000/api/sports/league?country=England&league=Premier%20League&competition_id=2&season_id=27' >/tmp/sports-league.json
@@ -83,15 +92,22 @@ jobs:
           if(!(a.upcoming.fixtures||[]).some(x=>x.prediction_frozen===false&&x.track_status==='preview_recalculable')) process.exit(1);
           console.log('sports complete explainable schedule ok',a.upcoming.provider,a.upcoming.fixtures.length,'frozen',a.upcoming.official_frozen,'previews',a.upcoming.preview_recalculable,f.model_id);
           NODE
+          for page in '' 'analyst/' 'predictions/' 'horizons/' 'causal/' 'sports/' 'matches/' 'track-record/' 'backtest/' 'sources/' 'alerts/' 'settings/'; do
+            curl -fsS "http://127.0.0.1:3000/$page" >/tmp/page.html
+            grep -q 'providence-v15' /tmp/page.html
+          done
+          curl -fsS http://127.0.0.1:3000/ >/tmp/home-page.html
+          grep -q 'L’AVANTAGE APPARTIENT' /tmp/home-page.html
+          grep -q 'PRÉVISIONS PHARES' /tmp/home-page.html
+          curl -fsS http://127.0.0.1:3000/analyst/ >/tmp/analyst-page.html
+          grep -q 'Parlez directement' /tmp/analyst-page.html
+          grep -q 'SUPERPOSITION' /tmp/analyst-page.html
+          curl -fsS http://127.0.0.1:3000/predictions/ >/tmp/predictions-page.html
+          grep -q 'p15-prediction-hero' /tmp/predictions-page.html
+          grep -q 'POURQUOI CETTE PRÉVISION' /tmp/predictions-page.html
           curl -fsS http://127.0.0.1:3000/sports/ >/tmp/sports-page.html
           grep -q 'Sports Calibration' /tmp/sports-page.html
-          grep -q 'providence-v14.css' /tmp/sports-page.html
           grep -q '/matches/' /tmp/sports-page.html
-          for page in '' 'matches/' 'track-record/' 'backtest/' 'sources/' 'alerts/' 'settings/'; do
-            curl -fsS "http://127.0.0.1:3000/$page" >/tmp/page.html
-            grep -q 'providence-v14.css' /tmp/page.html
-            grep -q 'providence-v14-shell.js' /tmp/page.html
-          done
           curl -fsS http://127.0.0.1:3000/matches/ >/tmp/matches-page.html
           grep -q 'Prochains matchs' /tmp/matches-page.html
           curl -fsS http://127.0.0.1:3000/backtest/ >/tmp/backtest-page.html
@@ -100,7 +116,7 @@ jobs:
           grep -q 'Alertes & Suivi' /tmp/alerts-page.html
           curl -fsS http://127.0.0.1:3000/settings/ >/tmp/settings-page.html
           grep -q 'Paramètres' /tmp/settings-page.html
-          echo 'Providence V14 cockpit pages ok'
+          echo 'Providence V15.1 cockpit and analyst pages ok'
           curl -fsS http://127.0.0.1:3000/api/supabase >/tmp/supabase.json
           node -e "const x=require('/tmp/supabase.json'); if(typeof x.configured!=='boolean'||typeof x.connected!=='boolean') process.exit(1); console.log('supabase bridge status ok')"
           curl -fsS http://127.0.0.1:3000/api/storage >/tmp/storage.json
