@@ -37,6 +37,14 @@ export const config = {
   metaculusApiKey: value('METACULUS_API_KEY'),
   footballDataApiKey: value('FOOTBALL_DATA_API_KEY'),
   theSportsDbApiKey: value('THESPORTSDB_API_KEY') || '123',
+  ai: {
+    baseUrl: value('PROVIDENCE_QWEN_BASE_URL','QWEN_BASE_URL','OPENAI_COMPATIBLE_BASE_URL'),
+    apiKey: value('PROVIDENCE_QWEN_API_KEY','QWEN_API_KEY','OPENAI_COMPATIBLE_API_KEY'),
+    analystModel: value('PROVIDENCE_QWEN_MODEL','QWEN_MODEL'),
+    redTeamModel: value('PROVIDENCE_REDTEAM_MODEL','QWEN_REDTEAM_MODEL'),
+    timeoutMs: int('PROVIDENCE_ANALYST_TIMEOUT_MS', 25000, 3000, 60000),
+    maxTokens: int('PROVIDENCE_ANALYST_MAX_TOKENS', 900, 128, 2400)
+  },
   supabase: {
     url: value('SUPABASE_URL','SUPABASE_PUBLIC_URL'),
     secretKey: value('SUPABASE_API_KEY','SUPABASE_SECRET_KEY','SUPABASE_SERVICE_ROLE_KEY')
@@ -60,6 +68,8 @@ export const providerState = () => ({
   PointReferenceOnly: Boolean(config.pointApiKey),
   FootballDataFixtures: Boolean(config.footballDataApiKey),
   TheSportsDBFallback: Boolean(config.theSportsDbApiKey),
+  ProvidenceAnalystConfigured: Boolean(config.ai.baseUrl && config.ai.analystModel),
+  ProvidenceRedTeamConfigured: Boolean(config.ai.baseUrl && config.ai.redTeamModel),
   SupabaseDurableMirrorConfigured: Boolean(config.supabase.url && config.supabase.secretKey),
   PersistentLearningConfigured: Boolean(config.mysql.host && config.mysql.user && config.mysql.database)
 });
