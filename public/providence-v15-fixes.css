@@ -9,15 +9,110 @@
 #explorer .v4-ring{border-color:#2ccaff!important;box-shadow:0 0 18px rgba(43,196,255,.12)}
 #explorer .v4-facts,#explorer .v4-meta,#explorer .v4-evidence{font-size:.5rem;color:#91a6bb}
 #explorer .v4-button,#explorer button{border:1px solid rgba(29,129,229,.45);background:#082543;color:#dff5ff;border-radius:6px}
+
+/* PROVIDENCE CLARITY — readable, quieter, faster to scan. */
+:root{
+  --p15-sidebar:226px;
+  --p15-muted:#a9b9c9;
+  --p15-radius:12px;
+  --p15-shadow:0 12px 34px rgba(0,0,0,.26);
+  --clarity-body:1rem;
+  --clarity-small:.78rem;
+  --clarity-meta:.82rem;
+  --clarity-card:.88rem;
+  --clarity-panel:.86rem;
+}
+html{font-size:16px}
+body{font-size:var(--clarity-body);line-height:1.5}
+
+/* Typography floor: no essential information below ~12.5px. */
+small{font-size:var(--clarity-small)!important;line-height:1.4}
+.p15-brand span{font-size:.72rem}
+.p15-nav a{height:44px;font-size:.88rem;font-weight:650;color:#dce6f0}
+.p15-nav-label{font-size:.68rem;letter-spacing:.11em;color:#91a4b8}
+.p15-mission{font-size:.79rem;line-height:1.55}
+.p15-usercard b,.p15-analyst b{font-size:.82rem}
+.p15-usercard small,.p15-analyst small,.p15-system{font-size:.72rem!important}
+.p15-topbar-context{font-size:.82rem;color:#8fa7bd;margin-right:auto;letter-spacing:.01em}
+.p15-search{font-size:.82rem}
+.p15-hero-kicker{font-size:.74rem;letter-spacing:.13em}
+.p15-hero-copy p{font-size:1rem;line-height:1.55;max-width:760px}
+.p15-status-live{font-size:.76rem}
+.p15-kpi small{font-size:.72rem!important;letter-spacing:.045em}
+.p15-kpi em{font-size:.76rem;line-height:1.35}
+.p15-panel>header{min-height:48px;height:auto;padding:11px 15px;font-size:.82rem;line-height:1.25}
+.p15-panel>header a{font-size:.76rem}
+.p15-panel .body{padding:15px}
+.p15-forecast-card{padding:16px;min-height:205px}
+.p15-forecast-card small{font-size:.72rem!important}
+.p15-forecast-card h3{font-size:1rem;line-height:1.35;margin:8px 0 6px;max-width:92%}
+.p15-forecast-card p{font-size:.84rem;line-height:1.5;color:#b2c0cf}
+.p15-table,.p15-list,.p15-source-strip,.p15-side-horizons{font-size:.86rem}
+.p15-horizon-row b{font-size:.9rem}
+.p15-horizon-row small{font-size:.75rem!important}
+.p15-bottom-stat small{font-size:.7rem!important}.p15-bottom-stat em{font-size:.74rem}
+.p15-sports-strip h3{font-size:1rem!important}.p15-sports-strip p{font-size:.84rem!important;line-height:1.5!important}.p15-sports-strip a{font-size:.78rem!important}
+#futureSummary{font-size:.92rem!important;color:#b6c5d4!important;line-height:1.55!important}
+#explorer>summary{font-size:.86rem!important}
+#explorer .v4-card h3{font-size:1rem}
+#explorer .v4-card p{font-size:.84rem;line-height:1.5;color:#b1c0ce}
+#explorer .v4-facts,#explorer .v4-meta,#explorer .v4-evidence{font-size:.76rem;color:#a8bacb}
+
+/* Less chrome, more signal. */
+.p15-sidebar{padding:14px 10px 12px;box-shadow:10px 0 30px rgba(0,0,0,.20)}
+.p15-brand{padding-bottom:14px}
+.p15-nav{padding:9px 0 5px;gap:2px}
+.p15-nav-sep{margin:5px 0}
+.p15-mission{padding:12px;background:rgba(4,24,40,.86)}
+.p15-main{padding:0 20px 22px}
+.p15-topbar{height:56px;gap:10px}
+.p15-iconbtn,.p15-search{display:none!important}
+.p15-analyst{height:42px;min-width:188px;border-radius:10px}
+.p15-analyst .ring{width:30px;height:30px}
+.p15-worldhero{min-height:205px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.p15-hero-copy{padding:24px 30px}
+.p15-kpis,.p15-dashboard-main,.p15-lower-grid{gap:12px}
+.p15-kpi,.p15-panel{box-shadow:0 10px 28px rgba(0,0,0,.22)}
+
+/* Collapsible secondary navigation. */
+.p15-nav-more{margin-top:5px;border-top:1px solid rgba(67,128,179,.14);padding-top:5px}
+.p15-nav-more>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:38px;padding:0 11px;border-radius:8px;color:#99aec2;font-size:.76rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.p15-nav-more>summary::-webkit-details-marker{display:none}
+.p15-nav-more>summary:after{content:'+';font-size:1rem;color:#6e91ae}
+.p15-nav-more[open]>summary:after{content:'−'}
+.p15-nav-more>summary:hover{background:rgba(19,106,188,.09);color:#d9e7f3}
+.p15-nav-more .p15-nav{padding:3px 0 5px}
+
+/* Home: keep the first screen decision-oriented; remove repeated secondary summaries. */
+body[data-page="home"] #mConfidence{display:none}
+body[data-page="home"] .p15-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+body[data-page="home"] .p15-lower-grid + .p15-lower-grid{display:none}
+body[data-page="home"] .p15-bottom-strip{display:none}
+
+@media(max-width:1200px){
+  body[data-page="home"] .p15-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .p15-lower-grid{grid-template-columns:1fr 1fr}
+}
 @media(max-width:1100px){#explorer .v4-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){
-  .p15-sidebar{display:none!important}.p15-topbar{display:none!important}.p15-main{margin-left:0!important;padding:64px 10px 16px!important}
-  .p15-mobilebar{display:flex;position:fixed;z-index:220;left:0;right:0;top:0;height:56px;align-items:center;justify-content:space-between;padding:0 10px 0 12px;background:rgba(2,9,20,.97);border-bottom:1px solid rgba(46,132,200,.32);backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(0,0,0,.25)}
-  .p15-mobilebrand{display:flex;align-items:center;gap:9px;font-size:.82rem;font-weight:900;letter-spacing:.02em}.p15-mobilebrand i{width:27px;height:30px;display:block;clip-path:polygon(50% 100%,0 0,100% 0);background:linear-gradient(180deg,#2ac8ff,#155cff 52%,#7658ff)}
-  .p15-mobile-toggle{width:40px;height:38px;border:1px solid rgba(49,139,207,.4);border-radius:8px;background:#071725;color:#eaf7ff;font-size:1.05rem;cursor:pointer}
-  .p15-mobile-overlay{display:block;position:fixed;z-index:218;inset:56px 0 0;background:rgba(0,4,10,.62);opacity:0;pointer-events:none;transition:opacity .2s ease}
-  .p15-mobile-drawer{display:block;position:fixed;z-index:219;left:0;top:56px;bottom:0;width:min(86vw,330px);padding:12px;background:linear-gradient(180deg,#020b17,#03111f);border-right:1px solid rgba(48,133,198,.36);overflow:auto;transform:translateX(-105%);transition:transform .22s ease;box-shadow:20px 0 50px rgba(0,0,0,.38)}
-  .p15-mobile-drawer .p15-nav{padding:4px 0 9px}.p15-mobile-drawer .p15-nav a{height:42px}.p15-mobile-drawer .p15-nav-label{margin-top:8px}
+  html{font-size:16px}
+  .p15-sidebar{display:none!important}.p15-topbar{display:none!important}.p15-main{margin-left:0!important;padding:68px 12px 18px!important}
+  .p15-mobilebar{display:flex;position:fixed;z-index:220;left:0;right:0;top:0;height:58px;align-items:center;justify-content:space-between;padding:0 10px 0 12px;background:rgba(2,9,20,.97);border-bottom:1px solid rgba(46,132,200,.32);backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .p15-mobilebrand{display:flex;align-items:center;gap:9px;font-size:.9rem;font-weight:900;letter-spacing:.02em}.p15-mobilebrand i{width:27px;height:30px;display:block;clip-path:polygon(50% 100%,0 0,100% 0);background:linear-gradient(180deg,#2ac8ff,#155cff 52%,#7658ff)}
+  .p15-mobile-toggle{width:42px;height:40px;border:1px solid rgba(49,139,207,.4);border-radius:8px;background:#071725;color:#eaf7ff;font-size:1.08rem;cursor:pointer}
+  .p15-mobile-overlay{display:block;position:fixed;z-index:218;inset:58px 0 0;background:rgba(0,4,10,.62);opacity:0;pointer-events:none;transition:opacity .2s ease}
+  .p15-mobile-drawer{display:block;position:fixed;z-index:219;left:0;top:58px;bottom:0;width:min(88vw,350px);padding:12px;background:linear-gradient(180deg,#020b17,#03111f);border-right:1px solid rgba(48,133,198,.36);overflow:auto;transform:translateX(-105%);transition:transform .22s ease;box-shadow:20px 0 50px rgba(0,0,0,.38)}
+  .p15-mobile-drawer .p15-nav{padding:4px 0 9px}.p15-mobile-drawer .p15-nav a{height:46px;font-size:.94rem}.p15-mobile-drawer .p15-nav-label{margin-top:8px}
   body.p15-menu-open .p15-mobile-drawer{transform:translateX(0)}body.p15-menu-open .p15-mobile-overlay{opacity:1;pointer-events:auto}
   #explorer .v4-grid{grid-template-columns:1fr}
+  .p15-hero-copy{padding:22px 18px}.p15-hero-copy p{font-size:.94rem}
+  .p15-dashboard-main,.p15-lower-grid{grid-template-columns:1fr}
+  body[data-page="home"] .p15-kpis{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  body[data-page="home"] .p15-kpis{grid-template-columns:1fr}
+  .p15-kpi{min-height:82px}
+  .p15-panel>header{font-size:.78rem;align-items:flex-start;gap:8px}
+  .p15-panel>header a{font-size:.72rem;white-space:nowrap}
+  .p15-hero-copy h1{font-size:clamp(2rem,11vw,3rem)}
 }
