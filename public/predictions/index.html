@@ -6,13 +6,13 @@
   <meta name="theme-color" content="#020713">
   <meta name="description" content="Providence — prédictions lisibles, probabilités, horizons et preuves vérifiables.">
   <title>Prédictions — Providence</title>
-  <link rel="stylesheet" href="/providence-v14-components.css?v=16.12">
-  <link rel="stylesheet" href="/providence-v15.css?v=16.12">
-  <link rel="stylesheet" href="/providence-v16-platform.css?v=16.12">
-  <link rel="stylesheet" href="/providence-v16-rail.css?v=16.12">
-  <link rel="stylesheet" href="/providence-v16-ux.css?v=16.12">
-  <link rel="stylesheet" href="/providence-v16-8-dynamic.css?v=16.12">
-  <link rel="stylesheet" href="/predictions/predictions-v16-8.css?v=16.12">
+  <link rel="stylesheet" href="/providence-v14-components.css?v=16.13">
+  <link rel="stylesheet" href="/providence-v15.css?v=16.13">
+  <link rel="stylesheet" href="/providence-v16-platform.css?v=16.13">
+  <link rel="stylesheet" href="/providence-v16-rail.css?v=16.13">
+  <link rel="stylesheet" href="/providence-v16-ux.css?v=16.13">
+  <link rel="stylesheet" href="/providence-v16-8-dynamic.css?v=16.13">
+  <link rel="stylesheet" href="/predictions/predictions-v16-8.css?v=16.13">
 </head>
 <body data-page="predictions">
 <main>
@@ -20,31 +20,15 @@
     <div class="p15-pred-copy">
       <span class="p16-result-kicker">Prévision prioritaire</span>
       <h1 id="futureTitle">Providence identifie la trajectoire prioritaire…</h1>
-      <div class="p15-bigprob">
-        <strong id="futureProbability">—%</strong>
-        <span><b id="futureDelta">Estimation active</b><small id="futureRegion">Monde · horizon en cours</small></span>
-      </div>
+      <div class="p15-bigprob"><strong id="futureProbability">—%</strong><span><b id="futureDelta">Estimation active</b><small id="futureRegion">Monde · horizon en cours</small></span></div>
       <p id="futureSummary">Connexion aux signaux mondiaux et aux preuves…</p>
-      <div class="p16-result-context" aria-label="Indicateurs essentiels">
-        <span>Solidité <b id="futureConfidence">—</b></span>
-        <span>Signaux forts <b id="futureStrong">—</b></span>
-        <span>Sources <b id="futureSources">—</b></span>
-      </div>
-      <div class="p16-result-actions">
-        <a href="#why">Pourquoi ?</a>
-        <a href="#alternatives">Comparer</a>
-        <a href="/analyst/">Interroger Providence →</a>
-      </div>
+      <div class="p16-result-context" aria-label="Indicateurs essentiels"><span>Solidité <b id="futureConfidence">—</b></span><span>Signaux forts <b id="futureStrong">—</b></span><span>Sources <b id="futureSources">—</b></span></div>
+      <div class="p16-result-actions"><a href="#why">Pourquoi ?</a><a href="#alternatives">Comparer</a><a href="/analyst/">Interroger Providence →</a></div>
     </div>
   </section>
 
-  <div class="p16-secondary-heading" id="alternatives">
-    <div><span>SCÉNARIOS CONCURRENTS</span><h2>Autres trajectoires plausibles</h2></div>
-    <a href="#explorer">Tout explorer →</a>
-  </div>
-  <section class="p15-panel">
-    <div class="body"><div class="p15-forecast-grid" id="futurePriority"></div></div>
-  </section>
+  <div class="p16-secondary-heading" id="alternatives"><div><span>SCÉNARIOS CONCURRENTS</span><h2>Autres trajectoires plausibles</h2></div><a href="#explorer">Tout explorer →</a></div>
+  <section class="p15-panel"><div class="body"><div class="p15-forecast-grid" id="futurePriority"></div></div></section>
 
   <details class="p16-deep-dive" id="why">
     <summary><span>Pourquoi cette prévision ? <small class="p16-technical-note">Signaux, fiabilité et sources</small></span></summary>
@@ -62,19 +46,14 @@
   <details id="explorer" class="p16-deep-dive">
     <summary><span>Explorer toutes les prédictions <small class="p16-technical-note">Recherche par sujet et horizon</small></span></summary>
     <div class="p16-deep-body">
-      <div class="v4-filterbar" style="display:flex;gap:8px;flex-wrap:wrap">
-        <input id="predictionSearch" type="search" placeholder="Rechercher un sujet, une région…" style="flex:1;min-width:220px;background:#071725;border:1px solid #173c5b;color:#fff;padding:12px;border-radius:12px;font-size:16px">
-        <select id="predictionDomain" aria-label="Domaine" style="background:#071725;border:1px solid #173c5b;color:#fff;padding:12px;border-radius:12px"></select>
-        <select id="predictionHorizon" aria-label="Horizon" style="background:#071725;border:1px solid #173c5b;color:#fff;padding:12px;border-radius:12px"></select>
-        <span id="predictionCount" style="padding:10px;color:#8fa4b9">— scénarios</span>
-      </div>
+      <div class="v4-filterbar" style="display:flex;gap:8px;flex-wrap:wrap"><input id="predictionSearch" type="search" placeholder="Rechercher un sujet, une région…" style="flex:1;min-width:220px;background:#071725;border:1px solid #173c5b;color:#fff;padding:12px;border-radius:12px;font-size:16px"><select id="predictionDomain" aria-label="Domaine" style="background:#071725;border:1px solid #173c5b;color:#fff;padding:12px;border-radius:12px"></select><select id="predictionHorizon" aria-label="Horizon" style="background:#071725;border:1px solid #173c5b;color:#fff;padding:12px;border-radius:12px"></select><span id="predictionCount" style="padding:10px;color:#8fa4b9">— scénarios</span></div>
       <section class="v4-grid" id="predictionGrid" style="margin-top:12px"><div style="padding:20px;color:#8fa4b9">Providence construit le champ prédictif…</div></section>
     </div>
   </details>
 </main>
-<script src="/providence-v15-shell.js?v=16.12" defer></script>
-<script src="/app.js?v=16.12" defer></script>
-<script src="/card-decision-v6.js?v=16.12" defer></script>
-<script src="/predictions/predictions-v15.js?v=16.12" defer></script>
+<script src="/providence-v15-shell.js?v=16.13" defer></script>
+<script src="/app.js?v=16.13" defer></script>
+<script src="/card-decision-v6.js?v=16.13" defer></script>
+<script src="/predictions/predictions-v15.js?v=16.13" defer></script>
 </body>
 </html>
