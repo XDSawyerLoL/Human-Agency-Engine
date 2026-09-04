@@ -1,0 +1,17 @@
+/* Providence V16.4 — final mobile ergonomics overrides */
+@media(max-width:760px){
+  body[data-page="home"] .p15-mobilebar,
+  body[data-page="home"] .p15-mobile-overlay,
+  body[data-page="home"] .p15-mobile-drawer{display:none!important}
+  body[data-page="home"] .p15-sidebar{display:none!important}
+  body[data-page="home"] main.p15-main{margin-left:0!important;width:100%!important;max-width:none!important;padding:0!important}
+  body:not([data-page="home"]) .p15-kpis .p15-kpi:nth-child(n+5){display:none!important}
+  body:not([data-page="home"]) .p15-bottom-strip{display:none!important}
+  body:not([data-page="home"]) .p15-mission{display:none!important}
+  body:not([data-page="home"]) .p15-source-strip{overflow-x:auto!important;display:flex!important;gap:8px!important;scroll-snap-type:x proximity;scrollbar-width:none}
+  body:not([data-page="home"]) .p15-source-strip::-webkit-scrollbar{display:none}
+  body:not([data-page="home"]) .p15-source{min-width:150px;scroll-snap-align:start}
+  body[data-page="predictions"] .p16-deep-dive:not([open]){background:rgba(6,12,22,.62)!important}
+  body[data-page="predictions"] #why{margin-top:12px!important}
+  body[data-page="predictions"] #explorer{margin-top:9px!important}
+}
