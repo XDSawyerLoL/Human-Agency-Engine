@@ -1,8 +1,8 @@
 {
   "name": "evidence-world-eye",
-  "version": "1.16.11",
+  "version": "1.16.12",
   "private": true,
-  "description": "PROVIDENCE V16.11 — clean mobile-first public home with functional responsive timeline",
+  "description": "PROVIDENCE V16.12 — authoritative real-device mobile layout for home timeline and predictions",
   "type": "module",
   "main": "server.js",
   "engines": { "node": "22.x" },
