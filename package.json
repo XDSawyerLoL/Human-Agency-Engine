@@ -1,8 +1,8 @@
 {
   "name": "evidence-world-eye",
-  "version": "1.16.3",
+  "version": "1.16.4",
   "private": true,
-  "description": "PROVIDENCE V16.3 — living temporal intelligence platform with QuanticOS-inspired multi-scenario navigation",
+  "description": "PROVIDENCE V16.4 — mobile-first temporal intelligence with result-first UX and living motion",
   "type": "module",
   "main": "server.js",
   "engines": { "node": "22.x" },
