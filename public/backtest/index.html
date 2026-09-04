@@ -1,1 +1,56 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#020713"><meta name="description" content="Providence — historique, backtests, résolutions et calibration hors échantillon."><title>Providence — Historique & Backtest</title><link rel="stylesheet" href="/providence-v14.css?v=14"><link rel="stylesheet" href="/providence-v14-components.css?v=14"><link rel="stylesheet" href="/providence-v15.css?v=15"><link rel="stylesheet" href="/providence-v15-pages.css?v=15"></head><body data-page="backtest"><main><section class="p15-pagehero backtest"><div class="copy"><small>PROVIDENCE · MÉMOIRE DU MODÈLE</small><h1>Historique & Backtest</h1><p>Apprenez du passé <strong>sans contaminer vos prédictions en direct</strong>. Analysez, comprenez, améliorez : l’histoire éclaire la précision.</p></div></section><section class="pv-kpis" id="backtestKpis"><article class="pv-kpi"><small>ÉCHANTILLON</small><strong>—</strong><span>scénarios suivis</span></article><article class="pv-kpi"><small>POINTS DE PROBABILITÉ</small><strong>—</strong><span>révisions enregistrées</span></article><article class="pv-kpi"><small>RÉSOLUTIONS SCORABLES</small><strong>—</strong><span>vérité terrain</span></article><article class="pv-kpi"><small>BRIER MOYEN</small><strong>—</strong><span>plus bas = meilleur</span></article><article class="pv-kpi"><small>ECE</small><strong>—</strong><span>écart de calibration</span></article></section><section class="pv-panel"><header><h2>Historique des prédictions</h2><span id="backtestMeta">chargement…</span></header><div style="overflow:auto"><table class="pv-backtest-table"><thead><tr><th>Scénario</th><th>Domaine</th><th>Horizon</th><th>Probabilité initiale</th><th>Dernière probabilité</th><th>Échéance</th></tr></thead><tbody id="backtestRows"><tr><td colspan="6">Chargement…</td></tr></tbody></table></div></section><section class="pv-backtest-bottom"><article class="pv-panel"><header><h2>Performance par domaine</h2><span>Brier</span></header><div class="pv-mini-bars" id="backtestDomains"></div></article><article class="pv-panel"><header><h2>Performance par horizon</h2><span>Brier</span></header><div class="pv-mini-bars" id="backtestHorizons"></div></article><article class="pv-panel"><header><h2>Résolutions à contrôler</h2><span>vérité terrain</span></header><div id="backtestQueue"></div></article></section><section class="pv-panel"><header><h2>Méthode de backtest</h2><span>NO LOOK-AHEAD</span></header><div style="padding:14px;color:#8ca7c1;font-size:.62rem;line-height:1.7">Les métriques historiques mesurent calibration et erreur. Un backtest n’est jamais présenté comme une preuve de performance future. La preuve la plus forte reste le Track Record de prévisions publiées avant leur résolution.</div></section></main><script src="/providence-v15-shell.js?v=15" defer></script><script src="/backtest/backtest.js?v=14" defer></script></body></html>
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#020713">
+  <meta name="description" content="Providence — historique, résolutions et calibration mesurée sur la vérité terrain.">
+  <title>Providence — Historique & Backtest</title>
+  <link rel="stylesheet" href="/providence-v14-components.css?v=16.8">
+  <link rel="stylesheet" href="/providence-v15.css?v=16.8">
+  <link rel="stylesheet" href="/providence-v15-pages.css?v=16.8">
+  <link rel="stylesheet" href="/providence-v16-8-dynamic.css?v=16.8">
+</head>
+<body data-page="backtest">
+<main>
+  <section class="p168-hero">
+    <span class="p168-kicker">PROVIDENCE · TRACK RECORD</span>
+    <h1>La preuve par les résultats</h1>
+    <p>Providence conserve ce qu’il avait annoncé avant l’événement, puis confronte ses probabilités à la vérité terrain. Pas de score artificiel quand l’échantillon est insuffisant.</p>
+  </section>
+
+  <section class="p168-track-status">
+    <article class="p168-track-card p168-ready">
+      <div class="p168-ready-ring" id="readinessRing"><b id="readinessValue">—</b></div>
+      <div><small>CALIBRATION</small><h2 id="calibrationHeadline">Collecte en cours</h2><p id="calibrationCopy">Providence attend des résolutions scorable avant d’afficher une performance.</p></div>
+    </article>
+    <article class="p168-track-card">
+      <small>PROCHAINE VÉRIFICATION</small><h2 id="nextResolution">À déterminer</h2><p id="nextResolutionTitle">Les échéances des prévisions actives apparaîtront ici.</p>
+    </article>
+  </section>
+
+  <section class="pv-kpis" id="backtestKpis">
+    <article class="pv-kpi"><small>SCÉNARIOS SUIVIS</small><strong>—</strong><span>historique enregistré</span></article>
+    <article class="pv-kpi"><small>RÉSOLUTIONS</small><strong>—</strong><span>vérité terrain scorable</span></article>
+    <article class="pv-kpi"><small>BRIER</small><strong>—</strong><span>plus bas = meilleur</span></article>
+    <article class="pv-kpi"><small>ÉCART CALIBRATION</small><strong>—</strong><span>ECE</span></article>
+  </section>
+
+  <section class="pv-panel" id="historyPanel">
+    <header><h2>Historique récent</h2><span id="backtestMeta">chargement…</span></header>
+    <div id="historyEmpty" hidden></div>
+    <div id="historyTableWrap" style="overflow:auto"><table class="pv-backtest-table"><thead><tr><th>Scénario</th><th>Domaine</th><th>Horizon</th><th>Initiale</th><th>Actuelle</th><th>Échéance</th></tr></thead><tbody id="backtestRows"><tr><td colspan="6">Chargement…</td></tr></tbody></table></div>
+  </section>
+
+  <section class="pv-backtest-bottom" id="performancePanels">
+    <article class="pv-panel" id="domainPerformance"><header><h2>Par domaine</h2><span>Brier</span></header><div class="pv-mini-bars" id="backtestDomains"></div></article>
+    <article class="pv-panel" id="horizonPerformance"><header><h2>Par horizon</h2><span>Brier</span></header><div class="pv-mini-bars" id="backtestHorizons"></div></article>
+    <article class="pv-panel"><header><h2>À vérifier</h2><span>vérité terrain</span></header><div id="backtestQueue"></div></article>
+  </section>
+
+  <section class="p168-method"><details><summary>Comment Providence mesure-t-il ses erreurs ?</summary><p>Les métriques historiques mesurent calibration et erreur sans regarder le futur au moment de la prévision (« no look-ahead »). Un backtest ne prouve jamais une performance future : le Track Record publié avant résolution reste la preuve la plus forte.</p></details></section>
+</main>
+<script src="/providence-v15-shell.js?v=16.8" defer></script>
+<script src="/backtest/backtest.js?v=16.8" defer></script>
+</body>
+</html>
