@@ -1,8 +1,8 @@
 {
   "name": "evidence-world-eye",
-  "version": "1.16.6",
+  "version": "1.16.7",
   "private": true,
-  "description": "PROVIDENCE V16.6 — real-device mobile QA, readable result cards and restored Analyst API",
+  "description": "PROVIDENCE V16.7 — simplified product surfaces, aligned sports cards and mandatory Analyst API",
   "type": "module",
   "main": "server.js",
   "engines": { "node": "22.x" },
