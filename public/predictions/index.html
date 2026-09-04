@@ -6,17 +6,27 @@
   <meta name="theme-color" content="#020713">
   <meta name="description" content="Providence — prédictions lisibles, probabilités, horizons et preuves vérifiables.">
   <title>Prédictions — Providence</title>
-  <link rel="stylesheet" href="/providence-v14-components.css?v=16.13">
-  <link rel="stylesheet" href="/providence-v15.css?v=16.13">
-  <link rel="stylesheet" href="/providence-v16-platform.css?v=16.13">
-  <link rel="stylesheet" href="/providence-v16-rail.css?v=16.13">
-  <link rel="stylesheet" href="/providence-v16-ux.css?v=16.13">
-  <link rel="stylesheet" href="/providence-v16-8-dynamic.css?v=16.13">
-  <link rel="stylesheet" href="/predictions/predictions-v16-8.css?v=16.13">
-  <link rel="stylesheet" href="/providence-v16-12-mobile.css?v=16.13">
+  <link rel="stylesheet" href="/providence-v14-components.css?v=16.14">
+  <link rel="stylesheet" href="/providence-v15.css?v=16.14">
+  <link rel="stylesheet" href="/providence-v16-platform.css?v=16.14">
+  <link rel="stylesheet" href="/providence-v16-rail.css?v=16.14">
+  <link rel="stylesheet" href="/providence-v16-ux.css?v=16.14">
+  <link rel="stylesheet" href="/providence-v16-8-dynamic.css?v=16.14">
+  <link rel="stylesheet" href="/predictions/predictions-v16-8.css?v=16.14">
+  <link rel="stylesheet" href="/providence-v16-12-mobile.css?v=16.14">
+  <link rel="stylesheet" href="/predictions/predictions-v16-14.css?v=16.14">
 </head>
 <body data-page="predictions">
 <main>
+  <section class="p1614-temporal-shell" aria-labelledby="temporalTitle">
+    <div class="p1614-temporal-head">
+      <div><span>CHAMP DES FUTURS POSSIBLES</span><h2 id="temporalTitle">Lignes temporelles</h2><p>À partir du présent, Providence suit plusieurs trajectoires concurrentes. Touchez une branche pour examiner le futur correspondant.</p></div>
+      <div class="p1614-temporal-meta"><b id="temporalCount">—</b> prévisions actives</div>
+    </div>
+    <div class="p1614-temporal-scroll"><div class="p1614-temporal-field" id="temporalField" aria-live="polite"></div></div>
+    <div class="p1614-temporal-legend"><span><i></i>épaisseur = probabilité</span><span>chaque courbe = futur plausible distinct</span></div>
+  </section>
+
   <section class="p15-prediction-hero" id="futureLead">
     <div class="p15-pred-copy">
       <span class="p16-result-kicker">Prévision prioritaire</span>
@@ -27,14 +37,18 @@
       <div class="p16-result-actions"><a href="#why">Pourquoi ?</a><a href="#alternatives">Comparer</a><a href="/analyst/">Interroger Providence →</a></div>
     </div>
   </section>
-  <div class="p16-secondary-heading" id="alternatives"><div><span>SCÉNARIOS CONCURRENTS</span><h2>Autres trajectoires plausibles</h2></div><a href="#explorer">Tout explorer →</a></div>
+
+  <div class="p16-secondary-heading" id="alternatives"><div><span>PRÉVISIONS ACTIVES</span><h2>Trajectoires concurrentes</h2></div><a href="#explorer">Tout explorer →</a></div>
   <section class="p15-panel"><div class="body"><div class="p15-forecast-grid" id="futurePriority"></div></div></section>
+
   <details class="p16-deep-dive" id="why"><summary><span>Pourquoi cette prévision ? <small class="p16-technical-note">Signaux, fiabilité et sources</small></span></summary><div class="p16-deep-body"><section class="p15-analysis-grid"><article class="p15-panel"><header>CONTEXTE CAUSAL</header><div class="body"><div class="p15-causal-wheel"><div class="core" id="futureCore">Événement<br>prévu</div><div class="node n1" id="futureNode1">Signal principal</div><div class="node n2" id="futureNode2">Mécanisme</div><div class="node n3" id="futureNode3">Conséquence</div><div class="node n4" id="futureNode4">Contexte</div><div class="node n5" id="futureNode5">Preuve</div></div></div></article><article class="p15-panel"><header>FIABILITÉ <a href="/track-record/">Calibration →</a></header><div class="body"><div class="p15-gauge"><b id="futureCalibration">—</b></div><div style="text-align:center"><small style="color:#8fa5ba">Calibration historique</small><b style="display:block;color:#40e690;font-size:13px;margin-top:3px">Mesurée sur les résultats</b></div></div></article><article class="p15-panel"><header>SIGNAUX DÉTERMINANTS</header><div class="body"><table class="p15-table" id="futureDrivers"><tbody><tr><td>Chargement…</td><td>—</td></tr></tbody></table></div></article><article class="p15-panel"><header>ALERTES ASSOCIÉES</header><div class="body"><div class="p15-list" id="futureAlerts"></div></div></article></section><section class="p15-panel" style="margin-top:10px"><header>SOURCES <a href="/sources/">Voir le détail →</a></header><div class="p15-source-strip" id="futureSourcesStrip"></div></section></div></details>
+
   <details id="explorer" class="p16-deep-dive"><summary><span>Explorer toutes les prédictions <small class="p16-technical-note">Recherche par sujet et horizon</small></span></summary><div class="p16-deep-body"><div class="v4-filterbar" style="display:flex;gap:8px;flex-wrap:wrap"><input id="predictionSearch" type="search" placeholder="Rechercher un sujet, une région…" style="flex:1;min-width:220px;background:#071725;border:1px solid #173c5b;color:#fff;padding:12px;border-radius:12px;font-size:16px"><select id="predictionDomain" aria-label="Domaine" style="background:#071725;border:1px solid #173c5b;color:#fff;padding:12px;border-radius:12px"></select><select id="predictionHorizon" aria-label="Horizon" style="background:#071725;border:1px solid #173c5b;color:#fff;padding:12px;border-radius:12px"></select><span id="predictionCount" style="padding:10px;color:#8fa4b9">— scénarios</span></div><section class="v4-grid" id="predictionGrid" style="margin-top:12px"><div style="padding:20px;color:#8fa4b9">Providence construit le champ prédictif…</div></section></div></details>
 </main>
-<script src="/providence-v15-shell.js?v=16.13" defer></script>
-<script src="/app.js?v=16.13" defer></script>
-<script src="/card-decision-v6.js?v=16.13" defer></script>
-<script src="/predictions/predictions-v15.js?v=16.13" defer></script>
+<script src="/providence-v15-shell.js?v=16.14" defer></script>
+<script src="/app.js?v=16.14" defer></script>
+<script src="/card-decision-v6.js?v=16.14" defer></script>
+<script src="/predictions/predictions-v15.js?v=16.14" defer></script>
+<script src="/predictions/predictions-v16-14.js?v=16.14" defer></script>
 </body>
 </html>
