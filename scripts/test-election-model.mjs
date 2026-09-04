@@ -38,7 +38,7 @@ try{
   if(!model.second_round?.length)throw new Error('head-to-head model missing');
   const h2h=model.second_round[0].model_win_probability.reduce((s,x)=>s+Number(x.percent||0),0);
   if(Math.abs(h2h-100)>.2)throw new Error(`head-to-head probability normalization failed: ${h2h}`);
-  if(model.methodology.house_effects.includes('appliqués'))throw new Error('unvalidated house effects were applied');
+  if(!String(model.methodology.house_effects||'').toLowerCase().startsWith('non appli'))throw new Error('house effects guardrail ambiguous');
   if(model.guardrails.lobbying_not_direct_vote_shift!==true||model.guardrails.polls_are_not_votes!==true)throw new Error('election guardrails missing');
   console.log(JSON.stringify({ok:true,polls:parsed.polls.length,candidates:model.first_round.candidates.length,iterations:model.methodology.monte_carlo_iterations,top:model.first_round.candidates[0],top_pair:model.first_round.pair_scenarios[0],head_to_head:model.second_round[0]}));
 } finally {globalThis.fetch=originalFetch;}
