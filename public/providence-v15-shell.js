@@ -25,12 +25,14 @@ const details=(label,rows)=>`<details class="p15-nav-more" ${rows.some(([k])=>k=
 const allLinks=()=>`<nav class="p15-nav">${links(navPrimary)}</nav>${details('Explorer',navExplore)}${details('Méthode & transparence',navTransparency)}${details('Outils',navTools)}`;
 const loadCss=(href,match)=>{if(!document.querySelector(`link[href*="${match}"]`)){const l=document.createElement('link');l.rel='stylesheet';l.href=href;document.head.appendChild(l)}};
 loadCss('/providence-v15-fixes.css?v=clarity-1','providence-v15-fixes.css');
-loadCss('/providence-v16-platform.css?v=16.10','providence-v16-platform.css');
-loadCss('/providence-v16-rail.css?v=16.10','providence-v16-rail.css');
-loadCss('/providence-v16-ux.css?v=16.10','providence-v16-ux.css');
-loadCss('/providence-v16-mobile-fixes.css?v=16.10','providence-v16-mobile-fixes.css');
-loadCss('/providence-v16-product-cleanup.css?v=16.10','providence-v16-product-cleanup.css');
-if(page==='home')loadCss('/providence-timeline-v16-10.css?v=16.10','providence-timeline-v16-10.css');
+loadCss('/providence-v16-platform.css?v=16.12','providence-v16-platform.css');
+loadCss('/providence-v16-rail.css?v=16.12','providence-v16-rail.css');
+loadCss('/providence-v16-ux.css?v=16.12','providence-v16-ux.css');
+loadCss('/providence-v16-mobile-fixes.css?v=16.12','providence-v16-mobile-fixes.css');
+loadCss('/providence-v16-product-cleanup.css?v=16.12','providence-v16-product-cleanup.css');
+if(page==='home')loadCss('/providence-timeline-v16-10.css?v=16.12','providence-timeline-v16-10.css');
+/* Authoritative mobile geometry must be the final cascade layer. */
+loadCss('/providence-v16-12-mobile.css?v=16.12','providence-v16-12-mobile.css');
 if(!document.querySelector('.p15-sidebar')){
  const side=document.createElement('aside');
  side.className='p15-sidebar';
@@ -75,6 +77,6 @@ if(!document.querySelector('.p16-mobile-dock')){
  document.body.appendChild(dock);
 }
 if(page==='home'&&!document.querySelector('script[src*="providence-timeline-v16-10.js"]')){
- const s=document.createElement('script');s.src='/providence-timeline-v16-10.js?v=16.10';s.async=true;document.body.appendChild(s);
+ const s=document.createElement('script');s.src='/providence-timeline-v16-10.js?v=16.12';s.async=true;document.body.appendChild(s);
 }
 })();
