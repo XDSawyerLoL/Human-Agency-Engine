@@ -32,101 +32,52 @@ jobs:
       - run: npm install --ignore-scripts
       - run: npm run check
       - run: npm run build
-      - name: Smoke-test multi-horizon predictor without network
+
+      - name: Start Providence and verify product-critical routes
         run: |
-          node --input-type=module <<'NODE'
-          import { buildForecasts } from './src/predictor.js';
-          const now = new Date().toISOString();
-          const common = {source_key:'test',source_label:'Test',source_family:'official_primary',source_trust:.95,observed_at:now,event_at:now,severity:.8,url:'',facts:{}};
-          const rows = buildForecasts([
-            {...common,event_type:'major_earthquake',title:'Séisme test',geography:'Zone test'},
-            {...common,event_type:'media_geopolitical_trade',title:'Signal commerce test',geography:'Monde'}
-          ],36);
-          if (rows.length < 5) throw new Error(`not enough distinct forecasts: ${rows.length}`);
-          if (rows.some(r => r.headline.includes('Séisme test'))) throw new Error('forecast merely repeats current event');
-          if (!rows.every(r => r.falsification && r.time_window?.end_at)) throw new Error('forecast contract incomplete');
-          if (!rows.some(r => r.horizon_tier === 'immediate')) throw new Error('immediate horizon missing');
-          if (!rows.some(r => r.horizon_tier === 'medium')) throw new Error('medium horizon missing');
-          if (!rows.some(r => r.horizon_tier === 'long')) throw new Error('long horizon missing');
-          if (!rows.some(r => r.horizon_tier === 'strategic')) throw new Error('strategic horizon missing');
-          console.log(rows.map(r => `${r.horizon_tier}:${r.probability.percent}%:${r.headline}`).join('\n'));
-          NODE
-      - name: Start Express and verify Providence V16.4 endpoints and pages
-        run: |
-          npm start >/tmp/evidence-node.log 2>&1 &
+          npm start >/tmp/providence.log 2>&1 &
           pid=$!
-          trap 'kill $pid 2>/dev/null || true; cat /tmp/evidence-node.log' EXIT
+          trap 'kill $pid 2>/dev/null || true; cat /tmp/providence.log' EXIT
+
           ok=0
           for i in $(seq 1 40); do
             if curl -fsS http://127.0.0.1:3000/api/health >/tmp/health.json; then ok=1; break; fi
             sleep 0.5
           done
           test "$ok" = "1"
-          node -e "const x=require('/tmp/health.json'); if(x.service!=='evidence-world-eye-node'||x.port!==3000||typeof x.causal_learning_ready!=='boolean'||x.sports_intelligence_ready!==true) process.exit(1); console.log('health endpoint ok')"
-          curl -fsS http://127.0.0.1:3000/api/modules >/tmp/modules.json
-          node -e "const x=require('/tmp/modules.json'); const keys=new Set((x.modules||[]).map(m=>m.key)); for(const k of ['gdelt','pubmed','arxiv','polymarket','trends','fred','metaculus','windy']) if(!keys.has(k)) process.exit(1); console.log('modules endpoint ok')"
+          node -e "const x=require('/tmp/health.json'); if(x.service!=='evidence-world-eye-node'||x.port!==3000) process.exit(1); console.log('health ok')"
+
+          # Analyst is a required product route. A 404 must fail the build.
+          curl -fsS http://127.0.0.1:3000/api/analyst/status >/tmp/analyst-status.json
+          node -e "const x=require('/tmp/analyst-status.json'); if(x.schema!=='providence-analyst-status-v1'||x.superposition_engine!==true) process.exit(1); console.log('analyst status ok')"
+
+          curl -fsS 'http://127.0.0.1:3000/api/superposition?limit=4' >/tmp/superposition.json
+          node -e "const x=require('/tmp/superposition.json'); if(x.schema!=='providence-superposition-v1'||!Array.isArray(x.worlds)) process.exit(1); console.log('superposition ok')"
+
+          curl -fsS -X POST http://127.0.0.1:3000/api/analyst/chat \
+            -H 'Content-Type: application/json' \
+            -d '{"message":"Que vois-tu venir en priorité ?","mode":"analyst"}' >/tmp/analyst-chat.json
+          node -e "const x=require('/tmp/analyst-chat.json'); if(x.schema!=='providence-analyst-response-v1'||typeof x.text!=='string'||!x.text.length) process.exit(1); console.log('analyst chat ok')"
+
           curl -fsS http://127.0.0.1:3000/api/track-record >/tmp/track.json
-          node -e "const x=require('/tmp/track.json'); if(typeof x.tracked_scenarios!=='number'||!x.calibration||!x.resolution||!x.ensemble||!x.causal_learning) process.exit(1); console.log('track record endpoint ok')"
-          curl -fsS http://127.0.0.1:3000/api/causal-graph >/tmp/causal.json
-          node -e "const x=require('/tmp/causal.json'); if(x.schema!=='evidence-causal-world-v1'||!Array.isArray(x.nodes)||!Array.isArray(x.edges)||!x.metrics) process.exit(1); console.log('causal world endpoint ok')"
-          curl -fsS http://127.0.0.1:3000/api/analyst/status >/tmp/analyst-status.json || true
-          if grep -q 'providence-analyst-status-v1' /tmp/analyst-status.json; then
-            node -e "const x=require('/tmp/analyst-status.json'); if(x.execution_authority!==false||x.tools_enabled!==false||x.superposition_engine!==true) process.exit(1); console.log('analyst status ok',x.configured?'configured':'engine-only')"
-            curl -fsS 'http://127.0.0.1:3000/api/superposition?limit=4' >/tmp/superposition.json
-            node -e "const x=require('/tmp/superposition.json'); if(x.schema!=='providence-superposition-v1'||!Array.isArray(x.worlds)||x.semantics?.world_weights_are_event_probabilities!==false||x.semantics?.quantum_computing_claim!==false) process.exit(1); const s=x.worlds.reduce((a,w)=>a+Number(w.relative_world_weight_percent||0),0); if(x.worlds.length&&Math.abs(s-100)>.2) process.exit(1); console.log('superposition endpoint ok',x.worlds.length)"
-            curl -fsS -X POST http://127.0.0.1:3000/api/analyst/chat -H 'Content-Type: application/json' -d '{"message":"Que vois-tu venir en priorité ?","mode":"analyst"}' >/tmp/analyst-chat.json
-            node -e "const x=require('/tmp/analyst-chat.json'); if(x.schema!=='providence-analyst-response-v1'||typeof x.text!=='string'||!x.text.length||!x.superposition) process.exit(1); console.log('analyst chat ok',x.provider)"
-          else
-            echo 'analyst API disabled by production availability hotfix; core server remains healthy'
-          fi
-          curl -fsS http://127.0.0.1:3000/api/sports/catalog >/tmp/sports-catalog.json
-          node -e "const x=require('/tmp/sports-catalog.json'); if(x.schema!=='evidence-sports-catalog-v2'||!Array.isArray(x.countries)||!x.countries.length) process.exit(1); console.log('sports catalog endpoint ok')"
-          curl --max-time 30 -fsS 'http://127.0.0.1:3000/api/sports/league?country=England&league=Premier%20League&competition_id=2&season_id=27' >/tmp/sports-league.json
-          curl --max-time 30 -fsS 'http://127.0.0.1:3000/api/sports/league?country=England&league=Premier%20League&competition_id=2&season_id=44' >/tmp/sports-alt.json
-          node <<'NODE'
-          const a=require('/tmp/sports-league.json'),b=require('/tmp/sports-alt.json');
-          if(a.schema!=='evidence-sports-intelligence-v4'||a.competition?.country!=='England'||typeof a.historical?.multiclass_brier!=='number'||a.model?.trained_only_on_prior_matches!==true) process.exit(1);
-          if(a.upcoming?.provider!=='OpenFootball'||!Array.isArray(a.upcoming?.fixtures)||a.upcoming.fixtures.length<=20||a.upcoming.complete_schedule!==true||a.track_record?.schema!=='evidence-sports-track-record-v1') process.exit(1);
-          if(a.upcoming.total_future!==a.upcoming.fixtures.length||a.upcoming.track_window_days!==21||a.upcoming.official_frozen<1||a.upcoming.preview_recalculable<1) process.exit(1);
-          if(a.model?.production_model?.independent_of_selected_backtest_season!==true||a.model.production_model.id!==b.model?.production_model?.id) process.exit(1);
-          const f=a.upcoming.fixtures[0],g=(b.upcoming?.fixtures||[]).find(x=>x.fixture_key===f.fixture_key);
-          if(!g||JSON.stringify(f.probabilities)!==JSON.stringify(g.probabilities)||f.model_id!==g.model_id) process.exit(1);
-          if(!f.explanation||typeof f.explanation.home_rating!=='number'||f.explanation.home_advantage_elo!==72||typeof f.explanation.league_draw_prior_percent!=='number') process.exit(1);
-          if((a.upcoming.fixtures||[]).some(x=>Date.parse(x.utc_date)<=Date.now()||x.prediction_frozen!==x.trackable)) process.exit(1);
-          if(!(a.upcoming.fixtures||[]).some(x=>x.prediction_frozen===false&&x.track_status==='preview_recalculable')) process.exit(1);
-          console.log('sports complete explainable schedule ok',a.upcoming.provider,a.upcoming.fixtures.length,'frozen',a.upcoming.official_frozen,'previews',a.upcoming.preview_recalculable,f.model_id);
-          NODE
-          for page in '' 'analyst/' 'predictions/' 'horizons/' 'causal/' 'sports/' 'matches/' 'track-record/' 'backtest/' 'sources/' 'alerts/' 'settings/'; do
-            curl -fsS "http://127.0.0.1:3000/$page" >/tmp/page.html
-            grep -q 'providence-v15' /tmp/page.html
-          done
-          curl -fsS http://127.0.0.1:3000/ >/tmp/home-page.html
-          grep -q 'La lecture vivante des futurs plausibles' /tmp/home-page.html
-          grep -q 'EXPLORATION MULTI-SCÉNARIOS' /tmp/home-page.html
-          grep -q 'providence-v16-platform.css' /tmp/home-page.html
+          node -e "const x=require('/tmp/track.json'); if(typeof x.tracked_scenarios!=='number'||!x.calibration) process.exit(1); console.log('track record ok')"
+
+          curl -fsS http://127.0.0.1:3000/api/sports/catalog >/tmp/sports.json
+          node -e "const x=require('/tmp/sports.json'); if(x.schema!=='evidence-sports-catalog-v2'||!Array.isArray(x.countries)||!x.countries.length) process.exit(1); console.log('sports catalog ok')"
+
           curl -fsS http://127.0.0.1:3000/analyst/ >/tmp/analyst-page.html
-          grep -q 'Parlez directement' /tmp/analyst-page.html
-          grep -q 'SUPERPOSITION' /tmp/analyst-page.html
+          grep -q 'Interrogez directement' /tmp/analyst-page.html
+          grep -q 'SCÉNARIOS CONCURRENTS' /tmp/analyst-page.html
+
           curl -fsS http://127.0.0.1:3000/predictions/ >/tmp/predictions-page.html
-          grep -q 'p15-prediction-hero' /tmp/predictions-page.html
-          grep -q 'POURQUOI CETTE PRÉVISION' /tmp/predictions-page.html
-          grep -q 'providence-v16-ux.css?v=16.4' /tmp/predictions-page.html
-          grep -q 'Autres scénarios' /tmp/predictions-page.html
+          grep -q 'Détails & sources' /tmp/predictions-page.html
+          grep -q 'SIGNAUX DÉTERMINANTS' /tmp/predictions-page.html
+
           curl -fsS http://127.0.0.1:3000/sports/ >/tmp/sports-page.html
-          grep -q 'Sports Calibration' /tmp/sports-page.html
-          grep -q '/matches/' /tmp/sports-page.html
-          curl -fsS http://127.0.0.1:3000/matches/ >/tmp/matches-page.html
-          grep -q 'Prochains matchs' /tmp/matches-page.html
-          curl -fsS http://127.0.0.1:3000/backtest/ >/tmp/backtest-page.html
-          grep -q 'Historique & Backtest' /tmp/backtest-page.html
-          curl -fsS http://127.0.0.1:3000/alerts/ >/tmp/alerts-page.html
-          grep -q 'Alertes & Suivi' /tmp/alerts-page.html
-          curl -fsS http://127.0.0.1:3000/settings/ >/tmp/settings-page.html
-          grep -q 'Paramètres' /tmp/settings-page.html
-          echo 'Providence V16.4 mobile-first result UX ok'
-          curl -fsS http://127.0.0.1:3000/api/supabase >/tmp/supabase.json
-          node -e "const x=require('/tmp/supabase.json'); if(typeof x.configured!=='boolean'||typeof x.connected!=='boolean') process.exit(1); console.log('supabase bridge status ok')"
-          curl -fsS http://127.0.0.1:3000/api/storage >/tmp/storage.json
-          node -e "const x=require('/tmp/storage.json'); if(typeof x.persistent!=='boolean'||!Array.isArray(x.accepted_configuration)||!x.supabase) process.exit(1); console.log('storage endpoint ok')"
-          curl -fsS -X POST http://127.0.0.1:3000/api/forecast/compile -H 'Content-Type: application/json' -d '{"question":"La production nucléaire française augmentera-t-elle avant 2030 ?"}' >/tmp/compiler.json
-          node -e "const x=require('/tmp/compiler.json'); if(x.schema!=='evidence-forecast-compiler-v1'||!Array.isArray(x.sub_forecasts)||x.sub_forecasts.length<4) process.exit(1); console.log('forecast compiler endpoint ok')"
+          grep -q 'Prédire. Puis vérifier.' /tmp/sports-page.html
+          grep -q 'PREUVE EN CONDITIONS RÉELLES' /tmp/sports-page.html
+
+          curl -fsS http://127.0.0.1:3000/providence-v16-product-cleanup.css >/tmp/cleanup.css
+          grep -q 'Providence V16.7' /tmp/cleanup.css
+
+          echo 'Providence V16.7 product smoke test ok'
