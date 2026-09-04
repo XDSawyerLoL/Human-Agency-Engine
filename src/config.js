@@ -28,7 +28,7 @@ const mysqlPortRaw=value('MYSQL_PORT','DB_PORT');
 export const config = {
   port: int('PORT', 3000, 1, 65535),
   refreshMs: int('EVIDENCE_REFRESH_SECONDS', 600, 120, 3600) * 1000,
-  maxForecasts: int('EVIDENCE_FORECAST_LIMIT', 72, 48, 100),
+  maxForecasts: int('EVIDENCE_FORECAST_LIMIT', 96, 72, 144),
   fredApiKey: value('FRED_API_KEY'),
   forecastApiKey: value('FORECAST_API_KEY', 'FORESCAST_API_KEY'),
   windyApiKey: value('WINDY_POINT_FORECAST_API_KEY', 'WINDY_KEY'),
