@@ -23,7 +23,9 @@ const navTools=[
 const links=rows=>rows.map(([k,href,icon,label])=>`<a href="${href}" class="${page===k?'active':''}" ${page===k?'aria-current="page"':''}><i>${icon}</i><span>${label}</span></a>`).join('');
 const details=(label,rows)=>`<details class="p15-nav-more" ${rows.some(([k])=>k===page)?'open':''}><summary>${label}</summary><nav class="p15-nav">${links(rows)}</nav></details>`;
 const allLinks=()=>`<nav class="p15-nav">${links(navPrimary)}</nav>${details('Explorer',navExplore)}${details('Outils',navTools)}`;
-if(!document.querySelector('link[href*="providence-v15-fixes.css"]')){const l=document.createElement('link');l.rel='stylesheet';l.href='/providence-v15-fixes.css?v=clarity-1';document.head.appendChild(l)}
+const loadCss=(href,match)=>{if(!document.querySelector(`link[href*="${match}"]`)){const l=document.createElement('link');l.rel='stylesheet';l.href=href;document.head.appendChild(l)}};
+loadCss('/providence-v15-fixes.css?v=clarity-1','providence-v15-fixes.css');
+loadCss('/providence-v16-platform.css?v=16.1','providence-v16-platform.css');
 if(!document.querySelector('.p15-sidebar')){
  const side=document.createElement('aside');
  side.className='p15-sidebar';
