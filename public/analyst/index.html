@@ -4,27 +4,27 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#020713">
-  <meta name="description" content="Providence Analyst — dialogue ancré sur les prédictions et les preuves de Providence.">
+  <meta name="description" content="Providence Analyst — dialogue ancré sur les prédictions, les preuves et la recherche dynamique Quantic.">
   <title>Providence Analyst</title>
-  <link rel="stylesheet" href="/providence-v15.css?v=16.16">
-  <link rel="stylesheet" href="/analyst/analyst.css?v=16.16">
-  <link rel="stylesheet" href="/providence-v16-8-dynamic.css?v=16.16">
+  <link rel="stylesheet" href="/providence-v15.css?v=16.17">
+  <link rel="stylesheet" href="/analyst/analyst.css?v=16.17">
+  <link rel="stylesheet" href="/providence-v16-8-dynamic.css?v=16.17">
 </head>
 <body data-page="analyst">
 <main>
-  <section class="pa-hero"><div><span class="pa-kicker">PROVIDENCE · ANALYSTE</span><h1>Interrogez directement<br><em>Providence.</em></h1><p>Comprendre ce que le moteur voit venir, ce qui soutient une trajectoire et ce qui pourrait l’invalider.</p></div><div class="pa-orbit" aria-hidden="true"><i></i><i></i><i></i><b>△</b></div></section>
-  <section class="pa-statusbar"><span id="analystState"><i></i>Connexion au moteur…</span><span id="analystDataState">Données live en lecture seule</span></section>
+  <section class="pa-hero"><div><span class="pa-kicker">PROVIDENCE · ANALYSTE</span><h1>Interrogez directement<br><em>Providence.</em></h1><p>Question connue : Providence explique ses prévisions. Question nouvelle : Quantic Dynamic Forecast lance une recherche croisée et explore plusieurs futurs plausibles.</p></div><div class="pa-orbit" aria-hidden="true"><i></i><i></i><i></i><b>△</b></div></section>
+  <section class="pa-statusbar"><span id="analystState"><i></i>Connexion au moteur…</span><span id="analystDataState">Prévisions + recherche dynamique en lecture seule</span></section>
   <section class="pa-layout">
     <article class="pa-chat"><header><div><small>PROVIDENCE ANALYST</small><h2>Conversation prédictive</h2></div><div class="pa-mode"><button type="button" data-mode="analyst" class="active">Analyser</button><button type="button" data-mode="red_team">Contester</button></div></header>
-      <div class="pa-messages" id="analystMessages"><div class="pa-message assistant"><div class="pa-avatar">△</div><div><b>Providence</b><p>Pose une question précise : je chercherai d’abord les prévisions réellement liées au sujet. S’il n’y en a aucune, je te le dirai au lieu de recycler une trajectoire sans rapport.</p></div></div></div>
-      <div class="pa-prompts"><button type="button">Que vois-tu venir en priorité ?</button><button type="button">Compare les scénarios principaux.</button><button type="button">Quelle prévision est la plus fragile ?</button><button type="button">Quel signal mérite d’être surveillé ?</button></div>
+      <div class="pa-messages" id="analystMessages"><div class="pa-message assistant"><div class="pa-avatar">△</div><div><b>Providence</b><p>Pose une question précise. Si aucune prévision existante ne correspond, je lance une recherche multi-source dynamique au lieu de répondre à côté.</p></div></div></div>
+      <div class="pa-prompts"><button type="button">Que va-t-il se passer pour les élections 2027 en France ?</button><button type="button">Compare les scénarios principaux.</button><button type="button">Quelle prévision est la plus fragile ?</button><button type="button">Quel signal mérite d’être surveillé ?</button></div>
       <form class="pa-composer" id="analystForm"><textarea id="analystInput" rows="2" maxlength="5000" placeholder="Posez une question à Providence…"></textarea><button type="submit">Envoyer ↗</button></form>
-      <div class="pa-footnote">L’Analyste explique le moteur ; il ne modifie jamais ses probabilités.</div>
+      <div class="pa-footnote">Providence ne transforme jamais automatiquement un poids de scénario, un signal médiatique ou une donnée de lobbying en probabilité de victoire.</div>
     </article>
     <aside class="pa-side"><section class="pa-panel"><header><div><small>SCÉNARIOS CONCURRENTS</small><h2>Futurs plausibles</h2></div><span id="worldEntropy">—</span></header><div id="worlds" class="pa-worlds"><div class="pa-empty">Construction des scénarios…</div></div></section></aside>
   </section>
 </main>
-<script src="/providence-v15-shell.js?v=16.16" defer></script>
-<script src="/analyst/analyst.js?v=16.16" defer></script>
+<script src="/providence-v15-shell.js?v=16.17" defer></script>
+<script src="/analyst/analyst.js?v=16.17" defer></script>
 </body>
 </html>
