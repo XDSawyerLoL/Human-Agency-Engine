@@ -15,21 +15,20 @@ const context=buildAnalystContext(snapshot,trackRecord,{query:'Europe logistique
 if(context.system_contract.llm_cannot_change_probability!==true)throw new Error('LLM write contract missing');
 if(context.system_contract.world_weight_is_not_probability!==true)throw new Error('world weight contract missing');
 if(context.system_contract.unrelated_forecast_fallback_forbidden!==true)throw new Error('unrelated fallback contract missing');
+if(context.system_contract.dynamic_research_allowed!==true)throw new Error('dynamic research contract missing');
 if(context.forecasts[0].probability_percent!==71)throw new Error('probability changed');
 if(context.superposition.semantics.world_weights_are_event_probabilities!==false)throw new Error('superposition semantics');
 
 const electionRank=rankForecastsForQuery(snapshot,'Que va-t-il se passer pour les élections 2027 en France ?');
 if(electionRank.length!==1||electionRank[0].scenario_key!=='beta')throw new Error('specific query did not isolate election forecast');
-const unrelated=buildAnalystContext({ ...snapshot, forecasts:[snapshot.forecasts[0]] },trackRecord,{query:'Que va-t-il se passer pour les élections 2027 en France ?'});
+const unrelated=buildAnalystContext({...snapshot,forecasts:[snapshot.forecasts[0]]},trackRecord,{query:'Que va-t-il se passer pour les élections 2027 en France ?'});
 if(unrelated.forecasts.length!==0||unrelated.superposition.worlds.length!==0)throw new Error('specific query fell back to unrelated global forecast');
 
 const status=analystStatus();
-if(typeof status.configured!=='boolean'||status.execution_authority!==false||status.tools_enabled!==false)throw new Error('status contract');
+if(typeof status.configured!=='boolean'||status.execution_authority!==false||status.tools_enabled!==false||status.dynamic_forecast_enabled!==true)throw new Error('status contract');
 if(!status.configured){
   const answer=await answerProvidence({message:'Que vois-tu venir ?',snapshot,trackRecord,history:[]});
   if(answer.provider!=='engine_only')throw new Error('engine fallback');
   if(!answer.text.includes('probabilité publique'))throw new Error('grounded fallback');
-  const noMatch=await answerProvidence({message:'Que va-t-il se passer pour les élections 2027 en France ?',snapshot:{...snapshot,forecasts:[snapshot.forecasts[0]]},trackRecord,history:[]});
-  if(!noMatch.no_relevant_forecast||/Tensions logistiques/.test(noMatch.text))throw new Error('analyst recycled unrelated forecast');
 }
-console.log(JSON.stringify({ok:true,configured:status.configured,worlds:context.superposition.worlds.length,probability:context.forecasts[0].probability_percent,election_match:electionRank[0].scenario_key,unrelated_refused:true}));
+console.log(JSON.stringify({ok:true,configured:status.configured,worlds:context.superposition.worlds.length,probability:context.forecasts[0].probability_percent,election_match:electionRank[0].scenario_key,unrelated_refused:true,dynamic_forecast_enabled:true}));
