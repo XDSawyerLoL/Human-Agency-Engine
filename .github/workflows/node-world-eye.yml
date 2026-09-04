@@ -51,7 +51,7 @@ jobs:
           if (!rows.some(r => r.horizon_tier === 'strategic')) throw new Error('strategic horizon missing');
           console.log(rows.map(r => `${r.horizon_tier}:${r.probability.percent}%:${r.headline}`).join('\n'));
           NODE
-      - name: Start Express and verify Providence V16 endpoints and pages
+      - name: Start Express and verify Providence V16.4 endpoints and pages
         run: |
           npm start >/tmp/evidence-node.log 2>&1 &
           pid=$!
@@ -103,14 +103,15 @@ jobs:
           curl -fsS http://127.0.0.1:3000/ >/tmp/home-page.html
           grep -q 'La lecture vivante des futurs plausibles' /tmp/home-page.html
           grep -q 'EXPLORATION MULTI-SCÉNARIOS' /tmp/home-page.html
-          grep -q 'providence-v16-platform.css?v=16.3' /tmp/home-page.html
+          grep -q 'providence-v16-platform.css' /tmp/home-page.html
           curl -fsS http://127.0.0.1:3000/analyst/ >/tmp/analyst-page.html
           grep -q 'Parlez directement' /tmp/analyst-page.html
           grep -q 'SUPERPOSITION' /tmp/analyst-page.html
           curl -fsS http://127.0.0.1:3000/predictions/ >/tmp/predictions-page.html
           grep -q 'p15-prediction-hero' /tmp/predictions-page.html
           grep -q 'POURQUOI CETTE PRÉVISION' /tmp/predictions-page.html
-          grep -q 'providence-v16-platform.css?v=16.3' /tmp/predictions-page.html
+          grep -q 'providence-v16-ux.css?v=16.4' /tmp/predictions-page.html
+          grep -q 'Autres scénarios' /tmp/predictions-page.html
           curl -fsS http://127.0.0.1:3000/sports/ >/tmp/sports-page.html
           grep -q 'Sports Calibration' /tmp/sports-page.html
           grep -q '/matches/' /tmp/sports-page.html
@@ -122,7 +123,7 @@ jobs:
           grep -q 'Alertes & Suivi' /tmp/alerts-page.html
           curl -fsS http://127.0.0.1:3000/settings/ >/tmp/settings-page.html
           grep -q 'Paramètres' /tmp/settings-page.html
-          echo 'Providence V16 temporal platform pages ok'
+          echo 'Providence V16.4 mobile-first result UX ok'
           curl -fsS http://127.0.0.1:3000/api/supabase >/tmp/supabase.json
           node -e "const x=require('/tmp/supabase.json'); if(typeof x.configured!=='boolean'||typeof x.connected!=='boolean') process.exit(1); console.log('supabase bridge status ok')"
           curl -fsS http://127.0.0.1:3000/api/storage >/tmp/storage.json
