@@ -8,6 +8,7 @@ on:
       - 'server_core.js'
       - 'src/**'
       - 'public/**'
+      - 'scripts/**'
       - 'supabase/**'
       - '.github/workflows/node-world-eye.yml'
   push:
@@ -18,6 +19,7 @@ on:
       - 'server_core.js'
       - 'src/**'
       - 'public/**'
+      - 'scripts/**'
       - 'supabase/**'
       - '.github/workflows/node-world-eye.yml'
 
