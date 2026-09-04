@@ -1,8 +1,8 @@
 {
   "name": "evidence-world-eye",
-  "version": "1.15.1",
+  "version": "1.16.3",
   "private": true,
-  "description": "PROVIDENCE V15.1 — exact-reference visual rebuild with Superposition Engine and grounded Providence Analyst",
+  "description": "PROVIDENCE V16.3 — living temporal intelligence platform with QuanticOS-inspired multi-scenario navigation",
   "type": "module",
   "main": "server.js",
   "engines": { "node": "22.x" },
