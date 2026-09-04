@@ -1,8 +1,8 @@
 {
   "name": "evidence-world-eye",
-  "version": "1.16.15",
+  "version": "1.16.16",
   "private": true,
-  "description": "PROVIDENCE V16.15 — prediction-first mobile UX, compact forecast feed and unified temporal branches",
+  "description": "PROVIDENCE V16.16 — prediction-first UX with query-aware Analyst routing and refusal of unrelated fallbacks",
   "type": "module",
   "main": "server.js",
   "engines": { "node": "22.x" },
