@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#020713">
   <meta name="description" content="Providence Analyst — dialogue ancré sur les prédictions et les preuves de Providence.">
   <title>Providence Analyst</title>
-  <link rel="stylesheet" href="/providence-v15.css?v=16.8">
-  <link rel="stylesheet" href="/analyst/analyst.css?v=16.8">
-  <link rel="stylesheet" href="/providence-v16-8-dynamic.css?v=16.8">
+  <link rel="stylesheet" href="/providence-v15.css?v=16.16">
+  <link rel="stylesheet" href="/analyst/analyst.css?v=16.16">
+  <link rel="stylesheet" href="/providence-v16-8-dynamic.css?v=16.16">
 </head>
 <body data-page="analyst">
 <main>
@@ -16,7 +16,7 @@
   <section class="pa-statusbar"><span id="analystState"><i></i>Connexion au moteur…</span><span id="analystDataState">Données live en lecture seule</span></section>
   <section class="pa-layout">
     <article class="pa-chat"><header><div><small>PROVIDENCE ANALYST</small><h2>Conversation prédictive</h2></div><div class="pa-mode"><button type="button" data-mode="analyst" class="active">Analyser</button><button type="button" data-mode="red_team">Contester</button></div></header>
-      <div class="pa-messages" id="analystMessages"><div class="pa-message assistant"><div class="pa-avatar">△</div><div><b>Providence</b><p>Je peux résumer les trajectoires prioritaires, expliquer leurs signaux ou chercher ce qui pourrait les invalider.</p></div></div></div>
+      <div class="pa-messages" id="analystMessages"><div class="pa-message assistant"><div class="pa-avatar">△</div><div><b>Providence</b><p>Pose une question précise : je chercherai d’abord les prévisions réellement liées au sujet. S’il n’y en a aucune, je te le dirai au lieu de recycler une trajectoire sans rapport.</p></div></div></div>
       <div class="pa-prompts"><button type="button">Que vois-tu venir en priorité ?</button><button type="button">Compare les scénarios principaux.</button><button type="button">Quelle prévision est la plus fragile ?</button><button type="button">Quel signal mérite d’être surveillé ?</button></div>
       <form class="pa-composer" id="analystForm"><textarea id="analystInput" rows="2" maxlength="5000" placeholder="Posez une question à Providence…"></textarea><button type="submit">Envoyer ↗</button></form>
       <div class="pa-footnote">L’Analyste explique le moteur ; il ne modifie jamais ses probabilités.</div>
@@ -24,7 +24,7 @@
     <aside class="pa-side"><section class="pa-panel"><header><div><small>SCÉNARIOS CONCURRENTS</small><h2>Futurs plausibles</h2></div><span id="worldEntropy">—</span></header><div id="worlds" class="pa-worlds"><div class="pa-empty">Construction des scénarios…</div></div></section></aside>
   </section>
 </main>
-<script src="/providence-v15-shell.js?v=16.8" defer></script>
-<script src="/analyst/analyst.js?v=16.8" defer></script>
+<script src="/providence-v15-shell.js?v=16.16" defer></script>
+<script src="/analyst/analyst.js?v=16.16" defer></script>
 </body>
 </html>
