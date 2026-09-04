@@ -1,6 +1,7 @@
 import { config } from './config.js';
 import { buildSuperposition } from './superposition_engine.js';
 import { analystStatus, answerProvidence } from './providence_analyst.js';
+import { buildDynamicForecast } from './quantic_dynamic_forecast.js';
 
 const analystRuns=new Map();
 const WINDOW_MS=60_000;
@@ -26,7 +27,7 @@ export function installProvidenceExtensions(app){
 
   app.get('/api/analyst/status',(_req,res)=>{
     res.set('Cache-Control','no-store');
-    res.json({schema:'providence-analyst-status-v1',...analystStatus(),superposition_engine:true,red_team_read_only:true});
+    res.json({schema:'providence-analyst-status-v1',...analystStatus(),superposition_engine:true,dynamic_forecast_engine:true,red_team_read_only:true});
   });
 
   app.get('/api/superposition',async(req,res)=>{
@@ -35,6 +36,18 @@ export function installProvidenceExtensions(app){
       const snapshot=await localJson('/api/snapshot');
       res.json(buildSuperposition(snapshot,{query:String(req.query.q||''),scenarioKey:String(req.query.scenario_key||''),limit:Number(req.query.limit)||4}));
     }catch(error){res.status(503).json({schema:'providence-superposition-v1',status:'unavailable',error:String(error?.message||error)});}
+  });
+
+  app.post('/api/dynamic-forecast',async(req,res)=>{
+    res.set('Cache-Control','no-store');
+    const client=String(req.ip||req.socket?.remoteAddress||'anonymous');
+    if(!allowed(`${client}:dynamic`))return res.status(429).json({status:'error',error:'dynamic_forecast_rate_limit',retry_after_seconds:60});
+    try{
+      const question=String(req.body?.question||req.body?.message||'').trim();
+      if(question.length<8)return res.status(400).json({status:'error',error:'question_too_short'});
+      const snapshot=await localJson('/api/snapshot');
+      res.json(await buildDynamicForecast(question,snapshot));
+    }catch(error){res.status(502).json({status:'error',error:String(error?.message||error)});}
   });
 
   app.post('/api/analyst/chat',async(req,res)=>{
