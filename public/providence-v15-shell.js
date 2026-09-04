@@ -4,31 +4,33 @@ const navPrimary=[
  ['home','/','◉','Accueil'],
  ['predictions','/predictions/','⌁','Prédictions'],
  ['analyst','/analyst/','△','Providence Analyst'],
- ['track-record','/track-record/','◎','Calibration'],
  ['alerts','/alerts/','♢','Alertes & Veille']
 ];
 const navExplore=[
- ['sources','/sources/','≋','Signaux & Données'],
  ['sports','/sports/','◈','Sports Intelligence'],
  ['cameras','/cameras/','◉','World Eye']
 ];
+const navTransparency=[
+ ['track-record','/track-record/','◎','Calibration'],
+ ['sources','/sources/','≋','Sources & données'],
+ ['backtest','/backtest/','▤','Historique & backtest']
+];
 const navTools=[
- ['backtest','/backtest/','▤','Backtest Lab'],
  ['settings','/settings/','⚙','Paramètres']
 ];
-const allRows=[...navPrimary,...navExplore,...navTools];
+const allRows=[...navPrimary,...navExplore,...navTransparency,...navTools];
 const pageLabel=(allRows.find(([k])=>k===page)||['','','','Console Providence'])[3];
 const links=rows=>rows.map(([k,href,icon,label])=>`<a href="${href}" class="${page===k?'active':''}" ${page===k?'aria-current="page"':''}><i>${icon}</i><span>${label}</span></a>`).join('');
 const details=(label,rows)=>`<details class="p15-nav-more" ${rows.some(([k])=>k===page)?'open':''}><summary>${label}</summary><nav class="p15-nav">${links(rows)}</nav></details>`;
-const allLinks=()=>`<nav class="p15-nav">${links(navPrimary)}</nav>${details('Explorer',navExplore)}${details('Outils',navTools)}`;
+const allLinks=()=>`<nav class="p15-nav">${links(navPrimary)}</nav>${details('Explorer',navExplore)}${details('Méthode & transparence',navTransparency)}${details('Outils',navTools)}`;
 const loadCss=(href,match)=>{if(!document.querySelector(`link[href*="${match}"]`)){const l=document.createElement('link');l.rel='stylesheet';l.href=href;document.head.appendChild(l)}};
 loadCss('/providence-v15-fixes.css?v=clarity-1','providence-v15-fixes.css');
-loadCss('/providence-v16-platform.css?v=16.7','providence-v16-platform.css');
-loadCss('/providence-v16-rail.css?v=16.7','providence-v16-rail.css');
-loadCss('/providence-v16-ux.css?v=16.7','providence-v16-ux.css');
-loadCss('/providence-v16-mobile-fixes.css?v=16.7','providence-v16-mobile-fixes.css');
-loadCss('/providence-v16-product-cleanup.css?v=16.7','providence-v16-product-cleanup.css');
-if(page==='home')loadCss('/providence-timeline-interactive.css?v=16.7','providence-timeline-interactive.css');
+loadCss('/providence-v16-platform.css?v=16.9','providence-v16-platform.css');
+loadCss('/providence-v16-rail.css?v=16.9','providence-v16-rail.css');
+loadCss('/providence-v16-ux.css?v=16.9','providence-v16-ux.css');
+loadCss('/providence-v16-mobile-fixes.css?v=16.9','providence-v16-mobile-fixes.css');
+loadCss('/providence-v16-product-cleanup.css?v=16.9','providence-v16-product-cleanup.css');
+if(page==='home')loadCss('/providence-timeline-interactive.css?v=16.9','providence-timeline-interactive.css');
 if(!document.querySelector('.p15-sidebar')){
  const side=document.createElement('aside');
  side.className='p15-sidebar';
@@ -36,6 +38,7 @@ if(!document.querySelector('.p15-sidebar')){
  <a class="p15-brand" href="/"><span class="p15-logo" aria-hidden="true"></span><span><b>PROVIDENCE</b><span>PREDICTIVE INTELLIGENCE</span></span></a>
  <nav class="p15-nav" aria-label="Navigation Providence">${links(navPrimary)}</nav>
  ${details('Explorer',navExplore)}
+ ${details('Méthode & transparence',navTransparency)}
  ${details('Outils',navTools)}
  <div class="p15-sidebar-spacer"></div>
  <div class="p15-mission"><strong>Mission</strong>Transformer des signaux vérifiables en prévisions utiles.<b>Voir avant. Décider mieux.</b></div>
@@ -72,6 +75,6 @@ if(!document.querySelector('.p16-mobile-dock')){
  document.body.appendChild(dock);
 }
 if(page==='home'&&!document.querySelector('script[src*="providence-timeline-interactive.js"]')){
- const s=document.createElement('script');s.src='/providence-timeline-interactive.js?v=16.7';s.async=true;document.body.appendChild(s);
+ const s=document.createElement('script');s.src='/providence-timeline-interactive.js?v=16.9';s.async=true;document.body.appendChild(s);
 }
 })();
