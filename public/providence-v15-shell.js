@@ -20,12 +20,15 @@ const navTools=[
  ['modules','/modules/','▦','Modules & IA'],
  ['settings','/settings/','⚙','Paramètres']
 ];
+const allRows=[...navPrimary,...navExplore,...navTools];
+const pageLabel=(allRows.find(([k])=>k===page)||['','','','Console Providence'])[3];
 const links=rows=>rows.map(([k,href,icon,label])=>`<a href="${href}" class="${page===k?'active':''}" ${page===k?'aria-current="page"':''}><i>${icon}</i><span>${label}</span></a>`).join('');
 const details=(label,rows)=>`<details class="p15-nav-more" ${rows.some(([k])=>k===page)?'open':''}><summary>${label}</summary><nav class="p15-nav">${links(rows)}</nav></details>`;
 const allLinks=()=>`<nav class="p15-nav">${links(navPrimary)}</nav>${details('Explorer',navExplore)}${details('Outils',navTools)}`;
 const loadCss=(href,match)=>{if(!document.querySelector(`link[href*="${match}"]`)){const l=document.createElement('link');l.rel='stylesheet';l.href=href;document.head.appendChild(l)}};
 loadCss('/providence-v15-fixes.css?v=clarity-1','providence-v15-fixes.css');
 loadCss('/providence-v16-platform.css?v=16.1','providence-v16-platform.css');
+loadCss('/providence-v16-rail.css?v=16.1','providence-v16-rail.css');
 if(!document.querySelector('.p15-sidebar')){
  const side=document.createElement('aside');
  side.className='p15-sidebar';
@@ -42,7 +45,17 @@ if(!document.querySelector('.p15-sidebar')){
 }
 const main=document.querySelector('main');if(main)main.classList.add('p15-main');
 if(main&&!main.querySelector('.p15-topbar')){
- const top=document.createElement('div');top.className='p15-topbar';top.innerHTML=`<span class="p15-topbar-context">Voir avant. Décider mieux.</span><a class="p15-analyst" href="/analyst/"><span class="ring">△</span><span><b>Analyste Providence</b><small>Interroger le moteur</small></span></a>`;main.prepend(top);
+ const top=document.createElement('div');top.className='p15-topbar';top.innerHTML=`<div class="p16-platform-head"><i></i><span><small>PROVIDENCE / TEMPORAL INTELLIGENCE</small><b>${pageLabel}<em>· plateforme live</em></b></span></div><span class="p15-topbar-context">Voir avant. Décider mieux.</span><a class="p15-analyst" href="/analyst/"><span class="ring">△</span><span><b>Analyste Providence</b><small>Interroger le moteur</small></span></a>`;main.prepend(top);
+}
+if(main&&page!=='home'&&!main.querySelector('.p16-time-rail')){
+ const rail=document.createElement('nav');rail.className='p16-time-rail';rail.setAttribute('aria-label','Navigation temporelle');rail.innerHTML=`
+  <a class="p16-now" href="/predictions/"><i></i><span><b>PRÉSENT</b><small>état observé</small></span></a>
+  <a class="p16-time-node ${page==='horizons'?'active':''}" style="--c:#ffc85a" href="/horizons/#immediate"><b>≤ 72 H</b><small>immédiat</small></a>
+  <a class="p16-time-node" style="--c:#e9a85d" href="/horizons/#near"><b>≤ 1 MOIS</b><small>court terme</small></a>
+  <a class="p16-time-node" style="--c:#a777ff" href="/horizons/#medium"><b>≤ 3 MOIS</b><small>moyen terme</small></a>
+  <a class="p16-time-node" style="--c:#4f8dff" href="/horizons/#long"><b>≤ 1 AN</b><small>long terme</small></a>
+  <a class="p16-time-node" style="--c:#57d8ff" href="/horizons/#deep"><b>&gt; 1 AN</b><small>stratégique</small></a>`;
+ const top=main.querySelector('.p15-topbar');top?.insertAdjacentElement('afterend',rail);
 }
 if(!document.querySelector('.p15-mobilebar')){
  const bar=document.createElement('div');bar.className='p15-mobilebar';bar.innerHTML='<a class="p15-mobilebrand" href="/"><i></i><span>PROVIDENCE</span></a><button class="p15-mobile-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">☰</button>';
