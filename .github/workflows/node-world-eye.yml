@@ -72,8 +72,10 @@ jobs:
           grep -q 'SCÉNARIOS CONCURRENTS' /tmp/analyst-page.html
 
           curl -fsS http://127.0.0.1:3000/predictions/ >/tmp/predictions-page.html
-          grep -q 'Détails & sources' /tmp/predictions-page.html
+          grep -q 'CHAMP DES FUTURS POSSIBLES' /tmp/predictions-page.html
+          grep -q 'Lignes temporelles' /tmp/predictions-page.html
           grep -q 'SIGNAUX DÉTERMINANTS' /tmp/predictions-page.html
+          grep -q 'predictions-v16-14.js' /tmp/predictions-page.html
 
           curl -fsS http://127.0.0.1:3000/sports/ >/tmp/sports-page.html
           grep -q 'Prédire. Puis vérifier.' /tmp/sports-page.html
@@ -82,4 +84,4 @@ jobs:
           curl -fsS http://127.0.0.1:3000/providence-v16-product-cleanup.css >/tmp/cleanup.css
           grep -q 'Providence V16.7' /tmp/cleanup.css
 
-          echo 'Providence V16.7 product smoke test ok'
+          echo 'Providence V16.14 product smoke test ok'
