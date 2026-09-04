@@ -30,6 +30,7 @@ loadCss('/providence-v15-fixes.css?v=clarity-1','providence-v15-fixes.css');
 loadCss('/providence-v16-platform.css?v=16.4','providence-v16-platform.css');
 loadCss('/providence-v16-rail.css?v=16.4','providence-v16-rail.css');
 loadCss('/providence-v16-ux.css?v=16.4','providence-v16-ux.css');
+loadCss('/providence-v16-mobile-fixes.css?v=16.4','providence-v16-mobile-fixes.css');
 if(!document.querySelector('.p15-sidebar')){
  const side=document.createElement('aside');
  side.className='p15-sidebar';
