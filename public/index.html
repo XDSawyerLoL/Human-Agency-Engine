@@ -4,62 +4,48 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#02050b">
-  <meta name="description" content="Providence — lecture temporelle des futurs plausibles, intelligence prédictive, causalité et calibration.">
+  <meta name="description" content="Providence — la lecture vivante des futurs plausibles.">
   <title>Providence — Intelligence prédictive</title>
-  <link rel="stylesheet" href="/providence-v15.css?v=16.3">
-  <link rel="stylesheet" href="/providence-timeline.css?v=16.3">
-  <link rel="stylesheet" href="/providence-v16-platform.css?v=16.3">
-  <style>
-    .ptl-live-branches{position:absolute!important;left:55%;right:18px;top:72px;bottom:42px;display:grid!important;grid-template-columns:1fr!important;grid-template-rows:repeat(3,1fr);gap:10px;z-index:4}
-    .ptl-live-branches .p15-forecast-card{min-height:0!important;height:auto!important;padding:11px 76px 10px 14px!important;border-radius:11px!important;background:linear-gradient(180deg,rgba(8,15,27,.91),rgba(4,9,17,.96))!important;box-shadow:0 0 24px rgba(65,113,255,.08)!important}
-    .ptl-live-branches .p15-forecast-card:nth-child(1){border-color:rgba(255,200,90,.42)!important;box-shadow:0 0 26px rgba(255,190,70,.09)!important}
-    .ptl-live-branches .p15-forecast-card:nth-child(2){border-color:rgba(167,119,255,.40)!important}
-    .ptl-live-branches .p15-forecast-card:nth-child(3){border-color:rgba(79,141,255,.42)!important}
-    .ptl-live-branches .p15-forecast-card h3{font-size:.82rem!important;margin:5px 0 3px!important;max-width:100%!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .ptl-live-branches .p15-forecast-card p{font-size:.66rem!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .ptl-live-branches .p15-forecast-card small{font-size:.62rem!important}
-    .ptl-live-branches .p15-prob-ring{position:absolute!important;right:12px!important;top:50%!important;transform:translateY(-50%)!important;width:54px!important;height:54px!important}
-    .ptl-live-branches .p15-prob-ring:before{inset:5px!important}.ptl-live-branches .p15-prob-ring b{font-size:.78rem!important}
-    .ptl-live-branches .p15-mini-meta{margin-top:5px!important;font-size:.59rem!important}
-    .ptl-live-note{position:absolute;right:19px;bottom:13px;color:#63778d;font-size:.61rem;z-index:5}.ptl-live-note b{color:#8fa1b5}
-    .ptl-public-panel .p15-side-horizons{border:0!important;background:transparent!important}.ptl-public-panel .p15-horizon-row{padding:7px 4px!important}.ptl-public-panel .p15-horizon-row b{font-size:.78rem!important}.ptl-public-panel .p15-horizon-row small{font-size:.64rem!important}
-    .ptl-public-panel .pv14-action{min-height:38px!important}.ptl-public-panel .pv14-action b{font-size:.72rem!important}.ptl-public-panel .pv14-action small{font-size:.61rem!important}.ptl-public-panel .pv14-action em{font-size:.74rem!important}
-    .ptl-public-panel .p15-gauge{margin:6px auto 12px}.ptl-public-panel .p15-bars{margin-top:8px}.ptl-public-panel .p15-bar{font-size:.62rem!important}
-    @media(max-width:760px){.ptl-live-branches{position:relative!important;left:auto;right:auto;top:auto;bottom:auto;padding:78px 12px 18px;grid-template-rows:none}.ptl-stage{padding:0!important;min-height:420px!important}.ptl-stage .ptl-graph,.ptl-stage .ptl-memory-node,.ptl-stage .ptl-memory-caption,.ptl-stage .ptl-present,.ptl-stage .ptl-bifurcation,.ptl-stage .ptl-bifurcation-label{display:none!important}.ptl-live-note{position:absolute;left:14px;right:14px;bottom:9px}.ptl-stage-label.future{left:14px!important;top:24px!important}.ptl-stage:after{content:"Présent → trajectoires plausibles";position:absolute;left:14px;top:49px;color:#ffcf69;font-size:.7rem}}
-  </style>
+  <link rel="stylesheet" href="/providence-v15.css?v=16.11">
+  <link rel="stylesheet" href="/providence-timeline.css?v=16.11">
+  <link rel="stylesheet" href="/providence-timeline-interactive.css?v=16.11">
+  <link rel="stylesheet" href="/providence-timeline-v16-10.css?v=16.11">
+  <link rel="stylesheet" href="/home-v16-11.css?v=16.11">
 </head>
 <body data-page="home">
 <main>
-  <nav class="ptl-public-nav" aria-label="Navigation publique Providence">
-    <a class="ptl-brand" href="/"><span class="ptl-brand-mark" aria-hidden="true"></span><span>PROVIDENCE</span></a>
-    <div class="ptl-nav-links">
-      <a href="#timeline">Timeline</a>
-      <a href="/predictions/">Prédictions</a>
-      <a href="/track-record/">Calibration</a>
-      <a href="/analyst/">Analyste</a>
-      <a class="ptl-nav-cta" href="/predictions/">Accès à la plateforme →</a>
-    </div>
+  <nav class="p1611-nav" aria-label="Navigation Providence">
+    <a class="p1611-brand" href="/" aria-label="Providence accueil"><span class="p1611-mark" aria-hidden="true"></span><span>PROVIDENCE</span></a>
+    <a class="p1611-platform" href="/predictions/"><span class="desktop">Accès à la plateforme →</span><span class="mobile">Plateforme →</span></a>
   </nav>
 
-  <section class="ptl-hero">
-    <div class="ptl-hero-inner">
-      <span class="ptl-eyebrow"><i></i>QuanticOS · Dimension Quantic Simulated</span>
+  <section class="p1611-hero">
+    <div class="p1611-hero-inner">
+      <span class="p1611-badge"><i></i>QuanticOS · Dimension Quantic Simulated</span>
       <h1>PROVIDENCE</h1>
       <h2>La lecture vivante des futurs plausibles.</h2>
-      <p>Providence transforme les signaux du présent en trajectoires lisibles : plusieurs temporalités, plusieurs hypothèses et des probabilités vérifiables qui évoluent avec les nouvelles données.</p>
-      <small class="ptl-hero-note">Approche multi-hypothèses inspirée du quantum-inspired, exécutée sur calcul classique — aucune revendication d’ordinateur quantique.</small>
-      <div class="ptl-actions">
-        <a class="ptl-button" href="#timeline">Explorer la timeline →</a>
-        <a class="ptl-button alt" href="/predictions/">Voir les prédictions →</a>
+      <p class="p1611-hero-copy">Providence transforme les signaux du présent en trajectoires compréhensibles : ce qui pourrait arriver, avec quelle probabilité et dans quel horizon.</p>
+      <small class="p1611-note">Exploration multi-hypothèses inspirée du quantum-inspired, exécutée sur calcul classique.</small>
+      <div class="p1611-actions">
+        <a class="p1611-btn" href="#timeline">Explorer la timeline →</a>
+        <a class="p1611-btn alt" href="/predictions/">Voir les prédictions →</a>
       </div>
     </div>
   </section>
 
-  <section class="ptl-shell" id="timeline">
+  <section class="p1611-timeline" id="timeline">
     <article class="ptl-timeline-card">
       <header class="ptl-timeline-head">
-        <div><span class="ptl-kicker">EXPLORATION MULTI-SCÉNARIOS</span><h3>Du signal observé aux futurs plausibles</h3><p>Le présent reste le point d’ancrage. Les branches affichent les prévisions actives les plus fortes de Providence.</p></div>
-        <div class="ptl-horizon-tabs" aria-label="Horizons temporels"><span class="ptl-horizon-tab" style="--c:#ffc85a"><i></i>Court terme</span><span class="ptl-horizon-tab" style="--c:#a777ff"><i></i>Moyen terme</span><span class="ptl-horizon-tab" style="--c:#4f8dff"><i></i>Long terme</span></div>
+        <div>
+          <span class="ptl-kicker">EXPLORATION MULTI-SCÉNARIOS</span>
+          <h3>Du présent aux futurs plausibles</h3>
+          <p>Les branches évoluent avec les signaux. Touchez un futur pour comprendre ce qui le renforce ou pourrait l’invalider.</p>
+        </div>
+        <div class="ptl-horizon-tabs" aria-label="Horizons temporels">
+          <span class="ptl-horizon-tab" style="--c:#ffc85a"><i></i>Court terme</span>
+          <span class="ptl-horizon-tab" style="--c:#a777ff"><i></i>Moyen terme</span>
+          <span class="ptl-horizon-tab" style="--c:#4f8dff"><i></i>Long terme</span>
+        </div>
       </header>
 
       <div class="ptl-stage">
@@ -77,35 +63,38 @@
           <path class="ptl-branch" style="--c:#a777ff;--w:4.5" d="M515 200 C675 183 850 178 1190 194"/>
           <path class="ptl-branch weak" style="--c:#4f8dff;--w:4" d="M515 200 C680 270 850 302 1190 307"/>
         </svg>
-        <span class="ptl-stage-label memory">Mémoire</span><span class="ptl-stage-label present">Présent</span><span class="ptl-stage-label future">Futurs plausibles</span>
+        <span class="ptl-stage-label memory">Mémoire</span>
+        <span class="ptl-stage-label present">Présent</span>
+        <span class="ptl-stage-label future">Futurs plausibles</span>
         <span class="ptl-memory-node n1"></span><span class="ptl-memory-node n2"></span><span class="ptl-memory-node n3"></span>
         <div class="ptl-memory-caption c1"><b>SIGNAL</b><small>données observées</small></div>
-        <div class="ptl-memory-caption c2"><b>RECALIBRATION</b><small>probabilités ajustées</small></div>
-        <div class="ptl-memory-caption c3"><b>RÉSOLUTION</b><small>résultats enregistrés</small></div>
-        <div class="ptl-present"><strong>MAINTENANT</strong><small>état du monde observé</small></div>
-        <span class="ptl-bifurcation"></span><div class="ptl-bifurcation-label">BIFURCATION<small>plusieurs trajectoires analysées</small></div>
-        <div class="p15-forecast-grid ptl-live-branches" id="p15ForecastCards"></div>
-        <div class="ptl-live-note"><b>Probabilités live.</b> Les trajectoires peuvent coexister et ne sont pas nécessairement exclusives.</div>
+        <div class="ptl-memory-caption c2"><b>RECALIBRATION</b><small>probabilité ajustée</small></div>
+        <div class="ptl-memory-caption c3"><b>RÉSOLUTION</b><small>résultat enregistré</small></div>
+        <div class="ptl-present"><strong>MAINTENANT</strong><small>état observé</small></div>
+        <span class="ptl-bifurcation"></span><div class="ptl-bifurcation-label">BIFURCATION<small>trajectoires concurrentes</small></div>
+        <div class="p15-forecast-grid ptl-live-branches" id="p15ForecastCards"><div style="padding:18px;color:#8193a8">Chargement des futurs plausibles…</div></div>
+        <div class="ptl-live-note"><b>Probabilités live.</b> Plusieurs trajectoires peuvent coexister.</div>
       </div>
     </article>
 
-    <div class="ptl-public-grid">
-      <article class="ptl-public-panel"><h4><span class="ptl-panel-icon">⌁</span>Scénarios</h4><div id="overviewDecision"></div></article>
-      <article class="ptl-public-panel"><h4><span class="ptl-panel-icon">◷</span>Temporalités</h4><div class="p15-side-horizons" id="p15Horizons"><div class="p15-horizon-row"><i>1</i><div><b>Ultra court terme</b><small>0 – 72 heures</small></div><strong>—</strong></div><div class="p15-horizon-row"><i>2</i><div><b>Court terme</b><small>3 jours – 4 semaines</small></div><strong>—</strong></div><div class="p15-horizon-row"><i>3</i><div><b>Moyen terme</b><small>1 – 6 mois</small></div><strong>—</strong></div><div class="p15-horizon-row"><i>4</i><div><b>Long terme</b><small>6 mois – 5 ans</small></div><strong>—</strong></div><div class="p15-horizon-row"><i>5</i><div><b>Très long terme</b><small>5 – 20 ans</small></div><strong>—</strong></div></div></article>
-      <article class="ptl-public-panel"><h4><span class="ptl-panel-icon">◎</span>Calibration</h4><div class="p15-gauge"><b id="p15ProofScore">—</b></div><div class="p15-bars" id="overviewTrend"></div><a href="/track-record/" style="display:block;margin-top:10px;color:#79b9ff;font-size:.68rem">Voir le registre de calibration →</a></article>
+    <div class="p1611-proofline" aria-label="État de Providence">
+      <span><b id="p1611ForecastCount">—</b> prévisions actives</span><i></i>
+      <span><b id="p1611SignalCount">—</b> signaux observés</span><i></i>
+      <span>Calibration <b id="p1611Calibration">en collecte</b></span>
     </div>
   </section>
 
-  <section class="ptl-live-section">
-    <header class="ptl-live-head"><span>DONNÉES & PREUVES</span><h3>Ce que Providence observe maintenant</h3><p>La mise en scène temporelle reste reliée aux mêmes données live et au même registre de calibration.</p></header>
-    <section class="p15-kpis"><article class="p15-kpi blue" id="mSignals"><span class="ico">◉</span><div><small>SIGNAUX MONDIAUX</small><strong>—</strong><em>observés maintenant</em></div></article><article class="p15-kpi violet" id="mForecasts"><span class="ico">⌁</span><div><small>PRÉVISIONS ACTIVES</small><strong>—</strong><em>scénarios publiés</em></div></article><article class="p15-kpi cyan" id="mResolved"><span class="ico">✓</span><div><small>SCÉNARIOS RÉSOLUS</small><strong>—</strong><em>registre vérifiable</em></div></article><article class="p15-kpi gold" id="mCalibration"><span class="ico">◎</span><div><small>CALIBRATION GLOBALE</small><strong>—</strong><em>100 − ECE</em></div></article><article class="p15-kpi green" id="mConfidence"><span class="ico">◇</span><div><small>CONFIANCE MOYENNE</small><strong>—</strong><em>solidité moyenne</em></div></article></section>
-
-    <section class="p15-dashboard-main"><article class="p15-panel"><header>PRÉVISIONS PRIORITAIRES <a href="/predictions/">Voir toutes →</a></header><div class="body"><div id="overviewPriorities"></div></div></article><article class="p15-panel"><header>CRÉDIBILITÉ DES SOURCES <a href="/sources/">Voir toutes →</a></header><div class="body"><div id="overviewMap"></div></div></article></section>
-    <section class="p15-lower-grid"><article class="p15-panel"><header>DOMAINES SURVEILLÉS <a href="/sources/">Voir les données →</a></header><div class="body"><div class="pv14-domains" id="overviewDomains"></div></div></article><article class="p15-panel"><header>ALERTES RÉCENTES <a href="/alerts/">Voir toutes →</a></header><div class="body"><div id="overviewAlerts"></div></div></article><article class="p15-panel"><header>SPORTS INTELLIGENCE <a href="/sports/">Ouvrir le module →</a></header><div class="p15-sports-strip"><div><small style="color:#3fd9ff">LABORATOIRE DE PREUVE</small><h3 style="font-size:1rem;margin:8px 0 4px">Le sport teste la calibration en conditions fermées.</h3><p style="font-size:.78rem;color:#8fa5ba;margin:0">Probabilités verrouillées avant le coup d’envoi, puis résultats mesurés.</p></div><div><a href="/matches/" style="font-size:.72rem;color:#39c4ff">Voir les prochains matchs →</a></div></div></article></section>
-    <section class="p15-bottom-strip"><article class="p15-bottom-stat"><i style="color:#2ecfff">◎</i><div><small>PRÉCISION 30 JOURS</small><b>—</b><em>calibration live</em></div></article><article class="p15-bottom-stat"><i style="color:#ffc34a">▥</i><div><small>PRÉDICTIONS PUBLIÉES</small><b>—</b><em>registre public</em></div></article><article class="p15-bottom-stat"><i style="color:#f25bd8">⌁</i><div><small>CHANGEMENTS CRITIQUES</small><b>—</b><em>surveillance active</em></div></article><article class="p15-bottom-stat"><i style="color:#48e68f">✦</i><div><small>NOUVEAUX SIGNAUX</small><b>—</b><em>flux continu</em></div></article><article class="p15-bottom-stat"><i style="color:#35d9ff">◷</i><div><small>DÉTECTION</small><b>Live</b><em>temps réel</em></div></article><article class="p15-bottom-stat"><i style="color:#48e68f">✓</i><div><small>SYSTÈME</small><b>Actif</b><em>opérationnel</em></div></article></section>
-  </section>
+  <footer class="p1611-footer">Providence privilégie les résultats. <a href="/track-record/">Méthode & transparence</a></footer>
 </main>
-<script src="/providence-v15-shell.js?v=16.3" defer></script>
-<script src="/overview-v15.js?v=16.3" defer></script>
+
+<nav class="p1611-dock" aria-label="Navigation mobile">
+  <a class="active" href="/" aria-current="page"><i>◉</i><span>Accueil</span></a>
+  <a href="/predictions/"><i>⌁</i><span>Prévisions</span></a>
+  <a href="/analyst/"><i>△</i><span>Analyste</span></a>
+  <a href="/alerts/"><i>♢</i><span>Alertes</span></a>
+</nav>
+
+<script src="/home-v16-11.js?v=16.11" defer></script>
+<script src="/providence-timeline-v16-10.js?v=16.11" defer></script>
 </body>
 </html>
