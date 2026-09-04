@@ -49,7 +49,6 @@ jobs:
           test "$ok" = "1"
           node -e "const x=require('/tmp/health.json'); if(x.service!=='evidence-world-eye-node'||x.port!==3000) process.exit(1); console.log('health ok')"
 
-          # Analyst is a required product route. A 404 must fail the build.
           curl -fsS http://127.0.0.1:3000/api/analyst/status >/tmp/analyst-status.json
           node -e "const x=require('/tmp/analyst-status.json'); if(x.schema!=='providence-analyst-status-v1'||x.superposition_engine!==true) process.exit(1); console.log('analyst status ok')"
 
@@ -72,10 +71,12 @@ jobs:
           grep -q 'SCÉNARIOS CONCURRENTS' /tmp/analyst-page.html
 
           curl -fsS http://127.0.0.1:3000/predictions/ >/tmp/predictions-page.html
-          grep -q 'CHAMP DES FUTURS POSSIBLES' /tmp/predictions-page.html
+          grep -q 'Ce que Providence voit venir' /tmp/predictions-page.html
+          grep -q 'FUTURS PLAUSIBLES' /tmp/predictions-page.html
           grep -q 'Lignes temporelles' /tmp/predictions-page.html
           grep -q 'SIGNAUX DÉTERMINANTS' /tmp/predictions-page.html
-          grep -q 'predictions-v16-14.js' /tmp/predictions-page.html
+          grep -q 'predictions-v16-15.js?v=16.15' /tmp/predictions-page.html
+          grep -q 'predictions-v16-15.css?v=16.15' /tmp/predictions-page.html
 
           curl -fsS http://127.0.0.1:3000/sports/ >/tmp/sports-page.html
           grep -q 'Prédire. Puis vérifier.' /tmp/sports-page.html
@@ -84,4 +85,4 @@ jobs:
           curl -fsS http://127.0.0.1:3000/providence-v16-product-cleanup.css >/tmp/cleanup.css
           grep -q 'Providence V16.7' /tmp/cleanup.css
 
-          echo 'Providence V16.14 product smoke test ok'
+          echo 'Providence V16.15 product smoke test ok'
