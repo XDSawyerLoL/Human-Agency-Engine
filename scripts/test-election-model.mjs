@@ -16,9 +16,23 @@ const html=`
 <tr><td>Harris</td><td>1100</td><td>54%</td><td>46%</td></tr>
 </table>`;
 
+const plainNumericHtml=`
+<table class="wikitable">
+<tr><th rowspan="2">Sondeur</th><th rowspan="2">Échantillon</th><th colspan="4">Intentions de vote</th></tr>
+<tr><th>Alice Martin</th><th>Bruno Durand</th><th>Claire Robert</th><th>David Simon</th></tr>
+<tr><td>IFOP</td><td>1500</td><td>31</td><td>27</td><td>23</td><td>19</td></tr>
+<tr><td>IPSOS</td><td>1200</td><td>30</td><td>28</td><td>22</td><td>20</td></tr>
+<tr><td>Harris</td><td>1800</td><td>32</td><td>26</td><td>24</td><td>18</td></tr>
+<tr><td>Elabe</td><td>1000</td><td>29</td><td>29</td><td>23</td><td>19</td></tr>
+<tr><td>OpinionWay</td><td>1400</td><td>31</td><td>27</td><td>22</td><td>20</td></tr>
+</table>`;
+
 const parsed=parseElectionPollingHtml(html);
 if(parsed.polls.length<5)throw new Error(`first round polling parse failed: ${parsed.polls.length}`);
 if(parsed.matchups.length<3)throw new Error(`head to head parse failed: ${parsed.matchups.length}`);
+const plain=parseElectionPollingHtml(plainNumericHtml);
+if(plain.polls.length<5)throw new Error(`plain numeric polling parse failed: ${plain.polls.length}`);
+if((plain.polls[0]?.candidates||[]).length<4)throw new Error('rowspan/colspan candidate alignment failed');
 
 const originalFetch=globalThis.fetch;
 globalThis.fetch=async input=>{
@@ -38,7 +52,7 @@ try{
   if(!model.second_round?.length)throw new Error('head-to-head model missing');
   const h2h=model.second_round[0].model_win_probability.reduce((s,x)=>s+Number(x.percent||0),0);
   if(Math.abs(h2h-100)>.2)throw new Error(`head-to-head probability normalization failed: ${h2h}`);
-  if(!String(model.methodology.house_effects||'').toLowerCase().startsWith('non appli'))throw new Error('house effects guardrail ambiguous');
+  if(model.methodology.house_effects_applied!==false||model.methodology.historical_calibration_applied!==false)throw new Error('unvalidated calibration was applied');
   if(model.guardrails.lobbying_not_direct_vote_shift!==true||model.guardrails.polls_are_not_votes!==true)throw new Error('election guardrails missing');
-  console.log(JSON.stringify({ok:true,polls:parsed.polls.length,candidates:model.first_round.candidates.length,iterations:model.methodology.monte_carlo_iterations,top:model.first_round.candidates[0],top_pair:model.first_round.pair_scenarios[0],head_to_head:model.second_round[0]}));
+  console.log(JSON.stringify({ok:true,polls:parsed.polls.length,plain_numeric_polls:plain.polls.length,candidates:model.first_round.candidates.length,iterations:model.methodology.monte_carlo_iterations,top:model.first_round.candidates[0],top_pair:model.first_round.pair_scenarios[0],head_to_head:model.second_round[0]}));
 } finally {globalThis.fetch=originalFetch;}
