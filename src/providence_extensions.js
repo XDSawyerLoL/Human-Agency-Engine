@@ -2,7 +2,9 @@ import { config } from './config.js';
 import { buildSuperposition } from './superposition_engine.js';
 import { analystStatus, answerProvidence } from './providence_analyst.js';
 import { buildDynamicForecast } from './quantic_dynamic_forecast.js';
+import { collectIndependentEvidence } from './quantic_independent_evidence.js';
 import { buildElectionModel, isFrench2027ElectionQuestion } from './election_model.js';
+import { buildElectionDeduction } from './election_deduction_engine.js';
 
 const analystRuns=new Map();
 const WINDOW_MS=60_000;
@@ -22,30 +24,60 @@ function allowed(client){
   list.push(now);analystRuns.set(client,list);return true;
 }
 
-function electionSuperposition(model,fallback){
+function electionSuperposition(model,deduction,fallback){
+  const final=deduction?.final_outcome;
+  if(final?.status==='publishable'&&Array.isArray(final.candidates)&&final.candidates.length){
+    const worlds=final.candidates.slice(0,6).map((x,i)=>({
+      world_id:`election_winner_${i+1}`,scenario_key:null,title:`Victoire finale : ${x.candidate}`,domain:'politics',region:'France',horizon_label:'Présidentielle 2027',
+      relative_world_weight_percent:Number(x.win_probability_percent)||0,forecast_probability_percent:Number(x.win_probability_percent)||0,
+      probability_kind:'model_probability_of_final_election_win',dynamic_research:true,source_count:x.paths?.length||0
+    }));
+    if(Number(final.unresolved_probability_mass_percent)>0)worlds.push({world_id:'election_unresolved',title:'Issue encore non résolue par les duels disponibles',domain:'politics',region:'France',horizon_label:'Présidentielle 2027',relative_world_weight_percent:Number(final.unresolved_probability_mass_percent)||0,forecast_probability_percent:null,probability_kind:'unresolved_probability_mass',dynamic_research:true});
+    return {schema:'providence-election-superposition-v2',generated_at:model.generated_at,query:'Présidentielle française 2027',worlds,consensus:{dominant_world_id:worlds[0]?.world_id||null,branch_count:worlds.length,interpretation:`résultat final simulé · couverture des duels ${final.coverage_percent}%`},semantics:{world_weights_are_event_probabilities:true,world_probability_kind:'final_election_outcome_with_unresolved_mass',forecast_probabilities_remain_canonical:true,quantum_computing_claim:false,unresolved_mass_is_not_redistributed:true}};
+  }
   const branches=model?.temporal_branches||[];
   if(!branches.length)return fallback;
-  return {
-    schema:'providence-election-superposition-v1',generated_at:model.generated_at,query:'Présidentielle française 2027',worlds:branches,
-    consensus:{dominant_world_id:branches[0]?.world_id||null,branch_count:branches.length,interpretation:'configurations de second tour simulées'},
-    semantics:{world_weights_are_event_probabilities:true,world_probability_kind:'model_probability_of_second_round_configuration',forecast_probabilities_remain_canonical:true,quantum_computing_claim:false}
-  };
+  return {schema:'providence-election-superposition-v1',generated_at:model.generated_at,query:'Présidentielle française 2027',worlds:branches,consensus:{dominant_world_id:branches[0]?.world_id||null,branch_count:branches.length,interpretation:'configurations de second tour simulées'},semantics:{world_weights_are_event_probabilities:true,world_probability_kind:'model_probability_of_second_round_configuration',forecast_probabilities_remain_canonical:true,quantum_computing_claim:false}};
 }
 
-function electionText(model){
+function electionText(model,deduction){
   if(!model||model.status==='degraded')return '';
   const rows=model?.first_round?.candidates||[];
-  const top=rows.slice(0,5).map((x,i)=>`${i+1}. ${x.candidate} — ${x.qualification_probability}% de probabilité de qualification au second tour · moyenne sondages ${x.poll_average}%`).join('\n');
+  const top=rows.slice(0,5).map((x,i)=>`${i+1}. ${x.candidate} — qualification au second tour ${x.qualification_probability}% · moyenne de l’hypothèse suivie ${x.poll_average}%`).join('\n');
   const pairs=(model?.first_round?.pair_scenarios||[]).slice(0,4).map((x,i)=>`${i+1}. ${x.title} — ${x.probability_percent}%`).join('\n');
   if(!top)return `Le module Election Model a été lancé, mais les tableaux de sondages disponibles ne sont pas encore assez structurés pour produire une simulation fiable.`;
-  return `Election Model a simulé ${model.methodology?.monte_carlo_iterations||0} trajectoires à partir des sondages publics structurés.\n\nQualification au second tour :\n${top}\n\nConfigurations de second tour les plus plausibles :\n${pairs||'Pas assez de données structurées.'}\n\nQualité du modèle : ${model.quality?.score||0}/100. Les sondages ne sont pas des votes ; aucun bonus causal n’est ajouté pour les banques, le lobbying ou les médias sans calibration historique.`;
+  const final=deduction?.final_outcome;
+  let finalBlock='';
+  if(final?.status==='publishable'){
+    const ranking=(final.candidates||[]).slice(0,5).map((x,i)=>`${i+1}. ${x.candidate} — victoire finale ${x.win_probability_percent}%`).join('\n');
+    finalBlock=`\n\nRésultat final simulé :\n${ranking}\nMasse encore non résolue faute de duel structuré : ${final.unresolved_probability_mass_percent}% · couverture des configurations : ${final.coverage_percent}%.`;
+  }else if(final){
+    finalBlock=`\n\nRésultat final : la couverture des sondages de duel est encore insuffisante (${final.coverage_percent||0}%). Providence conserve donc les configurations de second tour sans inventer un vainqueur.`;
+  }
+  const deductionRows=(deduction?.deductions||[]).slice(0,5).map(x=>`• ${x.statement}`).join('\n');
+  const deductionBlock=deductionRows?`\n\nDéductions croisées :\n${deductionRows}\nIndépendance des sources : ${deduction?.evidence_independence?.score||0}/100 · doublons supprimés : ${deduction?.evidence_independence?.duplicates_suppressed||0}.`:'';
+  return `Election Model a simulé ${model.methodology?.monte_carlo_iterations||0} trajectoires à partir des sondages publics structurés.\n\nQualification au second tour :\n${top}\n\nConfigurations de second tour les plus plausibles :\n${pairs||'Pas assez de données structurées.'}${finalBlock}${deductionBlock}\n\nQualité du modèle : ${model.quality?.score||0}/100. Les données économiques, médiatiques et de lobbying servent à construire des situations et contre-scénarios ; elles ne deviennent jamais automatiquement des points pour un candidat sans calibration historique.`;
+}
+
+function mergeIndependentEvidence(dynamic,independent){
+  if(!dynamic?.research||!independent)return dynamic;
+  const old=Array.isArray(dynamic.research.evidence)?dynamic.research.evidence:[];
+  const extra=Array.isArray(independent.evidence)?independent.evidence:[];
+  dynamic.research.evidence=[...old,...extra];
+  dynamic.research.sources_attempted=Number(dynamic.research.sources_attempted||old.length)+Number(independent.sources_attempted||extra.length);
+  dynamic.research.sources_ok=Number(dynamic.research.sources_ok||old.filter(x=>x?.status==='ok').length)+Number(independent.sources_ok||extra.filter(x=>x?.status==='ok').length);
+  dynamic.research.independent_evidence_score=independent.independence_score;
+  dynamic.research.coverage_score=Math.min(100,Math.round(Number(dynamic.research.coverage_score||0)+Math.min(14,Number(independent.sources_ok||0)*6)));
+  return dynamic;
 }
 
 async function buildDynamicBundle(question,snapshot){
-  const dynamic=await buildDynamicForecast(question,snapshot);
+  const [dynamicBase,independent]=await Promise.all([buildDynamicForecast(question,snapshot),collectIndependentEvidence(question)]);
+  const dynamic=mergeIndependentEvidence(dynamicBase,independent);
   const election=isFrench2027ElectionQuestion(question)?await buildElectionModel(question):null;
-  if(!election)return dynamic;
-  return {...dynamic,election_model:election,superposition:electionSuperposition(election,dynamic.superposition)};
+  if(!election)return {...dynamic,independent_evidence:independent};
+  const deduction=buildElectionDeduction({electionModel:election,dynamicForecast:dynamic});
+  return {...dynamic,independent_evidence:independent,election_model:election,election_deduction:deduction,superposition:electionSuperposition(election,deduction,dynamic.superposition)};
 }
 
 export function installProvidenceExtensions(app){
@@ -54,15 +86,13 @@ export function installProvidenceExtensions(app){
 
   app.get('/api/analyst/status',(_req,res)=>{
     res.set('Cache-Control','no-store');
-    res.json({schema:'providence-analyst-status-v1',...analystStatus(),superposition_engine:true,dynamic_forecast_engine:true,election_model:true,red_team_read_only:true});
+    res.json({schema:'providence-analyst-status-v1',...analystStatus(),superposition_engine:true,dynamic_forecast_engine:true,election_model:true,election_deduction_engine:true,independent_evidence_engine:true,red_team_read_only:true});
   });
 
   app.get('/api/superposition',async(req,res)=>{
     res.set('Cache-Control','public, max-age=20, stale-while-revalidate=60');
-    try{
-      const snapshot=await localJson('/api/snapshot');
-      res.json(buildSuperposition(snapshot,{query:String(req.query.q||''),scenarioKey:String(req.query.scenario_key||''),limit:Number(req.query.limit)||4}));
-    }catch(error){res.status(503).json({schema:'providence-superposition-v1',status:'unavailable',error:String(error?.message||error)});}
+    try{const snapshot=await localJson('/api/snapshot');res.json(buildSuperposition(snapshot,{query:String(req.query.q||''),scenarioKey:String(req.query.scenario_key||''),limit:Number(req.query.limit)||4}));}
+    catch(error){res.status(503).json({schema:'providence-superposition-v1',status:'unavailable',error:String(error?.message||error)});}
   });
 
   app.post('/api/election-model',async(req,res)=>{
@@ -71,9 +101,10 @@ export function installProvidenceExtensions(app){
     if(!allowed(`${client}:election`))return res.status(429).json({status:'error',error:'election_model_rate_limit',retry_after_seconds:60});
     try{
       const question=String(req.body?.question||req.body?.message||'Que va-t-il se passer pour les élections 2027 en France ?').trim();
-      const model=await buildElectionModel(question);
-      if(!model)return res.status(400).json({status:'error',error:'unsupported_election_scope'});
-      res.json(model);
+      if(!isFrench2027ElectionQuestion(question))return res.status(400).json({status:'error',error:'unsupported_election_scope'});
+      const snapshot=await localJson('/api/snapshot');
+      const bundle=await buildDynamicBundle(question,snapshot);
+      res.json({...bundle.election_model,deduction:bundle.election_deduction,independent_evidence:bundle.independent_evidence});
     }catch(error){res.status(502).json({status:'error',error:String(error?.message||error)});}
   });
 
@@ -101,12 +132,10 @@ export function installProvidenceExtensions(app){
       if(result?.no_relevant_forecast&&message.trim().length>=8){
         try{
           const dynamic=await buildDynamicBundle(message,snapshot);
-          const eText=electionText(dynamic?.election_model);
+          const eText=electionText(dynamic?.election_model,dynamic?.election_deduction);
           const baseText=`J’ai lancé Quantic Dynamic Forecast car aucune prévision publiée ne couvrait suffisamment ta question. Recherche multi-source : ${dynamic?.research?.sources_ok||0}/${dynamic?.research?.sources_attempted||0} sources exploitables · couverture ${dynamic?.research?.coverage_score||0}/100.`;
-          return res.json({schema:'providence-analyst-response-v1',status:'ok',provider:dynamic?.election_model?'quantic_election_model':'quantic_dynamic',model:null,mode:'analyst',text:[baseText,eText].filter(Boolean).join('\n\n'),superposition:dynamic.superposition,dynamic_forecast:dynamic,election_model:dynamic.election_model||null,execution_authority:false});
-        }catch(dynamicError){
-          return res.json({schema:'providence-analyst-response-v1',...result,dynamic_forecast_error:String(dynamicError?.message||dynamicError)});
-        }
+          return res.json({schema:'providence-analyst-response-v1',status:'ok',provider:dynamic?.election_model?'quantic_election_model':'quantic_dynamic',model:null,mode:'analyst',text:[baseText,eText].filter(Boolean).join('\n\n'),superposition:dynamic.superposition,dynamic_forecast:dynamic,election_model:dynamic.election_model||null,election_deduction:dynamic.election_deduction||null,execution_authority:false});
+        }catch(dynamicError){return res.json({schema:'providence-analyst-response-v1',...result,dynamic_forecast_error:String(dynamicError?.message||dynamicError)});}
       }
       res.json({schema:'providence-analyst-response-v1',...result});
     }catch(error){res.status(500).json({status:'error',error:String(error?.message||error)});}
