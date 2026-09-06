@@ -51,7 +51,7 @@ export function buildElectionOutcomeProjection(model,situation=null){
   const quality=clamp(Math.round(Number(model?.quality?.score||0)*.55+coverage*.35+Math.max(0,10-volatility)*1.0),0,92);
   return {
     schema:'providence-election-outcome-v1',status:'ok',generated_at:new Date().toISOString(),election:model?.election||'Élection',
-    winner_projection:candidates[0]||null,candidates,pair_outcomes,
+    winner_projection:candidates[0]||null,candidates,pair_outcomes:pairOutcomes,
     coverage:{configuration_probability_mass:round(totalMass,1),direct_head_to_head_probability_mass:round(directCoverage,1),direct_head_to_head_coverage_percent:round(coverage,1),synthetic_runoff_coverage_percent:round(100-coverage,1)},
     situation:{inference_quality:Number(situation?.quality?.score||0),volatility_index:round(volatility,1),deductions_used:(situation?.deductions||[]).map(x=>x.id).slice(0,10)},
     quality:{score:quality,status:quality>=70?'substantial':quality>=50?'exploratory':'fragile'},
