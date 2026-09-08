@@ -54,5 +54,5 @@ console.log(JSON.stringify({
   providence_analyst: true,
   red_team_read_only: true,
   primary_pages: 12,
-  version: '1.15.1'
+  version: '1.16.20'
 }));
