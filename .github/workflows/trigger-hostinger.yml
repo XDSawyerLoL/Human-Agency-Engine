@@ -1,0 +1,20 @@
+name: Trigger Hostinger deployment
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  trigger:
+    if: ${{ github.event.head_commit.message != 'CI: trigger Hostinger deployment after every main update' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch Hostinger deployment workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy-hostinger.yml --repo "${{ github.repository }}" --ref main
