@@ -14,6 +14,8 @@ const required = [
   'public/providence-v15-compat.css',
   'public/providence-v15-pages.css',
   'public/providence-v15-shell.js',
+  'public/providence-early-warning-v17.js',
+  'public/providence-early-warning-v17.css',
   'public/overview-v15.js',
   'public/predictions/index.html',
   'public/predictions/predictions-v15.js',
@@ -28,7 +30,9 @@ const required = [
   'public/backtest/index.html',
   'public/sources/index.html',
   'public/alerts/index.html',
-  'public/settings/index.html'
+  'public/alerts/alerts.js',
+  'public/settings/index.html',
+  'scripts/test-early-warning-v17.mjs'
 ];
 
 for (const file of required) {
@@ -52,7 +56,11 @@ console.log(JSON.stringify({
   data_driven_gauges: true,
   superposition_engine: true,
   providence_analyst: true,
+  early_warning_engine: true,
+  probability_movement: true,
+  competing_scenarios: true,
+  falsification_surface: true,
   red_team_read_only: true,
   primary_pages: 12,
-  version: '1.16.20'
+  version: '1.17.0'
 }));
