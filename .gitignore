@@ -2,4 +2,16 @@ __pycache__/
 .pytest_cache/
 .venv/
 .env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
 *.db
+node_modules/
+npm-debug.log*
+.DS_Store
