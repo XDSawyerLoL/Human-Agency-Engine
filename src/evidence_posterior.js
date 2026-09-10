@@ -4,8 +4,8 @@ const logit=p=>Math.log(clamp(p,.001,.999)/(1-clamp(p,.001,.999)));
 const sigmoid=x=>1/(1+Math.exp(-x));
 
 const SUPPORT_WORDS=new Set([
-  'support','supportive','confirm','confirmed','confirmation','increase','up','upward','rise','rising','positive','favorable','favourable','for','toward','towards','worsen','worsening','escalate','escalation','stress','shortage','outage','spike','accelerate','accelerating',
-  'soutien','favorable','confirme','confirmation','hausse','monte','augmentation','positif','vers','aggrave','aggravation','escalade','tension','penurie','coupure','pic','accelere'
+  'support','supportive','confirm','confirmed','confirmation','increase','up','upward','rise','rising','positive','favorable','favourable','toward','towards','worsen','worsening','escalate','escalation','stress','shortage','outage','spike','accelerate','accelerating',
+  'soutien','favorable','confirme','confirmation','hausse','monte','augmentation','positif','aggrave','aggravation','escalade','tension','penurie','coupure','pic','accelere'
 ]);
 const CONTRARY_WORDS=new Set([
   'contrary','against','disconfirm','disconfirmed','contradict','contradiction','decrease','down','downward','fall','falling','negative','mitigate','mitigation','ease','easing','stabilize','stabilized','stabilisation','stabilization','recovery','recover','restore','restored','surplus','resolved','contained','deescalate','de-escalate','deescalation','ceasefire',
@@ -93,14 +93,14 @@ export function computeEvidencePosterior(priorProbability,rows=[],options={}){
   for(let index=0;index<eligible.length;index++){
     const row=eligible[index];
     const contribution=evidenceContribution(row,index,maxLogBayesFactor);
-    const remaining=Math.max(0,maxAbsoluteLogShift-Math.abs(cumulativeShift));
-    let shift=clamp(contribution.log_bayes_factor,-remaining,remaining);
-    // Do not allow a late item to flip an already accumulated shift merely because
-    // the global cap has been reached in the opposite direction.
-    if(remaining<=0)shift=0;
+    // Cap the cumulative movement, not the individual opposite-direction step.
+    // This lets new contrary evidence undo prior support instead of getting stuck
+    // at the cap while still preventing runaway posterior movement.
+    const boundedCumulative=clamp(cumulativeShift+contribution.log_bayes_factor,-maxAbsoluteLogShift,maxAbsoluteLogShift);
+    const shift=boundedCumulative-cumulativeShift;
     const before=sigmoid(currentLogit);
     currentLogit+=shift;
-    cumulativeShift+=shift;
+    cumulativeShift=boundedCumulative;
     const after=sigmoid(currentLogit);
     updates.push({
       source_key:row.source_key,
