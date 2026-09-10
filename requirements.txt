@@ -7,7 +7,7 @@ pydantic-settings==2.10.1
 psycopg[binary]==3.2.9
 pytest==8.4.1
 httpx==0.28.1
-cryptography==49.0.0
+cryptography==50.0.1
 google-api-python-client==2.198.0
 google-auth==2.56.2
 google-auth-oauthlib==1.4.0
