@@ -1,0 +1,58 @@
+name: Crypto Market CI
+
+on:
+  pull_request:
+    paths:
+      - 'src/crypto_market_forecast.js'
+      - 'src/crypto_market_routes.js'
+      - 'src/providence_extensions_bootstrap.js'
+      - 'public/crypto/**'
+      - 'scripts/test-crypto-market-forecast.mjs'
+      - '.github/workflows/crypto-market.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/crypto_market_forecast.js'
+      - 'src/crypto_market_routes.js'
+      - 'src/providence_extensions_bootstrap.js'
+      - 'public/crypto/**'
+      - 'scripts/test-crypto-market-forecast.mjs'
+      - '.github/workflows/crypto-market.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  crypto-market:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+      - name: Compile crypto modules
+        run: |
+          node --check src/crypto_market_forecast.js
+          node --check src/crypto_market_routes.js
+          node --check public/crypto/crypto.js
+      - name: Test deterministic crypto forecast
+        run: node scripts/test-crypto-market-forecast.mjs
+      - name: Smoke-test crypto routes and page
+        run: |
+          npm start >/tmp/providence.log 2>&1 &
+          pid=$!
+          trap 'kill $pid 2>/dev/null || true; cat /tmp/providence.log' EXIT
+          ok=0
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3000/api/health >/dev/null; then ok=1; break; fi
+            sleep 0.5
+          done
+          test "$ok" = "1"
+          curl -fsS http://127.0.0.1:3000/api/markets/crypto/catalog >/tmp/crypto-catalog.json
+          node -e "const x=require('/tmp/crypto-catalog.json'); if(x.schema!=='providence-crypto-catalog-v1'||!x.assets.some(a=>a.symbol==='BTC')||!x.assets.some(a=>a.symbol==='ETH')) process.exit(1)"
+          curl -fsS http://127.0.0.1:3000/crypto/ >/tmp/crypto.html
+          grep -q 'PROVIDENCE · CRYPTO MARKET' /tmp/crypto.html
+          grep -q 'crypto.js?v=1.19' /tmp/crypto.html
