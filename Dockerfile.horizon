@@ -4,6 +4,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=8000
 
+RUN groupadd --system providence \
+    && useradd --system --gid providence --home-dir /home/providence --create-home --shell /usr/sbin/nologin providence
+
 WORKDIR /app
 
 COPY requirements.txt .
@@ -13,6 +16,9 @@ COPY alembic.ini ./alembic.ini
 COPY migrations ./migrations
 COPY app ./app
 COPY scripts ./scripts
+
+RUN chown -R providence:providence /app /home/providence
+USER providence
 
 EXPOSE 8000
 
