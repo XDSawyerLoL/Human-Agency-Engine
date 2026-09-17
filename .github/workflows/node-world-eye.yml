@@ -38,6 +38,8 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
       - run: npm run check
+      - name: Verify Quantic portal probes are concurrent
+        run: node scripts/test-quantic-portal-status.mjs
       - run: npm run build
 
       - name: Start Providence and verify product-critical routes
@@ -53,6 +55,9 @@ jobs:
           done
           test "$ok" = "1"
           node -e "const x=require('/tmp/health.json'); if(x.service!=='evidence-world-eye-node'||x.port!==3000) process.exit(1); console.log('health ok')"
+
+          curl -fsS http://127.0.0.1:3000/api/quantic-portal/status >/tmp/quantic-status.json
+          node -e "const x=require('/tmp/quantic-status.json'); const ids=new Set((x.services||[]).map(s=>s.id)); if(x.status!=='ok'||!ids.has('vision')||!ids.has('mail')||!ids.has('relay-render')||!ids.has('relay-railway')||!ids.has('relay-hostinger')) process.exit(1); console.log('quantic portal status ok')"
 
           curl -fsS http://127.0.0.1:3000/api/analyst/status >/tmp/analyst-status.json
           node -e "const x=require('/tmp/analyst-status.json'); if(x.schema!=='providence-analyst-status-v1'||x.superposition_engine!==true) process.exit(1); console.log('analyst status ok')"

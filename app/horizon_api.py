@@ -49,6 +49,7 @@ from .routers.horizon_weather_chain import router as horizon_weather_chain_route
 from .routers.horizon_windy import router as horizon_windy_router
 from .routers.horizon_world import router as horizon_world_router
 from .routers.horizon_briefing import router as horizon_briefing_router
+from .routers.quantic_portal import router as quantic_portal_router
 from .config import settings
 
 
@@ -101,6 +102,7 @@ HORIZON_ROUTERS = (
     horizon_human_dynamics_router,
     horizon_world_router,
     horizon_briefing_router,
+    quantic_portal_router,
 )
 
 for router in HORIZON_ROUTERS:

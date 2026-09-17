@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#05080d">
+  <title>Quantic Network</title><meta name="description" content="État des services et relais du Quantic Network.">
+  <link rel="stylesheet" href="/quantic.css?v=1.0">
+</head>
+<body class="q-body" data-status-endpoint="/api/quantic-portal/status">
+<header class="q-topbar"><nav class="q-shell q-nav" aria-label="Navigation principale"><a class="q-brand" href="/"><span class="q-mark" aria-hidden="true"></span><span>QUANTIC</span></a><div class="q-links"><a href="/vision/">Vision</a><a href="/mail/">Mail</a><a href="/network/" aria-current="page">Network</a><a href="/products/">Produits</a><a class="q-nav-cta" href="/quantic/">Centre</a></div></nav></header>
+<main class="q-shell">
+  <section class="q-dashboard-hero"><p class="q-kicker">INFRASTRUCTURE</p><h1>Quantic Network</h1><p>Le réseau relie les services Quantic sans faire d’un seul serveur l’autorité centrale. Les statuts ci-dessous décrivent la disponibilité technique, pas un niveau de sécurité.</p><div class="q-status-summary" data-quantic-status-summary><span class="q-status-dot"></span><span data-status-label>État du réseau inconnu</span></div></section>
+  <section class="q-section"><div class="q-section-head"><div><p class="q-kicker">TOPOLOGIE</p><h2>Services & relais</h2><p class="q-section-copy">Le portail interroge uniquement une liste fixe de services Quantic. Aucune URL fournie par un visiteur n’est sondée.</p></div></div><div class="q-service-grid">
+    <article class="q-service" data-service-id="vision"><div class="q-service-head"><h3>Quantic Vision</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Providence / HORIZON · intelligence prédictive.</p></article>
+    <article class="q-service" data-service-id="mail"><div class="q-service-head"><h3>Quantic Mail</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Application chiffrée de communication Quantic.</p></article>
+    <article class="q-service" data-service-id="relay-render"><div class="q-service-head"><h3>Relay Render</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Relais public actuellement déployé sur Render.</p></article>
+    <article class="q-service" data-service-id="relay-railway"><div class="q-service-head"><h3>Relay Railway</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Relais secondaire avec persistance distincte.</p></article>
+    <article class="q-service" data-service-id="relay-hostinger"><div class="q-service-head"><h3>Relay Hostinger</h3><span class="q-service-state" data-service-state data-state="pending">Bientôt</span></div><p>Emplacement prévu pour le nœud Hostinger. Il ne sera marqué disponible qu’après un vrai déploiement et un test de redémarrage.</p></article>
+  </div></section>
+  <section class="q-section"><div class="q-band"><div><strong>Le portail n’est pas le réseau.</strong><p>Le site présente et contrôle l’état du système. Les relais restent des processus séparés, avec leurs propres identités et leur propre persistance. Cette séparation évite qu’une mise à jour visuelle interrompe Quantic Mail.</p></div><a class="q-button secondary" href="/mail/">Tester Quantic Mail</a></div></section>
+</main>
+<footer class="q-shell q-footer"><span>Quantic Network</span><span><a href="/quantic/">Centre Quantic</a> · <a href="/products/">Écosystème</a></span></footer>
+<script src="/quantic.js?v=1.0" defer></script>
+</body></html>
