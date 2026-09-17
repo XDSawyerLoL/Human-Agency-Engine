@@ -58,7 +58,7 @@ This page preserves the current Providence public experience and reframes it as 
 
 Existing deep routes stay valid, including current predictions, alerts, analyst, cameras, track record and other public Providence surfaces.
 
-Providence remains visible as the founding technology/history of Quantic Vision, but is no longer presented as a separate competing top-level product.
+Providence remains visible as the founding technology/history of Quantic Vision, but is no longer presented as a separate competing top-level product. The shared Providence shell uses `/vision/` as its internal home route and displays Quantic Vision at product level.
 
 ### `/mail/` — Quantic Mail inside the portal
 
@@ -78,7 +78,7 @@ Initial visible nodes:
 - Railway relay
 - Hostinger relay slot (reported as pending until actually deployed)
 - Quantic Mail application
-- Quantic Vision API
+- Quantic Vision runtime
 
 Status is obtained from a same-origin portal API. Browser-side code does not probe arbitrary URLs directly.
 
@@ -97,9 +97,9 @@ Desktop global navigation:
 - Produits
 - `Entrer dans Quantic`
 
-Mobile uses a compact bottom dock or hamburger equivalent while keeping Vision, Mail and Network one tap away.
+Mobile keeps the same primary product access with a compact layout.
 
-The existing Providence-specific navigation remains inside Vision pages where useful, but its home link must return to `/vision/`, not the global Quantic root.
+The existing Providence-specific navigation remains inside Vision pages where useful, but its home link returns to `/vision/`, not the global Quantic root.
 
 ## Visual direction
 
@@ -119,6 +119,29 @@ Design rules:
 
 ## Service architecture
 
+The repository currently has two supported Hostinger runtime paths. The public contract is intentionally identical across both so the product does not need another rewrite when infrastructure evolves.
+
+### Current Hostinger Node Web App
+
+```text
+Public browser
+    |
+    v
+Hostinger managed Node app
+    |-- Express static `public/`
+    |-- /api/quantic-portal/status
+    |      \-- fixed allowlist probes
+    |
+    +--> Quantic Mail web app (cross-origin embedded/fallback link)
+
+Providence / Vision Node runtime
+    |-- existing prediction APIs
+    |-- analyst / timeline / alert surfaces
+    +-- Quantic portal status route installed before the catch-all
+```
+
+### Prepared Hostinger VPS / Compose path
+
 ```text
 Public browser
     |
@@ -134,22 +157,31 @@ HORIZON/FastAPI API
     +-- Quantic portal status endpoint
           |-- probes fixed allowlisted services only
           |-- never accepts a user-provided URL
+```
 
+### Quantic Network
+
+```text
 Quantic Network
     |-- Render relay
     |-- Railway relay
     +-- Hostinger relay (separate long-running service, added in a later deployment task)
 ```
 
-The Hostinger public Nginx process is not itself a relay. The Hostinger relay must run as a separate service/container so a frontend restart cannot erase or impersonate relay state.
+Neither the Hostinger Node web process nor the Hostinger public Nginx process is itself a Quantic relay. The Hostinger relay must run as a separate process/container so a portal restart cannot erase, replace or impersonate relay state.
 
 ## Quantic portal status API
 
-New endpoint:
+Public same-origin endpoint:
 
-`GET /v1/quantic/portal/status`
+`GET /api/quantic-portal/status`
 
-Response shape:
+Runtime implementations:
+
+- current managed Node deployment serves it directly;
+- VPS/Compose deployment proxies it to FastAPI `GET /v1/quantic/portal/status`.
+
+Both return the same public shape:
 
 ```json
 {
@@ -179,22 +211,22 @@ Rules:
 
 The portal uses the existing public Quantic Mail application URL as the initial application surface.
 
-The Mail page must include:
+The Mail page includes:
 
 - full-height embedded application area when framing is permitted;
 - visible direct-open fallback;
 - short explanation that the Mail app is a separate encrypted service;
 - no duplicated login or key-entry UI in the portal.
 
-The portal must not proxy message plaintext, private identity material or private device keys through the HORIZON API.
+The portal must not proxy message plaintext, private identity material or private device keys through either Vision runtime.
 
 ## Vision preservation
 
-The existing public Providence homepage is copied to `/vision/` before the root is replaced.
+The existing public Providence homepage is preserved under `/vision/` before the root is replaced.
 
-Existing data-backed public pages remain in place. The migration must not delete or rename their URLs in this phase.
+Existing data-backed public pages remain in place. The migration does not delete or rename their URLs in this phase.
 
-The current HORIZON API and its `/ui/` cockpit remain available for operator use.
+The current HORIZON API and its `/ui/` cockpit remain available for operator use on the VPS/Compose path.
 
 ## Hostinger relay boundary
 
@@ -207,13 +239,13 @@ Requirements for that relay task:
 - independent persistent database/volume from other relay processes;
 - bootstrap to Render and Railway;
 - publish a stable HTTPS public endpoint;
-- add the Hostinger endpoint to QuanticMail client bootstrap configuration only after a live verification;
+- add the Hostinger endpoint to QuanticMail client bootstrap configuration only after live verification;
 - preserve Render and Railway during migration so Hostinger is additive, not a cutover dependency.
 
 ## Failure behaviour
 
-- Vision unavailable: portal still loads; Vision card reports unavailable; Mail and Network remain accessible.
-- Mail web app unavailable: Mail shell shows direct retry/fallback state; Vision still works.
+- Vision unavailable: portal still loads where the static web surface is available; Vision card reports unavailable; Mail and Network links remain visible.
+- Mail web app unavailable: Mail shell keeps a direct retry/fallback action; Vision still works.
 - one relay unavailable: Network page marks that node unavailable; other relays remain listed.
 - status API unavailable: portal renders products normally and displays status as unknown rather than hiding services.
 - JavaScript disabled: landing-page navigation remains usable through normal anchors.
@@ -229,19 +261,21 @@ Requirements for that relay task:
 
 ## Testing
 
-Tests must verify:
+Tests verify:
 
 - public root contains Quantic navigation and required product routes;
 - `/vision/` preserves the former Providence landing experience;
+- Vision deep-route navigation returns to `/vision/` and identifies the product as Quantic Vision;
 - `/quantic/`, `/mail/`, `/network/`, `/products/` all exist and expose their required primary controls;
-- portal status service has a fixed allowlist and fail-closed error normalization;
-- Nginx exposes the same-origin status API path to the internal FastAPI service;
-- current HORIZON/Python test suite and Compose validation remain green.
+- portal status services have a fixed allowlist and fail-closed error normalization;
+- current Hostinger Node runtime serves `/api/quantic-portal/status` as JSON before the catch-all;
+- Nginx exposes the same-origin status API path to the internal FastAPI service on the VPS path;
+- current HORIZON/Python suite, Node product smoke tests and Compose validation remain green.
 
 ## Deployment
 
-This work lands through a feature branch and pull request. The existing CI must pass before merge.
+This work lands through a feature branch and pull request. Existing CI must pass before merge.
 
-The first production deployment changes the public site and status surface only. It must not remove Render or Railway relay infrastructure.
+The first production deployment changes the public site and status surface only. It does not remove Render or Railway relay infrastructure.
 
 The Hostinger relay is the next infrastructure task after the portal is live and verified.
