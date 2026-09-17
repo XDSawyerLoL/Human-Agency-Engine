@@ -38,6 +38,8 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
       - run: npm run check
+      - name: Verify Quantic portal probes are concurrent
+        run: node scripts/test-quantic-portal-status.mjs
       - run: npm run build
 
       - name: Start Providence and verify product-critical routes
