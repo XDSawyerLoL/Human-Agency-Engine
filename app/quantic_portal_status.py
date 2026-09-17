@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Callable
 from urllib.error import HTTPError, URLError
@@ -97,20 +98,34 @@ def _service_payload(target: ServiceTarget, result: dict[str, object] | None) ->
     }
 
 
+def _safe_probe(
+    target: ServiceTarget,
+    probe: Callable[[ServiceTarget], dict[str, object]],
+) -> dict[str, object]:
+    try:
+        return probe(target)
+    except Exception:
+        # The public endpoint never leaks an exception body, hostname
+        # resolution detail, credential, stack trace or provider message.
+        return {"reachable": False, "http_status": None}
+
+
 def build_portal_status(
     probe: Callable[[ServiceTarget], dict[str, object]] = probe_service,
 ) -> dict[str, object]:
-    services: list[dict[str, object]] = []
-    for target in QUANTIC_SERVICE_TARGETS:
-        if target.state == "pending":
-            services.append(_service_payload(target, None))
-            continue
-        try:
-            result = probe(target)
-        except Exception:
-            # The public endpoint never leaks an exception body, hostname
-            # resolution detail, credential, stack trace or provider message.
-            result = {"reachable": False, "http_status": None}
-        services.append(_service_payload(target, result))
+    active_targets = [target for target in QUANTIC_SERVICE_TARGETS if target.state != "pending"]
+    results: dict[str, dict[str, object]] = {}
 
+    if active_targets:
+        with ThreadPoolExecutor(max_workers=len(active_targets), thread_name_prefix="quantic-status") as pool:
+            futures = {
+                target.id: pool.submit(_safe_probe, target, probe)
+                for target in active_targets
+            }
+            results = {service_id: future.result() for service_id, future in futures.items()}
+
+    services = [
+        _service_payload(target, None if target.state == "pending" else results[target.id])
+        for target in QUANTIC_SERVICE_TARGETS
+    ]
     return {"status": "ok", "services": services}
