@@ -102,6 +102,8 @@ must('public/providence-v15-shell.js','p15-mobilebar');
 must('public/providence-v15-shell.js','providence-v16-platform.css');
 must('public/providence-v15-shell.js','providence-v16-product-cleanup.css');
 must('public/providence-v15-shell.js','providence-v16-12-mobile.css');
+must('public/providence-v15-shell.js',"['home','/vision/'");
+must('public/providence-v15-shell.js','QUANTIC VISION');
 must('public/providence-v16-product-cleanup.css','Providence V16.7');
 must('public/providence-v15.css','--p15-sidebar:242px');
 must('public/providence-v15-fixes.css','--gauge');
