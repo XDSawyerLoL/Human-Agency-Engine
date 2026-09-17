@@ -34,19 +34,21 @@ function publicService(target,result){
   };
 }
 
-export async function buildQuanticPortalStatus({probe=probeQuanticService}={}){
-  const services=[];
-  for(const target of QUANTIC_SERVICE_TARGETS){
-    if(target.state==='pending'){
-      services.push(publicService(target,null));
-      continue;
-    }
-    try{
-      services.push(publicService(target,await probe(target)));
-    }catch{
-      services.push(publicService(target,{reachable:false,http_status:null}));
-    }
+async function safeProbe(target,probe){
+  try{
+    return await probe(target);
+  }catch{
+    return {reachable:false,http_status:null};
   }
+}
+
+export async function buildQuanticPortalStatus({probe=probeQuanticService}={}){
+  const activeTargets=QUANTIC_SERVICE_TARGETS.filter(target=>target.state!=='pending');
+  const activeResults=await Promise.all(activeTargets.map(target=>safeProbe(target,probe)));
+  const resultById=new Map(activeTargets.map((target,index)=>[target.id,activeResults[index]]));
+  const services=QUANTIC_SERVICE_TARGETS.map(target=>
+    publicService(target,target.state==='pending'?null:resultById.get(target.id))
+  );
   return {status:'ok',services};
 }
 
