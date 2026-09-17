@@ -1,0 +1,61 @@
+name: Hostinger Production Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/**'
+      - 'src/**'
+      - 'server.js'
+      - 'server_core.js'
+      - 'package.json'
+      - '.github/workflows/hostinger-production-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hostinger-production-smoke
+  cancel-in-progress: true
+
+jobs:
+  production-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify deployed Quantic portal on Hostinger
+        env:
+          BASE_URL: https://mediumorchid-badger-314305.hostingersite.com
+        run: |
+          set -euo pipefail
+          ready=0
+          for attempt in $(seq 1 36); do
+            root="$(curl -fsSL --max-time 20 "$BASE_URL/" 2>/dev/null || true)"
+            vision="$(curl -fsSL --max-time 20 "$BASE_URL/vision/" 2>/dev/null || true)"
+            network="$(curl -fsSL --max-time 20 "$BASE_URL/network/" 2>/dev/null || true)"
+            if grep -q 'QUANTIC ECOSYSTEM' <<<"$root" \
+              && grep -q 'Quantic Vision' <<<"$vision" \
+              && grep -q 'Quantic Network' <<<"$network"; then
+              ready=1
+              echo "Hostinger portal is serving the merged Quantic surfaces."
+              break
+            fi
+            echo "Hostinger deployment not ready yet (attempt $attempt/36)."
+            sleep 10
+          done
+          test "$ready" = "1"
+
+          curl -fsSL --max-time 25 "$BASE_URL/api/quantic-portal/status" -o /tmp/quantic-status.json
+          python - <<'PY'
+          import json
+          with open('/tmp/quantic-status.json', encoding='utf-8') as handle:
+              payload = json.load(handle)
+          ids = {service.get('id') for service in payload.get('services', [])}
+          expected = {'vision', 'mail', 'relay-render', 'relay-railway', 'relay-hostinger'}
+          assert payload.get('status') == 'ok', payload
+          assert expected <= ids, (expected, ids)
+          hostinger = next(service for service in payload['services'] if service.get('id') == 'relay-hostinger')
+          assert hostinger.get('state') == 'pending', hostinger
+          print('Hostinger production status API verified:', sorted(ids))
+          PY
