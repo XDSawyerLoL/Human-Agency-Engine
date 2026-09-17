@@ -1,4 +1,5 @@
 from pathlib import Path
+from threading import Barrier
 
 from app.quantic_portal_status import QUANTIC_SERVICE_TARGETS, build_portal_status
 
@@ -63,3 +64,16 @@ def test_status_normalizes_probe_failure_without_failing_payload():
     assert services["relay-render"]["reachable"] is False
     assert "offline-secret-detail" not in str(services["relay-render"])
     assert services["relay-hostinger"]["state"] == "pending"
+
+
+def test_status_probes_active_services_concurrently():
+    barrier = Barrier(4)
+
+    def synchronized_probe(_target):
+        barrier.wait(timeout=1)
+        return {"reachable": True, "http_status": 200}
+
+    payload = build_portal_status(probe=synchronized_probe)
+    active = [item for item in payload["services"] if item["state"] != "pending"]
+    assert len(active) == 4
+    assert all(item["reachable"] is True for item in active)
