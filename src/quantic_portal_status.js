@@ -49,3 +49,12 @@ export async function buildQuanticPortalStatus({probe=probeQuanticService}={}){
   }
   return {status:'ok',services};
 }
+
+export function installQuanticPortalStatusRoute(app){
+  if(app.__quanticPortalStatusInstalled)return;
+  app.__quanticPortalStatusInstalled=true;
+  app.get('/api/quantic-portal/status',async(_req,res)=>{
+    res.set('Cache-Control','no-store');
+    res.json(await buildQuanticPortalStatus());
+  });
+}
