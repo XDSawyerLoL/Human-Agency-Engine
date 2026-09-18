@@ -3,11 +3,15 @@ import assert from "node:assert/strict";
 
 const sync=fs.readFileSync("scripts/sync-quantic-mail.mjs","utf8");
 assert.match(sync,/XDSawyerLoL\/QuanticMail/);
-assert.match(sync,/2e2a0a37ab7514e616739dd9f366cebdf107ff2e/);
-assert.match(sync,/build:hostinger/);
-assert.match(sync,/public[\\/]mail|public",\s*"mail"/);
+assert.match(sync,/8aba3d5038f64911895041c2278502d932e4ba4a/);
+assert.match(sync,/e8ab65a082eab42a0b0fd43d1dce307262f3bf58/);
+assert.match(sync,/quantic-hostinger-relay\.invalid/);
+assert.match(sync,/QUANTICMAIL_COMMIT/);
 assert.match(sync,/QUANTIC_HOSTINGER_RELAY_URL/);
-assert.match(sync,/mailBootstraps/);
+assert.match(sync,/patchSentinel/);
+assert.match(sync,/public[\\/]mail|public",\s*"mail"/);
+assert.doesNotMatch(sync,/npm",\["install/);
+assert.doesNotMatch(sync,/build:hostinger/);
 
 const pkg=JSON.parse(fs.readFileSync("package.json","utf8"));
 assert.match(pkg.scripts.build,/sync-quantic-mail\.mjs/);
@@ -20,4 +24,4 @@ const pyStatus=fs.readFileSync("app/quantic_portal_status.py","utf8");
 assert.match(pyStatus,/id="mail"[\s\S]*public_url="\/mail\/"/);
 assert.doesNotMatch(pyStatus,/id="mail"[\s\S]*quanticmail\.onrender\.com/);
 
-console.log(JSON.stringify({ok:true,contract:"hostinger-native-quanticmail-v3"}));
+console.log(JSON.stringify({ok:true,contract:"hostinger-native-quanticmail-v3-prebuilt"}));
