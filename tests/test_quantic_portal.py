@@ -77,3 +77,35 @@ def test_status_probes_active_services_concurrently():
     active = [item for item in payload["services"] if item["state"] != "pending"]
     assert len(active) == 4
     assert all(item["reachable"] is True for item in active)
+
+
+def test_quantic_desire_visual_system_is_wired():
+    root = text("public/index.html")
+    css = text("public/quantic.css")
+    js = text("public/quantic.js")
+    assert 'class="q-hero-stage"' in root
+    assert 'class="q-hero-aurora"' in root
+    assert 'class="q-signal-ribbon"' in root
+    assert 'data-q-reveal' in root
+    assert 'data-q-tilt' in root
+    assert "--q-ease:" in css
+    assert ".q-hero-stage" in css
+    assert ".q-hero-aurora" in css
+    assert ".q-noise" in css
+    assert ".q-signal-ribbon" in css
+    assert "@media(prefers-reduced-motion:reduce)" in css
+    assert "IntersectionObserver" in js
+    assert "pointermove" in js
+
+
+def test_quantic_surfaces_share_premium_shell():
+    for path in (
+        "public/quantic/index.html",
+        "public/mail/index.html",
+        "public/network/index.html",
+        "public/products/index.html",
+    ):
+        page = text(path)
+        assert 'class="q-body q-premium"' in page
+        assert 'class="q-noise"' in page
+        assert "quantic.css?v=2.0" in page

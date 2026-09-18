@@ -32,13 +32,16 @@ jobs:
           ready=0
           for attempt in $(seq 1 36); do
             root="$(curl -fsSL --max-time 20 "$BASE_URL/" 2>/dev/null || true)"
+            centre="$(curl -fsSL --max-time 20 "$BASE_URL/quantic/" 2>/dev/null || true)"
             vision="$(curl -fsSL --max-time 20 "$BASE_URL/vision/" 2>/dev/null || true)"
             network="$(curl -fsSL --max-time 20 "$BASE_URL/network/" 2>/dev/null || true)"
-            if grep -q 'QUANTIC ECOSYSTEM' <<<"$root" \
+            if grep -q 'q-hero-stage' <<<"$root" \
+              && grep -q 'quantic.css?v=2.0' <<<"$root" \
+              && grep -q 'CENTRE QUANTIC' <<<"$centre" \
               && grep -q 'Quantic Vision' <<<"$vision" \
               && grep -q 'Quantic Network' <<<"$network"; then
               ready=1
-              echo "Hostinger portal is serving the merged Quantic surfaces."
+              echo "Hostinger is serving the Quantic Desire v2 surfaces."
               break
             fi
             echo "Hostinger deployment not ready yet (attempt $attempt/36)."

@@ -26,6 +26,7 @@
   }
 
   async function loadStatus() {
+    if (!document.querySelector("[data-quantic-status-summary],[data-service-id]")) return;
     setSummary("pending", "Vérification du réseau…");
     try {
       const response = await fetch(endpoint, {
@@ -53,15 +54,10 @@
         }
       });
 
-      if (!active) {
-        setSummary("unknown", "État du réseau inconnu");
-      } else if (online === active) {
-        setSummary("online", `${online}/${active} services vérifiés`);
-      } else if (online > 0) {
-        setSummary("partial", `${online}/${active} services disponibles`);
-      } else {
-        setSummary("offline", "Services temporairement indisponibles");
-      }
+      if (!active) setSummary("unknown", "État du réseau inconnu");
+      else if (online === active) setSummary("online", `${online}/${active} services vérifiés`);
+      else if (online > 0) setSummary("partial", `${online}/${active} services disponibles`);
+      else setSummary("offline", "Services temporairement indisponibles");
     } catch (_error) {
       document.querySelectorAll("[data-service-id]").forEach((card) => {
         const badge = card.querySelector("[data-service-state]");
@@ -74,9 +70,53 @@
     }
   }
 
+  function initReveal() {
+    const targets = [...document.querySelectorAll("[data-q-reveal]")];
+    if (!targets.length) return;
+    if (!("IntersectionObserver" in window) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      targets.forEach((el) => el.classList.add("is-visible"));
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.12 });
+    targets.forEach((el) => observer.observe(el));
+  }
+
+  function initPointerDepth() {
+    if (window.matchMedia("(pointer: coarse)").matches || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.querySelectorAll("[data-q-tilt]").forEach((card) => {
+      card.addEventListener("pointermove", (event) => {
+        const rect = card.getBoundingClientRect();
+        const px = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+        const py = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
+        card.style.setProperty("--pointer-x", `${(px * 100).toFixed(2)}%`);
+        card.style.setProperty("--pointer-y", `${(py * 100).toFixed(2)}%`);
+        card.style.setProperty("--tilt-y", `${((px - .5) * 3.2).toFixed(2)}deg`);
+        card.style.setProperty("--tilt-x", `${((.5 - py) * 3.2).toFixed(2)}deg`);
+      });
+      card.addEventListener("pointerleave", () => {
+        card.style.removeProperty("--tilt-x");
+        card.style.removeProperty("--tilt-y");
+        card.style.removeProperty("--pointer-x");
+        card.style.removeProperty("--pointer-y");
+      });
+    });
+  }
+
+  function boot() {
+    initReveal();
+    initPointerDepth();
+    void loadStatus();
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", loadStatus, { once: true });
+    document.addEventListener("DOMContentLoaded", boot, { once: true });
   } else {
-    loadStatus();
+    boot();
   }
 })();
