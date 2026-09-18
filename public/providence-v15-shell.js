@@ -32,6 +32,7 @@ loadCss('/providence-v16-product-cleanup.css?v=16.12','providence-v16-product-cl
 if(page==='home')loadCss('/providence-timeline-v16-10.css?v=16.12','providence-timeline-v16-10.css');
 loadCss('/providence-v16-12-mobile.css?v=16.12','providence-v16-12-mobile.css');
 loadCss('/quantic-unified.css?v=3.0','quantic-unified.css');
+loadCss('/quantic-finish-v4.css?v=4.0','quantic-finish-v4.css');
 
 document.body.classList.add('q-vision-shell');
 
@@ -48,6 +49,7 @@ global.innerHTML=`
       <a href="/mail/">Mail</a>
       <a href="/network/">Network</a>
       <a href="/products/" class="q-hide-mobile">Produits</a>
+      <a href="/downloads/">Téléchargements</a>
       <a href="/quantic/" class="q-global-centre"><span class="q-global-status" aria-hidden="true"></span>Centre</a>
     </nav>
   </div>`;
@@ -83,7 +85,7 @@ if(main&&page==='predictions'&&!main.querySelector('.p16-time-rail')){
 if(main&&!document.querySelector('.q-unified-footer')){
   const footer=document.createElement('footer');
   footer.className='q-unified-footer';
-  footer.innerHTML='<span>QUANTIC VISION · PROVIDENCE / HORIZON</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/products/">Écosystème Quantic</a></span>';
+  footer.innerHTML='<span>QUANTIC VISION · PROVIDENCE / HORIZON</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/downloads/">Téléchargements</a> · <a href="/products/">Écosystème Quantic</a></span>';
   main.insertAdjacentElement('afterend',footer);
 }
 
