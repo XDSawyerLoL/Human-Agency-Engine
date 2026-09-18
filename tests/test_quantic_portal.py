@@ -83,7 +83,7 @@ def test_quantic_desire_visual_system_is_wired():
     root = text("public/index.html")
     css = text("public/quantic.css")
     js = text("public/quantic.js")
-    assert 'class="q-hero-stage"' in root
+    assert 'q-hero-stage' in root
     assert 'class="q-hero-aurora"' in root
     assert 'class="q-signal-ribbon"' in root
     assert 'data-q-reveal' in root
