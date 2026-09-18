@@ -16,9 +16,9 @@
     <div class="q-service-grid">
       <article class="q-service" data-service-id="vision"><div class="q-service-head"><h3>Quantic Vision</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Providence / HORIZON · intelligence prédictive.</p></article>
       <article class="q-service" data-service-id="mail"><div class="q-service-head"><h3>Quantic Mail</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Application chiffrée de communication Quantic.</p></article>
-      <article class="q-service" data-service-id="relay-render"><div class="q-service-head"><h3>Relay Render</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Relais historique conservé pendant la migration vers Hostinger.</p></article>
+      <article class="q-service" data-service-id="relay-render"><div class="q-service-head"><h3>Relay Render</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Chemin de secours public sur un fournisseur distinct.</p></article>
       <article class="q-service" data-service-id="relay-railway"><div class="q-service-head"><h3>Relay Railway</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Second chemin public sur un fournisseur distinct.</p></article>
-      <article class="q-service" data-service-id="relay-hostinger"><div class="q-service-head"><h3>Relay Hostinger</h3><span class="q-service-state" data-service-state data-state="pending">Bientôt</span></div><p>Le nœud deviendra actif seulement après déploiement, persistance d’identité et test de redémarrage réels.</p></article>
+      <article class="q-service" data-service-id="relay-hostinger"><div class="q-service-head"><h3>Relay Hostinger</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Nœud Quantic intégré au runtime Hostinger, avec état et identité persistés dans MySQL.</p></article>
     </div>
   </section>
 
@@ -27,9 +27,9 @@
     <div class="q-grid">
       <article class="q-card network"><span class="q-card-icon">01</span><span class="q-card-meta">discovery</span><h3>Trouver</h3><p>Les identités et routes sont découvertes sans faire de l’URL d’un fournisseur l’autorité d’identité.</p></article>
       <article class="q-card network"><span class="q-card-icon">02</span><span class="q-card-meta">direct</span><h3>Relier</h3><p>Le transport direct est opportuniste. S’il échoue, le message déjà chiffré peut reprendre un chemin relais.</p></article>
-      <article class="q-card network"><span class="q-card-icon">03</span><span class="q-card-meta">fallback</span><h3>Continuer</h3><p>Render, Railway et bientôt Hostinger donnent plusieurs chemins publics au lieu d’un seul point de passage.</p></article>
+      <article class="q-card network"><span class="q-card-icon">03</span><span class="q-card-meta">fallback</span><h3>Continuer</h3><p>Hostinger, Railway et Render donnent plusieurs chemins publics au lieu d’un seul point de passage.</p></article>
     </div>
-    <div class="q-band"><div><strong>Le portail n’est pas le réseau.</strong><p>Le site présente le système. Les relais restent des processus séparés avec leur propre identité et leur propre persistance.</p></div><a class="q-button secondary" href="/mail/">Ouvrir Quantic Mail</a></div>
+    <div class="q-band"><div><strong>Le portail n’est pas l’autorité du réseau.</strong><p>Le site héberge aussi un relais, mais l’identité Quantic et les messages restent gouvernés par le protocole, avec des chemins de secours indépendants.</p></div><a class="q-button secondary" href="/mail/">Ouvrir Quantic Mail</a></div>
   </section>
 </main>
 <footer class="q-shell q-footer"><span>QUANTIC NETWORK · MULTIPLE PATHS</span><span><a href="/quantic/">Centre Quantic</a> · <a href="/products/">Écosystème</a></span></footer>
