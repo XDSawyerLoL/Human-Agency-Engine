@@ -141,3 +141,19 @@ def test_unified_visual_layer_inherits_providence_color_language():
     assert ".q-vision-subnav" in css
     assert ".q-unified-hero" in css
     assert "@media(prefers-reduced-motion:reduce)" in css
+
+
+def test_all_vision_product_routes_load_unified_css_before_runtime_shell():
+    routes = (
+        "alerts", "analyst", "backtest", "cameras", "causal", "crypto",
+        "horizons", "intelligence", "matches", "modules", "predictions",
+        "sports", "settings", "sources", "track-record",
+    )
+    for route in routes:
+        page = text(f"public/{route}/index.html")
+        assert "quantic-unified.css?v=3.0" in page, route
+
+
+def test_legacy_v14_shell_bridges_to_unified_v15_shell():
+    shell = text("public/providence-v14-shell.js")
+    assert "providence-v15-shell.js" in shell
