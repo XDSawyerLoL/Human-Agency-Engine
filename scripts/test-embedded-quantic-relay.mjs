@@ -7,8 +7,9 @@ assert.match(sync,/standalone-relay/);
 assert.match(sync,/lib/);
 assert.match(sync,/vendor[\\/]quanticmail-relay|vendor",\s*"quanticmail-relay"/);
 
-const bootstrap=fs.readFileSync("src/providence_extensions_bootstrap.js","utf8");
-assert.match(bootstrap,/installEmbeddedQuanticRelay/);
+const server=fs.readFileSync("server_core.js","utf8");
+assert.match(server,/installEmbeddedQuanticRelay/);
+assert.ok(server.indexOf("installEmbeddedQuanticRelay(app)") < server.indexOf("express.json"),"relay must mount before express.json");
 
 const embedded=fs.readFileSync("src/quantic_embedded_relay.js","utf8");
 assert.match(embedded,/createMySqlRelayPersistenceFromConfig/);
