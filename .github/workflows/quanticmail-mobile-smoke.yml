@@ -18,7 +18,7 @@ jobs:
       - name: Verify live mobile-stable QuanticMail bundle
         env:
           BASE_URL: https://mediumorchid-badger-314305.hostingersite.com
-          EXPECTED_MAIL_COMMIT: cdf0cd775b02b239f976eae95abeebd554b98ab9
+          EXPECTED_MAIL_COMMIT: 7ada69845830b3253795abf24f8554877ae4b6d5
         shell: bash
         run: |
           set -euo pipefail
