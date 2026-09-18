@@ -1,29 +1,40 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#05070b">
-  <title>Quantic Mail</title><meta name="description" content="Quantic Mail intégré au portail Quantic.">
-  <link rel="stylesheet" href="/quantic.css?v=2.0">\n  <link rel="stylesheet" href="/quantic-unified.css?v=3.0">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#02050b">
+  <meta name="description" content="Quantic Mail — messagerie chiffrée native de l’écosystème Quantic.">
+  <title>Quantic Mail</title>
+  <link rel="stylesheet" href="/quantic.css?v=2.0">
+  <link rel="stylesheet" href="/quantic-unified.css?v=3.0">
 </head>
 <body class="q-body q-premium">
 <div class="q-noise" aria-hidden="true"></div>
-<header class="q-topbar"><nav class="q-shell q-nav" aria-label="Navigation principale"><a class="q-brand" href="/"><span class="q-mark" aria-hidden="true"></span><span>QUANTIC</span></a><div class="q-links"><a href="/vision/">Vision</a><a href="/mail/" aria-current="page">Mail</a><a href="/network/">Network</a><a href="/products/">Produits</a><a class="q-nav-cta" href="/quantic/">Centre</a></div></nav></header>
-<main class="q-shell q-mail-wrap">
-  <div class="q-mail-head q-unified-hero" data-q-reveal>
-    <div><p class="q-kicker">COMMUNICATION</p><h1>Quantic<br>Mail.</h1><p>Une identité de communication Quantic et une messagerie chiffrée. Le portail présente l’application sans recevoir tes clés privées ni le contenu déchiffré des messages.</p></div>
-    <a class="q-button secondary" href="https://quanticmail.onrender.com" target="_blank" rel="noopener noreferrer">Ouvrir directement ↗</a>
+<header class="q-global-nav">
+  <div class="q-global-nav-inner">
+    <a class="q-global-brand" href="/" aria-label="Quantic accueil"><span class="q-global-mark" aria-hidden="true"></span><span>QUANTIC</span></a>
+    <nav class="q-global-links" aria-label="Navigation Quantic">
+      <a href="/vision/">Vision</a><a href="/mail/" class="active" aria-current="page">Mail</a><a href="/network/">Network</a><a href="/products/">Produits</a><a href="/quantic/" class="q-global-centre"><span class="q-global-status" aria-hidden="true"></span>Centre</a>
+    </nav>
   </div>
-  <div class="q-proof-strip" data-q-reveal aria-label="Principes de Quantic Mail">
-    <div class="q-proof"><b>Identité</b><span>Adresse Quantic</span></div>
-    <div class="q-proof"><b>Chiffrement</b><span>Avant transport</span></div>
-    <div class="q-proof"><b>Direct</b><span>Quand disponible</span></div>
-    <div class="q-proof"><b>Relay</b><span>Fallback multi-nœuds</span></div>
-  </div>
-  <div class="q-note" data-q-reveal>La migration de l’interface vers Hostinger est en cours. Render reste le point d’ouverture direct tant que le build Hostinger n’a pas passé les tests de production.</div>
-  <div class="q-mail-stage" data-q-reveal>
-    <iframe class="q-mail-frame" src="https://quanticmail.onrender.com" title="Quantic Mail" loading="eager" referrerpolicy="no-referrer" sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-scripts allow-same-origin allow-downloads"></iframe>
-  </div>
+</header>
+<main class="q-shell">
+  <section class="q-dashboard-hero q-unified-hero">
+    <p class="q-kicker">COMMUNICATION</p>
+    <h1>Quantic<br>Mail.</h1>
+    <p>Cette surface est la position de repli du portail. Le build Hostinger remplace automatiquement cette page par l’application QuanticMail V1.3 complète, exportée nativement sous <strong>/mail/</strong>.</p>
+    <div class="q-proof-strip">
+      <div class="q-proof"><b>Identité</b><span>Adresse Quantic</span></div>
+      <div class="q-proof"><b>Chiffrement</b><span>Avant transport</span></div>
+      <div class="q-proof"><b>Hostinger</b><span>Frontend natif</span></div>
+      <div class="q-proof"><b>Network</b><span>Relais multiples</span></div>
+    </div>
+  </section>
+  <section class="q-section">
+    <div class="q-band"><div><strong>Aucune iframe Render.</strong><p>Le site déployé construit QuanticMail directement depuis son dépôt vérifié. Si cette page de repli apparaît en production, le smoke-test Hostinger doit échouer au lieu de masquer une migration incomplète.</p></div><a class="q-button secondary" href="/network/">Voir Quantic Network</a></div>
+  </section>
 </main>
-<footer class="q-shell q-footer"><span>QUANTIC MAIL · PRIVATE COMMUNICATION</span><span><a href="/network/">Voir le réseau</a> · <a href="/quantic/">Centre Quantic</a></span></footer>
+<footer class="q-shell q-footer"><span>QUANTIC MAIL · HOSTINGER NATIVE</span><span><a href="/">Accueil</a> · <a href="/quantic/">Centre Quantic</a></span></footer>
 <script src="/quantic.js?v=2.0" defer></script>
 </body></html>
