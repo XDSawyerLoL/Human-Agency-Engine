@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const NAV_ID='quantic-mail-global-nav';
 function ensureNav(){
-  if(document.getElementById(NAV_ID)||!document.body)return;
+  if(document.getElementById(NAV_ID)||document.querySelector('.qn-global-nav')||!document.body)return;
   const header=document.createElement('header');
   header.id=NAV_ID;
   header.className='qn-global-nav';
