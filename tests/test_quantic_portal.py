@@ -35,7 +35,7 @@ def test_operational_surfaces_exist():
     assert "Quantic Vision" in dashboard
     assert "Quantic Mail" in dashboard
     assert "Quantic Network" in dashboard
-    assert "quanticmail.onrender.com" in mail
+    assert "quanticmail.onrender.com" not in mail\n    assert "Quantic Mail" in mail
     assert "api/quantic-portal/status" in network
     assert "Quantic Glide" in products
     assert "Quantic OS" in products
@@ -158,3 +158,9 @@ def test_all_vision_product_routes_load_unified_css_before_runtime_shell():
 def test_legacy_v14_shell_bridges_to_unified_v15_shell():
     shell = text("public/providence-v14-shell.js")
     assert "providence-v15-shell.js" in shell
+
+
+def test_mail_status_is_local_to_hostinger():
+    target = next(item for item in QUANTIC_SERVICE_TARGETS if item.id == "mail")
+    assert target.public_url == "/mail/"
+    assert target.probe_url is None
