@@ -1,3 +1,5 @@
+import { embeddedRelayPublicEndpoint } from "./quantic_embedded_relay.js";
+
 function normalizedHttpsUrl(value){
   const raw=String(value||"").trim();
   if(!raw)return null;
@@ -12,7 +14,7 @@ function normalizedHttpsUrl(value){
 }
 
 export function quanticServiceTargets(env=process.env){
-  const hostingerRelay=normalizedHttpsUrl(env.QUANTIC_HOSTINGER_RELAY_URL);
+  const hostingerRelay=normalizedHttpsUrl(env.QUANTIC_HOSTINGER_RELAY_URL)||embeddedRelayPublicEndpoint(env);
   return Object.freeze([
     Object.freeze({ id:'vision', label:'Quantic Vision', kind:'vision', public_url:'/vision/', probe_url:null, state:'active' }),
     Object.freeze({ id:'mail', label:'Quantic Mail', kind:'application', public_url:'/mail/', probe_url:null, state:'active' }),
