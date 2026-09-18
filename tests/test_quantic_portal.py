@@ -109,3 +109,35 @@ def test_quantic_surfaces_share_premium_shell():
         assert 'class="q-body q-premium"' in page
         assert 'class="q-noise"' in page
         assert "quantic.css?v=2.0" in page
+
+
+def test_all_quantic_primary_surfaces_load_unified_providence_visual_layer():
+    for path in (
+        "public/index.html",
+        "public/quantic/index.html",
+        "public/vision/index.html",
+        "public/mail/index.html",
+        "public/network/index.html",
+        "public/products/index.html",
+    ):
+        page = text(path)
+        assert "quantic-unified.css?v=3.0" in page, path
+
+
+def test_providence_internal_shell_uses_quantic_navigation_not_software_sidebar():
+    shell = text("public/providence-v15-shell.js")
+    assert "q-global-nav" in shell
+    assert "q-vision-subnav" in shell
+    assert "quantic-unified.css?v=3.0" in shell
+    assert "p15-sidebar" not in shell
+    assert "p15-topbar" not in shell
+
+
+def test_unified_visual_layer_inherits_providence_color_language():
+    css = text("public/quantic-unified.css")
+    for token in ("#148cff", "#20d8ff", "#9b5cff", "#ffc74d", "#02050b"):
+        assert token in css
+    assert ".q-global-nav" in css
+    assert ".q-vision-subnav" in css
+    assert ".q-unified-hero" in css
+    assert "@media(prefers-reduced-motion:reduce)" in css
