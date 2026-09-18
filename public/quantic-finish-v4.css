@@ -55,13 +55,15 @@ body.q-vision-surface .p1611-nav{
   margin-top:12px!important;
 }
 .p1611-nav-actions{display:flex;align-items:center;gap:8px}
-.p1611-nav-actions .p1611-download{
+.p1611-nav-actions .p1611-download,
+.p1611-nav-actions .p1611-home{
   display:inline-flex;align-items:center;justify-content:center;
   min-height:42px;padding:0 15px;border:1px solid rgba(46,157,255,.36);
   border-radius:999px;background:rgba(18,72,122,.13);
   color:#dceeff;text-decoration:none;font:700 12px/1 system-ui,sans-serif;
 }
-.p1611-nav-actions .p1611-download:hover{border-color:rgba(46,157,255,.68);background:rgba(29,107,180,.18)}
+.p1611-nav-actions .p1611-download:hover,
+.p1611-nav-actions .p1611-home:hover{border-color:rgba(46,157,255,.68);background:rgba(29,107,180,.18)}
 
 .q-links,.q-global-links{gap:18px!important}
 .q-links a,.q-global-links a{
@@ -243,6 +245,7 @@ body.q-vision-surface .p1611-nav{
   .q-links a:not(.q-nav-cta):not([href="/downloads/"]),
   .q-global-links a:not(.active):not(.q-global-centre):not([href="/downloads/"]){display:none}
   .p1611-nav-actions .p1611-download{display:none}
+  .p1611-nav-actions .p1611-home{padding:0 11px}
   .q-download-card{padding:20px;min-height:0}
   .q-download-top{display:block}
   .q-download-status{margin-top:10px}
