@@ -1,0 +1,38 @@
+name: QuanticMail Mobile Production Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/quanticmail-mobile-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify live mobile-stable QuanticMail bundle
+        env:
+          BASE_URL: https://mediumorchid-badger-314305.hostingersite.com
+          EXPECTED_MAIL_COMMIT: 95f31d461edcc0a90ad87d14eeec4ae9ea6346f1
+        shell: bash
+        run: |
+          set -euo pipefail
+          ready=0
+          for attempt in $(seq 1 36); do
+            manifest="$(curl -fsSL --max-time 20 "$BASE_URL/mail/QUANTICMAIL_COMMIT" 2>/dev/null | tr -d '\r\n' || true)"
+            mail="$(curl -fsSL --max-time 20 "$BASE_URL/mail/" 2>/dev/null || true)"
+            nav_count="$(grep -o '<header class="qn-global-nav"' <<<"$mail" | wc -l | tr -d ' ')"
+            if [[ "$manifest" == "$EXPECTED_MAIL_COMMIT" ]] && [[ "$nav_count" == "1" ]]; then
+              echo "Live QuanticMail mobile bundle verified: $manifest; nav_count=$nav_count"
+              ready=1
+              break
+            fi
+            echo "Waiting for Hostinger mail deploy (attempt $attempt/36): manifest=$manifest nav_count=$nav_count"
+            sleep 10
+          done
+          test "$ready" = "1"
