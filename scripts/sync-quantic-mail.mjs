@@ -12,6 +12,20 @@ const REPO="https://github.com/XDSawyerLoL/QuanticMail.git";
 const COMMIT="85641d971163416225ffc386468951832782c227";
 const DEFAULT_BOOTSTRAPS="https://quantic-network-relay-backup-production.up.railway.app";
 
+function mailBootstraps(env=process.env){
+  const values=[];
+  const hostinger=String(env.QUANTIC_HOSTINGER_RELAY_URL||"").trim().replace(/\/$/,"");
+  if(hostinger){
+    try{ if(new URL(hostinger).protocol==="https:") values.push(hostinger); }catch{}
+  }
+  const configured=String(env.NEXT_PUBLIC_QUANTIC_BOOTSTRAPS||DEFAULT_BOOTSTRAPS)
+    .split(",").map(value=>value.trim()).filter(Boolean);
+  for(const value of configured){
+    if(!values.includes(value))values.push(value);
+  }
+  return values.join(",");
+}
+
 function run(command,args,{cwd=root,env=process.env}={}){
   const result=spawnSync(command,args,{cwd,env,stdio:"inherit",shell:false});
   if(result.status!==0)throw new Error(`${command} ${args.join(" ")} a échoué (code ${result.status??"?"}).`);
@@ -27,7 +41,7 @@ try{
     cwd:work,
     env:{
       ...process.env,
-      NEXT_PUBLIC_QUANTIC_BOOTSTRAPS:process.env.NEXT_PUBLIC_QUANTIC_BOOTSTRAPS||DEFAULT_BOOTSTRAPS
+      NEXT_PUBLIC_QUANTIC_BOOTSTRAPS:mailBootstraps(process.env)
     }
   });
   const built=join(work,"out");
