@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 
 const sync=fs.readFileSync("scripts/sync-quantic-mail.mjs","utf8");
 assert.match(sync,/XDSawyerLoL\/QuanticMail/);
-assert.match(sync,/8aba3d5038f64911895041c2278502d932e4ba4a/);
-assert.match(sync,/e8ab65a082eab42a0b0fd43d1dce307262f3bf58/);
+assert.match(sync,/f726e484dc1221073eb2e1ea3b80fb8d88372ecb/);
+assert.match(sync,/86fe4ba39c1fab0df43a84137cb197a6142309f8/);
 assert.match(sync,/quantic-hostinger-relay\.invalid/);
 assert.match(sync,/QUANTICMAIL_COMMIT/);
 assert.match(sync,/QUANTIC_HOSTINGER_RELAY_URL/);

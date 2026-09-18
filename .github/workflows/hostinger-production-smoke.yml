@@ -63,6 +63,9 @@ jobs:
           test "$ready" = "1"
 
           curl -fsSL --max-time 25 "$BASE_URL/api/quantic-portal/status" -o /tmp/quantic-status.json
+          curl -fsSL --max-time 25 "$BASE_URL/api/quantic/health" -o /tmp/quantic-relay-health-a.json
+          sleep 1
+          curl -fsSL --max-time 25 "$BASE_URL/api/quantic/health" -o /tmp/quantic-relay-health-b.json
           python - <<'PY'
           import json
           with open('/tmp/quantic-status.json', encoding='utf-8') as handle:
@@ -73,15 +76,23 @@ jobs:
           assert expected <= ids, (expected, ids)
           hostinger = next(service for service in payload['services'] if service.get('id') == 'relay-hostinger')
           mail = next(service for service in payload['services'] if service.get('id') == 'mail')
-          assert hostinger.get('state') in {'pending', 'active'}, hostinger
-          if hostinger.get('state') == 'active':
-              assert str(hostinger.get('url', '')).startswith('https://'), hostinger
-              assert hostinger.get('reachable') is True, hostinger
-              assert hostinger.get('http_status') == 200, hostinger
-          else:
-              assert hostinger.get('reachable') is None, hostinger
+          assert hostinger.get('state') == 'active', hostinger
+          assert hostinger.get('url') == 'https://mediumorchid-badger-314305.hostingersite.com', hostinger
+          assert hostinger.get('reachable') is True, hostinger
+          assert hostinger.get('http_status') == 200, hostinger
           assert mail.get('state') == 'active', mail
           assert mail.get('url') == '/mail/', mail
           assert mail.get('reachable') is True, mail
+
+          with open('/tmp/quantic-relay-health-a.json', encoding='utf-8') as handle:
+              health_a = json.load(handle)
+          with open('/tmp/quantic-relay-health-b.json', encoding='utf-8') as handle:
+              health_b = json.load(handle)
+          for health in (health_a, health_b):
+              assert health.get('ok') is True, health
+              assert health.get('protocol') == 'quantic-relay/1', health
+              assert isinstance(health.get('relayId'), str) and len(health['relayId']) == 64, health
+          assert health_a['relayId'] == health_b['relayId'], (health_a, health_b)
+          print('Hostinger Quantic Relay verified:', health_a['relayId'])
           print('Hostinger production status API verified:', sorted(ids), 'mail=', mail)
           PY
