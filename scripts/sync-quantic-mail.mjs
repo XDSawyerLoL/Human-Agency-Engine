@@ -9,7 +9,7 @@ const work=mkdtempSync(join(tmpdir(),"quanticmail-source-"));
 const target=join(root,"public","mail");
 const stage=join(root,"public",".mail-stage");
 const REPO="https://github.com/XDSawyerLoL/QuanticMail.git";
-const COMMIT="85641d971163416225ffc386468951832782c227";
+const COMMIT="2e2a0a37ab7514e616739dd9f366cebdf107ff2e";
 const DEFAULT_BOOTSTRAPS="https://quantic-network-relay-backup-production.up.railway.app";
 
 function mailBootstraps(env=process.env){
