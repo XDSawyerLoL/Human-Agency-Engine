@@ -1,7 +1,7 @@
 from pathlib import Path
 from threading import Barrier
 
-from app.quantic_portal_status import QUANTIC_SERVICE_TARGETS, build_portal_status
+from app.quantic_portal_status import QUANTIC_SERVICE_TARGETS, build_portal_status, quantic_service_targets
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -165,3 +165,27 @@ def test_mail_status_is_local_to_hostinger():
     target = next(item for item in QUANTIC_SERVICE_TARGETS if item.id == "mail")
     assert target.public_url == "/mail/"
     assert target.probe_url is None
+
+
+def test_hostinger_relay_activates_only_with_https_url():
+    pending = {item.id: item for item in quantic_service_targets({})}
+    assert pending["relay-hostinger"].state == "pending"
+    assert pending["relay-hostinger"].probe_url is None
+
+    active = {
+        item.id: item
+        for item in quantic_service_targets(
+            {"QUANTIC_HOSTINGER_RELAY_URL": "https://relay-hostinger.example.com/"}
+        )
+    }
+    assert active["relay-hostinger"].state == "active"
+    assert active["relay-hostinger"].public_url == "https://relay-hostinger.example.com"
+    assert active["relay-hostinger"].probe_url == "https://relay-hostinger.example.com/api/quantic/health"
+
+    invalid = {
+        item.id: item
+        for item in quantic_service_targets(
+            {"QUANTIC_HOSTINGER_RELAY_URL": "http://relay-hostinger.example.com"}
+        )
+    }
+    assert invalid["relay-hostinger"].state == "pending"

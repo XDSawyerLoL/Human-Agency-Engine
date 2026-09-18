@@ -73,7 +73,13 @@ jobs:
           assert expected <= ids, (expected, ids)
           hostinger = next(service for service in payload['services'] if service.get('id') == 'relay-hostinger')
           mail = next(service for service in payload['services'] if service.get('id') == 'mail')
-          assert hostinger.get('state') == 'pending', hostinger
+          assert hostinger.get('state') in {'pending', 'active'}, hostinger
+          if hostinger.get('state') == 'active':
+              assert str(hostinger.get('url', '')).startswith('https://'), hostinger
+              assert hostinger.get('reachable') is True, hostinger
+              assert hostinger.get('http_status') == 200, hostinger
+          else:
+              assert hostinger.get('reachable') is None, hostinger
           assert mail.get('state') == 'active', mail
           assert mail.get('url') == '/mail/', mail
           assert mail.get('reachable') is True, mail

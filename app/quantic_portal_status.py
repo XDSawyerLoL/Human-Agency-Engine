@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+import os
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Mapping
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+from urllib.parse import urlparse
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,44 +19,48 @@ class ServiceTarget:
     state: str = "active"
 
 
-QUANTIC_SERVICE_TARGETS: tuple[ServiceTarget, ...] = (
-    ServiceTarget(
-        id="vision",
-        label="Quantic Vision",
-        kind="vision",
-        public_url="/vision/",
-        probe_url=None,
-    ),
-    ServiceTarget(
-        id="mail",
-        label="Quantic Mail",
-        kind="application",
-        public_url="/mail/",
-        probe_url=None,
-    ),
-    ServiceTarget(
-        id="relay-render",
-        label="Quantic Relay · Render",
-        kind="relay",
-        public_url="https://quanticmail-network-relay.onrender.com",
-        probe_url="https://quanticmail-network-relay.onrender.com",
-    ),
-    ServiceTarget(
-        id="relay-railway",
-        label="Quantic Relay · Railway",
-        kind="relay",
-        public_url="https://quantic-network-relay-backup-production.up.railway.app",
-        probe_url="https://quantic-network-relay-backup-production.up.railway.app",
-    ),
-    ServiceTarget(
-        id="relay-hostinger",
-        label="Quantic Relay · Hostinger",
-        kind="relay",
-        public_url="/network/",
-        probe_url=None,
-        state="pending",
-    ),
-)
+def _normalized_https_url(value: str | None) -> str | None:
+    raw = (value or "").strip().rstrip("/")
+    if not raw:
+        return None
+    parsed = urlparse(raw)
+    if parsed.scheme != "https" or not parsed.netloc:
+        return None
+    return raw
+
+
+def quantic_service_targets(env: Mapping[str, str] | None = None) -> tuple[ServiceTarget, ...]:
+    values = os.environ if env is None else env
+    hostinger_relay = _normalized_https_url(values.get("QUANTIC_HOSTINGER_RELAY_URL"))
+    return (
+        ServiceTarget(id="vision", label="Quantic Vision", kind="vision", public_url="/vision/", probe_url=None),
+        ServiceTarget(id="mail", label="Quantic Mail", kind="application", public_url="/mail/", probe_url=None),
+        ServiceTarget(
+            id="relay-render",
+            label="Quantic Relay · Render",
+            kind="relay",
+            public_url="https://quanticmail-network-relay.onrender.com",
+            probe_url="https://quanticmail-network-relay.onrender.com",
+        ),
+        ServiceTarget(
+            id="relay-railway",
+            label="Quantic Relay · Railway",
+            kind="relay",
+            public_url="https://quantic-network-relay-backup-production.up.railway.app",
+            probe_url="https://quantic-network-relay-backup-production.up.railway.app",
+        ),
+        ServiceTarget(
+            id="relay-hostinger",
+            label="Quantic Relay · Hostinger",
+            kind="relay",
+            public_url=hostinger_relay or "/network/",
+            probe_url=f"{hostinger_relay}/api/quantic/health" if hostinger_relay else None,
+            state="active" if hostinger_relay else "pending",
+        ),
+    )
+
+
+QUANTIC_SERVICE_TARGETS: tuple[ServiceTarget, ...] = quantic_service_targets()
 
 
 def probe_service(target: ServiceTarget, *, timeout: float = 2.5) -> dict[str, object]:
