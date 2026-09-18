@@ -1,13 +1,13 @@
 export const QUANTIC_SERVICE_TARGETS = Object.freeze([
   Object.freeze({ id:'vision', label:'Quantic Vision', kind:'vision', public_url:'/vision/', probe_url:null, state:'active' }),
-  Object.freeze({ id:'mail', label:'Quantic Mail', kind:'application', public_url:'https://quanticmail.onrender.com', probe_url:'https://quanticmail.onrender.com', state:'active' }),
+  Object.freeze({ id:'mail', label:'Quantic Mail', kind:'application', public_url:'/mail/', probe_url:null, state:'active' }),
   Object.freeze({ id:'relay-render', label:'Quantic Relay · Render', kind:'relay', public_url:'https://quanticmail-network-relay.onrender.com', probe_url:'https://quanticmail-network-relay.onrender.com', state:'active' }),
   Object.freeze({ id:'relay-railway', label:'Quantic Relay · Railway', kind:'relay', public_url:'https://quantic-network-relay-backup-production.up.railway.app', probe_url:'https://quantic-network-relay-backup-production.up.railway.app', state:'active' }),
   Object.freeze({ id:'relay-hostinger', label:'Quantic Relay · Hostinger', kind:'relay', public_url:'/network/', probe_url:null, state:'pending' })
 ]);
 
 export async function probeQuanticService(target,{timeoutMs=2500,fetchImpl=fetch}={}){
-  if(target.id==='vision'&&!target.probe_url)return {reachable:true,http_status:200};
+  if((target.id==='vision'||target.id==='mail')&&!target.probe_url)return {reachable:true,http_status:200};
   if(!target.probe_url)return {reachable:null,http_status:null};
   try{
     const response=await fetchImpl(target.probe_url,{
