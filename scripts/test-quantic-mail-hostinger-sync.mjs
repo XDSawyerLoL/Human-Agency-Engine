@@ -10,7 +10,7 @@ assert.match(sync,/QUANTICMAIL_COMMIT/);
 assert.match(sync,/QUANTIC_HOSTINGER_RELAY_URL/);
 assert.match(sync,/patchSentinel/);
 assert.match(sync,/injectPortalNav/);
-assert.match(sync,/quantic-mail-portal-nav\\.js/);
+assert.match(sync,/quantic-mail-portal-nav\.js/);
 assert.match(sync,/public[\\/]mail|public",\s*"mail"/);
 assert.doesNotMatch(sync,/npm",\["install/);
 assert.doesNotMatch(sync,/build:hostinger/);
