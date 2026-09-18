@@ -35,7 +35,8 @@ def test_operational_surfaces_exist():
     assert "Quantic Vision" in dashboard
     assert "Quantic Mail" in dashboard
     assert "Quantic Network" in dashboard
-    assert "quanticmail.onrender.com" not in mail\n    assert "Quantic Mail" in mail
+    assert "quanticmail.onrender.com" not in mail
+    assert "Quantic Mail" in mail
     assert "api/quantic-portal/status" in network
     assert "Quantic Glide" in products
     assert "Quantic OS" in products
