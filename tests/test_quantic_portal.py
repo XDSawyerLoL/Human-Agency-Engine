@@ -104,6 +104,7 @@ def test_quantic_surfaces_share_premium_shell():
         "public/mail/index.html",
         "public/network/index.html",
         "public/products/index.html",
+        "public/plans/index.html",
     ):
         page = text(path)
         assert 'class="q-body q-premium"' in page
