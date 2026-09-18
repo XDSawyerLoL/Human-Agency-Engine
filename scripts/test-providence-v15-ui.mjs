@@ -110,7 +110,10 @@ must('public/providence-v15-fixes.css','--gauge');
 must('public/providence-v15-fixes.css','p15-mobile-drawer');
 must('public/providence-v15-compat.css','kill historical blank-top regressions');
 must('public/providence-v15-pages.css','p15-pagehero.sports');
-must('public/providence-v14-shell.js','providence-v15-pages.css');
+must('public/providence-v14-shell.js','providence-v15-pages.css');\nmust('public/plans/index.html','quantic-unified.css?v=3.0');
+must('public/plans/index.html','QUANTIC');
+mustNot('public/plans/index.html','class="v4-topbar"');
+
 must('public/overview-v15.js','/api/snapshot');
 must('public/overview-v15.js','near|short|week|day');
 must('public/overview-v15.js','--gauge');
