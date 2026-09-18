@@ -32,7 +32,15 @@ const required = [
   'public/alerts/index.html',
   'public/alerts/alerts.js',
   'public/settings/index.html',
-  'scripts/test-early-warning-v17.mjs'
+  'scripts/test-early-warning-v17.mjs',
+  'src/quantic_embedded_relay.js',
+  'vendor/quanticmail-relay/lib/quantic/pqc-runtime-node.ts',
+  'vendor/quanticmail-relay/standalone-relay/mysql-storage.ts',
+  'vendor/quanticmail-relay/standalone-relay/embedded.ts',
+  'vendor/quanticmail-relay/QUANTICMAIL_RELAY_COMMIT',
+  'public/mail/vault/index.html',
+  'public/mail/network/index.html',
+  'public/mail/index.html'
 ];
 
 for (const file of required) {
@@ -62,5 +70,9 @@ console.log(JSON.stringify({
   falsification_surface: true,
   red_team_read_only: true,
   primary_pages: 12,
-  version: '1.17.0'
+  quantic_mail_native: true,
+  embedded_quantic_relay: true,
+  relay_persistence: 'mysql',
+  node22_relay_runtime: true,
+  version: 'quantic-hostinger-final'
 }));
