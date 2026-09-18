@@ -1,29 +1,28 @@
 (()=>{'use strict';
+
 const page=(document.body.dataset.page||'home').trim();
 const navPrimary=[
- ['home','/vision/','◉','Accueil'],
- ['predictions','/predictions/','⌁','Prédictions'],
- ['analyst','/analyst/','△','Analyste Vision'],
- ['alerts','/alerts/','♢','Alertes & Veille']
+ ['home','/vision/','◉','Vision'],
+ ['predictions','/predictions/','⌁','Prévisions'],
+ ['analyst','/analyst/','△','Analyste'],
+ ['alerts','/alerts/','♢','Alertes'],
+ ['sports','/sports/','◈','Sports'],
+ ['cameras','/cameras/','◎','World Eye'],
+ ['track-record','/track-record/','✓','Calibration'],
+ ['sources','/sources/','≋','Sources'],
+ ['backtest','/backtest/','▤','Historique'],
+ ['settings','/settings/','⚙','Réglages']
 ];
-const navExplore=[
- ['sports','/sports/','◈','Sports Intelligence'],
- ['cameras','/cameras/','◉','World Eye']
-];
-const navTransparency=[
- ['track-record','/track-record/','◎','Calibration'],
- ['sources','/sources/','≋','Sources & données'],
- ['backtest','/backtest/','▤','Historique & backtest']
-];
-const navTools=[
- ['settings','/settings/','⚙','Paramètres']
-];
-const allRows=[...navPrimary,...navExplore,...navTransparency,...navTools];
-const pageLabel=(allRows.find(([k])=>k===page)||['','','','Console Quantic Vision'])[3];
-const links=rows=>rows.map(([k,href,icon,label])=>`<a href="${href}" class="${page===k?'active':''}" ${page===k?'aria-current="page"':''}><i>${icon}</i><span>${label}</span></a>`).join('');
-const details=(label,rows)=>`<details class="p15-nav-more" ${rows.some(([k])=>k===page)?'open':''}><summary>${label}</summary><nav class="p15-nav">${links(rows)}</nav></details>`;
-const allLinks=()=>`<nav class="p15-nav">${links(navPrimary)}</nav>${details('Explorer',navExplore)}${details('Méthode & transparence',navTransparency)}${details('Outils',navTools)}`;
-const loadCss=(href,match)=>{if(!document.querySelector(`link[href*="${match}"]`)){const l=document.createElement('link');l.rel='stylesheet';l.href=href;document.head.appendChild(l)}};
+
+const loadCss=(href,match)=>{
+  if(document.querySelector(`link[href*="${match}"]`))return;
+  const link=document.createElement('link');
+  link.rel='stylesheet';
+  link.href=href;
+  document.head.appendChild(link);
+};
+
+/* Legacy component styles remain available; the unified layer is authoritative and loads last. */
 loadCss('/providence-v15-fixes.css?v=clarity-1','providence-v15-fixes.css');
 loadCss('/providence-v16-platform.css?v=16.12','providence-v16-platform.css');
 loadCss('/providence-v16-rail.css?v=16.12','providence-v16-rail.css');
@@ -31,52 +30,67 @@ loadCss('/providence-v16-ux.css?v=16.12','providence-v16-ux.css');
 loadCss('/providence-v16-mobile-fixes.css?v=16.12','providence-v16-mobile-fixes.css');
 loadCss('/providence-v16-product-cleanup.css?v=16.12','providence-v16-product-cleanup.css');
 if(page==='home')loadCss('/providence-timeline-v16-10.css?v=16.12','providence-timeline-v16-10.css');
-/* Authoritative mobile geometry must be the final cascade layer. */
 loadCss('/providence-v16-12-mobile.css?v=16.12','providence-v16-12-mobile.css');
-if(!document.querySelector('.p15-sidebar')){
- const side=document.createElement('aside');
- side.className='p15-sidebar';
- side.innerHTML=`
- <a class="p15-brand" href="/vision/"><span class="p15-logo" aria-hidden="true"></span><span><b>QUANTIC VISION</b><span>PROVIDENCE · PREDICTIVE INTELLIGENCE</span></span></a>
- <nav class="p15-nav" aria-label="Navigation Quantic Vision">${links(navPrimary)}</nav>
- ${details('Explorer',navExplore)}
- ${details('Méthode & transparence',navTransparency)}
- ${details('Outils',navTools)}
- <div class="p15-sidebar-spacer"></div>
- <div class="p15-mission"><strong>Mission</strong>Transformer des signaux vérifiables en prévisions utiles.<b>Voir avant. Décider mieux.</b></div>
- <a class="p15-usercard" href="/analyst/"><span class="avatar">△</span><span><b>Analyste Vision</b><small>Moteur Providence</small></span></a>
- <div class="p15-system"><span>●</span> Vision en ligne</div>`;
- document.body.prepend(side);
-}
-const main=document.querySelector('main');if(main)main.classList.add('p15-main');
-if(main&&!main.querySelector('.p15-topbar')){
- const top=document.createElement('div');top.className='p15-topbar';top.innerHTML=`<div class="p16-platform-head"><i></i><span><small>QUANTIC VISION / TEMPORAL INTELLIGENCE</small><b>${pageLabel}<em>· live</em></b></span></div><a class="p15-analyst" href="/analyst/" aria-label="Interroger Quantic Vision"><span class="ring">△</span><span><b>Analyste Vision</b><small>Interroger Providence</small></span></a>`;main.prepend(top);
-}
+loadCss('/quantic-unified.css?v=3.0','quantic-unified.css');
+
+document.body.classList.add('q-vision-shell');
+
+const productActive='vision';
+const global=document.createElement('header');
+global.className='q-global-nav';
+global.innerHTML=`
+  <div class="q-global-nav-inner">
+    <a class="q-global-brand" href="/" aria-label="Quantic accueil">
+      <span class="q-global-mark" aria-hidden="true"></span><span>QUANTIC</span>
+    </a>
+    <nav class="q-global-links" aria-label="Navigation Quantic">
+      <a href="/vision/" class="${productActive==='vision'?'active':''}" aria-current="page">Vision</a>
+      <a href="/mail/">Mail</a>
+      <a href="/network/">Network</a>
+      <a href="/products/" class="q-hide-mobile">Produits</a>
+      <a href="/quantic/" class="q-global-centre"><span class="q-global-status" aria-hidden="true"></span>Centre</a>
+    </nav>
+  </div>`;
+document.body.prepend(global);
+
+const subnav=document.createElement('nav');
+subnav.className='q-vision-subnav';
+subnav.setAttribute('aria-label','Navigation Quantic Vision');
+subnav.innerHTML=navPrimary.map(([key,href,icon,label],index)=>{
+  const separator=index===4||index===6?'<span class="q-vision-subnav-sep" aria-hidden="true"></span>':'';
+  const active=page===key;
+  return `${separator}<a href="${href}" class="${active?'active':''}" ${active?'aria-current="page"':''}><i>${icon}</i><span>${label}</span></a>`;
+}).join('');
+global.insertAdjacentElement('afterend',subnav);
+
+const main=document.querySelector('main');
+if(main)main.classList.add('q-vision-content');
+
 if(main&&page==='predictions'&&!main.querySelector('.p16-time-rail')){
- const rail=document.createElement('nav');rail.className='p16-time-rail';rail.setAttribute('aria-label','Navigation temporelle');rail.innerHTML=`
-  <a class="p16-now active" href="/predictions/"><i></i><span><b>PRÉSENT</b><small>état observé</small></span></a>
-  <a class="p16-time-node" style="--c:#ffc85a" href="/predictions/?horizon=immediate"><b>≤ 72 H</b><small>immédiat</small></a>
-  <a class="p16-time-node" style="--c:#e9a85d" href="/predictions/?horizon=near"><b>≤ 1 MOIS</b><small>court terme</small></a>
-  <a class="p16-time-node" style="--c:#a777ff" href="/predictions/?horizon=medium"><b>≤ 3 MOIS</b><small>moyen terme</small></a>
-  <a class="p16-time-node" style="--c:#4f8dff" href="/predictions/?horizon=long"><b>≤ 1 AN</b><small>long terme</small></a>
-  <a class="p16-time-node" style="--c:#57d8ff" href="/predictions/?horizon=deep"><b>&gt; 1 AN</b><small>stratégique</small></a>`;
- const top=main.querySelector('.p15-topbar');top?.insertAdjacentElement('afterend',rail);
+  const rail=document.createElement('nav');
+  rail.className='p16-time-rail';
+  rail.setAttribute('aria-label','Navigation temporelle');
+  rail.innerHTML=`
+    <a class="p16-now active" href="/predictions/"><i></i><span><b>PRÉSENT</b><small>état observé</small></span></a>
+    <a class="p16-time-node" style="--c:#ffc74d" href="/predictions/?horizon=immediate"><b>≤ 72 H</b><small>immédiat</small></a>
+    <a class="p16-time-node" style="--c:#ff9f43" href="/predictions/?horizon=near"><b>≤ 1 MOIS</b><small>court terme</small></a>
+    <a class="p16-time-node" style="--c:#9b5cff" href="/predictions/?horizon=medium"><b>≤ 3 MOIS</b><small>moyen terme</small></a>
+    <a class="p16-time-node" style="--c:#148cff" href="/predictions/?horizon=long"><b>≤ 1 AN</b><small>long terme</small></a>
+    <a class="p16-time-node" style="--c:#20d8ff" href="/predictions/?horizon=deep"><b>&gt; 1 AN</b><small>stratégique</small></a>`;
+  main.prepend(rail);
 }
-if(!document.querySelector('.p15-mobilebar')){
- const bar=document.createElement('div');bar.className='p15-mobilebar';bar.innerHTML='<a class="p15-mobilebrand" href="/vision/"><i></i><span>QUANTIC VISION</span></a><button class="p15-mobile-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">☰</button>';
- const overlay=document.createElement('button');overlay.className='p15-mobile-overlay';overlay.type='button';overlay.setAttribute('aria-label','Fermer le menu');
- const drawer=document.createElement('aside');drawer.className='p15-mobile-drawer';drawer.innerHTML=`<div aria-label="Navigation mobile Quantic Vision">${allLinks()}</div>`;
- document.body.append(bar,overlay,drawer);
- const toggle=bar.querySelector('.p15-mobile-toggle');const setOpen=open=>{document.body.classList.toggle('p15-menu-open',open);toggle.setAttribute('aria-expanded',String(open));toggle.textContent=open?'×':'☰'};
- toggle.addEventListener('click',()=>setOpen(!document.body.classList.contains('p15-menu-open')));overlay.addEventListener('click',()=>setOpen(false));drawer.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>setOpen(false)));document.addEventListener('keydown',e=>{if(e.key==='Escape')setOpen(false)});
+
+if(main&&!document.querySelector('.q-unified-footer')){
+  const footer=document.createElement('footer');
+  footer.className='q-unified-footer';
+  footer.innerHTML='<span>QUANTIC VISION · PROVIDENCE / HORIZON</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/products/">Écosystème Quantic</a></span>';
+  main.insertAdjacentElement('afterend',footer);
 }
-if(!document.querySelector('.p16-mobile-dock')){
- const dock=document.createElement('nav');dock.className='p16-mobile-dock';dock.setAttribute('aria-label','Navigation principale mobile');
- const items=[['home','/vision/','◉','Accueil'],['predictions','/predictions/','⌁','Prévisions'],['analyst','/analyst/','△','Analyste'],['alerts','/alerts/','♢','Alertes']];
- dock.innerHTML=items.map(([k,href,icon,label])=>`<a href="${href}" class="${page===k?'active':''}" ${page===k?'aria-current="page"':''}><i>${icon}</i><span>${label}</span></a>`).join('');
- document.body.appendChild(dock);
-}
+
 if(page==='home'&&!document.querySelector('script[src*="providence-timeline-v16-10.js"]')){
- const s=document.createElement('script');s.src='/providence-timeline-v16-10.js?v=16.12';s.async=true;document.body.appendChild(s);
+  const script=document.createElement('script');
+  script.src='/providence-timeline-v16-10.js?v=16.12';
+  script.async=true;
+  document.body.appendChild(script);
 }
 })();
