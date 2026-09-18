@@ -22,7 +22,7 @@ try{
   run("git",["remote","add","origin",REPO],{cwd:work});
   run("git",["fetch","--quiet","--depth","1","origin",COMMIT],{cwd:work});
   run("git",["checkout","--quiet","--detach","FETCH_HEAD"],{cwd:work});
-  run("npm",["ci","--ignore-scripts","--no-audit","--no-fund"],{cwd:work});
+  run("npm",["install","--ignore-scripts","--no-audit","--no-fund"],{cwd:work});
   run("npm",["run","build:hostinger"],{
     cwd:work,
     env:{
