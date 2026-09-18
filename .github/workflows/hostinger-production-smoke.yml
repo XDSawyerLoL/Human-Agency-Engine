@@ -56,6 +56,7 @@ jobs:
               && grep -q 'Quantic-Glide-1.2.6-x64.exe' <<<"$downloads" \
               && grep -q 'quantic-v2-d9f379d4f6a3' <<<"$downloads" \
               && grep -q 'QuanticMail' <<<"$mail" \
+              && grep -q 'quantic-mail-portal-nav.js' <<<"$mail" \
               && grep -Eq 'qn-onboarding|qn-app' <<<"$mail" \
               && ! grep -q 'quanticmail.onrender.com' <<<"$mail" \
               && ! grep -qi '<iframe' <<<"$mail"; then
