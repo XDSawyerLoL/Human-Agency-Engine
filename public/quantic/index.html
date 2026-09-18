@@ -1,29 +1,41 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#05080d">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#05070b">
   <title>Quantic — Centre</title><meta name="description" content="Le centre unifié de Quantic Vision, Quantic Mail et Quantic Network.">
-  <link rel="stylesheet" href="/quantic.css?v=1.0">
+  <link rel="stylesheet" href="/quantic.css?v=2.0">
 </head>
-<body class="q-body">
+<body class="q-body q-premium" data-status-endpoint="/api/quantic-portal/status">
+<div class="q-noise" aria-hidden="true"></div>
 <header class="q-topbar"><nav class="q-shell q-nav" aria-label="Navigation principale"><a class="q-brand" href="/"><span class="q-mark" aria-hidden="true"></span><span>QUANTIC</span></a><div class="q-links"><a href="/vision/">Vision</a><a href="/mail/">Mail</a><a href="/network/">Network</a><a href="/products/">Produits</a><a class="q-nav-cta" href="/quantic/" aria-current="page">Centre</a></div></nav></header>
 <main class="q-shell">
-  <section class="q-dashboard-hero"><p class="q-kicker">CENTRE QUANTIC</p><h1>Tout Quantic,<br>au même endroit.</h1><p>Le tableau de bord rassemble l’accès aux services sans mélanger leurs responsabilités techniques.</p><div class="q-status-summary" data-quantic-status-summary><span class="q-status-dot"></span><span data-status-label>État du réseau inconnu</span></div></section>
-  <section class="q-section">
+  <section class="q-dashboard-hero" data-q-reveal>
+    <p class="q-kicker">CENTRE QUANTIC</p>
+    <h1>Ton point<br>d’entrée.</h1>
+    <p>Une surface unique pour entrer dans Vision, Mail et Network sans confondre leurs responsabilités techniques.</p>
+    <div class="q-status-summary" data-quantic-status-summary><span class="q-status-dot"></span><span data-status-label>État du réseau inconnu</span></div>
+  </section>
+
+  <section class="q-section" data-q-reveal>
+    <div class="q-section-head"><div><p class="q-kicker">SERVICES</p><h2>Choisis ton mouvement.</h2></div><span class="q-section-index">01 / LAUNCHPAD</span></div>
     <div class="q-grid four">
-      <a class="q-card vision" href="/vision/"><span class="q-card-icon">V</span><h3>Quantic Vision</h3><p>Observer le monde, suivre les signaux, explorer les futurs plausibles et contrôler les preuves.</p><span class="q-card-link">Entrer dans Vision →</span></a>
-      <a class="q-card mail" href="/mail/"><span class="q-card-icon">M</span><h3>Quantic Mail</h3><p>Accéder à la messagerie chiffrée et à l’identité de communication Quantic.</p><span class="q-card-link">Ouvrir Mail →</span></a>
-      <a class="q-card network" href="/network/"><span class="q-card-icon">N</span><h3>Quantic Network</h3><p>Consulter les relais, services et l’état général de l’infrastructure Quantic.</p><span class="q-card-link">Voir Network →</span></a>
-      <a class="q-card ecosystem" href="/products/"><span class="q-card-icon">Q</span><h3>Écosystème</h3><p>Quantic OS, Quantic Glide, Providence et les briques communes du système.</p><span class="q-card-link">Explorer l’écosystème →</span></a>
+      <a class="q-card vision" data-q-tilt href="/vision/"><span class="q-card-icon">V</span><span class="q-card-meta">anticiper</span><h3>Quantic Vision</h3><p>Observer le monde, suivre les signaux, explorer les futurs plausibles et contrôler les preuves.</p><span class="q-card-link">Entrer dans Vision →</span></a>
+      <a class="q-card mail" data-q-tilt href="/mail/"><span class="q-card-icon">M</span><span class="q-card-meta">communiquer</span><h3>Quantic Mail</h3><p>Accéder à la messagerie chiffrée et à ton identité de communication Quantic.</p><span class="q-card-link">Ouvrir Mail →</span></a>
+      <a class="q-card network" data-q-tilt href="/network/"><span class="q-card-icon">N</span><span class="q-card-meta">relier</span><h3>Quantic Network</h3><p>Consulter les relais, services et la continuité de l’infrastructure Quantic.</p><span class="q-card-link">Voir Network →</span></a>
+      <a class="q-card ecosystem" data-q-tilt href="/products/"><span class="q-card-icon">Q</span><span class="q-card-meta">étendre</span><h3>Écosystème</h3><p>Quantic OS, Quantic Glide, Providence et les briques communes du système.</p><span class="q-card-link">Explorer →</span></a>
     </div>
   </section>
-  <section class="q-section"><div class="q-section-head"><div><p class="q-kicker">SERVICES</p><h2>Disponibilité</h2><p class="q-section-copy">Les statuts sont informatifs. Un service reste toujours accessible même si le contrôle de disponibilité ne répond pas.</p></div></div><div class="q-service-grid">
-    <article class="q-service" data-service-id="vision"><div class="q-service-head"><h3>Quantic Vision</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Moteur Providence/HORIZON et surfaces prédictives.</p></article>
-    <article class="q-service" data-service-id="mail"><div class="q-service-head"><h3>Quantic Mail</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Application de messagerie Quantic.</p></article>
-    <article class="q-service" data-service-id="relay-render"><div class="q-service-head"><h3>Relay Render</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Relais public principal actuel.</p></article>
-    <article class="q-service" data-service-id="relay-railway"><div class="q-service-head"><h3>Relay Railway</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Relais secondaire indépendant du fournisseur Render.</p></article>
-  </div></section>
+
+  <section class="q-section" data-q-reveal>
+    <div class="q-section-head"><div><p class="q-kicker">LIVE FABRIC</p><h2>Disponibilité.</h2><p class="q-section-copy">Ces états mesurent la disponibilité technique. Ils ne remplacent ni une preuve cryptographique ni un audit de sécurité.</p></div><span class="q-section-index">02 / STATUS</span></div>
+    <div class="q-service-grid">
+      <article class="q-service" data-service-id="vision"><div class="q-service-head"><h3>Quantic Vision</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Moteur Providence/HORIZON et surfaces prédictives.</p></article>
+      <article class="q-service" data-service-id="mail"><div class="q-service-head"><h3>Quantic Mail</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Application de messagerie Quantic.</p></article>
+      <article class="q-service" data-service-id="relay-render"><div class="q-service-head"><h3>Relay Render</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Relais public historique pendant la migration Hostinger.</p></article>
+      <article class="q-service" data-service-id="relay-railway"><div class="q-service-head"><h3>Relay Railway</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Relais secondaire sur un fournisseur distinct.</p></article>
+    </div>
+  </section>
 </main>
-<footer class="q-shell q-footer"><span>Quantic Centre</span><span><a href="/">Accueil public</a> · <a href="/network/">État du réseau</a></span></footer>
-<script src="/quantic.js?v=1.0" defer></script>
+<footer class="q-shell q-footer"><span>QUANTIC CENTRE</span><span><a href="/">Accueil public</a> · <a href="/network/">État du réseau</a></span></footer>
+<script src="/quantic.js?v=2.0" defer></script>
 </body></html>
