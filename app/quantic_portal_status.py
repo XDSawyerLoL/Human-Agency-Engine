@@ -29,8 +29,8 @@ QUANTIC_SERVICE_TARGETS: tuple[ServiceTarget, ...] = (
         id="mail",
         label="Quantic Mail",
         kind="application",
-        public_url="https://quanticmail.onrender.com",
-        probe_url="https://quanticmail.onrender.com",
+        public_url="/mail/",
+        probe_url=None,
     ),
     ServiceTarget(
         id="relay-render",
@@ -59,7 +59,7 @@ QUANTIC_SERVICE_TARGETS: tuple[ServiceTarget, ...] = (
 
 def probe_service(target: ServiceTarget, *, timeout: float = 2.5) -> dict[str, object]:
     """Probe one immutable Quantic target without exposing response content."""
-    if target.id == "vision" and target.probe_url is None:
+    if target.id in {"vision", "mail"} and target.probe_url is None:
         # This function runs inside the Vision API process. If it can build the
         # status response, the local Vision service is alive by definition.
         return {"reachable": True, "http_status": 200}
