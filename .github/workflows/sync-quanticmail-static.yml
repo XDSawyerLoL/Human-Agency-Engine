@@ -1,0 +1,112 @@
+name: Sync QuanticMail into Hostinger portal
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sync-quanticmail-static.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-quanticmail-static
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout portal
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch latest QuanticMail static export
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/quanticmail-dist
+          git clone --depth 1 --branch hostinger-dist https://github.com/XDSawyerLoL/QuanticMail.git /tmp/quanticmail-dist
+          test -f /tmp/quanticmail-dist/index.html
+          test -f /tmp/quanticmail-dist/network/index.html
+          test -f /tmp/quanticmail-dist/vault/index.html
+          test -f /tmp/quanticmail-dist/QUANTICMAIL_COMMIT
+
+      - name: Install QuanticMail under public/mail
+        shell: bash
+        env:
+          HOSTINGER_ORIGIN: https://mediumorchid-badger-314305.hostingersite.com
+        run: |
+          set -euo pipefail
+          rm -rf public/mail
+          mkdir -p public/mail
+          cp -a /tmp/quanticmail-dist/. public/mail/
+          rm -rf public/mail/.git
+
+          python - <<'PY'
+          from pathlib import Path
+          import os
+
+          root = Path("public/mail")
+          sentinel = "https://quantic-hostinger-relay.invalid"
+          relay = os.environ["HOSTINGER_ORIGIN"]
+          nav = '<script src="/quantic-mail-portal-nav.js" defer></script>'
+
+          replacements = 0
+          html_pages = 0
+          for path in root.rglob("*"):
+              if not path.is_file():
+                  continue
+              try:
+                  text = path.read_text(encoding="utf-8")
+              except UnicodeDecodeError:
+                  continue
+
+              if sentinel in text:
+                  replacements += text.count(sentinel)
+                  text = text.replace(sentinel, relay)
+
+              if path.suffix.lower() == ".html":
+                  html_pages += 1
+                  if "quantic-mail-portal-nav.js" not in text and "</body>" in text:
+                      text = text.replace("</body>", nav + "</body>")
+
+              path.write_text(text, encoding="utf-8")
+
+          if replacements < 1:
+              raise SystemExit("Bootstrap sentinel missing from QuanticMail export")
+          if html_pages < 3:
+              raise SystemExit(f"Unexpected QuanticMail export: only {html_pages} HTML pages")
+
+          print(f"Patched {replacements} relay references across {html_pages} HTML pages")
+          PY
+
+      - name: Verify real QuanticMail replaced fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Eq 'qn-onboarding|qn-app' public/mail/index.html
+          grep -q 'quantic-mail-portal-nav.js' public/mail/index.html
+          test -f public/mail/QUANTICMAIL_COMMIT
+          ! grep -q 'Aucune iframe Render' public/mail/index.html
+          ! grep -qi '<iframe' public/mail/index.html
+          ! grep -q 'quanticmail.onrender.com' public/mail/index.html
+          echo "QuanticMail source: $(cat public/mail/QUANTICMAIL_COMMIT)"
+
+      - name: Commit synchronized mail application
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- public/mail; then
+            echo "QuanticMail bundle already synchronized."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A public/mail
+          git commit -m "deploy(mail): sync real QuanticMail into Hostinger portal"
+          git push origin HEAD:main
