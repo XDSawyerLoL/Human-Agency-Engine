@@ -559,3 +559,94 @@ body.q-vision-surface td{
   .q-vision-subnav{top:62px!important;padding-left:12px!important;padding-right:12px!important}
   .q-unified-footer{flex-direction:column!important}
 }
+
+
+/* V8 clarity reset for legacy feature cards
+   Feature pages keep their mature DOM/runtime, but no dark Providence chrome survives. */
+.p15-forecast-card,
+.p1615-card,
+.p17-alert-card,
+.p17-cluster,
+.p17-card,
+.p1615-temporal-field,
+.p16-deep-dive,
+.p16-technical-note,
+.p15-horizon-row,
+.p15-list-row,
+.p15-source-strip,
+.pv-threshold,
+.p168-method,
+.v8-status,
+.v8-proof-status{
+  background:#fff!important;
+  color:var(--qv-ink)!important;
+  border-color:var(--qv-line)!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+}
+.p15-forecast-card:after,
+.p1615-card:after,
+.p17-alert-card:after,
+.p17-cluster:after{display:none!important}
+.p15-forecast-card small,
+.p1615-tag,
+.p17-kicker,
+.p17-alert-card>small{color:#39869a!important}
+.p15-forecast-card h3,
+.p1615-card h3,
+.p17-alert-card h3,
+.p17-cluster h3,
+.p17-branch b,
+.p17-branch span,
+.p17-alert-numbers b{color:var(--qv-ink)!important}
+.p15-forecast-card p,
+.p1615-meta,
+.p1615-foot,
+.p1615-foot strong,
+.p17-alert-numbers,
+.p17-detail p,
+.p17-detail ul,
+.p17-detail small,
+.p17-note,
+.p15-horizon-row small{color:var(--qv-muted)!important}
+.p15-prob-ring,
+.p1615-prob{background:conic-gradient(var(--ring,var(--tone,#3ba6bb)) calc(var(--p)*1%),#e7eef1 0)!important}
+.p15-prob-ring:after,
+.p1615-prob:before{background:#fff!important}
+.p15-prob-ring b,
+.p1615-prob b{color:var(--qv-ink)!important}
+.p15-mini-meta span{
+  background:#f7f9fa!important;
+  border-color:var(--qv-line)!important;
+  color:#687b85!important;
+}
+.p1615-card:hover,.p1615-card:focus-visible,
+.p15-forecast-card:hover{
+  transform:translateY(-2px)!important;
+  border-color:#bfd9df!important;
+  box-shadow:0 12px 30px rgba(15,32,43,.07)!important;
+}
+.p1615-card.is-selected{
+  border-color:#8fcbd7!important;
+  box-shadow:0 0 0 3px rgba(19,184,210,.08)!important;
+}
+.p1615-chip{
+  border-color:var(--qv-line)!important;
+  background:#fff!important;
+  color:#607681!important;
+  box-shadow:none!important;
+}
+.p1615-chip.is-active{
+  border-color:#c5e7ed!important;
+  background:var(--qv-cyan-soft)!important;
+  color:#1d6576!important;
+  box-shadow:none!important;
+}
+.p17-detail div,.p17-branch{border-color:#e9eff1!important}
+.p17-reason{color:#607681!important}
+.sports-empty,.v4-empty,.d6-loading,.causal-empty,.graph-empty,.p1611-empty{
+  border:1px dashed #d5e1e5!important;
+  border-radius:14px!important;
+  background:#fbfcfd!important;
+  color:#7a8b94!important;
+}
