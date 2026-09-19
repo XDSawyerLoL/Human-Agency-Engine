@@ -39,19 +39,24 @@ jobs:
             plans="$(curl -fsSL --max-time 20 "$BASE_URL/plans/" 2>/dev/null || true)"
             mail="$(curl -fsSL --max-time 20 "$BASE_URL/mail/" 2>/dev/null || true)"
             downloads="$(curl -fsSL --max-time 20 "$BASE_URL/downloads/" 2>/dev/null || true)"
+            qmark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/quantic-sillage-mark.svg" 2>/dev/null || true)"
+            pulsemark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/pulse-mark.svg" 2>/dev/null || true)"
+            mailmark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/mail-mark.svg" 2>/dev/null || true)"
+            newsmark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/news-mark.svg" 2>/dev/null || true)"
+            visionmark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/vision-mark.svg" 2>/dev/null || true)"
             if grep -q 'q-hero-stage' <<<"$root" \
               && grep -q 'quantic-unified.css?v=3.0' <<<"$root" \
-              && grep -q 'quantic-finish-v4.css?v=4.0' <<<"$root" \
-              && grep -q 'CENTRE QUANTIC' <<<"$centre" \
+              && grep -q 'quantic-finish-v4.css' <<<"$root" \
+              && grep -q 'Quantic ID' <<<"$centre" \
               && grep -q 'quantic-unified.css?v=3.0' <<<"$centre" \
               && grep -q 'Quantic Vision' <<<"$vision" \
-              && grep -q 'quantic-unified.css?v=3.0' <<<"$vision" \
-              && grep -q 'Quantic Network' <<<"$network" \
-              && grep -q 'quantic-unified.css?v=3.0' <<<"$network" \
-              && grep -q 'quantic-unified.css?v=3.0' <<<"$predictions" \
+              && grep -q 'quantic-vision-home-v8.css?v=8.0' <<<"$vision" \
+              && grep -q 'QUANTIC NETWORK' <<<"$network" \
+              && grep -q 'id="network"' <<<"$downloads" \
+              && grep -q 'predictions-brand-2026.css?v=20260919' <<<"$predictions" \
+              && grep -q '/assets/brand-2026/vision-mark.svg' <<<"$predictions" \
               && grep -q 'quantic-unified.css?v=3.0' <<<"$plans" \
               && grep -q 'ACCÈS QUANTIC' <<<"$plans" \
-              && grep -q 'quantic-finish-v4.css?v=4.0' <<<"$plans" \
               && grep -q 'Quantic Glide 1.2.6' <<<"$downloads" \
               && grep -q 'Quantic-Glide-1.2.6-x64.exe' <<<"$downloads" \
               && grep -q 'quantic-v2-d9f379d4f6a3' <<<"$downloads" \
@@ -59,9 +64,14 @@ jobs:
               && grep -q 'quantic-mail-portal-nav.js' <<<"$mail" \
               && grep -Eq 'qn-onboarding|qn-app' <<<"$mail" \
               && ! grep -q 'quanticmail.onrender.com' <<<"$mail" \
-              && ! grep -qi '<iframe' <<<"$mail"; then
+              && ! grep -qi '<iframe' <<<"$mail" \
+              && grep -q 'Quantic Sillage' <<<"$qmark" \
+              && grep -q 'aria-label="Pulse"' <<<"$pulsemark" \
+              && grep -q 'aria-label="Mail"' <<<"$mailmark" \
+              && grep -q 'aria-label="News"' <<<"$newsmark" \
+              && grep -q 'aria-label="Vision"' <<<"$visionmark"; then
               ready=1
-              echo "Hostinger is serving the unified Providence-derived Quantic v3 surfaces."
+              echo "Hostinger is serving Quantic 2026 branding and product logos."
               break
             fi
             echo "Hostinger deployment not ready yet (attempt $attempt/36)."
