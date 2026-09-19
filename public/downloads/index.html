@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f5f7f9">
-  <meta name="description" content="Téléchargements officiels Quantic : Quantic Glide, Quantic OS et accès aux services Quantic.">
-  <title>Téléchargements — Quantic</title>
+  <meta name="description" content="Quantic Network et téléchargements : état des services et accès aux outils Quantic.">
+  <title>Network & Téléchargements — Quantic</title>
   <link rel="stylesheet" href="/quantic.css?v=2.0" media="not all">
   <link rel="stylesheet" href="/quantic-unified.css?v=3.0" media="not all">
   <link rel="stylesheet" href="/quantic-finish-v4.css?v=4.1" media="not all">
@@ -17,22 +17,31 @@
 <header class="q-topbar">
   <nav class="q-shell q-nav" aria-label="Navigation principale">
     <a class="q-brand" href="/" aria-label="Quantic accueil"><span class="q-mark" aria-hidden="true"></span><span>QUANTIC SILLAGE</span></a>
-    <div class="q-links"><a href="/vision/">Vision</a><a href="/mail/">Mail</a><a href="/pulse/">Pulse</a><a href="/news/">News</a><a href="/network/">Network</a><a href="/products/">Produits</a><a href="/downloads/" aria-current="page">Téléchargements</a><a class="q-nav-cta" href="/quantic/">Quantic ID</a></div>
+    <div class="q-links"><a href="/vision/">Vision</a><a href="/mail/">Mail</a><a href="/pulse/">Pulse</a><a href="/news/">News</a><a href="/products/">Produits</a><a href="/downloads/" aria-current="page">Network & téléchargements</a><a class="q-nav-cta" href="/quantic/">Quantic ID</a></div>
   </nav>
 </header>
 
 <main class="q-shell">
   <section class="q-dashboard-hero q-unified-hero q-download-hero">
-    <p class="q-kicker">DISTRIBUTION OFFICIELLE</p>
-    <h1>Prendre les outils.<br>Pas chercher les liens.</h1>
-    <p>Cette page est le point d’entrée unique pour les versions réellement disponibles. Un produit web ouvre son application ; un logiciel publié propose son paquet officiel ; une preview reste explicitement marquée comme telle.</p>
-    <div class="q-download-note"><strong>Source de vérité :</strong> les binaires pointent directement vers les releases GitHub officielles Quantic. Aucun bouton fictif, aucun fichier intermédiaire hébergé sur cette page.</div>
+    <p class="q-kicker">NETWORK & OUTILS</p>
+    <h1>Vos services.<br>Vos outils.</h1>
+    <p>Retrouvez au même endroit l’état de l’écosystème Quantic et les versions disponibles de ses applications.</p>
+    <div class="q-download-note"><strong>Distribution vérifiée :</strong> chaque téléchargement proposé ici correspond à une version publiée et identifiée de l’écosystème Quantic.</div>
+  </section>
+
+  <section class="q-section" id="network">
+    <div class="q-section-head"><div><p class="q-kicker">QUANTIC NETWORK</p><h2>État des services.</h2><p class="q-section-copy">Vérifiez rapidement la disponibilité des principaux services Quantic avant d’ouvrir ou télécharger un outil.</p></div><span class="q-section-index">01 / NETWORK</span></div>
+    <div class="q-network-public-grid">
+      <article class="q-service" data-service-id="vision"><div class="q-service-head"><h3>Quantic Vision</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Accès au service Vision.</p><small class="q-service-meta" data-service-meta>Vérification en cours</small></article>
+      <article class="q-service" data-service-id="mail"><div class="q-service-head"><h3>Quantic Mail</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Accès à la messagerie Quantic.</p><small class="q-service-meta" data-service-meta>Vérification en cours</small></article>
+      <article class="q-service" data-network-continuity><div class="q-service-head"><h3>Disponibilité générale</h3><span class="q-service-state" data-network-continuity-state data-state="checking">Vérification…</span></div><p>Vue synthétique de la continuité des services.</p><small class="q-service-meta" data-continuity-meta>État en cours d’analyse</small></article>
+    </div>
   </section>
 
   <section class="q-section">
     <div class="q-section-head">
       <div><p class="q-kicker">LOGICIELS</p><h2>Téléchargements disponibles.</h2><p class="q-section-copy">Identity Vault, Windows, portable USB, QuanticMail Desktop et preview système. Les statuts ci-dessous correspondent aux distributions publiées.</p></div>
-      <span class="q-section-index">01 / DOWNLOAD</span>
+      <span class="q-section-index">02 / DOWNLOAD</span>
     </div>
     <div class="q-download-grid">
       <article class="q-download-card" data-tone="identity" id="identity-vault">
@@ -85,11 +94,11 @@
 
   <section class="q-section q-download-trust">
     <div class="q-section-head">
-      <div><p class="q-kicker">CONFIANCE</p><h2>Sécurité des téléchargements.</h2><p class="q-section-copy">Un téléchargement doit être vérifiable avant d’être rassurant. Quantic affiche donc la provenance, la signature et les empreintes sans masquer les limites actuelles.</p></div>
-      <span class="q-section-index">02 / TRUST</span>
+      <div><p class="q-kicker">CONFIANCE</p><h2>Sécurité des téléchargements.</h2><p class="q-section-copy">Chaque version affiche les informations nécessaires pour identifier le fichier proposé et son niveau de maturité.</p></div>
+      <span class="q-section-index">03 / TRUST</span>
     </div>
     <div class="q-trust-grid">
-      <article><small>SOURCE OFFICIELLE</small><h3>GitHub Releases Quantic</h3><p>Les boutons de cette page pointent directement vers les releases des dépôts officiels. Aucun exécutable n’est reproposé depuis un miroir opaque.</p><span class="q-trust-state ok">Source vérifiable</span></article>
+      <article><small>DISTRIBUTION</small><h3>Versions identifiées</h3><p>Chaque téléchargement est rattaché à une version précise et documentée de son produit.</p><span class="q-trust-state ok">Version vérifiable</span></article>
       <article><small>Signature Windows</small><h3>Identity Vault & Glide</h3><p>Les versions actuellement publiées ne sont pas encore signées avec un certificat Windows Quantic. SmartScreen peut donc afficher un avertissement.</p><span class="q-trust-state warn">Signature : à finaliser</span></article>
       <article><small>INTÉGRITÉ</small><h3>Empreintes de fichiers</h3><p>Glide publie son SHA-256 et Quantic OS publie les empreintes de ses parties. Ces contrôles permettent de vérifier qu’un fichier téléchargé n’a pas été modifié.</p><a href="https://github.com/XDSawyerLoL/QuanticSillage/releases/download/quantic-glide-v1.2.6/Quantic-Glide-1.2.6-SHA256SUMS.txt">Voir le SHA-256 de Glide →</a></article>
     </div>
@@ -98,7 +107,7 @@
   <section class="q-section">
     <div class="q-section-head">
       <div><p class="q-kicker">SERVICES</p><h2>À ouvrir, pas à télécharger.</h2><p class="q-section-copy">Ces briques sont des services web actifs. Leur bouton mène directement au produit au lieu de simuler un téléchargement inexistant.</p></div>
-      <span class="q-section-index">03 / OPEN</span>
+      <span class="q-section-index">04 / OPEN</span>
     </div>
     <div class="q-download-grid">
       <article class="q-download-card" data-tone="violet">
@@ -140,6 +149,6 @@
 </main>
 
 <footer class="q-shell q-footer"><span>QUANTIC · OFFICIAL DISTRIBUTION</span><span><a href="/">Accueil</a> · <a href="/products/">Produits</a> · <a href="/network/">Réseau</a></span></footer>
-<script src="/quantic.js?v=2.0" defer></script>
+<script src="/quantic.js?v=2.1" defer></script>
 </body>
 </html>
