@@ -85,6 +85,8 @@ function publicStatus(){
     version:1,
     bridge:{host:HOST,port:PORT,ready:Boolean(bridge),error:bridgeError||null},
     vaultMode:isPortable?"portable":"pc",
+    keyAlgorithm:"ed25519",
+    portableCipher:"aes-256-gcm",
     vaultExists:Boolean(record),
     identityAvailable:Boolean(activeIdentity),
     keyId:activeIdentity?.keyId||record?.keyId||null,
