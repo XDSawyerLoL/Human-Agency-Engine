@@ -1,6 +1,7 @@
 (()=>{'use strict';
 const BRIDGE_ORIGIN='http://127.0.0.1:47621';
 const STATUS_URL=BRIDGE_ORIGIN+'/v1/status';
+const ASSERT_URL=BRIDGE_ORIGIN+'/v1/assert';
 
 async function probe({timeoutMs=1200}={}){
   const controller=new AbortController();
@@ -45,9 +46,38 @@ async function probe({timeoutMs=1200}={}){
   }
 }
 
+async function assert({challenge,audience='',timeoutMs=2500}={}){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{
+    const response=await fetch(ASSERT_URL,{
+      method:'POST',
+      cache:'no-store',
+      credentials:'omit',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({challenge:String(challenge||''),audience:String(audience||'')}),
+      signal:controller.signal
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok){
+      const error=new Error(data.error||('bridge_http_'+response.status));
+      error.data=data;
+      throw error;
+    }
+    if(Number(data.version)!==1||!data.keyId||!data.publicKey||!data.payload||!data.signature){
+      throw new Error('invalid_identity_assertion');
+    }
+    return data;
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
 window.QuanticID=Object.freeze({
   bridgeOrigin:BRIDGE_ORIGIN,
   statusUrl:STATUS_URL,
-  probe
+  assertUrl:ASSERT_URL,
+  probe,
+  assert
 });
 })();
