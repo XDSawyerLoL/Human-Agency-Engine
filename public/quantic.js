@@ -1,10 +1,12 @@
 (() => {
   const endpoint = "/api/quantic-portal/status";
+  const STATUS_TIMEOUT_MS = 6500;
   const labels = {
     online: "Disponible",
     offline: "Indisponible",
     pending: "Bientôt",
-    unknown: "État inconnu",
+    checking: "Vérification…",
+    unknown: "Non vérifié",
   };
 
   function setServiceState(id, state) {
@@ -25,20 +27,69 @@
     });
   }
 
-  async function loadStatus() {
-    if (!document.querySelector("[data-quantic-status-summary],[data-service-id]")) return;
-    setSummary("pending", "Vérification du réseau…");
+  function setContinuity(state, text) {
+    document.querySelectorAll("[data-network-continuity]").forEach((card) => {
+      const badge = card.querySelector("[data-network-continuity-state]");
+      if (!badge) return;
+      badge.dataset.state = state;
+      badge.textContent = text;
+    });
+  }
+
+  function summarizeContinuity(serviceStates) {
+    const relays = ["relay-render", "relay-railway", "relay-hostinger"]
+      .map((id) => serviceStates.get(id))
+      .filter(Boolean);
+
+    if (!relays.length || relays.every((state) => state === "unknown")) {
+      setContinuity("unknown", "Non vérifié");
+      return;
+    }
+    if (relays.some((state) => state === "online")) {
+      setContinuity("online", "Chemin disponible");
+      return;
+    }
+    if (relays.every((state) => state === "pending")) {
+      setContinuity("pending", "En préparation");
+      return;
+    }
+    setContinuity("offline", "Indisponible");
+  }
+
+  async function fetchStatus() {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), STATUS_TIMEOUT_MS);
     try {
-      const response = await fetch(endpoint, {
+      return await fetch(endpoint, {
         headers: { Accept: "application/json" },
         cache: "no-store",
+        signal: controller.signal,
       });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function loadStatus() {
+    if (!document.querySelector("[data-quantic-status-summary],[data-service-id],[data-network-continuity]")) return;
+
+    setSummary("pending", "Vérification des services…");
+    document.querySelectorAll("[data-service-state]").forEach((badge) => {
+      badge.dataset.state = "checking";
+      badge.textContent = labels.checking;
+    });
+    setContinuity("checking", labels.checking);
+
+    try {
+      const response = await fetchStatus();
       if (!response.ok) throw new Error("status unavailable");
       const payload = await response.json();
       if (!payload || !Array.isArray(payload.services)) throw new Error("invalid status payload");
 
       let active = 0;
       let online = 0;
+      const serviceStates = new Map();
+
       payload.services.forEach((service) => {
         const state = service.state === "pending"
           ? "pending"
@@ -47,26 +98,29 @@
             : service.reachable === false
               ? "offline"
               : "unknown";
+
+        serviceStates.set(service.id, state);
         setServiceState(service.id, state);
+
         if (service.state !== "pending") {
           active += 1;
           if (state === "online") online += 1;
         }
       });
 
-      if (!active) setSummary("unknown", "État du réseau inconnu");
-      else if (online === active) setSummary("online", `${online}/${active} services vérifiés`);
-      else if (online > 0) setSummary("partial", `${online}/${active} services disponibles`);
+      summarizeContinuity(serviceStates);
+
+      if (!active) setSummary("unknown", "Monitoring indisponible");
+      else if (online === active) setSummary("online", "Services principaux disponibles");
+      else if (online > 0) setSummary("partial", "Service partiellement disponible");
       else setSummary("offline", "Services temporairement indisponibles");
     } catch (_error) {
-      document.querySelectorAll("[data-service-id]").forEach((card) => {
-        const badge = card.querySelector("[data-service-state]");
-        if (badge && badge.dataset.state !== "pending") {
-          badge.dataset.state = "unknown";
-          badge.textContent = labels.unknown;
-        }
+      document.querySelectorAll("[data-service-state]").forEach((badge) => {
+        badge.dataset.state = "unknown";
+        badge.textContent = labels.unknown;
       });
-      setSummary("unknown", "État du réseau inconnu");
+      setContinuity("unknown", labels.unknown);
+      setSummary("unknown", "Monitoring indisponible");
     }
   }
 

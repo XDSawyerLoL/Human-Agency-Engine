@@ -6,6 +6,7 @@
   const pctProb = v => `${Math.round(n(v) * 100)}%`;
   const DOMAIN={energy:'Énergie',geopolitics_security:'Géopolitique',cyber_technology:'Technologie & cyber',public_health:'Santé',financial_stress:'Finance',economy_labor:'Économie & emploi',weather_climate:'Climat',natural_hazards:'Risques naturels',social_collective_behavior:'Société',supply_fuel:'Commerce & logistique',regulation_policy:'Régulation',transport_mobility:'Transport'};
   const HORIZON={immediate:'≤72 h',near:'Jours–semaines',medium:'Mois',long:'1–3 ans',strategic:'3–5 ans',deep:'5 ans +'};
+  const TRACK_TIMEOUT_MS=9000;
   const date = v => { if (!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? '—' : new Intl.DateTimeFormat('fr-FR',{day:'2-digit',month:'short',year:'numeric'}).format(d); };
 
   function verdictRows(rows, resolutionRecent=[]) {
@@ -43,9 +44,30 @@
 
   function setStatus(id,text,kind='') { const el=$(id); if(!el)return; el.textContent=text; el.className=`v8-status ${kind}`.trim(); }
 
+  async function fetchTrackRecord() {
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),TRACK_TIMEOUT_MS);
+    try{return await fetch('/api/track-record',{cache:'no-store',signal:controller.signal});}
+    finally{clearTimeout(timer);}
+  }
+
+  function renderTrackError(error) {
+    const note=$('#trackNote');
+    if(note)note.innerHTML='Track Record momentanément indisponible. <button type="button" class="v8-retry" data-track-retry>Réessayer</button>';
+    const table=$('#trackTable');
+    if(table)table.innerHTML='<div class="v5-track-row"><b>Aucun verdict affiché.</b><span>—</span><span>—</span><span>—</span></div>';
+    const queue=$('#resolutionQueue');
+    if(queue)queue.innerHTML='<div class="v5-track-row"><b>File de résolution indisponible.</b><span>—</span><span>—</span><span>—</span></div>';
+    $('#storageWarning').textContent='La couche de preuve historique n’a pas répondu dans le délai prévu.';
+    setStatus('#storageState','TRACK RECORD · INDISPONIBLE','warn');
+    setStatus('#resolutionState','RÉSOLUTION · NON VÉRIFIÉE','warn');
+    setStatus('#calibrationState','CALIBRATION · NON VÉRIFIÉE','warn');
+    $('[data-track-retry]')?.addEventListener('click',()=>init());
+  }
+
   async function init() {
     try {
-      const r = await fetch('/api/track-record',{cache:'no-store'});
+      const r = await fetchTrackRecord();
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
       const c=d.calibration||{}; const g=c.global||{}; const resolution=d.resolution||{};
@@ -73,9 +95,7 @@
       setStatus('#resolutionState','RESOLUTION ENGINE · ACTIF','ok');
       setStatus('#calibrationState',c.calibration_ready?'CALIBRATION · ACTIVE':`CALIBRATION · ${n(c.scorable_resolutions)}/${n(c.minimum_global_samples)||30}`,c.calibration_ready?'ok':'warn');
     } catch (error) {
-      $('#trackNote').textContent = `Track Record indisponible : ${error.message}`;
-      $('#storageWarning').textContent = 'Le moteur prédictif continue de fonctionner, mais la couche de preuve historique n’a pas répondu.';
-      setStatus('#storageState','ERREUR TRACK RECORD','warn');
+      renderTrackError(error);
     }
   }
   init();

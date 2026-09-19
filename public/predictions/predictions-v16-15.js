@@ -5,7 +5,8 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const H={immediate:'≤ 72 h',near:'Jours à semaines',medium:'Mois',long:'1–3 ans',strategic:'3–5 ans',deep:'5 ans +'};
 const D={natural_hazards:'Risques naturels',weather_climate:'Climat & météo',cyber_technology:'Technologie',public_health:'Santé',financial_stress:'Finance',energy:'Énergie',economy_labor:'Économie & emploi',supply_fuel:'Logistique',social_collective_behavior:'Société',geopolitics_security:'Géopolitique',regulation_policy:'Régulation',transport_mobility:'Transport'};
 const COLORS=['#ffc85a','#7b7cff','#4f8dff','#46d7ff','#44dda2','#bb7cff','#ff8c72','#8fc8ff','#7ee2bc','#ffb36b','#6ca6ff','#c77cff'];
-const state={rows:[],query:'',horizon:'all',limit:10,hero:null};
+const SNAPSHOT_TIMEOUT_MS=9000;
+const state={rows:[],query:'',horizon:'all',limit:10,hero:null,bound:false};
 const title=f=>String(f?.title||f?.headline||f?.outcome||'Scénario');
 const summary=f=>String(f?.summary||f?.public_summary||f?.why_now||'');
 const tier=f=>String(f?.horizon_tier||f?.time_window?.tier||'near').toLowerCase();
@@ -27,7 +28,39 @@ function setHero(f,{scroll=false}={}){if(!f)return;state.hero=f;const delta=Numb
 function card(f,i){const c=COLORS[i%COLORS.length],selected=state.hero===f?' is-selected':'';return `<article class="p1615-card${selected}" style="--tone:${c};--p:${prob(f)}" role="button" tabindex="0" data-p1615-index="${i}" aria-label="Afficher ${esc(frTitle(f))}"><span class="p1615-tag">${esc(D[f.domain]||f.domain||'Prévision')}</span><h3>${esc(frTitle(f))}</h3><div class="p1615-meta">${esc(frRegion(f?.region||f?.geography||'Monde'))} · ${esc(H[tier(f)]||f?.horizon_label||tier(f))}</div><div class="p1615-prob"><b>${prob(f)}%</b></div><div class="p1615-foot"><span>Solidité <strong>${conf(f)||'—'}/100</strong></span><span class="p1615-open">Voir →</span></div></article>`;}
 function renderFeed(resetLimit=false){const host=$('#p1615FeedGrid'),count=$('#p1615Count'),more=$('#p1615More');if(!host)return;if(resetLimit)state.limit=matchMedia('(max-width:760px)').matches?8:12;const rows=visibleRows();if(count)count.textContent=String(rows.length);const shown=diversified(rows,Math.min(rows.length,state.limit));host.innerHTML=shown.length?shown.map(card).join(''):'<div class="p1615-empty">Aucune prévision ne correspond à ce filtre.</div>';$$('[data-p1615-index]',host).forEach((el,i)=>{const f=shown[i],open=()=>setHero(f,{scroll:true});el.addEventListener('click',open);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}})});if(more){more.hidden=rows.length<=shown.length;more.textContent=`Afficher plus (${Math.max(0,rows.length-shown.length)})`;}}
 function renderTimeline(){const host=$('#temporalField');if(!host)return;const rows=diversified(state.horizon==='all'?state.rows:state.rows.filter(f=>horizonGroup(f)===state.horizon),8);const W=900,HGT=285,origin={x:66,y:143},xs={immediate:205,near:335,medium:470,long:610,strategic:745,deep:850},ys=[48,77,107,137,167,197,227,252];let svg=`<svg viewBox="0 0 ${W} ${HGT}" role="img" aria-label="Futurs plausibles à partir du présent">`;[['immediate','≤72 h'],['near','Semaines'],['medium','Mois'],['long','1–3 ans'],['strategic','3–5 ans'],['deep','5 ans +']].forEach(([k,l])=>{const x=xs[k];svg+=`<line class="p1615-axis" x1="${x}" y1="28" x2="${x}" y2="268"/><text class="p1615-axis-label" x="${x+5}" y="20">${l}</text>`});svg+=`<circle class="p1615-now-ring" cx="${origin.x}" cy="${origin.y}" r="16"/><circle class="p1615-now-core" cx="${origin.x}" cy="${origin.y}" r="5"/><text class="p1615-now-text" x="27" y="177">MAINTENANT</text>`;rows.forEach((f,i)=>{const x=xs[tier(f)]||xs.near,y=ys[i]||140,c=COLORS[i%COLORS.length],w=(2.3+prob(f)/40).toFixed(1),c1=Math.min(x-80,145),c2=Math.max(origin.x+75,x-110),label=clip(frTitle(f),43),sub=`${prob(f)}% · ${frRegion(f?.region||f?.geography||'Monde')}`;svg+=`<g class="p1615-branch-group" data-p1615-branch="${i}" style="--branch:${c};--weight:${w}px"><path class="p1615-branch" d="M ${origin.x} ${origin.y} C ${c1} ${origin.y}, ${c2} ${y}, ${x} ${y}"/><path class="p1615-branch-hit" d="M ${origin.x} ${origin.y} C ${c1} ${origin.y}, ${c2} ${y}, ${x} ${y}"/><circle class="p1615-branch-dot" cx="${x}" cy="${y}" r="7"/><text class="p1615-branch-label" x="${Math.min(x+12,768)}" y="${y-3}">${esc(label)}</text><text class="p1615-branch-sub" x="${Math.min(x+12,768)}" y="${y+13}">${esc(sub)}</text></g>`});svg+='</svg>';host.innerHTML=svg;$$('[data-p1615-branch]',host).forEach((g,i)=>{const open=()=>{$$('[data-p1615-branch]',host).forEach(x=>{x.classList.toggle('is-muted',x!==g);x.classList.toggle('is-active',x===g)});setHero(rows[i],{scroll:true});};g.addEventListener('click',open);});}
-function bind(){const search=$('#p1615Search');search?.addEventListener('input',e=>{state.query=e.target.value||'';renderFeed(true)});$$('.p1615-chip').forEach(ch=>ch.addEventListener('click',()=>{state.horizon=ch.dataset.horizon||'all';$$('.p1615-chip').forEach(x=>x.classList.toggle('is-active',x===ch));renderFeed(true);renderTimeline()}));$('#p1615More')?.addEventListener('click',()=>{state.limit+=matchMedia('(max-width:760px)').matches?8:12;renderFeed(false)});}
-async function boot(){try{const r=await fetch('/api/snapshot',{cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);const data=await r.json();state.rows=(data.forecasts||[]).filter(active).sort((a,b)=>score(b)-score(a));state.limit=matchMedia('(max-width:760px)').matches?8:12;if(state.rows.length)setHero(state.rows[0]);renderFeed(false);renderTimeline();bind();}catch(e){const host=$('#p1615FeedGrid');if(host)host.innerHTML='<div class="p1615-empty">Les prévisions sont momentanément indisponibles.</div>';}}
+function bind(){if(state.bound)return;state.bound=true;const search=$('#p1615Search');search?.addEventListener('input',e=>{state.query=e.target.value||'';renderFeed(true)});$$('.p1615-chip').forEach(ch=>ch.addEventListener('click',()=>{state.horizon=ch.dataset.horizon||'all';$$('.p1615-chip').forEach(x=>x.classList.toggle('is-active',x===ch));renderFeed(true);renderTimeline()}));$('#p1615More')?.addEventListener('click',()=>{state.limit+=matchMedia('(max-width:760px)').matches?8:12;renderFeed(false)});}
+async function fetchSnapshot(){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),SNAPSHOT_TIMEOUT_MS);
+  try{return await fetch('/api/snapshot',{cache:'no-store',signal:controller.signal});}
+  finally{clearTimeout(timer);}
+}
+function renderLoadError(){
+  setText('#futureTitle','Prévisions momentanément indisponibles');
+  setText('#futureProbability','—');
+  setText('#futureDelta','Aucune donnée affichée');
+  setText('#futureRegion','Quantic Vision');
+  setText('#futureSummary','Providence n’a pas répondu dans le délai prévu. Vous pouvez réessayer sans recharger toute la page.');
+  const host=$('#p1615FeedGrid');
+  if(host)host.innerHTML='<div class="p1615-empty">Impossible de charger les prévisions.<br><button type="button" class="p1615-more" data-p1615-retry>Réessayer</button></div>';
+  const temporal=$('#temporalField');
+  if(temporal)temporal.innerHTML='<div class="p1615-empty">Les trajectoires réapparaîtront lorsque Providence répondra.</div>';
+  $('[data-p1615-retry]')?.addEventListener('click',()=>boot());
+}
+async function boot(){
+  try{
+    const r=await fetchSnapshot();
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const data=await r.json();
+    state.rows=(data.forecasts||[]).filter(active).sort((a,b)=>score(b)-score(a));
+    state.limit=matchMedia('(max-width:760px)').matches?8:12;
+    if(state.rows.length)setHero(state.rows[0]);
+    else{
+      setText('#futureTitle','Aucune prévision active pour le moment');
+      setText('#futureSummary','Providence fonctionne, mais aucun scénario actif n’est actuellement publié.');
+    }
+    renderFeed(false);renderTimeline();bind();
+  }catch(e){renderLoadError();}
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

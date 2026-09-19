@@ -1105,3 +1105,47 @@ body.q-vision-shell .q-global-nav{background:rgba(245,247,249,.76)!important}
 
 /* Quantic ID */
 .qid-page{padding-top:36px}.qid-hero{padding:84px 0 48px;max-width:900px}.qid-hero h1{margin:12px 0 20px;font-size:clamp(4rem,8vw,6.5rem);line-height:.92;letter-spacing:-.065em;font-weight:560}.qid-hero>p:not(.q-kicker){max-width:720px;color:var(--qs-muted);font-size:1rem;line-height:1.75}.qid-state{margin:26px 0 18px;display:flex;align-items:center;gap:13px;width:min(560px,100%);padding:16px;border:1px solid var(--qs-line);border-radius:17px;background:#fff;box-shadow:var(--qs-shadow-sm)}.qid-state-dot{width:10px;height:10px;border-radius:50%;background:#92a1a8}.qid-state strong,.qid-state span{display:block}.qid-state strong{font-size:.9rem}.qid-state span{margin-top:4px;color:#7c8d95;font-size:.75rem}.qid-state[data-state="checking"] .qid-state-dot{background:var(--qs-cyan)}.qid-state[data-state="ready"] .qid-state-dot{background:#35c6a5}.qid-state[data-state="inactive"] .qid-state-dot{background:#d5a648}.qid-state[data-state="missing"] .qid-state-dot{background:#e46e79}.q-card.is-locked{opacity:.58}.q-card.is-locked .q-card-link{color:#8c6d26}
+
+
+/* ---------- NETWORK READINESS ---------- */
+.q-network-public-grid{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:14px!important;
+}
+.q-technical-details{
+  margin-top:22px!important;
+  border:1px solid var(--qs-line)!important;
+  border-radius:20px!important;
+  background:#fff!important;
+  overflow:hidden!important;
+}
+.q-technical-details>summary{
+  min-height:58px!important;
+  padding:0 20px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  cursor:pointer!important;
+  color:#365260!important;
+  font-size:.8rem!important;
+  font-weight:700!important;
+  list-style:none!important;
+}
+.q-technical-details>summary::-webkit-details-marker{display:none!important}
+.q-technical-details>summary:after{content:"+";font-size:1.1rem;color:#7e919a}
+.q-technical-details[open]>summary:after{content:"−"}
+.q-technical-details-body{
+  padding:0 20px 20px!important;
+  border-top:1px solid var(--qs-line)!important;
+}
+.q-technical-details-body>p{
+  max-width:820px!important;
+  margin:18px 0!important;
+  color:var(--qs-muted)!important;
+  font-size:.78rem!important;
+  line-height:1.6!important;
+}
+.q-service-state[data-state="checking"]{color:#617782!important;background:#f2f6f7!important}
+.q-service-state[data-state="unknown"]{color:#617782!important;background:#f2f6f7!important}
+@media(max-width:900px){.q-network-public-grid{grid-template-columns:1fr!important}}

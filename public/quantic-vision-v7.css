@@ -650,3 +650,16 @@ body.q-vision-surface td{
   background:#fbfcfd!important;
   color:#7a8b94!important;
 }
+
+.v8-retry{
+  margin-left:8px!important;
+  min-height:34px!important;
+  padding:0 12px!important;
+  border:1px solid var(--qv-line)!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:#24566a!important;
+  font-weight:700!important;
+  cursor:pointer!important;
+}
+.v8-retry:hover{border-color:#a9d6df!important;background:#f4fafb!important}
