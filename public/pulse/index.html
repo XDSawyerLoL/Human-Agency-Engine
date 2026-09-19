@@ -130,6 +130,11 @@
       <span class="pulse-kicker">Quantic Pulse</span>
       <h2 id="auth-title">Se connecter</h2>
       <p id="auth-copy">Retrouve ton fil, tes abonnements, tes messages et tes cercles.</p>
+      <div class="pulse-id-status" data-pulse-id-status data-state="checking">
+        <span class="pulse-id-dot"></span>
+        <div><strong data-pulse-id-title>Vérification d’Identity Vault…</strong><small data-pulse-id-detail>Pulse exige Quantic Identity Vault pour créer un compte ou se connecter.</small></div>
+        <a href="/downloads/#identity-vault">Installer</a>
+      </div>
       <form id="auth-form">
         <label id="display-name-field" hidden>Nom affiché<input id="auth-display-name" maxlength="50" autocomplete="name"></label>
         <label>Identifiant<input id="auth-handle" maxlength="24" autocomplete="username" placeholder="@identifiant" required></label>
@@ -141,6 +146,7 @@
     </div>
   </div>
 
+  <script src="/quantic-id-runtime.js"></script>
   <script src="/pulse/pulse-config.js?v=1"></script>
   <script type="module" src="/pulse/app.js?v=1"></script>
 </body>
