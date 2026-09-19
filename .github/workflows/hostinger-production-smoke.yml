@@ -38,6 +38,7 @@ jobs:
             predictions="$(curl -fsSL --max-time 20 "$BASE_URL/predictions/" 2>/dev/null || true)"
             plans="$(curl -fsSL --max-time 20 "$BASE_URL/plans/" 2>/dev/null || true)"
             mail="$(curl -fsSL --max-time 20 "$BASE_URL/mail/" 2>/dev/null || true)"
+            pulse="$(curl -fsSL --max-time 20 "$BASE_URL/pulse/" 2>/dev/null || true)"
             downloads="$(curl -fsSL --max-time 20 "$BASE_URL/downloads/" 2>/dev/null || true)"
             qmark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/quantic-sillage-mark.svg" 2>/dev/null || true)"
             pulsemark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/pulse-mark.svg" 2>/dev/null || true)"
@@ -60,7 +61,15 @@ jobs:
               && grep -q 'Quantic Glide 1.2.6' <<<"$downloads" \
               && grep -q 'Quantic-Glide-1.2.6-x64.exe' <<<"$downloads" \
               && grep -q 'quantic-v2-d9f379d4f6a3' <<<"$downloads" \
+              && grep -q '/assets/brand-2026/vision-mark.svg' <<<"$downloads" \
+              && grep -q '/assets/brand-2026/mail-mark.svg' <<<"$downloads" \
+              && grep -q '/assets/brand-2026/pulse-mark.svg' <<<"$downloads" \
+              && grep -q '/assets/brand-2026/news-mark.svg' <<<"$downloads" \
+              && grep -q '/assets/brand-2026/quantic-sillage-mark.svg' <<<"$pulse" \
+              && grep -q '/assets/brand-2026/pulse-mark.svg' <<<"$pulse" \
               && grep -q 'QuanticMail' <<<"$mail" \
+              && grep -q '/assets/brand-2026/quantic-sillage-mark.svg' <<<"$mail" \
+              && grep -q '/assets/brand-2026/mail-mark.svg' <<<"$mail" \
               && grep -q 'quantic-mail-portal-nav.js' <<<"$mail" \
               && grep -Eq 'qn-onboarding|qn-app' <<<"$mail" \
               && ! grep -q 'quanticmail.onrender.com' <<<"$mail" \
