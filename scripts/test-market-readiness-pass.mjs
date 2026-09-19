@@ -2,7 +2,7 @@ import fs from "node:fs";
 import assert from "node:assert/strict";
 
 const read=p=>fs.readFileSync(p,"utf8");
-const network=read("public/network/index.html");
+const network=read("public/network/index.html");\nconst downloads=read("public/downloads/index.html");
 const quantic=read("public/quantic.js");
 const mail=read("public/mail/index.html");
 const mailResilience=read("public/quantic-mail-resilience.js");
