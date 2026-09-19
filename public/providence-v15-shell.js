@@ -33,6 +33,7 @@ if(page==='home')loadCss('/providence-timeline-v16-10.css?v=16.12','providence-t
 loadCss('/providence-v16-12-mobile.css?v=16.12','providence-v16-12-mobile.css');
 loadCss('/quantic-unified.css?v=3.0','quantic-unified.css');
 loadCss('/quantic-finish-v4.css?v=4.0','quantic-finish-v4.css');
+loadCss('/quantic-premium-v5.css?v=5.0','quantic-premium-v5.css');
 
 document.body.classList.add('q-vision-shell');
 
@@ -47,10 +48,11 @@ global.innerHTML=`
     <nav class="q-global-links" aria-label="Navigation Quantic">
       <a href="/vision/" class="${productActive==='vision'?'active':''}" aria-current="page">Vision</a>
       <a href="/mail/">Mail</a>
+      <a href="/pulse/">Pulse</a>
       <a href="/network/">Network</a>
       <a href="/products/" class="q-hide-mobile">Produits</a>
       <a href="/downloads/">Téléchargements</a>
-      <a href="/quantic/" class="q-global-centre"><span class="q-global-status" aria-hidden="true"></span>Centre</a>
+      <a href="/quantic/" class="q-global-centre"><span class="q-global-status" aria-hidden="true"></span>Entrer</a>
     </nav>
   </div>`;
 document.body.prepend(global);
