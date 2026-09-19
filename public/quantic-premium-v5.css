@@ -260,7 +260,7 @@ body.q-vision-surface .p1611-nav{
 .q-card .q-card-link,.q-product-row a{color:#187b94!important}
 .q-band strong{color:var(--qp-ink)!important}
 .q-band p{color:var(--qp-muted)!important}
-.q-proof-strip{border-color:var(--qp-line)!important;background:var(--qp-line)!important}
+.q-proof-strip{grid-template-columns:repeat(5,1fr)!important;border-color:var(--qp-line)!important;background:var(--qp-line)!important}
 .q-proof{box-shadow:none!important}
 .q-proof b{color:var(--qp-ink)!important}
 .q-proof span{color:#89979e!important}
@@ -324,7 +324,7 @@ body.q-vision-surface .p1611-nav{
 .pulse-hero h1{color:var(--qp-ink)!important;font-weight:560!important;letter-spacing:-.06em!important}
 .pulse-hero p{color:var(--qp-muted)!important}
 .pulse-panel,
-.pulse-composer,
+.pulse-compose,
 .pulse-post,
 .pulse-feed,
 .pulse-state{
@@ -333,7 +333,7 @@ body.q-vision-surface .p1611-nav{
   color:var(--qp-ink)!important;
   box-shadow:var(--qp-shadow-sm)!important;
 }
-.pulse-panel input,.pulse-composer textarea{
+.pulse-panel input,.pulse-compose textarea{
   border-color:var(--qp-line)!important;
   background:#f5f8f9!important;
   color:var(--qp-ink)!important;
@@ -444,3 +444,65 @@ body:has(.qn-global-nav){
 @media(prefers-reduced-motion:reduce){
   *{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}
 }
+
+
+/* PROVIDENCE / VISION SUBPAGES */
+body.q-vision-shell,
+body[data-page="predictions"],
+body[data-page="alerts"],
+body[data-page="analyst"],
+body[data-page="track-record"],
+body[data-page="settings"],
+body[data-page="sources"],
+body[data-page="backtest"],
+body[data-page="sports"],
+body[data-page="cameras"]{
+  color-scheme:light!important;
+  background:linear-gradient(180deg,#f9fbfc,#eef3f6)!important;
+  color:var(--qp-ink)!important;
+}
+body.q-vision-shell .q-vision-content,
+body.q-vision-shell main{color:var(--qp-ink)!important}
+.p15-pagehero,.p15-prediction-hero,.pa-hero,.p168-hero{
+  background:
+    radial-gradient(620px 380px at 78% 4%,rgba(34,184,212,.10),transparent 70%),
+    linear-gradient(180deg,#fbfcfd,#f0f5f7)!important;
+  color:var(--qp-ink)!important;
+  border-bottom:1px solid var(--qp-line)!important;
+}
+.p15-pagehero h1,.p15-prediction-hero h1,.pa-hero h1,.p168-hero h1,
+.p15-pagehero h2,.pa-hero h2,.p168-hero h2{
+  color:var(--qp-ink)!important;
+  text-shadow:none!important;
+}
+.p15-pagehero p,.p15-prediction-hero p,.pa-hero p,.p168-hero p{color:var(--qp-muted)!important}
+.pv-panel,.pv-kpi,.v5-proof,.v5-section,.pv-setting-card,.v8-segment-panel,
+.pa-chat,.pa-panel,.p1615-feed,.p1615-toolbar,.p16-time-rail,.v4-source-card,
+.p168-section,.pv-track-main,.pv-track-advanced{
+  border-color:var(--qp-line)!important;
+  background:#fff!important;
+  color:var(--qp-ink)!important;
+  box-shadow:var(--qp-shadow-sm)!important;
+}
+.pv-panel h2,.pv-setting-card h2,.pa-chat h2,.pa-panel h2,.p1615-feed h2,
+.v5-section h2,.p168-section h2,.v4-source-card h3{color:var(--qp-ink)!important}
+.pv-panel p,.pv-setting-card p,.pa-footnote,.p1615-feed p,.v5-note,
+.p168-section p,.v4-source-card p{color:var(--qp-muted)!important}
+.pa-message,.pa-composer,.p1615-search,.pv-setting-row,.pv-system-row{
+  border-color:var(--qp-line)!important;
+  background:#f6f9fa!important;
+  color:var(--qp-ink)!important;
+}
+.pa-composer textarea,.p1615-search,.pv-setting-card select{
+  background:#fff!important;color:var(--qp-ink)!important;border-color:var(--qp-line)!important;
+}
+.q-vision-subnav,.q-unified-footer{
+  border-color:var(--qp-line)!important;
+  background:rgba(255,255,255,.84)!important;
+  color:#63747e!important;
+}
+.q-vision-subnav a{color:#657782!important}
+.q-vision-subnav a.active{color:#15394a!important;background:#edf7f9!important}
+.q-unified-footer a{color:#3f6978!important}
+@media(max-width:1000px){.q-proof-strip{grid-template-columns:repeat(2,1fr)!important}}
+@media(max-width:620px){.q-proof-strip{grid-template-columns:1fr!important}}
