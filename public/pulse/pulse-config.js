@@ -1,0 +1,1 @@
+window.QUANTIC_PULSE_API_BASE = window.QUANTIC_PULSE_API_BASE || 'https://quanticminds.onrender.com';
