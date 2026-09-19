@@ -153,3 +153,30 @@ button.pulse-account{width:100%;border:0;background:transparent;text-align:left;
 .pulse-media-preview[hidden]{display:none}.pulse-media-preview img{width:88px;height:70px;object-fit:cover}.pulse-media-preview>div{padding:10px;min-width:0;display:grid;gap:3px}.pulse-media-preview strong{font-size:.75rem}.pulse-media-preview span{font-size:.65rem;color:var(--pulse-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pulse-media-preview>button{border:0;background:transparent;font-size:1.25rem;padding:12px;cursor:pointer;color:#6f8791}
 .pulse-emoji-picker{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;padding:9px;border:1px solid var(--pulse-line);border-radius:13px;background:#f8fcfd}.pulse-emoji-picker[hidden]{display:none}.pulse-emoji-picker button{width:34px;height:34px;border:0;border-radius:10px;background:#fff;font-size:1.2rem;cursor:pointer}.pulse-emoji-picker button:hover{background:#e8f8fb;transform:translateY(-1px)}
 .pulse-toolset button[data-tool="emoji"],.pulse-toolset button[data-tool="gif"]{font-size:.72rem;font-weight:800;color:#0787a5}
+
+/* Pulse composer V9 */
+.pulse-compose-main{position:relative}
+.pulse-compose-tools{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:12px;border-top:1px solid #edf3f5}
+.pulse-toolset{position:relative;display:flex;align-items:center;gap:8px}
+.pulse-toolset .pulse-tool-btn{width:auto;height:38px;padding:0 12px;border:1px solid #d9e7ec;border-radius:999px;background:#fff;color:#167d95;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:.74rem;font-weight:750;cursor:pointer;transition:background .16s ease,border-color .16s ease,transform .16s ease}
+.pulse-toolset .pulse-tool-btn:hover{background:#eef9fb;border-color:#bfe2ea;transform:translateY(-1px)}
+.pulse-toolset .pulse-tool-btn .pi{width:17px;height:17px}
+.pulse-tool-glyph{font-size:1rem;line-height:1}.pulse-gif-button{letter-spacing:.03em}.pulse-tool-close{padding:0 9px!important}
+.pulse-compose-right{display:flex;align-items:center;gap:12px;white-space:nowrap}
+.pulse-compose-right #pulse-count{font-size:.72rem;color:var(--pulse-muted)}
+.pulse-emoji-picker{position:absolute;left:0;bottom:50px;z-index:40;width:290px;padding:12px;border:1px solid #d9e7ec;border-radius:18px;background:rgba(255,255,255,.98);box-shadow:0 20px 55px rgba(7,29,44,.15);backdrop-filter:blur(16px)}
+.pulse-emoji-picker[hidden]{display:none}
+.pulse-popover-head{display:grid;gap:2px;margin-bottom:10px}.pulse-popover-head strong{font-size:.78rem;color:var(--pulse-ink)}.pulse-popover-head small{font-size:.65rem;color:var(--pulse-muted)}
+.pulse-emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.pulse-emoji-grid button{width:100%;aspect-ratio:1;border:0;border-radius:11px;background:#f7fbfc;font-size:1.25rem;cursor:pointer;transition:background .15s ease,transform .15s ease}
+.pulse-emoji-grid button:hover{background:#e7f7fa;transform:translateY(-1px)}
+.pulse-gif-modal[hidden]{display:none}.pulse-gif-modal{position:fixed;inset:0;z-index:3200;display:grid;place-items:center;padding:20px;background:rgba(4,22,33,.58);backdrop-filter:blur(10px)}
+.pulse-gif-card{position:relative;width:min(520px,100%);padding:28px;border:1px solid rgba(13,77,98,.08);border-radius:24px;background:#fff;box-shadow:0 30px 100px rgba(3,20,31,.28)}
+.pulse-gif-card h2{margin:7px 0 8px;font:600 1.8rem 'Space Grotesk',sans-serif;color:var(--pulse-ink)}.pulse-gif-card>p{margin:0;color:var(--pulse-muted);font-size:.84rem;line-height:1.55}
+.pulse-gif-close{position:absolute;right:15px;top:13px;width:36px;height:36px;border:0;border-radius:50%;background:#f3f7f8;color:#4f6975;font-size:1.35rem;cursor:pointer}
+.pulse-gif-field{display:grid;gap:6px;margin-top:20px;font-size:.73rem;font-weight:750;color:#274756}.pulse-gif-field input{height:44px;padding:0 13px;border:1px solid #d8e6eb;border-radius:12px;background:#fff;color:var(--pulse-ink);outline:none}.pulse-gif-field input:focus{border-color:#71cddd;box-shadow:0 0 0 3px rgba(0,166,196,.08)}
+.pulse-gif-preview{margin-top:14px;min-height:190px;display:grid;place-items:center;overflow:hidden;border:1px dashed #cedfe5;border-radius:16px;background:#f7fbfc;color:#8198a2;font-size:.75rem}
+.pulse-gif-preview img{width:100%;max-height:320px;display:block;object-fit:contain;background:#071d2c}
+.pulse-gif-error{min-height:18px;margin-top:8px;color:#b7334c;font-size:.72rem}
+.pulse-gif-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}.pulse-gif-actions button{min-height:40px;padding:0 15px;border-radius:999px;font-weight:750;cursor:pointer}.pulse-gif-cancel{border:1px solid #d8e5ea;background:#fff;color:#536f7a}.pulse-gif-insert{border:0;background:linear-gradient(115deg,#063e58,#008fae);color:#fff}.pulse-gif-insert:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:620px){.pulse-toolset .pulse-tool-btn span:last-child{display:none}.pulse-toolset .pulse-tool-btn{width:38px;padding:0}.pulse-toolset .pulse-gif-button{width:auto;padding:0 11px}.pulse-toolset .pulse-gif-button span{display:inline!important}.pulse-emoji-picker{left:0;width:min(290px,calc(100vw - 54px))}.pulse-compose-right{gap:8px}}
