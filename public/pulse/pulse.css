@@ -139,3 +139,6 @@ button.pulse-account{width:100%;border:0;background:transparent;text-align:left;
   .pulse-topbar{top:58px}
   .pulse-tabs{top:120px}
 }
+
+/* Auth visibility hardening */
+.pulse-modal-card label[hidden]{display:none!important}
