@@ -115,3 +115,27 @@ button.pulse-account{width:100%;border:0;background:transparent;text-align:left;
 .pulse-id-status a{padding:7px 10px;border:1px solid #d8e3e7;border-radius:999px;background:#fff;color:#2a5b6a;font-size:.66rem;font-weight:750;text-decoration:none}
 .pulse-auth-submit:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:520px){.pulse-id-status{grid-template-columns:10px 1fr}.pulse-id-status a{grid-column:2;width:max-content}}
+
+/* Global Sillage shell on Pulse */
+.q-sillage-global{position:sticky;top:0;z-index:120;min-height:64px;padding:0 max(18px,calc((100vw - 1440px)/2 + 20px));display:flex;align-items:center;justify-content:space-between;gap:24px;border-bottom:1px solid #e1e7ea;background:rgba(255,255,255,.94);backdrop-filter:blur(22px) saturate(145%);box-shadow:0 6px 26px rgba(15,32,43,.035)}
+.q-sillage-global-brand{display:flex;align-items:center;gap:10px;color:#0f202b;text-decoration:none;font-size:.73rem;font-weight:800;letter-spacing:.12em}
+.q-sillage-global-mark{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:#e9f8fb;color:#237d91;font-size:.8rem;letter-spacing:0}
+.q-sillage-global-links{display:flex;align-items:center;gap:3px;overflow-x:auto;scrollbar-width:none}.q-sillage-global-links::-webkit-scrollbar{display:none}
+.q-sillage-global-links a{min-height:36px;padding:0 11px;display:inline-flex;align-items:center;border-radius:999px;color:#647781;text-decoration:none;white-space:nowrap;font-size:.69rem;font-weight:650}
+.q-sillage-global-links a:hover,.q-sillage-global-links a.active{background:#f2f6f7;color:#183c4a}
+.q-sillage-global-links a.identity{margin-left:5px;background:#0d1e29;color:#fff}
+.pulse-shell{min-height:calc(100vh - 64px)}
+.pulse-sidebar,.pulse-right{top:64px;height:calc(100vh - 64px)}
+.pulse-main{min-height:calc(100vh - 64px)}
+.pulse-topbar{top:64px}
+@media(max-width:980px){.q-sillage-global-links a:nth-child(1),.q-sillage-global-links a:nth-child(5),.q-sillage-global-links a:nth-child(6){display:none}}
+@media(max-width:620px){
+  .q-sillage-global{min-height:58px;padding:0 12px;gap:10px}
+  .q-sillage-global-brand span:last-child{font-size:.65rem}
+  .q-sillage-global-links{gap:1px}
+  .q-sillage-global-links a{display:none!important}
+  .q-sillage-global-links a.active,.q-sillage-global-links a.identity{display:inline-flex!important;min-height:34px;padding:0 9px;font-size:.65rem}
+  .pulse-main{min-height:calc(100vh - 58px)}
+  .pulse-topbar{top:58px}
+  .pulse-tabs{top:120px}
+}
