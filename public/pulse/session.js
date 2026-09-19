@@ -103,17 +103,39 @@ export function clearSession(){
   updateAccount();
 }
 
-export async function restoreSession(){
-  if(!state.token){
-    updateAccount();
-    return;
-  }
+async function restoreFromIdentity(){
+  if(!window.QuanticID?.probe||!window.QuanticID?.assert)return false;
   try{
-    const data=await api('/api/pulse/me');
-    state.user=data.user;
-  }catch{
-    state.token='';
-    localStorage.removeItem(TOKEN_KEY);
+    const identity=await window.QuanticID.probe();
+    if(!identity?.ok)return false;
+    const challenge=await api('/api/pulse/auth/challenge',{method:'POST',body:JSON.stringify({action:'login',handle:''})});
+    const proof=await window.QuanticID.assert({challenge:challenge.challenge,audience:challenge.audience});
+    const data=await api('/api/pulse/auth/login',{method:'POST',body:JSON.stringify({identityProof:proof})});
+    applySession(data);
+    return true;
+  }catch(error){
+    if(error?.message!=='identity_not_registered'){
+      console.warn('Pulse identity session restore failed');
+    }
+    return false;
   }
-  updateAccount();
+}
+
+export async function restoreSession(){
+  if(state.token){
+    try{
+      const data=await api('/api/pulse/me');
+      state.user=data.user;
+      updateAccount();
+      return true;
+    }catch{
+      state.token='';
+      state.user=null;
+      localStorage.removeItem(TOKEN_KEY);
+    }
+  }
+
+  const restored=await restoreFromIdentity();
+  if(!restored)updateAccount();
+  return restored;
 }
