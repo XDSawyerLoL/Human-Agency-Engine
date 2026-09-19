@@ -68,3 +68,9 @@ body.q-vision-native{margin:0;background:
 
 .qv8-retry{margin-top:14px;min-height:38px;padding:0 14px;border:1px solid var(--qv8-line);border-radius:999px;background:#fff;color:#24566a;font-weight:750;cursor:pointer}
 .qv8-retry:hover{border-color:#a8d5de;background:#f4fafb}
+
+/* Vision 2026 brand */
+.qv8-product-brand{display:flex;align-items:center;gap:13px;margin-bottom:14px}
+.qv8-product-brand>img{width:54px;height:54px;border-radius:16px;box-shadow:0 12px 28px rgba(105,84,244,.16)}
+.qv8-product-brand>div{display:grid;gap:3px}.qv8-product-brand .qv8-eyebrow{margin:0}.qv8-product-brand span{font-size:.72rem;color:#7d8da2;font-weight:650}
+.qv8-idmark.qv8-idmark-logo{object-fit:contain;padding:0;background:transparent!important}

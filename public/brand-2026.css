@@ -72,3 +72,23 @@
   .q-global-links a{min-width:42px;justify-content:center}
   .q-hide-mobile{display:none!important}
 }
+
+/* BRAND 2026 GLOBAL BRIDGE */
+.q-brand2026-topbar{position:sticky;top:0;z-index:140;background:rgba(255,255,255,.92)!important;backdrop-filter:blur(22px) saturate(150%);border-bottom:1px solid rgba(218,230,241,.9)!important}
+.q-brand2026-lockup,.q-brand2026-lockup:hover{display:flex!important;align-items:center!important;gap:10px!important;text-decoration:none!important;color:#081a3a!important;letter-spacing:0!important}
+.q-brand-logo{width:42px!important;height:42px!important;display:block!important;flex:0 0 42px!important;border-radius:0!important;background:none!important;border:0!important;box-shadow:none!important}
+.q-brand-copy{display:grid;line-height:.86;text-transform:none}.q-brand-copy strong{font-size:.92rem;font-weight:820;letter-spacing:-.045em;color:#081a3a}
+.q-brand2026-links{gap:3px!important}.q-brand2026-links a{gap:7px!important}
+.q-menu-app-icon{width:22px;height:22px;display:block;flex:0 0 22px;border-radius:7px;box-shadow:0 4px 12px rgba(37,82,133,.10)}
+.q-brand2026-links .q-app-nav.active,.q-brand2026-links .q-app-nav[aria-current="page"]{background:#eef5ff!important;color:#0e5fc8!important}
+.q-product-logo,.q-card-logo,.q-service-logo,.q-download-logo{width:48px;height:48px;display:block;border-radius:14px;box-shadow:0 10px 24px rgba(42,79,126,.10);margin-bottom:12px}
+.q-card-icon.q-card-logo-wrap{width:48px!important;height:48px!important;padding:0!important;border:0!important;background:transparent!important;overflow:visible!important}
+.q-card-icon.q-card-logo-wrap img{width:48px;height:48px;display:block;border-radius:14px;box-shadow:0 10px 24px rgba(42,79,126,.10)}
+.q-service-headline{display:flex;align-items:center;gap:12px}.q-service-headline .q-service-logo{width:38px;height:38px;margin:0;border-radius:11px}
+.q-download-product-head{display:flex;align-items:center;gap:12px}.q-download-product-head .q-download-logo{width:44px;height:44px;margin:0;border-radius:13px}
+.q-news-brandline{display:flex;align-items:center;gap:14px;margin-bottom:12px}.q-news-brandline img{width:56px;height:56px;border-radius:16px;box-shadow:0 12px 28px rgba(255,82,82,.14)}
+.qs-hero-brand{display:flex;align-items:center;gap:14px;margin-bottom:20px}.qs-hero-brand img{width:64px;height:64px}.qs-hero-brand div{display:grid;line-height:.82}.qs-hero-brand strong{font-size:1.35rem;font-weight:820;letter-spacing:-.05em;color:#081a3a}
+.qs-product-card .q-product-logo{width:42px;height:42px;margin:0 0 18px;border-radius:13px}.q-products .q-product-logo{width:44px;height:44px;margin-bottom:12px}.qid-page .q-card-logo-wrap{margin-bottom:12px!important}
+.qn-global-logo{width:38px;height:38px;display:block;flex:0 0 38px}.qn-global-wordmark{font-weight:800;letter-spacing:-.025em;color:#10294a}.qn-global-links a{gap:7px!important}.qn-global-links .q-nav-app-icon{width:22px;height:22px;border-radius:7px}
+@media(max-width:980px){.q-brand-copy{display:none}.q-brand2026-links .q-app-nav span{display:none}.q-brand2026-links .q-app-nav{min-width:40px!important;justify-content:center!important;padding:0 8px!important}}
+@media(max-width:680px){.q-brand-logo{width:36px!important;height:36px!important;flex-basis:36px!important}.q-brand2026-links>a:not(.q-app-nav):not(.q-nav-cta){display:none!important}.q-brand2026-links{overflow-x:auto;scrollbar-width:none}.q-menu-app-icon{width:24px;height:24px;flex-basis:24px}}

@@ -180,3 +180,12 @@ button.pulse-account{width:100%;border:0;background:transparent;text-align:left;
 .pulse-gif-error{min-height:18px;margin-top:8px;color:#b7334c;font-size:.72rem}
 .pulse-gif-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}.pulse-gif-actions button{min-height:40px;padding:0 15px;border-radius:999px;font-weight:750;cursor:pointer}.pulse-gif-cancel{border:1px solid #d8e5ea;background:#fff;color:#536f7a}.pulse-gif-insert{border:0;background:linear-gradient(115deg,#063e58,#008fae);color:#fff}.pulse-gif-insert:disabled{opacity:.4;cursor:not-allowed}
 @media(max-width:620px){.pulse-toolset .pulse-tool-btn span:last-child{display:none}.pulse-toolset .pulse-tool-btn{width:38px;padding:0}.pulse-toolset .pulse-gif-button{width:auto;padding:0 11px}.pulse-toolset .pulse-gif-button span{display:inline!important}.pulse-emoji-picker{left:0;width:min(290px,calc(100vw - 54px))}.pulse-compose-right{gap:8px}}
+
+/* Pulse 2026 brand bridge */
+.q-sillage-global-brand{letter-spacing:0!important;gap:9px!important}
+.q-sillage-global-logo{width:38px;height:38px;display:block;flex:0 0 38px}
+.q-sillage-global-wordmark{font-size:.78rem!important;font-weight:800!important;letter-spacing:-.025em!important;color:#10294a!important;text-transform:none!important}
+.q-sillage-global-links a{gap:7px}.q-sillage-app-icon{width:21px;height:21px;display:block;flex:0 0 21px;border-radius:7px;box-shadow:0 4px 12px rgba(42,79,126,.09)}
+.pulse-brand img{width:48px;height:48px;border-radius:14px;box-shadow:0 10px 26px rgba(196,54,226,.16)}
+@media(max-width:980px){.q-sillage-global-links a span{display:none}.q-sillage-global-links a.active,.q-sillage-global-links a.identity{display:inline-flex!important}.q-sillage-global-links a.active{min-width:42px!important;justify-content:center!important;padding:0 8px!important}}
+@media(max-width:620px){.q-sillage-global-wordmark{display:none}}
