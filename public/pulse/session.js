@@ -110,7 +110,7 @@ async function restoreFromIdentity(){
     if(!identity?.ok)return false;
     const challenge=await api('/api/pulse/auth/challenge',{method:'POST',body:JSON.stringify({action:'login',handle:''})});
     const proof=await window.QuanticID.assert({challenge:challenge.challenge,audience:challenge.audience});
-    const data=await api('/api/pulse/auth/login',{method:'POST',body:JSON.stringify({identityProof:proof})});
+    const data=await api('/api/pulse/auth/login',{method:'POST',body:JSON.stringify({identityProof:proof,provision:true,displayName:identity.label||'Membre Quantic'})});
     applySession(data);
     return true;
   }catch(error){
