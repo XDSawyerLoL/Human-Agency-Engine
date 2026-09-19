@@ -54,7 +54,7 @@ global.className='q-global-nav';
 global.innerHTML=`
   <div class="q-global-nav-inner">
     <a class="q-global-brand" href="/" aria-label="Quantic Sillage — accueil">
-      <img class="q-global-logo-mark" src="/assets/brand-2026/quantic-sillage-mark.svg" alt="">
+      <img class="q-global-logo-mark" src="/assets/brand-2026/quantic-sillage-mark.svg?v=20260919.7" alt="">
       <span class="q-global-wordmark"><strong>Quantic</strong><strong>Sillage</strong></span>
     </a>
     <nav class="q-global-links" aria-label="Navigation Quantic">
@@ -99,7 +99,7 @@ if(main&&page==='predictions'&&!main.querySelector('.p16-time-rail')){
 if(main&&!document.querySelector('.q-unified-footer')){
   const footer=document.createElement('footer');
   footer.className='q-unified-footer';
-  footer.innerHTML='<span class="q-unified-footer-brand"><img src="/assets/brand-2026/quantic-sillage-mark.svg" alt="">Quantic Sillage · QUANTIC VISION</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/downloads/">Outils</a> · <a href="/products/">Écosystème Quantic</a></span>';
+  footer.innerHTML='<span class="q-unified-footer-brand"><img src="/assets/brand-2026/quantic-sillage-mark.svg?v=20260919.7" alt="">Quantic Sillage · QUANTIC VISION</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/downloads/">Outils</a> · <a href="/products/">Écosystème Quantic</a></span>';
   main.insertAdjacentElement('afterend',footer);
 }
 
