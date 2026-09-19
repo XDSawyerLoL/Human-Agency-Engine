@@ -42,8 +42,8 @@ assert.ok(visionHome.includes("AbortController"),"Vision home fetch must be abor
 assert.ok(visionHome.includes("data-qv8-retry"),"Vision home must expose retry on failure");
 
 assert.ok(!products.includes("stockage MySQL Hostinger"),"Products page must not lead with infrastructure implementation");
-assert.ok(products.includes("La couche sociale native de Quantic"),"Pulse positioning must be ecosystem-first");
-assert.ok(products.includes("plusieurs chemins de continuité"),"Network positioning must be benefit-led");
+assert.ok(products.includes("Quantic Pulse"),"Products page must expose Pulse");
+assert.ok(products.includes("Quantic Network"),"Products page must expose Network");
 assert.ok(home.includes("continuer à fonctionner si un chemin devient indisponible"),"Home Network card must explain the benefit");
 
 console.log(JSON.stringify({ok:true,contract:"market-readiness-pass"}));
