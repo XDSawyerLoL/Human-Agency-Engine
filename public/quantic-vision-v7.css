@@ -1,0 +1,561 @@
+/* QUANTIC VISION V7
+   Authoritative visual layer for Providence surfaces inside Quantic Sillage. */
+
+:root{
+  --qv-bg:#f5f7f9;
+  --qv-surface:#fff;
+  --qv-surface-soft:#f8fafb;
+  --qv-ink:#0f202b;
+  --qv-muted:#6c7b84;
+  --qv-line:#e1e7ea;
+  --qv-line-strong:#d5e0e5;
+  --qv-cyan:#13b8d2;
+  --qv-cyan-soft:#e9f8fb;
+  --qv-navy:#0d1e29;
+  --qv-green:#35b995;
+  --qv-amber:#c99832;
+  --qv-red:#d96573;
+  --qv-radius:20px;
+  --qv-shadow:0 1px 2px rgba(15,32,43,.025),0 12px 34px rgba(15,32,43,.055);
+}
+
+body.q-vision-shell,
+body.q-vision-surface,
+body[data-page="home"],
+body[data-page="predictions"],
+body[data-page="analyst"],
+body[data-page="alerts"],
+body[data-page="sports"],
+body[data-page="cameras"],
+body[data-page="track-record"],
+body[data-page="sources"],
+body[data-page="backtest"],
+body[data-page="settings"],
+body[data-page="causal"],
+body[data-page="crypto"],
+body[data-page="horizons"],
+body[data-page="intelligence"],
+body[data-page="matches"],
+body[data-page="modules"]{
+  color-scheme:light!important;
+  margin:0!important;
+  background:
+    radial-gradient(760px 470px at 86% -8%,rgba(19,184,210,.075),transparent 70%),
+    linear-gradient(180deg,#fbfcfd 0%,#f4f7f9 52%,#f8fafb 100%)!important;
+  color:var(--qv-ink)!important;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif!important;
+  -webkit-font-smoothing:antialiased!important;
+}
+
+/* Shared product shell */
+body.q-vision-shell .q-global-nav,
+body.q-vision-surface .q-global-nav{
+  position:sticky!important;
+  top:0!important;
+  z-index:80!important;
+}
+.q-vision-subnav{
+  position:sticky!important;
+  top:70px!important;
+  z-index:70!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:4px!important;
+  width:100%!important;
+  padding:9px max(16px,calc((100vw - 1390px)/2 + 16px))!important;
+  overflow-x:auto!important;
+  border-bottom:1px solid var(--qv-line)!important;
+  background:rgba(255,255,255,.9)!important;
+  backdrop-filter:blur(20px) saturate(145%)!important;
+  scrollbar-width:none!important;
+}
+.q-vision-subnav::-webkit-scrollbar{display:none!important}
+.q-vision-subnav a{
+  min-height:36px!important;
+  padding:0 11px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  border:0!important;
+  border-radius:999px!important;
+  background:transparent!important;
+  color:#667983!important;
+  text-decoration:none!important;
+  white-space:nowrap!important;
+  font-size:.72rem!important;
+  font-weight:600!important;
+}
+.q-vision-subnav a:hover{background:#f3f6f7!important;color:#173642!important}
+.q-vision-subnav a.active{background:var(--qv-cyan-soft)!important;color:#1c6172!important}
+.q-vision-subnav a i{font-style:normal!important;color:#3e8ea1!important}
+.q-vision-subnav-sep{width:1px!important;height:22px!important;margin:0 5px!important;background:var(--qv-line)!important;flex:0 0 1px!important}
+.q-vision-content{min-height:calc(100vh - 126px)!important}
+
+/* Product headings */
+.p1611-hero,
+.p15-pagehero,
+.p15-prediction-hero,
+.p15-worldhero,
+.p168-hero,
+.pa-hero,
+.future-hero,
+.camera-intro{
+  width:min(1320px,calc(100% - 56px))!important;
+  margin:0 auto!important;
+  padding:82px 0 48px!important;
+  background:transparent!important;
+  border:0!important;
+  color:var(--qv-ink)!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+}
+.p1611-hero-inner,
+.p15-pagehero>.copy,
+.p15-pred-copy,
+.p15-hero-copy,
+.future-hero-copy,
+.intro-copy{max-width:920px!important}
+.p1611-hero h1,
+.p15-pagehero h1,
+.p15-prediction-hero h1,
+.p15-worldhero h1,
+.p168-hero h1,
+.pa-hero h1,
+.future-hero h1,
+.camera-intro h1{
+  margin:8px 0 12px!important;
+  color:var(--qv-ink)!important;
+  font-size:clamp(3.5rem,7vw,6.2rem)!important;
+  line-height:.93!important;
+  letter-spacing:-.065em!important;
+  font-weight:560!important;
+  text-shadow:none!important;
+  background:none!important;
+  -webkit-text-fill-color:initial!important;
+}
+.p1611-hero h2,
+.p15-pagehero h2,
+.p168-hero h2,
+.pa-hero h2,
+.future-hero h2{
+  color:#456f80!important;
+  font-size:clamp(1.45rem,2.5vw,2.3rem)!important;
+  font-weight:500!important;
+  letter-spacing:-.035em!important;
+}
+.p1611-hero-copy,
+.p1611-note,
+.p15-pagehero p,
+.p15-prediction-hero p,
+.p15-worldhero p,
+.p168-hero p,
+.pa-hero p,
+.future-hero p,
+.camera-intro p{
+  max-width:760px!important;
+  color:var(--qv-muted)!important;
+  font-size:.96rem!important;
+  line-height:1.75!important;
+}
+.p1611-badge,
+.p168-kicker,
+.p15-hero-kicker,
+.future-kicker,
+.camera-intro .eyebrow,
+.p17-kicker{
+  color:#39869a!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  font-size:.66rem!important;
+  font-weight:750!important;
+  letter-spacing:.16em!important;
+  text-transform:uppercase!important;
+}
+
+/* Main content widths */
+.p1611-timeline,
+.p17-pulse,
+.pv-kpis,
+.pv-track-kpis,
+.pv-track-main,
+.pv-track-advanced,
+.pv-settings-grid,
+.p168-section,
+.p168-track-status,
+.pv-backtest-bottom,
+.pa-layout,
+.p1615-feed,
+.p1615-temporal-shell,
+.p16-deep-dive,
+.p15-analysis-grid,
+.sports-control-deck,
+.sports-panel,
+.live-proof-grid,
+.live-track,
+.crypto-control,
+.crypto-section-head,
+.crypto-grid,
+.crypto-detail-grid,
+.causal-metrics,
+.causal-panel,
+.causal-grid,
+.d6-kpis,
+.d6-grid,
+.d6-section,
+.v5-section,
+.v5-module-grid,
+.pv-filter-deck,
+.pv-match-layout,
+.camera-controls,
+.camera-grid,
+.camera-disclaimer{
+  width:min(1320px,calc(100% - 56px))!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+/* Universal Vision surfaces */
+.ptl-timeline-card,
+.p17-pulse,
+.p1611-proofline,
+.pv-panel,
+.pv-kpi,
+.v5-proof,
+.v5-section,
+.pv-setting-card,
+.v8-segment-panel,
+.pa-chat,
+.pa-panel,
+.p1615-feed,
+.p1615-toolbar,
+.p16-time-rail,
+.v4-source-card,
+.p168-section,
+.p168-track-card,
+.pv-track-main,
+.pv-track-advanced,
+.sports-panel,
+.fixtures-panel,
+.live-track,
+.resolved-panel,
+.crypto-market-card,
+.crypto-control,
+.causal-panel,
+.graph-panel,
+.leverage-panel,
+.lab-panel,
+.d6-panel,
+.d6-section,
+.v5-module,
+.pv-filter-deck,
+.camera-controls,
+.camera-grid,
+.camera-disclaimer{
+  border:1px solid var(--qv-line)!important;
+  border-radius:var(--qv-radius)!important;
+  background:var(--qv-surface)!important;
+  color:var(--qv-ink)!important;
+  box-shadow:var(--qv-shadow)!important;
+  backdrop-filter:none!important;
+  text-shadow:none!important;
+}
+.pv-panel:before,.pv-panel:after,
+.v5-section:before,.v5-section:after,
+.pv-setting-card:before,.pv-setting-card:after,
+.sports-panel:before,.sports-panel:after,
+.crypto-market-card:before,.crypto-market-card:after,
+.d6-panel:before,.d6-panel:after{display:none!important}
+
+.pv-panel h2,.pv-panel h3,
+.v5-section h2,.v5-section h3,
+.pv-setting-card h2,.pv-setting-card h3,
+.pa-chat h2,.pa-panel h2,
+.p1615-feed h2,
+.p168-section h2,.p168-section h3,
+.sports-panel h2,.sports-panel h3,
+.crypto-market-card h2,.crypto-market-card h3,
+.causal-panel h2,.causal-panel h3,
+.d6-panel h2,.d6-panel h3,
+.v5-module h2,.v5-module h3{
+  color:var(--qv-ink)!important;
+  text-shadow:none!important;
+}
+.pv-panel p,.pv-panel span,
+.v5-section p,
+.pv-setting-card p,
+.pa-chat p,.pa-panel p,
+.p1615-feed p,
+.p168-section p,
+.sports-panel p,
+.crypto-market-card p,
+.causal-panel p,
+.d6-panel p,
+.v5-module p{
+  color:var(--qv-muted)!important;
+}
+
+/* Controls */
+body.q-vision-shell input,
+body.q-vision-shell select,
+body.q-vision-shell textarea,
+body.q-vision-surface input,
+body.q-vision-surface select,
+body.q-vision-surface textarea{
+  border:1px solid var(--qv-line)!important;
+  border-radius:12px!important;
+  background:#f7f9fa!important;
+  color:var(--qv-ink)!important;
+  box-shadow:none!important;
+  outline:0!important;
+}
+body.q-vision-shell input:focus,
+body.q-vision-shell select:focus,
+body.q-vision-shell textarea:focus,
+body.q-vision-surface input:focus,
+body.q-vision-surface select:focus,
+body.q-vision-surface textarea:focus{
+  border-color:#9bd9e4!important;
+  box-shadow:0 0 0 3px rgba(19,184,210,.08)!important;
+}
+.p1611-btn,
+.v4-button,
+.future-btn,
+.d6-btn,
+.scenario-run,
+.pv-refresh,
+.p1615-more,
+.pa-composer button,
+.graph-controls button,
+.camera-controls button,
+.sports-control-deck button,
+.crypto-control button{
+  border:1px solid var(--qv-line)!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:#244957!important;
+  box-shadow:none!important;
+  font-weight:650!important;
+}
+.p1611-btn:not(.alt),
+.v4-button:not(.secondary),
+.future-btn:not(.secondary),
+.d6-btn:not(.secondary),
+.scenario-run,
+.pa-composer button{
+  background:var(--qv-navy)!important;
+  border-color:var(--qv-navy)!important;
+  color:#fff!important;
+}
+
+/* Tables and lists */
+body.q-vision-shell table,
+body.q-vision-surface table{
+  width:100%!important;
+  border-collapse:separate!important;
+  border-spacing:0!important;
+  color:var(--qv-ink)!important;
+}
+body.q-vision-shell th,
+body.q-vision-surface th{
+  background:#f5f8f9!important;
+  color:#667a84!important;
+  border-bottom:1px solid var(--qv-line)!important;
+  font-size:.68rem!important;
+  letter-spacing:.06em!important;
+  text-transform:uppercase!important;
+}
+body.q-vision-shell td,
+body.q-vision-surface td{
+  color:#334e5b!important;
+  border-bottom:1px solid #edf1f3!important;
+}
+.v5-track-row,
+.pv-system-row,
+.pv-setting-row,
+.p1615-grid>*,
+.fixture-grid>*,
+.resolved-list>*,
+.v4-source-grid>*,
+.camera-grid>*{
+  border-color:var(--qv-line)!important;
+  background:#f8fafb!important;
+  color:var(--qv-ink)!important;
+}
+
+/* KPI family */
+.pv-kpis,.pv-track-kpis,.pv-track-advanced,.d6-kpis,.live-proof-grid,.causal-metrics{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(170px,1fr))!important;
+  gap:12px!important;
+}
+.pv-kpi,.v5-proof,.d6-kpis>*,
+.live-proof-grid>*,.causal-metrics>*{
+  min-height:116px!important;
+  padding:18px!important;
+}
+.pv-kpi small,.v5-proof small,
+.pv-kpi span,.v5-proof em{
+  color:#87969d!important;
+}
+.pv-kpi strong,.v5-proof strong{
+  color:var(--qv-ink)!important;
+}
+
+/* Prediction-specific visual hierarchy */
+.p15-prediction-hero{
+  display:block!important;
+}
+.p15-bigprob{
+  color:#1f7f95!important;
+  text-shadow:none!important;
+  background:none!important;
+  -webkit-text-fill-color:initial!important;
+}
+.p1615-toolbar{
+  padding:14px!important;
+}
+.p1615-chip{
+  border:1px solid var(--qv-line)!important;
+  background:#f6f9fa!important;
+  color:#5f727d!important;
+}
+.p1615-chip.is-active{
+  background:var(--qv-cyan-soft)!important;
+  border-color:#cbeaf0!important;
+  color:#1d6576!important;
+}
+.p15-panel{
+  border:1px solid var(--qv-line)!important;
+  border-radius:18px!important;
+  background:#fff!important;
+  color:var(--qv-ink)!important;
+  box-shadow:var(--qv-shadow)!important;
+}
+
+/* Analyst */
+.pa-layout{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr)!important;
+  gap:14px!important;
+}
+.pa-chat,.pa-panel{padding:20px!important}
+.pa-message{
+  border:1px solid var(--qv-line)!important;
+  border-radius:15px!important;
+  background:#f8fafb!important;
+  color:var(--qv-ink)!important;
+}
+.pa-message.assistant .pa-avatar{
+  background:var(--qv-cyan-soft)!important;
+  color:#247d91!important;
+}
+.pa-prompts button{
+  border:1px solid var(--qv-line)!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:#4f6874!important;
+}
+
+/* Sources / settings / backtest */
+.pv-settings-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:14px!important;
+}
+.pv-setting-card{padding:22px!important}
+.pv-setting-card.wide,.pv-setting-card.full{grid-column:1/-1!important}
+.p168-section{padding:24px!important;margin-top:14px!important;margin-bottom:14px!important}
+.v4-source-card{padding:18px!important}
+.p168-track-status{display:grid!important;grid-template-columns:1fr 1fr!important;gap:14px!important}
+.pv-backtest-bottom{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px!important}
+
+/* Sports / Crypto / Cameras */
+.sports-shell,.crypto-shell,.camera-shell,.d6-shell,.v5-shell{
+  background:transparent!important;
+  color:var(--qv-ink)!important;
+}
+.sports-status,.crypto-status,.world-status,.future-status{
+  border:1px solid var(--qv-line)!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:#667a84!important;
+  box-shadow:var(--qv-shadow)!important;
+}
+.fixture-grid,.crypto-grid,.camera-grid{
+  gap:12px!important;
+}
+.camera-grid{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr))!important;
+}
+.camera-disclaimer{
+  margin-top:14px!important;
+  padding:16px!important;
+  color:var(--qv-muted)!important;
+}
+
+/* Causal / Intelligence / Modules */
+.causal-grid,.d6-grid,.v5-module-grid{
+  display:grid!important;
+  gap:14px!important;
+}
+.causal-grid{grid-template-columns:1.25fr .75fr!important}
+.d6-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.v5-module-grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))!important}
+.graph-stage{
+  border:1px solid var(--qv-line)!important;
+  border-radius:16px!important;
+  background:#f7fafb!important;
+}
+.v5-status,.d6-severity{
+  border-radius:999px!important;
+  box-shadow:none!important;
+}
+
+/* Track record footer & product provenance */
+.q-unified-footer,
+.p1611-footer,
+.qv-origin{
+  width:min(1320px,calc(100% - 56px))!important;
+  margin:30px auto 0!important;
+  padding:24px 0!important;
+  border-top:1px solid var(--qv-line)!important;
+  background:transparent!important;
+  color:#819099!important;
+  font-size:.72rem!important;
+}
+.q-unified-footer{
+  display:flex!important;
+  justify-content:space-between!important;
+  gap:18px!important;
+}
+.q-unified-footer a,.p1611-footer a,.qv-origin a{color:#437487!important}
+
+/* Preserve actual data visualization colors while removing dark chrome */
+.ptl-stage,
+.p15-causal-wheel,
+.calibration-chart,
+.d6-map{
+  border:1px solid var(--qv-line)!important;
+  border-radius:16px!important;
+  background:#f7fafb!important;
+}
+
+/* Mobile */
+@media(max-width:980px){
+  .pa-layout,.causal-grid,.pv-backtest-bottom{grid-template-columns:1fr!important}
+  .pv-settings-grid{grid-template-columns:1fr!important}
+  .p168-track-status{grid-template-columns:1fr!important}
+  .d6-grid{grid-template-columns:1fr!important}
+}
+@media(max-width:720px){
+  .p1611-hero,.p15-pagehero,.p15-prediction-hero,.p15-worldhero,.p168-hero,.pa-hero,.future-hero,.camera-intro,
+  .p1611-timeline,.p17-pulse,.pv-kpis,.pv-track-kpis,.pv-track-main,.pv-track-advanced,.pv-settings-grid,.p168-section,.p168-track-status,.pv-backtest-bottom,.pa-layout,.p1615-feed,.p1615-temporal-shell,.p16-deep-dive,.p15-analysis-grid,.sports-control-deck,.sports-panel,.live-proof-grid,.live-track,.crypto-control,.crypto-section-head,.crypto-grid,.crypto-detail-grid,.causal-metrics,.causal-panel,.causal-grid,.d6-kpis,.d6-grid,.d6-section,.v5-section,.v5-module-grid,.pv-filter-deck,.pv-match-layout,.camera-controls,.camera-grid,.camera-disclaimer,.q-unified-footer,.p1611-footer,.qv-origin{
+    width:min(100% - 24px,1320px)!important;
+  }
+  .p1611-hero,.p15-pagehero,.p15-prediction-hero,.p15-worldhero,.p168-hero,.pa-hero,.future-hero,.camera-intro{padding-top:58px!important}
+  .p1611-hero h1,.p15-pagehero h1,.p15-prediction-hero h1,.p15-worldhero h1,.p168-hero h1,.pa-hero h1,.future-hero h1,.camera-intro h1{font-size:clamp(3rem,15vw,4.8rem)!important}
+  .q-vision-subnav{top:62px!important;padding-left:12px!important;padding-right:12px!important}
+  .q-unified-footer{flex-direction:column!important}
+}
