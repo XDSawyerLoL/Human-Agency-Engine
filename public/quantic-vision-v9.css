@@ -705,3 +705,64 @@ body[data-vision-ui="v9"] .fixture-probs small{
 body[data-vision-ui="v9"] .fixture-probs strong{
   display:block!important;color:var(--qv9-ink)!important;font-size:.9rem!important;line-height:1.15!important
 }
+
+
+/* Track Record evidence threshold */
+body[data-vision-ui="v9"] .q-track-threshold{
+  width:min(1320px,calc(100% - 48px))!important;
+  margin:0 auto 14px!important;
+}
+body[data-vision-ui="v9"] .q-track-threshold-grid{
+  display:grid!important;
+  grid-template-columns:minmax(220px,.8fr) minmax(280px,1.2fr)!important;
+  gap:18px!important;
+  align-items:center!important;
+}
+body[data-vision-ui="v9"] .q-track-threshold-grid>div:first-child strong,
+body[data-vision-ui="v9"] .q-track-threshold-grid>div:first-child span{
+  display:block!important;
+}
+body[data-vision-ui="v9"] .q-track-threshold-grid>div:first-child strong{
+  color:var(--qv9-ink)!important;
+  font-size:1.15rem!important;
+  letter-spacing:-.025em!important;
+}
+body[data-vision-ui="v9"] .q-track-threshold-grid>div:first-child span{
+  margin-top:5px!important;
+  color:var(--qv9-muted)!important;
+  font-size:.72rem!important;
+}
+body[data-vision-ui="v9"] .q-track-threshold-bar{
+  height:11px!important;
+  overflow:hidden!important;
+  border-radius:999px!important;
+  background:#e8eef1!important;
+}
+body[data-vision-ui="v9"] .q-track-threshold-bar i{
+  display:block!important;
+  height:100%!important;
+  min-width:0!important;
+  border-radius:inherit!important;
+  background:linear-gradient(90deg,var(--qv9-cyan),var(--qv9-green))!important;
+  transition:width .35s ease!important;
+}
+body[data-vision-ui="v9"] .q-track-threshold-grid>p{
+  grid-column:1/-1!important;
+  margin:0!important;
+  padding:12px 14px!important;
+  border:1px solid var(--qv9-line)!important;
+  border-radius:13px!important;
+  background:#f8fafb!important;
+  color:#71838d!important;
+  font-size:.72rem!important;
+  line-height:1.55!important;
+}
+@media(max-width:720px){
+  body[data-vision-ui="v9"] .q-track-threshold{
+    width:min(100% - 24px,1320px)!important;
+  }
+  body[data-vision-ui="v9"] .q-track-threshold-grid{
+    grid-template-columns:1fr!important;
+  }
+  body[data-vision-ui="v9"] .q-track-threshold-grid>p{grid-column:auto!important}
+}
