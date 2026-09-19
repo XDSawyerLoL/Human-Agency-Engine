@@ -1,7 +1,8 @@
 (()=>{'use strict';
 
 const page=(document.body.dataset.page||'home').trim();
-const legacyVisualContract='quantic-unified.css?v=3.0';\nconst nativeV9Pages=new Set(['alerts','sports','track-record','sources','backtest','settings']);
+const legacyVisualContract='quantic-unified.css?v=3.0';
+const nativeV9Pages=new Set(['alerts','sports','track-record','sources','backtest','settings']);
 const navPrimary=[
  ['home','/vision/','◉','Vision'],
  ['predictions','/predictions/','⌁','Prévisions'],
@@ -98,7 +99,7 @@ if(main&&page==='predictions'&&!main.querySelector('.p16-time-rail')){
 if(main&&!document.querySelector('.q-unified-footer')){
   const footer=document.createElement('footer');
   footer.className='q-unified-footer';
-  footer.innerHTML='<span class="q-unified-footer-brand"><img src="/assets/brand-2026/quantic-sillage-mark.svg" alt="">Quantic Sillage · Quantic Vision</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/downloads/">Outils</a> · <a href="/products/">Écosystème Quantic</a></span>';
+  footer.innerHTML='<span class="q-unified-footer-brand"><img src="/assets/brand-2026/quantic-sillage-mark.svg" alt="">Quantic Sillage · QUANTIC VISION</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/downloads/">Outils</a> · <a href="/products/">Écosystème Quantic</a></span>';
   main.insertAdjacentElement('afterend',footer);
 }
 
