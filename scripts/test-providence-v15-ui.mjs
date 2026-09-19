@@ -68,7 +68,7 @@ must('public/providence-early-warning-v17.js','historyDelta');
 must('public/providence-early-warning-v17.js','counterSignals');
 must('public/providence-early-warning-v17.js','falsification');
 must('public/providence-early-warning-v17.css','.p17-alert-card');
-must('public/alerts/index.html','EARLY WARNING 1.17');
+must('public/alerts/index.html','QUANTIC VISION · ALERTES');
 must('public/alerts/index.html','scenarioClusters');
 must('public/alerts/alerts.js','Pourquoi maintenant');
 must('public/alerts/alerts.js','Condition d’invalidation');
