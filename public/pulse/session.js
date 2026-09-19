@@ -30,7 +30,7 @@ export async function openAuth(mode='login'){
   dom.authModal.hidden=false;
   updateAuthModal();
   await ensureIdentityVault();
-  setTimeout(function(){document.getElementById('auth-handle').focus()},20);
+  setTimeout(function(){const target=state.authMode==='register'?document.getElementById('auth-handle'):document.querySelector('.pulse-auth-submit');target?.focus()},20);
 }
 
 export function closeAuth(){
@@ -40,8 +40,8 @@ export function closeAuth(){
 
 export function updateAuthModal(){
   const register=state.authMode==='register';
-  document.getElementById('auth-title').textContent=register?'Créer un compte':'Se connecter';
-  document.getElementById('auth-copy').textContent=register?'Choisis ton @pseudo et ton nom affiché. Identity Vault devient la clé de ce compte.':'Aucun identifiant ni mot de passe. Identity Vault confirme directement ton compte Pulse.';
+  document.getElementById('auth-title').textContent=register?'Créer avec Quantic ID':'Entrer avec Quantic ID';
+  document.getElementById('auth-copy').textContent=register?'Choisis ton @pseudo et ton nom affiché. Identity Vault devient la clé de ce compte.':'Identity Vault confirme directement ton compte Pulse et restaure ta session.';
   document.getElementById('display-name-field').hidden=!register;
   const handleField=document.getElementById('handle-field');
   handleField.hidden=!register;
@@ -67,11 +67,11 @@ export function updateAccount(){
     dom.followingLabel.textContent='Abonnements';
     dom.followingHelp.textContent='Les comptes que vous suivez';
   }else{
-    name.textContent='Compte Pulse';
-    handle.textContent='Identité locale Pulse';
+    name.textContent='Quantic ID';
+    handle.textContent='Entrer dans Pulse';
     avatar.textContent='?';
     composerAvatar.textContent='?';
-    button.textContent='Compte Pulse';
+    button.textContent='Entrer';
     dom.textarea.placeholder='Écrivez une publication…';
     dom.followingLabel.textContent='Récent';
     dom.followingHelp.textContent='Les publications les plus récentes';

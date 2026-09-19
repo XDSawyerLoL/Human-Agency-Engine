@@ -11,7 +11,7 @@ function getCard(){
 function stuckHeading(){
   const h=getCard()?.querySelector('h1');
   const value=String(h?.textContent||'');
-  return /Préparation de Quantic Mail|Vérification du manifeste/i.test(value);
+  return /Préparation de Quantic Mail|Vérification du manifeste|Quantic ID requis/i.test(value);
 }
 function addRecovery(card){
   if(card.querySelector('[data-qm-recovery]'))return;
@@ -29,7 +29,7 @@ function showRecovery(){
   const h=card.querySelector('h1');
   const note=card.querySelector('.qn-footnote');
   if(h)h.textContent='Vérification plus longue que prévu';
-  if(note)note.textContent='Quantic Mail n’a pas terminé sa préparation. Vous pouvez réessayer maintenant ou vérifier l’état du réseau.';
+  if(note)note.textContent='L’identité a été vérifiée ou la vérification est en cours, mais Mail n’a pas terminé son démarrage. Réessayez ou consultez l’état du réseau.';
   addRecovery(card);
 }
 function schedule(){

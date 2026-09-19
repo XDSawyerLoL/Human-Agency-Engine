@@ -19,7 +19,7 @@
     <p class="q-kicker">CONTINUITÉ</p>
     <h1>Un chemin tombe.<br>Quantic continue.</h1>
     <p>Quantic Network donne aux applications plusieurs chemins pour rester joignables. Si un chemin tombe, Quantic cherche un autre chemin disponible.</p>
-    <div class="q-status-summary" data-quantic-status-summary><span class="q-status-dot is-pending"></span><span data-status-label>Vérification des services…</span></div>
+    <div class="q-status-summary" data-quantic-status-summary><span class="q-status-dot is-pending"></span><span data-status-label>Vérification des services…</span><span class="q-status-meta" data-status-meta>Première vérification en cours</span><button class="q-status-refresh" type="button" data-network-refresh>Actualiser</button></div>
   </section>
 
   <section class="q-section" data-q-reveal>
@@ -28,9 +28,9 @@
       <span class="q-section-index">01 / STATUS</span>
     </div>
     <div class="q-network-public-grid">
-      <article class="q-service" data-service-id="vision"><div class="q-service-head"><h3>Quantic Vision</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Accès au moteur d’analyse et de prévision.</p></article>
-      <article class="q-service" data-service-id="mail"><div class="q-service-head"><h3>Quantic Mail</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Accès à la messagerie Quantic protégée par Quantic ID.</p></article>
-      <article class="q-service" data-network-continuity><div class="q-service-head"><h3>Continuité réseau</h3><span class="q-service-state" data-network-continuity-state data-state="checking">Vérification…</span></div><p>Plusieurs chemins peuvent prendre le relais si l’un d’eux devient indisponible.</p></article>
+      <article class="q-service" data-service-id="vision"><div class="q-service-head"><h3>Quantic Vision</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Accès au moteur d’analyse et de prévision.</p><small class="q-service-meta" data-service-meta>Jamais vérifié</small></article>
+      <article class="q-service" data-service-id="mail"><div class="q-service-head"><h3>Quantic Mail</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Accès à la messagerie Quantic protégée par Quantic ID.</p><small class="q-service-meta" data-service-meta>Jamais vérifié</small></article>
+      <article class="q-service" data-network-continuity><div class="q-service-head"><h3>Continuité réseau</h3><span class="q-service-state" data-network-continuity-state data-state="checking">Vérification…</span></div><p>Plusieurs chemins peuvent prendre le relais si l’un d’eux devient indisponible.</p><small class="q-service-meta" data-continuity-meta>Calculé à partir des relais surveillés</small></article>
     </div>
   </section>
 
@@ -50,9 +50,9 @@
       <div class="q-technical-details-body">
         <p>Cette vue détaille les chemins actuellement surveillés. « Disponible » signifie qu’un endpoint répond au contrôle technique ; cela ne signifie ni audit de sécurité ni garantie d’absence de panne.</p>
         <div class="q-service-grid">
-          <article class="q-service" data-service-id="relay-render"><div class="q-service-head"><h3>Relay Render</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Chemin de continuité sur un fournisseur distinct.</p></article>
-          <article class="q-service" data-service-id="relay-railway"><div class="q-service-head"><h3>Relay Railway</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Chemin de continuité sur un second fournisseur.</p></article>
-          <article class="q-service" data-service-id="relay-hostinger"><div class="q-service-head"><h3>Relay Hostinger</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Relais intégré au runtime principal.</p></article>
+          <article class="q-service" data-service-id="relay-render"><div class="q-service-head"><h3>Relay Render</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Chemin de continuité sur un fournisseur distinct.</p><small class="q-service-meta" data-service-meta>Jamais vérifié</small></article>
+          <article class="q-service" data-service-id="relay-railway"><div class="q-service-head"><h3>Relay Railway</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Chemin de continuité sur un second fournisseur.</p><small class="q-service-meta" data-service-meta>Jamais vérifié</small></article>
+          <article class="q-service" data-service-id="relay-hostinger"><div class="q-service-head"><h3>Relay Hostinger</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Relais intégré au runtime principal.</p><small class="q-service-meta" data-service-meta>Jamais vérifié</small></article>
         </div>
       </div>
     </details>

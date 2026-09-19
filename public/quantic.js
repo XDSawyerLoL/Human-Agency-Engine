@@ -9,22 +9,41 @@
     unknown: "Non vérifié",
   };
 
-  function setServiceState(id, state) {
+  function setServiceState(id, state, metaText = "") {
     document.querySelectorAll(`[data-service-id="${id}"]`).forEach((card) => {
       const badge = card.querySelector("[data-service-state]");
-      if (!badge) return;
-      badge.dataset.state = state;
-      badge.textContent = labels[state] || labels.unknown;
+      const meta = card.querySelector("[data-service-meta]");
+      if (badge) {
+        badge.dataset.state = state;
+        badge.textContent = labels[state] || labels.unknown;
+      }
+      if (meta && metaText) meta.textContent = metaText;
     });
   }
 
-  function setSummary(state, text) {
+  function setSummary(state, text, metaText = "") {
     document.querySelectorAll("[data-quantic-status-summary]").forEach((summary) => {
       const dot = summary.querySelector(".q-status-dot");
       const label = summary.querySelector("[data-status-label]");
+      const meta = summary.querySelector("[data-status-meta]");
       if (dot) dot.className = `q-status-dot is-${state}`;
       if (label) label.textContent = text;
+      if (meta && metaText) meta.textContent = metaText;
     });
+  }
+
+  function timeLabel(value = new Date()) {
+    const d = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(d.getTime())) return "heure indisponible";
+    return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(d);
+  }
+
+  function serviceMeta(service, fallbackTime) {
+    const latency = Number(service?.latency_ms ?? service?.latencyMs ?? service?.latency);
+    const checkedAt = service?.checked_at ?? service?.checkedAt ?? fallbackTime;
+    const parts = [`Vérifié à ${timeLabel(checkedAt)}`];
+    if (Number.isFinite(latency) && latency >= 0) parts.push(`${Math.round(latency)} ms`);
+    return parts.join(" · ");
   }
 
   function setContinuity(state, text) {
@@ -70,10 +89,17 @@
     }
   }
 
+  let statusLoading = false;
+  let lastSuccessfulCheck = null;
+
   async function loadStatus() {
     if (!document.querySelector("[data-quantic-status-summary],[data-service-id],[data-network-continuity]")) return;
+    if (statusLoading) return;
+    statusLoading = true;
 
-    setSummary("pending", "Vérification des services…");
+    const startedAt = performance.now();
+    const attemptedAt = new Date();
+    setSummary("pending", "Vérification des services…", `Tentative à ${timeLabel(attemptedAt)}`);
     document.querySelectorAll("[data-service-state]").forEach((badge) => {
       badge.dataset.state = "checking";
       badge.textContent = labels.checking;
@@ -100,7 +126,7 @@
               : "unknown";
 
         serviceStates.set(service.id, state);
-        setServiceState(service.id, state);
+        setServiceState(service.id, state, serviceMeta(service, payload.checked_at ?? payload.checkedAt ?? new Date()));
 
         if (service.state !== "pending") {
           active += 1;
@@ -110,17 +136,30 @@
 
       summarizeContinuity(serviceStates);
 
-      if (!active) setSummary("unknown", "Monitoring indisponible");
-      else if (online === active) setSummary("online", "Services principaux disponibles");
-      else if (online > 0) setSummary("partial", "Service partiellement disponible");
-      else setSummary("offline", "Services temporairement indisponibles");
+      lastSuccessfulCheck = new Date();
+      const requestLatency = Math.max(0, Math.round(performance.now() - startedAt));
+      const summaryMeta = `Dernière vérification ${timeLabel(lastSuccessfulCheck)} · monitoring ${requestLatency} ms`;
+      document.querySelectorAll("[data-continuity-meta]").forEach((meta) => {
+        meta.textContent = `Calculé à ${timeLabel(lastSuccessfulCheck)} sur ${serviceStates.size} services surveillés`;
+      });
+
+      if (!active) setSummary("unknown", "Monitoring indisponible", summaryMeta);
+      else if (online === active) setSummary("online", "Services principaux disponibles", summaryMeta);
+      else if (online > 0) setSummary("partial", "Service partiellement disponible", summaryMeta);
+      else setSummary("offline", "Services temporairement indisponibles", summaryMeta);
     } catch (_error) {
       document.querySelectorAll("[data-service-state]").forEach((badge) => {
         badge.dataset.state = "unknown";
         badge.textContent = labels.unknown;
       });
+      document.querySelectorAll("[data-service-meta]").forEach((meta) => {
+        meta.textContent = `Tentative à ${timeLabel(attemptedAt)} · aucune mesure reçue`;
+      });
       setContinuity("unknown", labels.unknown);
-      setSummary("unknown", "Monitoring indisponible");
+      const prior = lastSuccessfulCheck ? `Dernier succès ${timeLabel(lastSuccessfulCheck)}` : "Aucun contrôle réussi dans cette session";
+      setSummary("unknown", "Monitoring indisponible", `Dernière tentative ${timeLabel(attemptedAt)} · ${prior}`);
+    } finally {
+      statusLoading = false;
     }
   }
 
@@ -166,6 +205,12 @@
     initReveal();
     initPointerDepth();
     void loadStatus();
+    document.querySelectorAll("[data-network-refresh]").forEach((button) => {
+      button.addEventListener("click", () => void loadStatus());
+    });
+    if (document.querySelector("[data-quantic-status-summary]")) {
+      setInterval(() => void loadStatus(), 60000);
+    }
   }
 
   if (document.readyState === "loading") {
