@@ -1,6 +1,6 @@
-import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=8';
-import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, ensureIdentityVault } from './session.js?v=8';
-import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview } from './views.js?v=8';
+import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=9';
+import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, ensureIdentityVault } from './session.js?v=9';
+import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview } from './views.js?v=9';
 
 function setReply(postId,handle){
   state.replyTo=postId;
@@ -154,13 +154,40 @@ function bindStaticEvents(){
     dom.textarea.focus();
     dom.textarea.setSelectionRange(start+emoji.length,start+emoji.length);
   });
+  document.addEventListener('click',function(event){
+    const picker=document.getElementById('pulse-emoji-picker');
+    if(!picker||picker.hidden)return;
+    if(event.target.closest('[data-tool="emoji"]')||event.target.closest('#pulse-emoji-picker'))return;
+    picker.hidden=true;
+  });
+  const gifModal=document.getElementById('pulse-gif-modal');
+  const gifInput=document.getElementById('pulse-gif-url');
+  const gifPreview=document.getElementById('pulse-gif-preview');
+  const gifError=document.getElementById('pulse-gif-error');
+  const gifInsert=document.getElementById('pulse-gif-insert');
+  const closeGifModal=()=>{gifModal.hidden=true;gifInput.value='';gifPreview.innerHTML='<span>Aperçu du GIF</span>';gifError.textContent='';gifInsert.disabled=true;};
+  const refreshGifPreview=()=>{
+    const url=safeHttpsUrl(gifInput.value);
+    gifError.textContent='';
+    gifInsert.disabled=!url;
+    gifPreview.innerHTML=url?'<img src="'+url.replace(/"/g,'&quot;')+'" alt="Aperçu GIF" referrerpolicy="no-referrer">':'<span>Aperçu du GIF</span>';
+  };
   document.querySelector('[data-tool="gif"]')?.addEventListener('click',function(){
-    const value=prompt('Colle l’URL HTTPS d’un GIF (Tenor, Giphy ou fichier .gif).');
-    if(!value)return;
-    const url=safeHttpsUrl(value);
-    if(!url){alert('URL GIF invalide. Utilise une adresse HTTPS.');return}
+    document.getElementById('pulse-emoji-picker').hidden=true;
+    gifModal.hidden=false;
+    setTimeout(()=>gifInput.focus(),0);
+  });
+  gifInput?.addEventListener('input',refreshGifPreview);
+  gifPreview?.addEventListener('error',function(){gifError.textContent='Impossible d’afficher ce GIF.';gifInsert.disabled=true;},true);
+  document.getElementById('pulse-gif-close')?.addEventListener('click',closeGifModal);
+  document.getElementById('pulse-gif-cancel')?.addEventListener('click',closeGifModal);
+  gifModal?.addEventListener('click',function(event){if(event.target===gifModal)closeGifModal();});
+  gifInsert?.addEventListener('click',function(){
+    const url=safeHttpsUrl(gifInput.value);
+    if(!url){gifError.textContent='Utilise une adresse HTTPS valide.';return}
     state.attachment={mediaUrl:url,mediaType:'gif'};
     updateMediaPreview();
+    closeGifModal();
   });
   document.getElementById('pulse-media-preview')?.addEventListener('click',function(event){
     if(!event.target.closest('[data-remove-media]'))return;
