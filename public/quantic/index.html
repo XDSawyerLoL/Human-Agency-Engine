@@ -16,17 +16,17 @@
   <section class="qid-hero">
     <p class="q-kicker">QUANTIC ID</p>
     <h1>Votre identité.<br>Votre point d’entrée.</h1>
-    <p>Quantic ID relie vos applications sans transformer votre identité en mot de passe. Le portail vérifie uniquement le logiciel Quantic ID actif sur cet ordinateur. Aucun accès Mail de secours par mot de passe n’est proposé.</p>
+    <p>Quantic ID relie vos applications sans transformer votre identité en mot de passe. Le portail vérifie uniquement le logiciel Quantic ID actif sur cet ordinateur. Les espaces privés comme Vision et Mail exigent une session Quantic ID validée par Identity Vault.</p>
     <div class="qid-state" data-quantic-id-state="checking">
       <span class="qid-state-dot"></span>
       <div><strong data-quantic-id-title>Recherche de Quantic ID…</strong><span data-quantic-id-detail>Vérification du logiciel d’identité sur ce PC.</span></div>
     </div>
     <div class="q-actions"><button class="q-button" type="button" data-quantic-id-retry>Relancer la détection</button><a class="q-button secondary" href="/downloads/#identity-vault">Télécharger Identity Vault</a></div>
   </section>
-  <section class="q-section" id="identity-vault"><div class="q-band"><div><strong>Quantic Identity Vault</strong><p>Installez le compagnon sur ce PC ou emportez la version portable sur une clé USB. Quantic Mail ne s’ouvre que lorsqu’une identité active est détectée.</p></div><a class="q-button" href="/downloads/#identity-vault">Télécharger Identity Vault ↓</a></div></section><section class="q-section">
-    <div class="q-section-head"><div><p class="q-kicker">APPLICATIONS</p><h2>Entrez depuis votre identité.</h2></div><p class="q-section-copy">Vision, Pulse, Network et les autres surfaces restent accessibles. Quantic Mail exige Quantic ID actif.</p></div>
+  <section class="q-section" id="identity-vault"><div class="q-band"><div><strong>Quantic Identity Vault</strong><p>Installez le compagnon sur ce PC ou emportez la version portable sur une clé USB. Quantic Vision et Quantic Mail ne s’ouvrent que lorsqu’une identité active est détectée.</p></div><a class="q-button" href="/downloads/#identity-vault">Télécharger Identity Vault ↓</a></div></section><section class="q-section">
+    <div class="q-section-head"><div><p class="q-kicker">APPLICATIONS</p><h2>Entrez depuis votre identité.</h2></div><p class="q-section-copy">Vision et Mail sont des espaces privés. Pulse reste lisible publiquement, mais son authentification passe par Quantic ID.</p></div>
     <div class="q-grid four" data-quantic-id-apps>
-      <a class="q-card vision" href="/vision/" data-quantic-id-app="vision"><span class="q-card-icon">V</span><span class="q-card-meta">analyse</span><h3>Quantic Vision</h3><p>Observer, anticiper et vérifier.</p><span class="q-card-link">Ouvrir →</span></a>
+      <a class="q-card vision is-locked" href="/vision/" data-quantic-id-app="vision" aria-disabled="true"><span class="q-card-icon">V</span><span class="q-card-meta">Quantic ID requis</span><h3>Quantic Vision</h3><p>Observer, anticiper et vérifier.</p><span class="q-card-link">Ouvrir →</span></a>
       <a class="q-card mail is-locked" href="/mail/" data-quantic-id-app="mail" aria-disabled="true"><span class="q-card-icon">M</span><span class="q-card-meta">Quantic ID requis</span><h3>Quantic Mail</h3><p>Messagerie protégée par l’identité locale.</p><span class="q-card-link">Vérifier Quantic ID →</span></a>
       <a class="q-card pulse" href="/pulse/" data-quantic-id-app="pulse"><span class="q-card-icon">P</span><span class="q-card-meta">social</span><h3>Quantic Pulse</h3><p>Publier et suivre les conversations.</p><span class="q-card-link">Ouvrir →</span></a>
       <a class="q-card network" href="/network/" data-quantic-id-app="network"><span class="q-card-icon">N</span><span class="q-card-meta">réseau</span><h3>Quantic Network</h3><p>Voir les relais et la continuité.</p><span class="q-card-link">Ouvrir →</span></a>
