@@ -1,6 +1,6 @@
-import { TOKEN_KEY, state, dom, api, errorText } from './core.js';
-import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, ensureIdentityVault } from './session.js';
-import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview } from './views.js';
+import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=7';
+import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, ensureIdentityVault } from './session.js?v=7';
+import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview } from './views.js?v=7';
 
 function setReply(postId,handle){
   state.replyTo=postId;
