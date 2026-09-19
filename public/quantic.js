@@ -61,7 +61,14 @@
       .filter(Boolean);
 
     if (!relays.length || relays.every((state) => state === "unknown")) {
-      setContinuity("unknown", "Non vérifié");
+      const primary = ["vision", "mail"].map((id) => serviceStates.get(id)).filter(Boolean);
+      if (primary.some((state) => state === "online")) {
+        setContinuity("online", "Services disponibles");
+      } else if (primary.length && primary.every((state) => state === "offline")) {
+        setContinuity("offline", "Services indisponibles");
+      } else {
+        setContinuity("unknown", "État partiel");
+      }
       return;
     }
     if (relays.some((state) => state === "online")) {
