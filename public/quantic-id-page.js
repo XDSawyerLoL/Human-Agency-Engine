@@ -53,15 +53,6 @@ async function check(){
   setState('checking','Recherche de Quantic ID…','Vérification d’Identity Vault et de la session Sillage.');
   setApps(false);
 
-  const existing=await currentSession();
-  if(existing?.authenticated){
-    setState('ready','Quantic ID actif','Session Sillage sécurisée · '+existing.keyId);
-    setApps(true);
-    const next=safeNext();
-    if(next)setTimeout(()=>location.replace(next),250);
-    return;
-  }
-
   if(!window.QuanticID?.probe){
     setState('missing','Runtime Quantic ID indisponible','Le composant local d’identité n’est pas disponible.');
     return;
@@ -73,6 +64,15 @@ async function check(){
     }else{
       setState('missing','Quantic Identity Vault non détecté','Installez Identity Vault sur ce PC ou lancez la version portable depuis une clé USB.');
     }
+    return;
+  }
+
+  const existing=await currentSession();
+  if(existing?.authenticated){
+    setState('ready','Quantic ID actif','Identity Vault actif · session Sillage sécurisée.');
+    setApps(true);
+    const next=safeNext();
+    if(next)setTimeout(()=>location.replace(next),250);
     return;
   }
 
