@@ -17,35 +17,103 @@
     <section class="hero">
       <p class="kicker">QUANTIC ID</p>
       <h2>Votre identité reste ici.</h2>
-      <p>Identity Vault conserve la clé privée sur votre PC ou votre clé USB. Les sites Quantic reçoivent uniquement un état, une clé publique et des signatures.</p>
+      <p>Chargez votre coffre USB sans saisir de code. Le code local n’est demandé qu’au moment de déverrouiller les données privées et la clé cryptographique.</p>
     </section>
 
     <section id="status" class="status" data-state="checking"><strong>Chargement…</strong></section>
 
+    <div class="vault-actions">
+      <button id="load-vault" type="button">Charger un coffre existant</button>
+      <button id="reveal" type="button" class="secondary">Afficher le coffre</button>
+    </div>
+
     <form id="create-form" class="card" hidden>
       <h3>Créer mon Quantic ID</h3>
-      <label>Nom de l’identité<input name="label" maxlength="80" value="Mon identité Quantic" required></label>
-      <label id="portable-pass-wrap" hidden>Code local du coffre USB<input name="passphrase" type="password" minlength="8" autocomplete="new-password"><small>Ce code déverrouille uniquement la clé USB. Il n’est jamais envoyé à Quantic Sillage.</small></label>
+      <div class="form-grid">
+        <label class="wide">Nom de l’identité<input name="label" maxlength="80" value="Mon identité Quantic" required></label>
+        <label>Prénom<input name="firstName" maxlength="100"></label>
+        <label>Nom<input name="lastName" maxlength="100"></label>
+      </div>
+      <label id="portable-pass-wrap" hidden>Code local du coffre USB<input name="passphrase" type="password" minlength="8" autocomplete="new-password"><small>Le code sert au déverrouillage. Il n’est pas nécessaire pour charger le fichier du coffre.</small></label>
       <button type="submit">Créer l’identité</button>
     </form>
 
     <form id="unlock-form" class="card" hidden>
-      <h3>Déverrouiller Identity Vault</h3>
+      <h3>Coffre chargé</h3>
+      <p class="card-intro">Le fichier est déjà chargé. Entrez maintenant le code local uniquement pour déverrouiller l’identité.</p>
       <div id="portable-unlock-wrap" hidden><label>Code local du coffre USB<input name="passphrase" type="password" minlength="8" autocomplete="current-password"></label></div>
-      <button type="submit">Activer Quantic ID</button>
+      <button type="submit">Déverrouiller Quantic ID</button>
+    </form>
+
+    <form id="profile-form" class="card profile-card" hidden>
+      <div class="profile-heading">
+        <div>
+          <p class="kicker">PROFIL CHIFFRÉ</p>
+          <h3>Mon identité personnelle</h3>
+          <p>Ces informations restent dans le coffre et ne sont pas transmises automatiquement aux services Quantic.</p>
+        </div>
+        <div class="avatar-wrap">
+          <img id="photo-preview" alt="Photo d’identité" hidden>
+          <div id="photo-placeholder">PHOTO</div>
+        </div>
+      </div>
+
+      <div class="photo-actions">
+        <label class="file-button">Choisir une photo<input id="photo-input" type="file" accept="image/png,image/jpeg,image/webp" hidden></label>
+        <button id="photo-remove" type="button" class="secondary small">Retirer</button>
+      </div>
+
+      <h4>État civil</h4>
+      <div class="form-grid">
+        <label>Prénom<input name="firstName" maxlength="100"></label>
+        <label>Autres prénoms<input name="middleNames" maxlength="160"></label>
+        <label>Nom<input name="lastName" maxlength="100"></label>
+        <label>Nom d’usage<input name="preferredName" maxlength="100"></label>
+        <label>Date de naissance<input name="birthDate" type="date"></label>
+        <label>Lieu de naissance<input name="birthPlace" maxlength="160"></label>
+        <label>Nationalité<input name="nationality" maxlength="120"></label>
+        <label>Genre / civilité<input name="gender" maxlength="80"></label>
+      </div>
+
+      <h4>Coordonnées</h4>
+      <div class="form-grid">
+        <label>Email<input name="email" type="email" maxlength="200"></label>
+        <label>Téléphone<input name="phone" maxlength="80"></label>
+        <label class="wide">Adresse<input name="addressLine1" maxlength="200"></label>
+        <label class="wide">Complément d’adresse<input name="addressLine2" maxlength="200"></label>
+        <label>Code postal<input name="postalCode" maxlength="32"></label>
+        <label>Ville<input name="city" maxlength="120"></label>
+        <label>Région<input name="region" maxlength="120"></label>
+        <label>Pays<input name="country" maxlength="120"></label>
+      </div>
+
+      <h4>Activité</h4>
+      <div class="form-grid">
+        <label>Profession<input name="occupation" maxlength="160"></label>
+        <label>Organisation<input name="organization" maxlength="180"></label>
+        <label class="wide">Site web<input name="website" type="url" maxlength="300"></label>
+      </div>
+
+      <h4>Sécurité personnelle</h4>
+      <div class="form-grid">
+        <label>Contact d’urgence<input name="emergencyContactName" maxlength="160"></label>
+        <label>Téléphone d’urgence<input name="emergencyContactPhone" maxlength="80"></label>
+        <label class="wide">Informations complémentaires<textarea name="notes" maxlength="2000" rows="4"></textarea></label>
+      </div>
+
+      <button type="submit">Enregistrer dans le coffre</button>
     </form>
 
     <section class="meta">
       <div><small>MODE</small><strong id="mode">—</strong></div>
-      <div><small>COFFRE</small><span id="location">—</span></div>
+      <div><small>COFFRE CHARGÉ</small><span id="location">—</span></div>
     </section>
 
     <div class="actions">
       <button id="lock" class="secondary" hidden>Verrouiller</button>
-      <button id="reveal" class="secondary">Afficher le coffre</button>
     </div>
 
-    <footer>Quantic Identity Vault · clé privée non exportée vers le Web</footer>
+    <footer>Quantic Identity Vault · profil personnel et clé privée chiffrés localement</footer>
   </main>
 <script src="./renderer.js"></script>
 </body>
