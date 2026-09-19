@@ -3,7 +3,7 @@ import {createServer} from "node:http";
 import {existsSync,mkdirSync,readFileSync,writeFileSync} from "node:fs";
 import {dirname,join} from "node:path";
 import {fileURLToPath} from "node:url";
-import {generateIdentity,encryptPortable,decryptPortable,normalizeIdentityProfile,signAssertion} from "./vault-core.mjs";
+import {generateIdentity,encryptPortable,decryptPortableRecord,normalizeIdentityProfile,signAssertion} from "./vault-core.mjs";
 
 const __dirname=dirname(fileURLToPath(import.meta.url));
 const HOST="127.0.0.1";
@@ -120,6 +120,7 @@ function publicStatus(){
   return {
     product:"Quantic Identity Vault",
     version:2,
+    appVersion:app.getVersion(),
     bridge:{host:HOST,port:PORT,ready:Boolean(bridge),error:bridgeError||null},
     vaultMode:record?.mode||(isPortable?"portable":"pc"),
     keyAlgorithm:"ed25519",
@@ -162,10 +163,19 @@ function unlockIdentity(passphrase=""){
   if(!record)throw new Error("vault_not_found");
   let secretValue="";
   if(record.mode==="portable"){
-    secretValue=decryptPortable(record.encryptedSecret||record.encryptedPrivateKey,passphrase);
+    try{
+      secretValue=decryptPortableRecord(record,passphrase);
+    }catch(error){
+      if(String(error?.message||error)==="portable_passphrase_too_short")throw error;
+      throw new Error("portable_unlock_failed");
+    }
   }else if(record.mode==="pc"){
     if(!safeStorage.isEncryptionAvailable())throw new Error("system_encryption_unavailable");
-    secretValue=safeStorage.decryptString(Buffer.from(record.encryptedSecret||record.encryptedPrivateKey,"base64"));
+    try{
+      secretValue=safeStorage.decryptString(Buffer.from(record.encryptedSecret||record.encryptedPrivateKey,"base64"));
+    }catch{
+      throw new Error("pc_unlock_failed");
+    }
   }else{
     throw new Error("vault_format_invalid");
   }
@@ -302,7 +312,7 @@ function createWindow(){
     minWidth:760,
     minHeight:620,
     backgroundColor:"#f5f7f9",
-    title:"Quantic Identity Vault",
+    title:`Quantic Identity Vault ${app.getVersion()}`,
     webPreferences:{
       preload:join(__dirname,"preload.cjs"),
       contextIsolation:true,

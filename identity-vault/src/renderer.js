@@ -8,6 +8,7 @@ const locationText=$("#location");
 const lockButton=$("#lock");
 const revealButton=$("#reveal");
 const loadVaultButton=$("#load-vault");
+const appVersionText=$("#app-version");
 const portablePass=$("#portable-pass-wrap");
 const portableUnlock=$("#portable-unlock-wrap");
 const photoInput=$("#photo-input");
@@ -24,13 +25,17 @@ function humanError(error){
     vault_not_found:"Aucun coffre n’existe encore.",
     vault_format_invalid:"Ce fichier n’est pas un coffre Quantic Identity Vault valide.",
     portable_vault_format_invalid:"Le coffre USB n’utilise pas un format de chiffrement compatible.",
+    portable_unlock_failed:"Impossible de déverrouiller ce coffre. Vérifiez le code local. Si le code est correct, rechargez le bon fichier de coffre.",
+    pc_unlock_failed:"Ce coffre PC ne peut pas être déchiffré sur ce compte Windows.",
     profile_photo_invalid:"La photo sélectionnée n’est pas dans un format accepté.",
     profile_photo_too_large:"La photo est trop volumineuse. Utilisez une image de moins de 2 Mo.",
     identity_locked:"Déverrouillez d’abord l’identité.",
     UnsupportedState:"Le coffre ne peut pas être déchiffré sur ce compte Windows."
   };
-  if(/authenticate data|bad decrypt|unable to authenticate/i.test(code))return"Code local incorrect ou coffre endommagé.";
-  return map[code]||code;
+  if(/portable_unlock_failed|Unsupported state|authenticate data|bad decrypt|unable to authenticate/i.test(code))return"Impossible de déverrouiller ce coffre. Vérifiez le code local puis, si nécessaire, utilisez « Charger / changer de coffre » pour sélectionner le bon fichier.";
+  if(/pc_unlock_failed/i.test(code))return"Ce coffre PC ne peut pas être déchiffré sur ce compte Windows.";
+  const known=Object.entries(map).find(([key])=>code.includes(key));
+  return known?known[1]:code;
 }
 
 function escapeHtml(value){
@@ -76,6 +81,7 @@ function basicProfileFromCreate(){
 }
 
 function render(status){
+  appVersionText.textContent=status.appVersion?"v"+status.appVersion:"";
   modeText.textContent=status.vaultMode==="portable"?"Mode portable · clé USB":"Mode PC · chiffrement Windows";
   locationText.textContent=status.vaultPath||"";
   document.body.dataset.mode=status.vaultMode;
@@ -138,7 +144,14 @@ unlockForm.addEventListener("submit",async event=>{
     const result=await window.IdentityVault.unlock(data.get("passphrase")||"");
     render(result);
     unlockForm.reset();
-  }catch(error){alert(humanError(error))}
+  }catch(error){
+    const message=humanError(error);
+    statusBox.dataset.state="error";
+    statusBox.innerHTML="<strong>Déverrouillage impossible</strong><span>"+escapeHtml(message)+"</span>";
+    const input=unlockForm.elements.namedItem("passphrase");
+    input?.focus();
+    input?.select?.();
+  }
 });
 
 profileForm.addEventListener("submit",async event=>{

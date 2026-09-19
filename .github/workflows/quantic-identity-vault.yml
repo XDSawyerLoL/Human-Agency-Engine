@@ -57,6 +57,13 @@ jobs:
           "VERSION=$($pkg.version)" >> $env:GITHUB_ENV
           "TAG=quantic-identity-vault-v$($pkg.version)" >> $env:GITHUB_ENV
 
+      - name: Prepare versioned release files
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: pwsh
+        run: |
+          Copy-Item "identity-vault/dist/Quantic-Identity-Vault-Setup.exe" "identity-vault/dist/Quantic-Identity-Vault-Setup-$env:VERSION.exe"
+          Copy-Item "identity-vault/dist/Quantic-Identity-Vault-Portable.exe" "identity-vault/dist/Quantic-Identity-Vault-Portable-$env:VERSION.exe"
+
       - name: Publish Identity Vault release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         shell: pwsh
@@ -65,6 +72,6 @@ jobs:
         run: |
           gh release view "$env:TAG" 2>$null
           if ($LASTEXITCODE -ne 0) {
-            gh release create "$env:TAG" --target "$env:GITHUB_SHA" --title "Quantic Identity Vault v$env:VERSION" --prerelease --notes "Quantic Identity Vault pour Windows. Le coffre peut être chargé sans code, puis déverrouillé localement. Le format v2 ajoute un profil personnel chiffré avec photo et conserve la compatibilité avec les coffres v1. Inclut un installateur PC et une version portable USB. Les exécutables ne sont pas encore signés avec un certificat Windows public : SmartScreen peut afficher un avertissement."
+            gh release create "$env:TAG" --target "$env:GITHUB_SHA" --title "Quantic Identity Vault v$env:VERSION" --prerelease --notes "Quantic Identity Vault v$env:VERSION. Le fichier du coffre USB se charge sans code ; le code local sert uniquement au déverrouillage. Cette correction affiche clairement la version de l’application, remplace les erreurs cryptographiques brutes par un message compréhensible, permet de changer de coffre à tout moment et vérifie la compatibilité des coffres USB v1. Le profil personnel et la photo restent chiffrés localement. Inclut un installateur Windows et une version portable USB."
           }
-          gh release upload "$env:TAG" "identity-vault/dist/Quantic-Identity-Vault-Setup.exe" "identity-vault/dist/Quantic-Identity-Vault-Portable.exe" --clobber
+          gh release upload "$env:TAG" "identity-vault/dist/Quantic-Identity-Vault-Setup-$env:VERSION.exe" "identity-vault/dist/Quantic-Identity-Vault-Portable-$env:VERSION.exe" --clobber

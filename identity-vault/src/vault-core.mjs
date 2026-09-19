@@ -81,6 +81,12 @@ export function decryptPortable(record,passphrase){
   return Buffer.concat([decipher.update(Buffer.from(record.ciphertext,"base64url")),decipher.final()]).toString("utf8");
 }
 
+export function decryptPortableRecord(record,passphrase){
+  const encrypted=record?.encryptedSecret||record?.encryptedPrivateKey;
+  if(!encrypted)throw new Error("portable_vault_format_invalid");
+  return decryptPortable(encrypted,passphrase);
+}
+
 export function assertionPayload({keyId,challenge,audience="",issuedAt=new Date().toISOString()}){
   const c=String(challenge||"");
   if(c.length<16||c.length>4096)throw new Error("invalid_challenge");

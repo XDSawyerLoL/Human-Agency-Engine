@@ -1,12 +1,25 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {generateIdentity,encryptPortable,decryptPortable,normalizeIdentityProfile,signAssertion,verifyAssertion} from "../src/vault-core.mjs";
+import {generateIdentity,encryptPortable,decryptPortable,decryptPortableRecord,normalizeIdentityProfile,signAssertion,verifyAssertion} from "../src/vault-core.mjs";
 
 test("portable vault encrypts and decrypts an Ed25519 private key",()=>{
   const identity=generateIdentity("USB");
   const encrypted=encryptPortable(identity.privateKeyPem,"12345678-local");
   assert.notEqual(encrypted.ciphertext,identity.privateKeyPem);
   assert.equal(decryptPortable(encrypted,"12345678-local"),identity.privateKeyPem);
+});
+
+test("legacy v1 USB record remains unlockable",()=>{
+  const identity=generateIdentity("Legacy USB");
+  const record={
+    version:1,
+    mode:"portable",
+    keyId:identity.keyId,
+    publicKey:identity.publicKey,
+    encryptedPrivateKey:encryptPortable(identity.privateKeyPem,"12345678-local")
+  };
+  assert.equal(decryptPortableRecord(record,"12345678-local"),identity.privateKeyPem);
+  assert.throws(()=>decryptPortableRecord(record,"wrong-code-000"),/authenticate|Unsupported|bad decrypt/i);
 });
 
 test("portable vault can encrypt a complete private identity profile",()=>{
