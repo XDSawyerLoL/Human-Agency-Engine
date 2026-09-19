@@ -132,3 +132,21 @@
   :root{--qbrand-house-nav:28px;--qbrand-app-nav:22px;--qbrand-card:40px;--qbrand-feature:48px;--qbrand-product-hero:42px}
   .qs-hero-brand img{width:48px!important;height:48px!important}
 }
+
+/* QID ECOSYSTEM COMPLETION */
+.qid-app-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))!important}
+.qid-app-grid .q-card{min-height:220px}
+.qid-app-grid .q-card.glide{--accent:#11bcae}
+.qid-app-grid .q-card.os{--accent:#ff9d1b}
+.qid-app-grid .q-card.vault{--accent:#0e477f}
+.q-identity-band{display:flex!important;align-items:center!important;gap:16px!important}
+.q-identity-band-icon{width:48px;height:48px;flex:0 0 48px;border-radius:14px;box-shadow:0 8px 22px rgba(7,48,82,.12)}
+.q-download-product-head{display:flex;align-items:center;gap:12px}
+.q-download-product-head>div{min-width:0}
+.q-download-product-head .q-download-logo{width:42px!important;height:42px!important;flex:0 0 42px!important;margin:0!important;border-radius:12px!important}
+@media(max-width:680px){
+  .qid-app-grid{grid-template-columns:1fr!important}
+  .qid-app-grid .q-card{min-height:0}
+  .q-identity-band{align-items:flex-start!important}
+  .q-identity-band-icon{width:42px;height:42px;flex-basis:42px}
+}
