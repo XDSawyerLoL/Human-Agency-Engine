@@ -15,6 +15,9 @@ const mail=read("public/mail/index.html");
 assert.ok(mail.includes("Quantic ID requis"),"Mail static fallback must explain Quantic ID immediately");
 assert.ok(mail.includes("/downloads/#identity-vault"),"Mail static fallback must link Identity Vault");
 assert.ok(mail.includes("Réessayer"),"Mail static fallback must expose retry");
+const mailSync=read("scripts/sync-quantic-mail.mjs");
+assert.ok(mailSync.includes("Quantic ID requis."),"Mail sync must preserve explicit Quantic ID fallback");
+assert.ok(mailSync.includes("data-qm-static-actions"),"Mail sync must preserve immediate recovery actions");
 
 const qid=read("public/quantic/index.html");
 assert.ok(qid.includes('data-icon="V"'),"Quantic ID cards must use decorative data icons");
