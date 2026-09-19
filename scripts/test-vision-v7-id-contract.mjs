@@ -6,6 +6,7 @@ const routes=[
   "track-record","sources","backtest","settings","causal","crypto",
   "horizons","intelligence","matches","modules"
 ];
+const nativeV9=new Set(["alerts","sports","track-record","sources","backtest","settings"]);
 
 for(const route of routes){
   const path=`public/${route}/index.html`;
@@ -16,6 +17,9 @@ for(const route of routes){
   if(route==="vision"){
     assert.ok(html.includes("/quantic-vision-home-v8.css"),"Vision home must load native V8 CSS");
     assert.ok(!html.includes("/quantic-vision-v7.css"),"Vision home must not load legacy overlay CSS");
+  }else if(nativeV9.has(route)){
+    assert.ok(html.includes("/quantic-vision-v9.css"),route+" must load native Vision V9 CSS");
+    assert.ok(!html.includes("/quantic-vision-v7.css"),route+" must not load legacy V7 overlay CSS");
   }else{
     assert.ok(html.includes("/quantic-vision-v7.css"),route+" must load authoritative Vision V7 CSS");
   }
@@ -32,6 +36,8 @@ for(const route of ["/vision/","/predictions/","/analyst/","/alerts/","/sports/"
   assert.ok(shell.includes(route),route+" must remain visible in Vision navigation");
 }
 assert.ok(shell.includes("quantic-vision-v7.css"),"shell must keep Vision V7 for legacy feature pages");
+assert.ok(shell.includes("quantic-vision-v9.css"),"shell must load Vision V9 for migrated operational pages");
+assert.ok(shell.includes("nativeV9Pages"),"shell must explicitly separate V9 pages");
 assert.ok(shell.includes("visionNative"),"shell must skip legacy V7 on native Vision home");
 
 const gate=fs.readFileSync("public/quantic-vision-id-gate.js","utf8");
