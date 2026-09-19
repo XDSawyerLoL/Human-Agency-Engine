@@ -17,7 +17,8 @@ def test_root_is_quantic_portal():
     assert 'href="/quantic/"' in page
     assert 'href="/vision/"' in page
     assert 'href="/mail/"' in page
-    assert 'href="/network/"' in page
+    assert 'href="/downloads/"' in page
+    assert 'href="/network/"' not in page
 
 
 def test_vision_preserves_providence_experience():
@@ -37,7 +38,8 @@ def test_operational_surfaces_exist():
     assert "Quantic Network" in dashboard
     assert "quanticmail.onrender.com" not in mail
     assert "Quantic Mail" in mail
-    assert "api/quantic-portal/status" in network
+    assert '/downloads/#network' in network
+    assert 'location.replace(\'/downloads/#network\')' in network
     assert "Quantic Glide" in products
     assert "Quantic OS" in products
 
@@ -103,7 +105,6 @@ def test_quantic_surfaces_share_premium_shell():
     for path in (
         "public/quantic/index.html",
         "public/mail/index.html",
-        "public/network/index.html",
         "public/products/index.html",
         "public/plans/index.html",
     ):
@@ -118,7 +119,6 @@ def test_all_quantic_primary_surfaces_load_unified_providence_visual_layer():
         "public/index.html",
         "public/quantic/index.html",
         "public/mail/index.html",
-        "public/network/index.html",
         "public/products/index.html",
     ):
         page = text(path)
