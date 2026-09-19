@@ -33,6 +33,9 @@ jobs:
         working-directory: identity-vault
         run: npm test
 
+      - name: Test Quantic Hardware Key QHK/1 contract
+        run: node scripts/test-quantic-hardware-key-contract.mjs
+
       - name: Build Windows installer
         working-directory: identity-vault
         run: npm run dist:setup
