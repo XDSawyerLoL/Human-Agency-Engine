@@ -124,6 +124,7 @@ function makePortalUrlsPortable(directory){
       text=text.split(LEGACY_PORTAL_ORIGIN).join("/");
       text=text.split("Vérification du manifeste…").join("Préparation de Quantic Mail…");
       text=text.split("QuanticMail compare l’état local avec l’autorité disponible avant d’ouvrir la session.").join("Quantic Mail vérifie votre identité et la disponibilité du service avant d’ouvrir la messagerie.");
+      text=text.split('<a href="/vision/">Vision</a><a class="active" aria-current="page" href="/mail/">Mail</a><a href="/pulse/">Pulse</a><a href="/network/">Network</a><a href="/products/">Produits</a><a href="/downloads/">Téléchargements</a>').join('<a href="/vision/">Vision</a><a class="active" aria-current="page" href="/mail/">Mail</a><a href="/pulse/">Pulse</a><a href="/news/">News</a><a href="/network/">Network</a><a href="/products/">Produits</a><a href="/downloads/">Téléchargements</a>');
       if(text!==before){writeFileSync(filePath,text,"utf8");patched+=1;}
     }
   }

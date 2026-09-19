@@ -62,6 +62,7 @@ global.innerHTML=`
       <a href="/vision/" class="${productActive==='vision'?'active':''}" aria-current="page">Vision</a>
       <a href="/mail/">Mail</a>
       <a href="/pulse/">Pulse</a>
+      <a href="/news/">News</a>
       <a href="/network/">Network</a>
       <a href="/products/" class="q-hide-mobile">Produits</a>
       <a href="/downloads/">Téléchargements</a>
