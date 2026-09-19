@@ -28,6 +28,7 @@ const SOURCE_COMMIT="86fe4ba39c1fab0df43a84137cb197a6142309f8";
 const RELAY_SOURCE_COMMIT="86fe4ba39c1fab0df43a84137cb197a6142309f8";
 const BOOTSTRAP_SENTINEL="https://quantic-hostinger-relay.invalid";
 const RAILWAY_RELAY="https://quantic-network-relay-backup-production.up.railway.app";
+const LEGACY_PORTAL_ORIGIN="https://mediumorchid-badger-314305.hostingersite.com";
 
 function run(command,args,{cwd=root}={}){
   const result=spawnSync(command,args,{cwd,stdio:"inherit",shell:false});
@@ -100,6 +101,50 @@ function injectMailTheme(directory){
       if(text.includes("quantic-mail-v7.css"))continue;
       if(!text.includes("</head>"))continue;
       writeFileSync(filePath,text.replace("</head>",stylesheet+"</head>"),"utf8");
+      injected+=1;
+    }
+  }
+  visit(directory);
+  return injected;
+}
+
+function makePortalUrlsPortable(directory){
+  let patched=0;
+  const routes=["/vision/","/mail/","/pulse/","/network/","/products/","/downloads/","/quantic/"];
+  function visit(current){
+    for(const entry of readdirSync(current)){
+      if(entry===".git")continue;
+      const filePath=join(current,entry);
+      const info=statSync(filePath);
+      if(info.isDirectory()){visit(filePath);continue;}
+      if(!info.isFile()||!filePath.endsWith(".html"))continue;
+      let text=readFileSync(filePath,"utf8");
+      const before=text;
+      for(const route of routes)text=text.split(LEGACY_PORTAL_ORIGIN+route).join(route);
+      text=text.split(LEGACY_PORTAL_ORIGIN).join("/");
+      text=text.split("Vérification du manifeste…").join("Préparation de Quantic Mail…");
+      text=text.split("QuanticMail compare l’état local avec l’autorité disponible avant d’ouvrir la session.").join("Quantic Mail vérifie votre identité et la disponibilité du service avant d’ouvrir la messagerie.");
+      if(text!==before){writeFileSync(filePath,text,"utf8");patched+=1;}
+    }
+  }
+  visit(directory);
+  return patched;
+}
+
+function injectMailResilience(directory){
+  const script='<script src="/quantic-mail-resilience.js?v=1.0" defer></script>';
+  let injected=0;
+  function visit(current){
+    for(const entry of readdirSync(current)){
+      if(entry===".git")continue;
+      const filePath=join(current,entry);
+      const info=statSync(filePath);
+      if(info.isDirectory()){visit(filePath);continue;}
+      if(!info.isFile()||!filePath.endsWith(".html"))continue;
+      const text=readFileSync(filePath,"utf8");
+      if(text.includes("quantic-mail-resilience.js"))continue;
+      if(!text.includes("</body>"))continue;
+      writeFileSync(filePath,text.replace("</body>",script+"</body>"),"utf8");
       injected+=1;
     }
   }
@@ -194,9 +239,19 @@ try{
     throw new Error(`Thème Quantic Mail V7 non injecté dans assez de pages: ${mailThemePages}.`);
   }
 
+  const portablePortalPages=makePortalUrlsPortable(work);
+  if(portablePortalPages<1){
+    throw new Error("Les URLs Quantic Mail n’ont pas été rendues portables.");
+  }
+
   const portalNavPages=injectPortalNav(work);
   if(portalNavPages<3){
     throw new Error(`Navigation Quantic non injectée dans assez de pages Mail: ${portalNavPages}.`);
+  }
+
+  const resiliencePages=injectMailResilience(work);
+  if(resiliencePages<3){
+    throw new Error(`Résilience de chargement non injectée dans assez de pages Mail: ${resiliencePages}.`);
   }
 
   rmSync(stage,{recursive:true,force:true});
@@ -219,6 +274,8 @@ try{
     identityGatePages,
     mailThemePages,
     portalNavPages,
+    portablePortalPages,
+    resiliencePages,
     relaySourceCommit:RELAY_SOURCE_COMMIT,
     relayVendor:"vendor/quanticmail-relay",
   }));
