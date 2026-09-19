@@ -51,8 +51,8 @@ app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(compression());
 installEmbeddedQuanticRelay(app);
-app.use(express.json({ limit: '64kb' }));
 installQuanticPulse(app);
+app.use(express.json({ limit: '64kb' }));
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: 0,
   etag: true,
