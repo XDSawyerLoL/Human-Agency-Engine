@@ -154,14 +154,14 @@ function bindStaticEvents(){
   dom.authForm.addEventListener('submit',async function(event){
     event.preventDefault();
     dom.authError.textContent='';
-    const handle=document.getElementById('auth-handle').value.trim().replace(/^@/,'').toLowerCase();
-    const password=document.getElementById('auth-password').value;
-    const displayName=document.getElementById('auth-display-name').value.trim();
+    const register=state.authMode==='register';
+    const handle=register?document.getElementById('auth-handle').value.trim().replace(/^@/,'').toLowerCase():'';
+    const displayName=register?document.getElementById('auth-display-name').value.trim():'';
     try{
-      const action=state.authMode==='register'?'register':'login';
-      const path=action==='register'?'/api/pulse/auth/register':'/api/pulse/auth/login';
-      const proof=await identityProof(action,handle);
-      const body=action==='register'?{handle,password,displayName,identityProof:proof}:{handle,password,identityProof:proof};
+      const action=register?'register':'login';
+      const path=register?'/api/pulse/auth/register':'/api/pulse/auth/login';
+      const proof=register?await identityProof('register',handle):await identityProof('login','');
+      const body=register?{handle,displayName,identityProof:proof}:{identityProof:proof};
       const data=await api(path,{method:'POST',body:JSON.stringify(body)});
       applySession(data);
       closeAuth();
