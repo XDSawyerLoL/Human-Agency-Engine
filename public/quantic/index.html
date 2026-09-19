@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f5f7f9">
-  <title>Entrer — Quantic Sillage</title><meta name="description" content="Le point d’entrée de l’écosystème Quantic Sillage.">
+  <title>Quantic ID — Quantic Sillage</title><meta name="description" content="Quantic ID — le point d’entrée sécurisé de l’écosystème Quantic Sillage.">
   <link rel="stylesheet" href="/quantic.css?v=2.0" media="not all">
   <link rel="stylesheet" href="/quantic-unified.css?v=3.0" media="not all">
   <link rel="stylesheet" href="/quantic-finish-v4.css?v=4.1" media="not all">
@@ -11,38 +11,28 @@
 </head>
 <body class="q-body q-premium" data-status-endpoint="/api/quantic-portal/status">
 <div class="q-noise" aria-hidden="true"></div>
-<header class="q-topbar"><nav class="q-shell q-nav" aria-label="Navigation principale"><a class="q-brand" href="/"><span class="q-mark" aria-hidden="true"></span><span>QUANTIC</span></a><div class="q-links"><a href="/vision/">Vision</a><a href="/mail/">Mail</a><a href="/pulse/">Pulse</a><a href="/network/">Network</a><a href="/products/">Produits</a><a href="/downloads/">Téléchargements</a><a class="q-nav-cta" href="/quantic/" aria-current="page">Entrer</a></div></nav></header>
-<main class="q-shell">
-  <section class="q-dashboard-hero q-unified-hero" data-q-reveal>
-    <p class="q-kicker">QUANTIC SILLAGE</p>
-    <h1>Votre environnement.<br>Un seul point d’entrée.</h1>
-    <p>Retrouvez Vision, Mail, Pulse, Network et les autres produits Quantic dans une interface commune, sans effacer leur autonomie.</p>
-    <div class="q-status-summary" data-quantic-status-summary><span class="q-status-dot"></span><span data-status-label>État du réseau inconnu</span></div>
-  </section>
-
-  <section class="q-section" data-q-reveal>
-    <div class="q-section-head"><div><p class="q-kicker">SERVICES</p><h2>Choisissez votre espace.</h2></div><span class="q-section-index">01 / LAUNCHPAD</span></div>
-    <div class="q-grid four">
-      <a class="q-card vision" data-q-tilt href="/vision/"><span class="q-card-icon">V</span><span class="q-card-meta">anticiper</span><h3>Quantic Vision</h3><p>Observer le monde, suivre les signaux, explorer les futurs plausibles et contrôler les preuves.</p><span class="q-card-link">Entrer dans Vision →</span></a>
-      <a class="q-card mail" data-q-tilt href="/mail/"><span class="q-card-icon">M</span><span class="q-card-meta">communiquer</span><h3>Quantic Mail</h3><p>Accéder à la messagerie chiffrée et à ton identité de communication Quantic.</p><span class="q-card-link">Ouvrir Mail →</span></a>
-      <a class="q-card pulse" data-q-tilt href="/pulse/"><span class="q-card-icon">P</span><span class="q-card-meta">échanger</span><h3>Quantic Pulse</h3><p>Publier, répondre et suivre les conversations publiques de l’écosystème Quantic.</p><span class="q-card-link">Ouvrir Pulse →</span></a>
-      <a class="q-card network" data-q-tilt href="/network/"><span class="q-card-icon">N</span><span class="q-card-meta">relier</span><h3>Quantic Network</h3><p>Consulter les relais, services et la continuité de l’infrastructure Quantic.</p><span class="q-card-link">Voir Network →</span></a>
-      <a class="q-card ecosystem" data-q-tilt href="/products/"><span class="q-card-icon">Q</span><span class="q-card-meta">étendre</span><h3>Écosystème</h3><p>Quantic OS, Quantic Glide, Providence et les briques communes du système.</p><span class="q-card-link">Explorer →</span></a>
+<header class="q-topbar"><nav class="q-shell q-nav" aria-label="Navigation principale"><a class="q-brand" href="/"><span class="q-mark" aria-hidden="true"></span><span>QUANTIC</span></a><div class="q-links"><a href="/vision/">Vision</a><a href="/mail/">Mail</a><a href="/pulse/">Pulse</a><a href="/network/">Network</a><a href="/products/">Produits</a><a href="/downloads/">Téléchargements</a><a class="q-nav-cta" href="/quantic/" aria-current="page">Quantic ID</a></div></nav></header>
+<main class="q-shell qid-page">
+  <section class="qid-hero">
+    <p class="q-kicker">QUANTIC ID</p>
+    <h1>Votre identité.<br>Votre point d’entrée.</h1>
+    <p>Quantic ID relie vos applications sans transformer votre identité en mot de passe. Le portail vérifie uniquement le logiciel Quantic ID actif sur cet ordinateur.</p>
+    <div class="qid-state" data-quantic-id-state="checking">
+      <span class="qid-state-dot"></span>
+      <div><strong data-quantic-id-title>Recherche de Quantic ID…</strong><span data-quantic-id-detail>Vérification du logiciel d’identité sur ce PC.</span></div>
     </div>
-    <div class="q-band"><div><strong>Installer ou emporter Quantic.</strong><p>Glide Windows, Glide portable USB et Quantic OS Developer Preview sont regroupés dans une seule page de distribution officielle.</p></div><a class="q-button" href="/downloads/">Téléchargements ↓</a></div>
+    <button class="q-button" type="button" data-quantic-id-retry>Relancer la détection</button>
   </section>
-
-  <section class="q-section" data-q-reveal>
-    <div class="q-section-head"><div><p class="q-kicker">LIVE FABRIC</p><h2>Disponibilité.</h2><p class="q-section-copy">Ces états mesurent la disponibilité technique. Ils ne remplacent ni une preuve cryptographique ni un audit de sécurité.</p></div><span class="q-section-index">02 / STATUS</span></div>
-    <div class="q-service-grid">
-      <article class="q-service" data-service-id="vision"><div class="q-service-head"><h3>Quantic Vision</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Moteur Providence/HORIZON et surfaces prédictives.</p></article>
-      <article class="q-service" data-service-id="mail"><div class="q-service-head"><h3>Quantic Mail</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Application de messagerie Quantic.</p></article>
-      <article class="q-service" data-service-id="relay-render"><div class="q-service-head"><h3>Relay Render</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Relais public de secours sur un fournisseur distinct.</p></article>
-      <article class="q-service" data-service-id="relay-railway"><div class="q-service-head"><h3>Relay Railway</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Relais secondaire sur un fournisseur distinct.</p></article>
-      <article class="q-service" data-service-id="relay-hostinger"><div class="q-service-head"><h3>Relay Hostinger</h3><span class="q-service-state" data-service-state data-state="unknown">État inconnu</span></div><p>Nœud Quantic embarqué dans le runtime Hostinger, persistant via MySQL.</p></article>
+  <section class="q-section">
+    <div class="q-section-head"><div><p class="q-kicker">APPLICATIONS</p><h2>Entrez depuis votre identité.</h2></div><p class="q-section-copy">Vision, Pulse, Network et les autres surfaces restent accessibles. Quantic Mail exige Quantic ID actif.</p></div>
+    <div class="q-grid four" data-quantic-id-apps>
+      <a class="q-card vision" href="/vision/" data-quantic-id-app="vision"><span class="q-card-icon">V</span><span class="q-card-meta">analyse</span><h3>Quantic Vision</h3><p>Observer, anticiper et vérifier.</p><span class="q-card-link">Ouvrir →</span></a>
+      <a class="q-card mail is-locked" href="/mail/" data-quantic-id-app="mail" aria-disabled="true"><span class="q-card-icon">M</span><span class="q-card-meta">Quantic ID requis</span><h3>Quantic Mail</h3><p>Messagerie protégée par l’identité locale.</p><span class="q-card-link">Vérifier Quantic ID →</span></a>
+      <a class="q-card pulse" href="/pulse/" data-quantic-id-app="pulse"><span class="q-card-icon">P</span><span class="q-card-meta">social</span><h3>Quantic Pulse</h3><p>Publier et suivre les conversations.</p><span class="q-card-link">Ouvrir →</span></a>
+      <a class="q-card network" href="/network/" data-quantic-id-app="network"><span class="q-card-icon">N</span><span class="q-card-meta">réseau</span><h3>Quantic Network</h3><p>Voir les relais et la continuité.</p><span class="q-card-link">Ouvrir →</span></a>
     </div>
   </section>
 </main>
 <footer class="q-shell q-footer"><span>QUANTIC CENTRE</span><span><a href="/">Accueil public</a> · <a href="/downloads/">Téléchargements</a> · <a href="/network/">État du réseau</a></span></footer>
 <script src="/quantic.js?v=2.0" defer></script>
-</body></html>
+<script src="/quantic-id-runtime.js"></script><script src="/quantic-id-page.js"></script></body></html>
