@@ -33,10 +33,14 @@ if(page==='home')loadCss('/providence-timeline-v16-10.css?v=16.12','providence-t
 loadCss('/providence-v16-12-mobile.css?v=16.12','providence-v16-12-mobile.css');
 const legacyVisualContract='quantic-unified.css?v=3.0';
 loadCss('/quantic-system-v6.css?v=6.0','quantic-system-v6.css');
+const visionV7=document.querySelector('link[href*="quantic-vision-v7.css"]');
+if(visionV7)document.head.appendChild(visionV7);else loadCss('/quantic-vision-v7.css?v=7.0','quantic-vision-v7.css');
 
 
 
 document.body.classList.add('q-vision-shell');
+document.body.dataset.product='quantic-vision';
+if(document.title.startsWith('Providence'))document.title=document.title.replace(/^Providence\s*[—-]?\s*/,'Quantic Vision — ');
 
 const productActive='vision';
 const global=document.createElement('header');
@@ -44,7 +48,7 @@ global.className='q-global-nav';
 global.innerHTML=`
   <div class="q-global-nav-inner">
     <a class="q-global-brand" href="/" aria-label="Quantic accueil">
-      <span class="q-global-mark" aria-hidden="true"></span><span>QUANTIC</span>
+      <span class="q-global-mark" aria-hidden="true"></span><span>QUANTIC SILLAGE</span>
     </a>
     <nav class="q-global-links" aria-label="Navigation Quantic">
       <a href="/vision/" class="${productActive==='vision'?'active':''}" aria-current="page">Vision</a>
@@ -88,7 +92,7 @@ if(main&&page==='predictions'&&!main.querySelector('.p16-time-rail')){
 if(main&&!document.querySelector('.q-unified-footer')){
   const footer=document.createElement('footer');
   footer.className='q-unified-footer';
-  footer.innerHTML='<span>QUANTIC VISION · PROVIDENCE / HORIZON</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/downloads/">Téléchargements</a> · <a href="/products/">Écosystème Quantic</a></span>';
+  footer.innerHTML='<span>QUANTIC VISION · moteur PROVIDENCE / HORIZON</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/downloads/">Téléchargements</a> · <a href="/products/">Écosystème Quantic</a></span>';
   main.insertAdjacentElement('afterend',footer);
 }
 
