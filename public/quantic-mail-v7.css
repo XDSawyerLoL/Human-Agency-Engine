@@ -1,0 +1,294 @@
+/* QUANTIC MAIL V7
+   Authoritative visual layer for the exported Next Mail client.
+   Keeps Mail unmistakably inside Quantic Sillage. */
+
+:root{
+  --qm7-bg:#f5f7f9;
+  --qm7-surface:#ffffff;
+  --qm7-soft:#f8fafb;
+  --qm7-ink:#0f202b;
+  --qm7-muted:#6c7b84;
+  --qm7-line:#e1e7ea;
+  --qm7-line-strong:#d5e0e5;
+  --qm7-cyan:#13b8d2;
+  --qm7-cyan-soft:#e9f8fb;
+  --qm7-navy:#0d1e29;
+  --qm7-navy-2:#173746;
+  --qm7-shadow:0 1px 2px rgba(15,32,43,.025),0 12px 34px rgba(15,32,43,.055);
+}
+
+body:has(.qn-mail-app),
+body:has(.qn-app),
+body:has(.qn-onboarding){
+  margin:0!important;
+  background:
+    radial-gradient(760px 470px at 86% -8%,rgba(19,184,210,.075),transparent 70%),
+    linear-gradient(180deg,#fbfcfd 0%,#f4f7f9 55%,#f8fafb 100%)!important;
+  color:var(--qm7-ink)!important;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif!important;
+  -webkit-font-smoothing:antialiased!important;
+}
+
+body:has(.qn-mail-app) .qn-global-nav{
+  display:flex!important;
+  position:sticky!important;
+  top:0!important;
+  z-index:90!important;
+  min-height:64px!important;
+  border-bottom:1px solid var(--qm7-line)!important;
+  background:rgba(255,255,255,.9)!important;
+  backdrop-filter:blur(22px) saturate(145%)!important;
+  box-shadow:0 6px 26px rgba(15,32,43,.04)!important;
+}
+.qn-global-brand{color:var(--qm7-ink)!important}
+.qn-global-links a{color:#5e6e78!important}
+.qn-global-links a:hover,.qn-global-links a.active{background:#f2f5f6!important;color:#152c37!important}
+.qn-global-links .centre{background:var(--qm7-navy)!important;color:#fff!important;border-radius:999px!important}
+
+/* Mail app shell */
+.qn-mail-app{
+  --qm-blue:var(--qm7-navy)!important;
+  --qm-blue-dark:var(--qm7-navy-2)!important;
+  --qm-accent:#1e7e96!important;
+  --qm-line:var(--qm7-line)!important;
+  --qm-soft:var(--qm7-soft)!important;
+  --qm-muted:var(--qm7-muted)!important;
+  --qm-text:var(--qm7-ink)!important;
+  min-height:calc(100dvh - 64px)!important;
+  background:transparent!important;
+  color:var(--qm7-ink)!important;
+}
+
+/* Product header: same calm Quantic language, no Outlook-blue slab */
+.qm-header{
+  height:70px!important;
+  padding:0 18px!important;
+  border-bottom:1px solid var(--qm7-line)!important;
+  background:rgba(255,255,255,.94)!important;
+  color:var(--qm7-ink)!important;
+  box-shadow:none!important;
+}
+.qm-header-title strong{font-size:1rem!important;font-weight:650!important;letter-spacing:-.02em!important}
+.qm-header-title small{color:#788892!important;opacity:1!important}
+.qm-logo{
+  background:linear-gradient(145deg,#eefbfc,#dff5f8)!important;
+  border:1px solid #d3ecf1!important;
+  color:#237d91!important;
+  box-shadow:none!important;
+}
+.qm-icon-btn{color:#536b76!important}
+.qm-icon-btn:hover{background:#f2f5f6!important;color:#183a49!important}
+
+/* Search + focus controls */
+.qm-searchbar{
+  height:52px!important;
+  padding:0 18px!important;
+  border-bottom:1px solid var(--qm7-line)!important;
+  background:#fff!important;
+}
+.qm-searchbar input{color:var(--qm7-ink)!important}
+.qm-searchbar>svg,.qm-searchbar button{color:#7b8b93!important}
+.qm-focus-tabs{
+  border-bottom:1px solid var(--qm7-line)!important;
+  background:#fff!important;
+}
+.qm-focus-tabs button{
+  color:#667983!important;
+  background:transparent!important;
+  border-color:transparent!important;
+}
+.qm-focus-tabs button.active{
+  color:#1e6577!important;
+  background:var(--qm7-cyan-soft)!important;
+  border-radius:999px!important;
+}
+
+/* Three-panel layout */
+.qm-shell{
+  grid-template-columns:250px minmax(340px,410px) minmax(0,1fr)!important;
+  height:calc(100dvh - 134px)!important;
+  background:transparent!important;
+}
+.qm-focus-tabs+.qm-shell{height:calc(100dvh - 192px)!important}
+.qm-searchbar+.qm-shell{height:calc(100dvh - 186px)!important}
+.qm-searchbar+.qm-focus-tabs+.qm-shell{height:calc(100dvh - 244px)!important}
+
+/* Sidebar */
+.qm-drawer{
+  border-right:1px solid var(--qm7-line)!important;
+  background:#f8fafb!important;
+}
+.qm-drawer-head{border-bottom:1px solid var(--qm7-line)!important}
+.qm-drawer-brand strong{color:var(--qm7-ink)!important}
+.qm-drawer-brand small{color:#7c8d95!important}
+.qm-folders>p{color:#98a4aa!important}
+.qm-folders a,.qm-folders button{color:#526b77!important;border-radius:11px!important}
+.qm-folders a:hover,.qm-folders button:hover{background:#eef3f5!important;color:#193b49!important}
+.qm-folders button.active{
+  background:var(--qm7-cyan-soft)!important;
+  color:#1d6576!important;
+}
+.qm-folders a svg,.qm-folders button svg{color:#6b7e88!important}
+.qm-folders button.active svg{color:#2e8aa0!important}
+.qm-folders button b{background:#edf2f4!important;color:#536b76!important}
+
+/* List */
+.qm-list-panel{
+  border-right:1px solid var(--qm7-line)!important;
+  background:#fff!important;
+}
+.qm-list-head{
+  height:64px!important;
+  border-bottom:1px solid var(--qm7-line)!important;
+  background:#fff!important;
+}
+.qm-list-head strong{color:var(--qm7-ink)!important}
+.qm-list-head small{color:#83929a!important}
+.qm-text-btn{color:#267a90!important}
+.qm-message-list{background:#fff!important}
+.qm-message-row{
+  padding:14px!important;
+  border-bottom:1px solid #edf1f3!important;
+  background:#fff!important;
+}
+.qm-message-row:hover{background:#f8fafb!important}
+.qm-message-row.selected{
+  background:#edf8fa!important;
+  box-shadow:inset 3px 0 0 #39a8bd!important;
+}
+.qm-avatar{
+  border-radius:13px!important;
+  background:#e7f7fa!important;
+  color:#247f94!important;
+  box-shadow:none!important;
+}
+.qm-avatar.out{background:#ecf8f4!important;color:#2d806c!important}
+.qm-message-line strong{color:#1a3441!important}
+.qm-message-line time{color:#89979e!important}
+.qm-subject{color:#314b58!important}
+.qm-preview{color:#83929a!important}
+.qm-unread-dot{background:var(--qm7-cyan)!important}
+
+/* Reader */
+.qm-reader{
+  background:#f8fafb!important;
+}
+.qm-reader-head{
+  min-height:70px!important;
+  border-bottom:1px solid var(--qm7-line)!important;
+  background:#fff!important;
+}
+.qm-reader-head strong{color:var(--qm7-ink)!important}
+.qm-reader-head small{color:#7b8d95!important}
+.qm-reader-body{padding:28px!important}
+.qm-reader-person{border-bottom:1px solid var(--qm7-line)!important}
+.qm-reader-person strong{color:#1e3947!important}
+.qm-reader-person small{color:#83929a!important}
+.qm-reader-message{
+  color:#314a57!important;
+  font-size:.94rem!important;
+  line-height:1.72!important;
+}
+.qm-reader-placeholder{color:#93a0a6!important}
+.qm-reader-placeholder strong{color:#667b85!important}
+
+/* Compose */
+.qm-compose-fab{
+  width:56px!important;
+  height:56px!important;
+  right:26px!important;
+  bottom:26px!important;
+  border-radius:18px!important;
+  background:var(--qm7-navy)!important;
+  color:#fff!important;
+  box-shadow:0 14px 34px rgba(13,30,41,.18)!important;
+}
+.qm-compose-layer{z-index:120!important}
+.qm-compose-backdrop{
+  background:rgba(13,30,41,.24)!important;
+  backdrop-filter:blur(8px)!important;
+}
+.qm-compose-sheet{
+  border:1px solid var(--qm7-line)!important;
+  border-radius:24px!important;
+  background:#fff!important;
+  box-shadow:0 34px 90px rgba(15,32,43,.18)!important;
+}
+.qm-compose-sheet>header{border-bottom:1px solid var(--qm7-line)!important}
+.qm-compose-sheet input,.qm-compose-sheet textarea{
+  color:var(--qm7-ink)!important;
+  background:#fff!important;
+  border-color:var(--qm7-line)!important;
+}
+.qm-send-top{
+  background:var(--qm7-navy)!important;
+  color:#fff!important;
+}
+
+/* Old QN pages: onboarding, vault, devices */
+.qn-app,.qn-onboarding{
+  background:transparent!important;
+  color:var(--qm7-ink)!important;
+}
+.qn-app:before,.qn-onboarding:before{display:none!important}
+.qn-card,.qn-onboarding-card,.qn-devices-card,.qn-vault-card{
+  border:1px solid var(--qm7-line)!important;
+  background:#fff!important;
+  color:var(--qm7-ink)!important;
+  box-shadow:0 24px 70px rgba(15,32,43,.10)!important;
+}
+.qn-mark{
+  background:var(--qm7-cyan-soft)!important;
+  border-color:#d1ebf0!important;
+  color:#287e92!important;
+  box-shadow:none!important;
+}
+.qn-kicker{color:#39869a!important}
+.qn-lead,.qn-footnote,.qn-local-note p{color:var(--qm7-muted)!important}
+.qn-topbar{border-color:var(--qm7-line)!important;background:#fff!important}
+.qn-sidebar{background:#f8fafb!important;color:var(--qm7-ink)!important}
+.qn-sidebar>button{color:#61747f!important}
+.qn-sidebar>button:hover{background:#eef3f5!important}
+.qn-sidebar>button.active{background:var(--qm7-cyan-soft)!important;color:#1f6778!important;border-color:#d4edf2!important}
+.qn-inbox,.qn-compose{background:#fff!important}
+.qn-section-head{border-color:var(--qm7-line)!important}
+.qn-message{
+  border-color:var(--qm7-line)!important;
+  background:#f8fafb!important;
+  color:var(--qm7-ink)!important;
+}
+.qn-message:hover{background:#f2f6f7!important;border-color:var(--qm7-line-strong)!important;transform:none!important}
+.qn-body{color:#354e5a!important}
+.qn-correspondent,.qn-message-meta time{color:#84939a!important}
+.qn-vault-fab{
+  border-color:var(--qm7-line)!important;
+  background:#fff!important;
+  color:#2c6677!important;
+  box-shadow:var(--qm7-shadow)!important;
+}
+
+/* Bottom navigation */
+.qm-bottom-nav{
+  border-top:1px solid var(--qm7-line)!important;
+  background:rgba(255,255,255,.96)!important;
+}
+.qm-bottom-nav button,.qm-bottom-nav a{color:#71838d!important}
+.qm-bottom-nav .active{color:#1d7288!important}
+
+@media(max-width:1040px){
+  .qm-shell{grid-template-columns:220px minmax(320px,390px) minmax(0,1fr)!important}
+}
+@media(max-width:860px){
+  body:has(.qn-mail-app) .qn-global-nav{display:none!important}
+  .qn-mail-app{min-height:100dvh!important}
+  .qm-header{height:68px!important}
+  .qm-shell,.qm-focus-tabs+.qm-shell,.qm-searchbar+.qm-shell,.qm-searchbar+.qm-focus-tabs+.qm-shell{
+    height:calc(100dvh - 68px)!important;
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  .qm-focus-tabs+.qm-shell{height:calc(100dvh - 126px)!important}
+  .qm-searchbar+.qm-shell{height:calc(100dvh - 120px)!important}
+  .qm-searchbar+.qm-focus-tabs+.qm-shell{height:calc(100dvh - 178px)!important}
+  .qm-reader-body{padding:20px 16px!important}
+  .qm-compose-fab{right:18px!important;bottom:78px!important}
+}
