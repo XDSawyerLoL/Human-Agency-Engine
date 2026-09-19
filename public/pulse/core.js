@@ -51,10 +51,8 @@ export function setStatus(title,text){
 export function errorText(e){
   const map={
     unauthorized:'Connexion requise.',
-    invalid_credentials:'Identifiant ou mot de passe incorrect.',
     handle_taken:'Cet identifiant est déjà pris.',
     invalid_handle:'Identifiant : 3 à 24 caractères, lettres minuscules, chiffres ou _.',
-    weak_password:'Le mot de passe doit contenir au moins 10 caractères.',
     rate_limited:'Trop de requêtes. Réessaie plus tard.',
     not_found:'Élément introuvable.',
     blocked:'Cette conversation est bloquée.',
@@ -66,7 +64,8 @@ export function errorText(e){
     identity_challenge_expired:'La vérification Identity Vault a expiré. Réessaie.',
     identity_challenge_mismatch:'La preuve Identity Vault ne correspond pas à cette connexion.',
     identity_mismatch:'Ce compte Pulse est lié à une autre identité Quantic.',
-    identity_already_linked:'Cette identité Quantic est déjà liée à un compte Pulse.'
+    identity_already_linked:'Cette identité Quantic est déjà liée à un compte Pulse.',
+    identity_not_registered:'Aucun compte Pulse n’est encore lié à cette identité Quantic.'
   };
   return map[e?.message]||e?.message||'Une erreur est survenue.';
 }

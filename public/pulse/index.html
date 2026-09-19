@@ -137,10 +137,9 @@
       </div>
       <form id="auth-form">
         <label id="display-name-field" hidden>Nom affiché<input id="auth-display-name" maxlength="50" autocomplete="name"></label>
-        <label>Identifiant<input id="auth-handle" maxlength="24" autocomplete="username" placeholder="@identifiant" required></label>
-        <label>Mot de passe<input id="auth-password" type="password" minlength="10" maxlength="128" autocomplete="current-password" required></label>
+        <label id="handle-field" hidden>Identifiant<input id="auth-handle" maxlength="24" autocomplete="username" placeholder="@identifiant"></label>
         <div class="pulse-auth-error" id="auth-error"></div>
-        <button class="pulse-publish pulse-auth-submit" type="submit">Continuer</button>
+        <button class="pulse-publish pulse-auth-submit" type="submit">Entrer avec Quantic ID</button>
       </form>
       <button class="pulse-auth-switch" id="auth-switch">Créer un compte</button>
     </div>

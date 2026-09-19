@@ -41,10 +41,12 @@ export function closeAuth(){
 export function updateAuthModal(){
   const register=state.authMode==='register';
   document.getElementById('auth-title').textContent=register?'Créer un compte':'Se connecter';
-  document.getElementById('auth-copy').textContent=register?'Choisis ton identité Pulse. Identity Vault sera lié à ce compte.':'Retrouve ton fil, tes abonnements et tes messages. Identity Vault doit confirmer ton identité.';
+  document.getElementById('auth-copy').textContent=register?'Choisis ton @pseudo et ton nom affiché. Identity Vault devient la clé de ce compte.':'Aucun identifiant ni mot de passe. Identity Vault confirme directement ton compte Pulse.';
   document.getElementById('display-name-field').hidden=!register;
+  const handleField=document.getElementById('handle-field');
+  handleField.hidden=!register;
   document.getElementById('auth-switch').textContent=register?'J’ai déjà un compte':'Créer un compte';
-  document.getElementById('auth-password').autocomplete=register?'new-password':'current-password';
+  document.querySelector('.pulse-auth-submit').textContent=register?'Créer mon compte':'Entrer avec Quantic ID';
 }
 
 export function updateAccount(){
