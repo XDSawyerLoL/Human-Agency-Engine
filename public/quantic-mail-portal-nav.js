@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const NAV_ID='quantic-mail-global-nav';
-const THEME_ID='quantic-premium-v5';
-function ensureTheme(){if(document.getElementById(THEME_ID)||!document.head)return;const link=document.createElement('link');link.id=THEME_ID;link.rel='stylesheet';link.href='/quantic-premium-v5.css?v=5.0';document.head.appendChild(link);}
+const THEME_ID='quantic-system-v6';
+function ensureTheme(){if(document.getElementById(THEME_ID)||!document.head)return;const link=document.createElement('link');link.id=THEME_ID;link.rel='stylesheet';link.href='/quantic-system-v6.css?v=6.0';document.head.appendChild(link);}
 function ensureNav(){
   ensureTheme();
   if(document.getElementById(NAV_ID)||document.querySelector('.qn-global-nav')||!document.body)return;

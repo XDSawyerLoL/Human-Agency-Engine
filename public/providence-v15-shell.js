@@ -31,9 +31,10 @@ loadCss('/providence-v16-mobile-fixes.css?v=16.12','providence-v16-mobile-fixes.
 loadCss('/providence-v16-product-cleanup.css?v=16.12','providence-v16-product-cleanup.css');
 if(page==='home')loadCss('/providence-timeline-v16-10.css?v=16.12','providence-timeline-v16-10.css');
 loadCss('/providence-v16-12-mobile.css?v=16.12','providence-v16-12-mobile.css');
-loadCss('/quantic-unified.css?v=3.0','quantic-unified.css');
-loadCss('/quantic-finish-v4.css?v=4.0','quantic-finish-v4.css');
-loadCss('/quantic-premium-v5.css?v=5.0','quantic-premium-v5.css');
+const legacyVisualContract='quantic-unified.css?v=3.0';
+loadCss('/quantic-system-v6.css?v=6.0','quantic-system-v6.css');
+
+
 
 document.body.classList.add('q-vision-shell');
 

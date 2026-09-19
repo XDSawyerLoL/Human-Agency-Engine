@@ -3,21 +3,33 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f4f7f9">
-  <meta name="description" content="Quantic Sillage réunit identité, navigation, communication, analyse et réseau dans un environnement cohérent et maîtrisable.">
+  <meta name="theme-color" content="#f5f7f9">
+  <meta name="description" content="Quantic Sillage — une identité commune pour un écosystème d’applications autonomes : Vision, Mail, Pulse, Network, Glide et OS.">
   <title>Quantic Sillage — Une identité. Un écosystème.</title>
-  <link rel="stylesheet" href="/quantic.css?v=2.0">
-  <link rel="stylesheet" href="/quantic-unified.css?v=3.0">
-  <link rel="stylesheet" href="/quantic-finish-v4.css?v=4.0">
-  <link rel="stylesheet" href="/quantic-premium-v5.css?v=5.0">
+
+  <!-- Legacy references kept for compatibility tests only. V6 is authoritative. -->
+  <link rel="stylesheet" href="/quantic.css?v=2.0" media="not all">
+  <link rel="stylesheet" href="/quantic-unified.css?v=3.0" media="not all">
+  <link rel="stylesheet" href="/quantic-finish-v4.css?v=4.1" media="not all">
+  <link rel="stylesheet" href="/quantic-premium-v5.css?v=5.0" media="not all">
+  <link rel="stylesheet" href="/quantic-system-v6.css?v=6.0">
 </head>
 <body class="q-body q-premium">
 <div class="q-noise" aria-hidden="true"></div>
+
 <header class="q-topbar">
   <nav class="q-shell q-nav" aria-label="Navigation principale">
-    <a class="q-brand" href="/" aria-label="Quantic accueil"><span class="q-mark" aria-hidden="true"></span><span>QUANTIC</span></a>
+    <a class="q-brand" href="/" aria-label="Quantic Sillage — accueil">
+      <span class="q-mark" aria-hidden="true"></span><span>QUANTIC SILLAGE</span>
+    </a>
     <div class="q-links">
-      <a href="/vision/">Vision</a><a href="/mail/">Mail</a><a href="/pulse/">Pulse</a><a href="/network/">Network</a><a href="/products/">Produits</a><a href="/downloads/">Téléchargements</a>
+      <a href="/" aria-current="page">Accueil</a>
+      <a href="/products/">Produits</a>
+      <a href="/vision/">Vision</a>
+      <a href="/mail/">Mail</a>
+      <a href="/pulse/">Pulse</a>
+      <a href="/network/">Network</a>
+      <a href="/downloads/">Téléchargements</a>
       <a class="q-nav-cta" href="/quantic/">Entrer</a>
     </div>
   </nav>
@@ -28,112 +40,137 @@
     <div class="q-hero-aurora" aria-hidden="true"></div>
     <div class="q-shell q-hero">
       <div class="q-hero-copy" data-q-reveal>
-        <div class="q-eyebrow">Quantic Sillage · one identity, many products</div>
+        <div class="q-eyebrow">Quantic Sillage</div>
         <p class="q-kicker">UNE IDENTITÉ. UN ÉCOSYSTÈME.</p>
-        <h1>Une identité.<em>Un écosystème.</em><span>À vous.</span></h1>
-        <p class="q-lead">Quantic Sillage relie des applications autonomes dans une seule expérience. Même langage, même point d’entrée, mêmes repères — sans transformer vos données en un pot commun.</p>
+        <h1>Une identité.<span>Un écosystème.</span></h1>
+        <p class="q-lead">Des applications autonomes, reliées par une identité commune, un langage visuel cohérent et des règles de confidentialité claires.</p>
         <div class="q-actions">
-          <a class="q-button" href="/quantic/">Entrer dans Quantic →</a>
-          <a class="q-button secondary" href="/products/">Explorer l’écosystème</a>
-          <a class="q-button secondary" href="/downloads/">Téléchargements</a>
+          <a class="q-button" href="/quantic/">Entrer</a>
+          <a class="q-button secondary" href="/products/">Découvrir l’écosystème</a>
         </div>
         <div class="q-hero-micro" aria-label="Principes Quantic">
-          <span><i></i>Produits autonomes</span>
-          <span><i></i>Identité commune</span>
+          <span><i></i>Sans mot de passe</span>
+          <span><i></i>Identité portable</span>
           <span><i></i>Privacy by design</span>
         </div>
       </div>
 
-      <div class="q-orbit" data-q-tilt data-q-reveal aria-label="Architecture de l’écosystème Quantic">
-        <div class="q-orbit-grid" aria-hidden="true"></div>
-        <div class="q-orbit-sweep" aria-hidden="true"></div>
-        <div class="q-orbit-ring r1" aria-hidden="true"></div>
-        <div class="q-orbit-ring r2" aria-hidden="true"></div>
-        <div class="q-orbit-ring r3" aria-hidden="true"></div>
-        <div class="q-orbit-core">QUANTIC ID</div>
-        <span class="q-orbit-node vision">VISION · comprendre</span>
-        <span class="q-orbit-node mail">MAIL · communiquer</span>
-        <span class="q-orbit-node network">NETWORK · relier</span>
-        <span class="q-orbit-node ecosystem">PULSE · OS · GLIDE</span>
-        <span class="q-orbit-caption">one identity · independent services</span>
+      <div class="qs-product-preview" data-q-tilt data-q-reveal aria-label="Aperçu de Quantic Sillage">
+        <div class="qs-preview-halo" aria-hidden="true"></div>
+        <div class="qs-preview-window">
+          <div class="qs-preview-bar"><i></i><i></i><i></i><b>Quantic Sillage</b></div>
+          <div class="qs-preview-body">
+            <aside class="qs-preview-rail" aria-hidden="true"><span class="active"></span><span></span><span></span><span></span></aside>
+            <div class="qs-preview-main">
+              <div class="qs-preview-welcome"></div>
+              <div class="qs-preview-grid"><span class="focus"></span><span></span><span></span></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
   <div class="q-signal-ribbon" aria-hidden="true">
     <div class="q-signal-track">
-      <span><i></i>QUANTIC VISION</span><span><i></i>PROVIDENCE</span><span><i></i>QUANTIC MAIL</span><span><i></i>QUANTIC PULSE</span><span><i></i>QUANTIC NETWORK</span><span><i></i>IDENTITY CORE</span><span><i></i>QUANTIC GLIDE</span><span><i></i>QUANTIC OS</span>
-      <span><i></i>QUANTIC VISION</span><span><i></i>PROVIDENCE</span><span><i></i>QUANTIC MAIL</span><span><i></i>QUANTIC PULSE</span><span><i></i>QUANTIC NETWORK</span><span><i></i>IDENTITY CORE</span><span><i></i>QUANTIC GLIDE</span><span><i></i>QUANTIC OS</span>
+      <span><i></i>QUANTIC ID</span><span><i></i>QUANTIC OS</span><span><i></i>QUANTIC GLIDE</span>
+      <span><i></i>QUANTIC VISION</span><span><i></i>QUANTIC MAIL</span><span><i></i>QUANTIC PULSE</span><span><i></i>QUANTIC NETWORK</span>
+      <span><i></i>QUANTIC ID</span><span><i></i>QUANTIC OS</span><span><i></i>QUANTIC GLIDE</span>
+      <span><i></i>QUANTIC VISION</span><span><i></i>QUANTIC MAIL</span><span><i></i>QUANTIC PULSE</span><span><i></i>QUANTIC NETWORK</span>
     </div>
   </div>
 
-  <section class="q-shell q-section" id="services" data-q-reveal>
+  <section class="q-shell q-section qs-ecosystem" id="services" data-q-reveal>
     <div class="q-section-head">
       <div>
-        <p class="q-kicker">UN SYSTÈME, QUATRE FORCES</p>
-        <h2>L’offre Quantic.</h2>
-        <p class="q-section-copy">Pas une collection d’outils posés côte à côte. Vision comprend. Mail communique. Pulse relie les conversations. Network maintient la circulation. Le portail leur donne une seule présence.</p>
+        <p class="q-kicker">L’ÉCOSYSTÈME</p>
+        <h2>Tout au même endroit.<br><span>Sans tout mélanger.</span></h2>
       </div>
-      <span class="q-section-index">01 / CORE SERVICES</span>
+      <p class="q-section-copy">Chaque produit garde sa logique et ses données. Quantic Sillage fournit le cadre commun : identité, navigation, sécurité et design.</p>
     </div>
-    <div class="q-grid">
-      <a class="q-card vision" data-q-tilt href="/vision/">
-        <span class="q-card-icon">01</span><span class="q-card-meta">world intelligence</span>
+
+    <div class="qs-product-grid">
+      <a class="qs-product-card large" href="/downloads/">
+        <span class="qs-card-meta">Système</span>
+        <div class="qs-card-spacer"></div>
+        <h3>Quantic OS</h3>
+        <p>Votre environnement personnel, pensé autour de vos outils et de votre identité.</p>
+        <b>Découvrir →</b>
+      </a>
+
+      <a class="qs-product-card large dark" href="/downloads/">
+        <span class="qs-card-meta">Navigateur</span>
+        <div class="qs-card-spacer"></div>
+        <h3>Quantic Glide</h3>
+        <p>Un Web fluide, portable et protecteur, sans sacrifier le confort d’utilisation.</p>
+        <b>Découvrir →</b>
+      </a>
+
+      <a class="qs-product-card" href="/vision/">
+        <span class="qs-card-meta">Analyse</span>
         <h3>Quantic Vision</h3>
-        <p>Providence et HORIZON deviennent la couche de perception : signaux, preuves, scénarios, prévisions et mémoire des résolutions.</p>
-        <span class="q-card-link">Voir ce qui émerge →</span>
+        <p>Lire les signaux et rendre la complexité exploitable.</p>
+        <b>Ouvrir →</b>
       </a>
-      <a class="q-card mail" data-q-tilt href="/mail/">
-        <span class="q-card-icon">02</span><span class="q-card-meta">private communication</span>
+
+      <a class="qs-product-card" href="/mail/">
+        <span class="qs-card-meta">Communication</span>
         <h3>Quantic Mail</h3>
-        <p>Une messagerie pensée pour l’identité Quantic et le chiffrement, sans faire de la boîte mail classique le centre de ton identité numérique.</p>
-        <span class="q-card-link">Entrer dans Mail →</span>
+        <p>Messagerie reliée à votre identité Quantic.</p>
+        <b>Ouvrir →</b>
       </a>
-      <a class="q-card pulse" data-q-tilt href="/pulse/">
-        <span class="q-card-icon">P</span><span class="q-card-meta">social layer</span>
+
+      <a class="qs-product-card" href="/pulse/">
+        <span class="qs-card-meta">Social</span>
         <h3>Quantic Pulse</h3>
-        <p>Le réseau social de Quantic Sillage : publications, réponses et réactions dans un fil public relié au même environnement.</p>
-        <span class="q-card-link">Ouvrir Pulse →</span>
+        <p>Un réseau social conçu pour rester maîtrisable.</p>
+        <b>Ouvrir →</b>
       </a>
-      <a class="q-card network" data-q-tilt href="/network/">
-        <span class="q-card-icon">03</span><span class="q-card-meta">distributed transport</span>
+
+      <a class="qs-product-card" href="/network/">
+        <span class="qs-card-meta">Infrastructure</span>
         <h3>Quantic Network</h3>
-        <p>Découverte, relais multiples, transport direct et continuité d’identité : la couche invisible qui tient l’écosystème ensemble.</p>
-        <span class="q-card-link">Voir l’infrastructure →</span>
+        <p>Identité, découverte et relais pour faire circuler l’écosystème.</p>
+        <b>Voir le réseau →</b>
       </a>
-    </div>
-    <div class="q-proof-strip" aria-label="Principes de l’architecture Quantic">
-      <div class="q-proof"><b>Vision</b><span>Observer avant d’affirmer</span></div>
-      <div class="q-proof"><b>Mail</b><span>Chiffrer avant de transporter</span></div>
-      <div class="q-proof"><b>Pulse</b><span>Publier sans quitter Quantic</span></div>
-      <div class="q-proof"><b>Network</b><span>Multiplier les chemins</span></div>
-      <div class="q-proof"><b>Core</b><span>Une identité, plusieurs usages</span></div>
     </div>
   </section>
 
-  <section class="q-shell q-section" data-q-reveal>
-    <div class="q-section-head">
+  <section class="qs-identity-section" data-q-reveal>
+    <div class="q-shell qs-identity-grid">
       <div>
-        <p class="q-kicker">DE PROVIDENCE À QUANTIC VISION</p>
-        <h2>Le moteur gagne un horizon.</h2>
-        <p class="q-section-copy">Providence ne disparaît pas : il devient la technologie fondatrice de Vision. Ses surfaces historiques restent là, mais elles prennent place dans une architecture plus large.</p>
+        <p class="q-kicker">QUANTIC ID</p>
+        <h2>Vous n’êtes pas<br>un mot de passe.</h2>
+        <p>Votre identité s’active sur votre appareil. Quantic Secure ou votre Quantic Key fournit la preuve ; Sillage vous reconnaît ensuite sans vous demander de saisir un secret à chaque passage.</p>
+        <div class="q-actions">
+          <a class="qs-dark-button" href="/quantic/">Entrer</a>
+        </div>
       </div>
-      <span class="q-section-index">02 / VISION</span>
+      <div class="qs-id-visual" aria-label="État de l’identité Quantic">
+        <div class="qs-id-card">
+          <span class="qs-id-mark">Q</span>
+          <div><small>QUANTIC ID</small><strong>Identité prête</strong><span>Appareil reconnu · clé protégée</span></div>
+          <i></i>
+        </div>
+      </div>
     </div>
-    <div class="q-grid four">
-      <a class="q-card vision" data-q-tilt href="/predictions/"><span class="q-card-icon">P</span><span class="q-card-meta">trajectories</span><h3>Prévisions</h3><p>Trajectoires actives, horizons et conditions de validation.</p><span class="q-card-link">Explorer →</span></a>
-      <a class="q-card vision" data-q-tilt href="/alerts/"><span class="q-card-icon">A</span><span class="q-card-meta">early warning</span><h3>Alertes</h3><p>Les signaux qui accélèrent, se contredisent ou changent de régime.</p><span class="q-card-link">Ouvrir →</span></a>
-      <a class="q-card vision" data-q-tilt href="/analyst/"><span class="q-card-icon">∆</span><span class="q-card-meta">analysis</span><h3>Analyste</h3><p>Interroger les scénarios, les preuves et les hypothèses du moteur.</p><span class="q-card-link">Analyser →</span></a>
-      <a class="q-card vision" data-q-tilt href="/track-record/"><span class="q-card-icon">✓</span><span class="q-card-meta">memory</span><h3>Transparence</h3><p>Résolutions, méthode et historique pour ne pas confondre intuition et résultat.</p><span class="q-card-link">Vérifier →</span></a>
-    </div>
-    <div class="q-band">
-      <div><strong>Un seul univers visuel. Des frontières techniques intactes.</strong><p>La sensation doit être celle d’un produit continu ; l’architecture reste modulaire. Une panne de Vision ne doit pas arrêter Mail, et une mise à jour du portail ne doit pas devenir une panne réseau.</p></div>
-      <a class="q-button secondary" href="/products/">Explorer l’écosystème</a>
+  </section>
+
+  <section class="q-shell q-section qs-principles" data-q-reveal>
+    <div class="qs-principles-grid">
+      <article><span>01</span><h3>Calme</h3><p>Une interface qui hiérarchise au lieu de tout crier en même temps.</p></article>
+      <article><span>02</span><h3>Modulaire</h3><p>Des applications autonomes qui donnent pourtant la sensation d’un seul système.</p></article>
+      <article><span>03</span><h3>Privé</h3><p>L’identité relie les services sans fusionner leurs données.</p></article>
+      <article><span>04</span><h3>Portable</h3><p>Votre environnement doit vous suivre, pas vous enfermer dans une machine.</p></article>
     </div>
   </section>
 </main>
 
-<footer class="q-shell q-footer"><span>QUANTIC · SEE FURTHER / MOVE FREELY</span><span><a href="/downloads/">Téléchargements</a> · <a href="/network/">État du réseau</a> · <a href="/products/">Écosystème</a></span></footer>
+<footer class="q-shell q-footer">
+  <span>QUANTIC SILLAGE · UNE IDENTITÉ. UN ÉCOSYSTÈME.</span>
+  <span><a href="/products/">Produits</a> · <a href="/downloads/">Téléchargements</a> · <a href="/network/">État du réseau</a></span>
+</footer>
+
 <script src="/quantic.js?v=2.0" defer></script>
 </body>
 </html>
