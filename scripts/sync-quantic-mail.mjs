@@ -86,6 +86,27 @@ function injectIdentityGate(directory){
   return injected;
 }
 
+function injectMailTheme(directory){
+  const stylesheet='<link rel="stylesheet" href="/quantic-mail-v7.css?v=7.0">';
+  let injected=0;
+  function visit(current){
+    for(const entry of readdirSync(current)){
+      if(entry===".git")continue;
+      const filePath=join(current,entry);
+      const info=statSync(filePath);
+      if(info.isDirectory()){visit(filePath);continue;}
+      if(!info.isFile()||!filePath.endsWith(".html"))continue;
+      const text=readFileSync(filePath,"utf8");
+      if(text.includes("quantic-mail-v7.css"))continue;
+      if(!text.includes("</head>"))continue;
+      writeFileSync(filePath,text.replace("</head>",stylesheet+"</head>"),"utf8");
+      injected+=1;
+    }
+  }
+  visit(directory);
+  return injected;
+}
+
 function injectPortalNav(directory){
   const script='<script src="/quantic-mail-portal-nav.js" defer></script>';
   let injected=0;
@@ -168,6 +189,11 @@ try{
     throw new Error(`Verrou Quantic ID non injecté dans assez de pages Mail: ${identityGatePages}.`);
   }
 
+  const mailThemePages=injectMailTheme(work);
+  if(mailThemePages<3){
+    throw new Error(`Thème Quantic Mail V7 non injecté dans assez de pages: ${mailThemePages}.`);
+  }
+
   const portalNavPages=injectPortalNav(work);
   if(portalNavPages<3){
     throw new Error(`Navigation Quantic non injectée dans assez de pages Mail: ${portalNavPages}.`);
@@ -191,6 +217,7 @@ try{
     relayInjected:relay,
     replacements,
     identityGatePages,
+    mailThemePages,
     portalNavPages,
     relaySourceCommit:RELAY_SOURCE_COMMIT,
     relayVendor:"vendor/quanticmail-relay",
