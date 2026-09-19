@@ -7,7 +7,7 @@
   <title>Quantic Pulse — Quantic Sillage</title>
   <meta name="description" content="Quantic Pulse : réseau social public et communautaire de l'écosystème Quantic Sillage.">
   <link rel="stylesheet" href="/pulse/site.css?v=1">
-  <link rel="stylesheet" href="/pulse/pulse.css?v=8">
+  <link rel="stylesheet" href="/pulse/pulse.css?v=9">
   <link rel="icon" type="image/svg+xml" href="/assets/quantic-sillage-mark.svg">
   <link rel="stylesheet" href="/quantic-system-v6.css?v=6.1">
 </head>
@@ -106,15 +106,18 @@
           <div class="pulse-context" id="pulse-context" hidden></div>
           <textarea id="pulse-text" maxlength="420" placeholder="Qu'est-ce qui mérite de circuler ?"></textarea>
           <div class="pulse-media-preview" id="pulse-media-preview" hidden></div>
-          <div class="pulse-emoji-picker" id="pulse-emoji-picker" hidden aria-label="Emojis Quantic">
-            <button type="button" data-emoji="🌀">🌀</button><button type="button" data-emoji="⚡">⚡</button><button type="button" data-emoji="🌌">🌌</button><button type="button" data-emoji="🧭">🧭</button><button type="button" data-emoji="🪐">🪐</button><button type="button" data-emoji="🐚">🐚</button><button type="button" data-emoji="🫧">🫧</button><button type="button" data-emoji="🛰️">🛰️</button><button type="button" data-emoji="🔭">🔭</button><button type="button" data-emoji="✨">✨</button>
-          </div>
           <div class="pulse-compose-tools">
             <div class="pulse-toolset">
-              <button title="Partager Quantic News" data-tool="news" aria-label="Partager Quantic News"><svg class="pi " aria-hidden="true"><use href="#pi-news"></use></svg></button>
-              <button title="Emojis Quantic" data-tool="emoji" type="button" aria-label="Ajouter un emoji">✦</button>
-              <button title="Ajouter un GIF" data-tool="gif" type="button" aria-label="Ajouter un GIF">GIF</button>
-              <button title="Annuler la réponse" id="cancel-context" hidden aria-label="Annuler la réponse"><svg class="pi " aria-hidden="true"><use href="#pi-close"></use></svg></button>
+              <button class="pulse-tool-btn" title="Partager Quantic News" data-tool="news" aria-label="Partager Quantic News"><svg class="pi" aria-hidden="true"><use href="#pi-news"></use></svg><span>News</span></button>
+              <button class="pulse-tool-btn" title="Emojis Quantic" data-tool="emoji" type="button" aria-label="Ajouter un emoji"><span class="pulse-tool-glyph">☺</span><span>Emoji</span></button>
+              <button class="pulse-tool-btn pulse-gif-button" title="Ajouter un GIF" data-tool="gif" type="button" aria-label="Ajouter un GIF"><span>GIF</span></button>
+              <button class="pulse-tool-btn pulse-tool-close" title="Annuler la réponse" id="cancel-context" hidden aria-label="Annuler la réponse"><svg class="pi" aria-hidden="true"><use href="#pi-close"></use></svg></button>
+              <div class="pulse-emoji-picker" id="pulse-emoji-picker" hidden aria-label="Emojis Quantic">
+                <div class="pulse-popover-head"><strong>Emojis Quantic</strong><small>Ajoute une touche au Pulse</small></div>
+                <div class="pulse-emoji-grid">
+                  <button type="button" data-emoji="🌀">🌀</button><button type="button" data-emoji="⚡">⚡</button><button type="button" data-emoji="🌌">🌌</button><button type="button" data-emoji="🧭">🧭</button><button type="button" data-emoji="🪐">🪐</button><button type="button" data-emoji="🐚">🐚</button><button type="button" data-emoji="🫧">🫧</button><button type="button" data-emoji="🛰️">🛰️</button><button type="button" data-emoji="🔭">🔭</button><button type="button" data-emoji="✨">✨</button><button type="button" data-emoji="🌊">🌊</button><button type="button" data-emoji="🧿">🧿</button>
+                </div>
+              </div>
             </div>
             <div class="pulse-compose-right"><span id="pulse-count">0 / 420</span><button class="pulse-publish" id="pulse-publish" disabled>Publier</button></div>
           </div>
@@ -145,6 +148,19 @@
     <button class="active" data-view="home" aria-label="Accueil"><svg class="pi " aria-hidden="true"><use href="#pi-home"></use></svg></button><button data-view="explore" aria-label="Explorer"><svg class="pi " aria-hidden="true"><use href="#pi-search"></use></svg></button><button id="mobile-compose" aria-label="Publier"><svg class="pi " aria-hidden="true"><use href="#pi-plus"></use></svg></button><button data-view="messages" aria-label="Messages"><svg class="pi " aria-hidden="true"><use href="#pi-message"></use></svg></button><a href="/mail/" aria-label="Ouvrir QuanticMail"><svg class="pi" aria-hidden="true"><use href="#pi-mail"></use></svg></a><button data-view="profile" aria-label="Profil"><svg class="pi " aria-hidden="true"><use href="#pi-user"></use></svg></button>
   </nav>
 
+  <div class="pulse-gif-modal" id="pulse-gif-modal" hidden>
+    <div class="pulse-gif-card" role="dialog" aria-modal="true" aria-labelledby="pulse-gif-title">
+      <button class="pulse-gif-close" id="pulse-gif-close" type="button" aria-label="Fermer">×</button>
+      <span class="pulse-kicker">MÉDIA</span>
+      <h2 id="pulse-gif-title">Ajouter un GIF</h2>
+      <p>Colle le lien HTTPS d’un GIF. L’aperçu apparaît ici avant insertion dans ton Pulse.</p>
+      <label class="pulse-gif-field">Lien du GIF<input id="pulse-gif-url" type="url" inputmode="url" placeholder="https://…"></label>
+      <div class="pulse-gif-preview" id="pulse-gif-preview"><span>Aperçu du GIF</span></div>
+      <div class="pulse-gif-error" id="pulse-gif-error"></div>
+      <div class="pulse-gif-actions"><button type="button" class="pulse-gif-cancel" id="pulse-gif-cancel">Annuler</button><button type="button" class="pulse-gif-insert" id="pulse-gif-insert" disabled>Insérer le GIF</button></div>
+    </div>
+  </div>
+
   <div class="pulse-modal" id="auth-modal" hidden>
     <div class="pulse-modal-card" role="dialog" aria-modal="true" aria-labelledby="auth-title">
       <button class="pulse-modal-close" id="auth-close" aria-label="Fermer"><svg class="pi " aria-hidden="true"><use href="#pi-close"></use></svg></button>
@@ -168,6 +184,6 @@
 
   <script src="/quantic-id-runtime.js"></script>
   <script src="/pulse/pulse-config.js?v=1"></script>
-  <script type="module" src="/pulse/app.js?v=8"></script>
+  <script type="module" src="/pulse/app.js?v=9"></script>
 </body>
 </html>
