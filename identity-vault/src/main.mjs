@@ -333,8 +333,10 @@ function startBridge(){
     if(url.pathname==="/v1/status"&&req.method==="GET"){
       const status=publicStatus();
       return json(res,200,{
-        version:3,
+        version:1,
         product:"Quantic Identity Vault",
+        appVersion:status.appVersion,
+        vaultFormatVersion:status.formatVersion,
         identityAvailable:status.identityAvailable,
         keyId:status.keyId,
         label:status.label,

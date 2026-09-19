@@ -2,6 +2,7 @@
 const BRIDGE_ORIGIN='http://127.0.0.1:47621';
 const STATUS_URL=BRIDGE_ORIGIN+'/v1/status';
 const ASSERT_URL=BRIDGE_ORIGIN+'/v1/assert';
+const SUPPORTED_STATUS_VERSIONS=new Set([1,2,3]);
 
 async function probe({timeoutMs=1200}={}){
   const controller=new AbortController();
@@ -23,7 +24,7 @@ async function probe({timeoutMs=1200}={}){
     const keyId=typeof data?.keyId==='string'?data.keyId.trim():'';
     const label=typeof data?.label==='string'&&data.label.trim()?data.label.trim():'Quantic ID';
 
-    if(version!==1){
+    if(!SUPPORTED_STATUS_VERSIONS.has(version)){
       return {ok:false,installed:true,identityAvailable:false,reason:'unsupported_version',version};
     }
     if(!identityAvailable){
@@ -32,7 +33,7 @@ async function probe({timeoutMs=1200}={}){
     if(!keyId){
       return {ok:false,installed:true,identityAvailable:false,reason:'invalid_identity_status',version,label};
     }
-    return {ok:true,installed:true,identityAvailable:true,version,keyId,label};
+    return {ok:true,installed:true,identityAvailable:true,version,keyId,label,appVersion:typeof data?.appVersion==='string'?data.appVersion:''};
   }catch(error){
     const aborted=error?.name==='AbortError';
     return {
