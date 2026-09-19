@@ -17,6 +17,43 @@ function requirePassphrase(passphrase){
   if(value.length<8)throw new Error("portable_passphrase_too_short");
   return value;
 }
+function clean(value,max=240){
+  return String(value||"").trim().slice(0,max);
+}
+
+export function normalizeIdentityProfile(profile={}){
+  const source=profile&&typeof profile==="object"?profile:{};
+  const photoDataUrl=String(source.photoDataUrl||"").trim();
+  if(photoDataUrl){
+    if(!/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(photoDataUrl))throw new Error("profile_photo_invalid");
+    if(photoDataUrl.length>3_000_000)throw new Error("profile_photo_too_large");
+  }
+  return {
+    firstName:clean(source.firstName,100),
+    middleNames:clean(source.middleNames,160),
+    lastName:clean(source.lastName,100),
+    preferredName:clean(source.preferredName,100),
+    birthDate:clean(source.birthDate,32),
+    birthPlace:clean(source.birthPlace,160),
+    nationality:clean(source.nationality,120),
+    gender:clean(source.gender,80),
+    email:clean(source.email,200),
+    phone:clean(source.phone,80),
+    addressLine1:clean(source.addressLine1,200),
+    addressLine2:clean(source.addressLine2,200),
+    postalCode:clean(source.postalCode,32),
+    city:clean(source.city,120),
+    region:clean(source.region,120),
+    country:clean(source.country,120),
+    occupation:clean(source.occupation,160),
+    organization:clean(source.organization,180),
+    website:clean(source.website,300),
+    emergencyContactName:clean(source.emergencyContactName,160),
+    emergencyContactPhone:clean(source.emergencyContactPhone,80),
+    notes:clean(source.notes,2000),
+    photoDataUrl
+  };
+}
 
 export function generateIdentity(label="Mon identité Quantic"){
   const {publicKey,privateKey}=generateKeyPairSync("ed25519");
@@ -26,12 +63,12 @@ export function generateIdentity(label="Mon identité Quantic"){
   return {keyId,label:String(label||"Quantic ID").trim().slice(0,80)||"Quantic ID",publicKey:b64url(publicDer),privateKeyPem:privatePem};
 }
 
-export function encryptPortable(privateKeyPem,passphrase){
+export function encryptPortable(secretValue,passphrase){
   const secret=requirePassphrase(passphrase);
   const salt=randomBytes(16),iv=randomBytes(12);
   const key=scryptSync(secret,salt,32);
   const cipher=createCipheriv("aes-256-gcm",key,iv);
-  const ciphertext=Buffer.concat([cipher.update(String(privateKeyPem),"utf8"),cipher.final()]);
+  const ciphertext=Buffer.concat([cipher.update(String(secretValue),"utf8"),cipher.final()]);
   return {kdf:"scrypt",cipher:"aes-256-gcm",salt:b64url(salt),iv:b64url(iv),tag:b64url(cipher.getAuthTag()),ciphertext:b64url(ciphertext)};
 }
 
