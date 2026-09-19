@@ -1,5 +1,11 @@
 import { TOKEN_KEY, state, dom, initials, api } from './core.js?v=9';
 
+const PRESENCE_RENEW_MS=5000;
+const PRESENCE_PROBE_MS=1000;
+let presenceGuardTimer=null;
+let presenceBusy=false;
+let lastPresenceRenewal=0;
+
 export async function ensureIdentityVault(){
   const status=document.querySelector('[data-pulse-id-status]');
   const title=status?.querySelector('[data-pulse-id-title]');
@@ -93,14 +99,77 @@ export function applySession(data){
   state.token=data.token;
   state.user=data.user;
   localStorage.setItem(TOKEN_KEY,data.token);
+  lastPresenceRenewal=Date.now();
   updateAccount();
 }
 
 export function clearSession(){
   state.token='';
   state.user=null;
+  lastPresenceRenewal=0;
   localStorage.removeItem(TOKEN_KEY);
   updateAccount();
+}
+
+async function revokePulseSession(){
+  if(state.token){
+    try{await api('/api/pulse/auth/logout',{method:'POST',body:'{}'})}catch{}
+  }
+  clearSession();
+}
+
+export async function renewIdentityPresence({quiet=false}={}){
+  if(!state.token)return false;
+  if(!window.QuanticID?.probe||!window.QuanticID?.assert){
+    await revokePulseSession();
+    return false;
+  }
+  try{
+    const identity=await window.QuanticID.probe({timeoutMs:1000});
+    if(!identity?.ok){
+      await revokePulseSession();
+      return false;
+    }
+    const challenge=await api('/api/pulse/auth/presence/challenge',{method:'POST',body:'{}'});
+    const proof=await window.QuanticID.assert({challenge:challenge.challenge,audience:challenge.audience,timeoutMs:2500});
+    await api('/api/pulse/auth/presence',{method:'POST',body:JSON.stringify({identityProof:proof})});
+    lastPresenceRenewal=Date.now();
+    return true;
+  }catch(error){
+    if(!quiet)console.warn('Pulse Quantic ID presence renewal failed');
+    await revokePulseSession();
+    return false;
+  }
+}
+
+async function presenceGuardTick(){
+  if(presenceBusy||!state.token)return;
+  presenceBusy=true;
+  try{
+    const identity=window.QuanticID?.probe?await window.QuanticID.probe({timeoutMs:900}):null;
+    if(!identity?.ok){
+      await revokePulseSession();
+      return;
+    }
+    if(Date.now()-lastPresenceRenewal>=PRESENCE_RENEW_MS){
+      await renewIdentityPresence({quiet:true});
+    }
+  }catch{
+    await revokePulseSession();
+  }finally{
+    presenceBusy=false;
+  }
+}
+
+export function startIdentityPresenceGuard(){
+  if(presenceGuardTimer)clearInterval(presenceGuardTimer);
+  presenceGuardTimer=setInterval(presenceGuardTick,PRESENCE_PROBE_MS);
+  presenceGuardTick();
+}
+
+export function stopIdentityPresenceGuard(){
+  if(presenceGuardTimer)clearInterval(presenceGuardTimer);
+  presenceGuardTimer=null;
 }
 
 async function restoreFromIdentity(){
@@ -123,15 +192,16 @@ async function restoreFromIdentity(){
 
 export async function restoreSession(){
   if(state.token){
-    try{
-      const data=await api('/api/pulse/me');
-      state.user=data.user;
-      updateAccount();
-      return true;
-    }catch{
-      state.token='';
-      state.user=null;
-      localStorage.removeItem(TOKEN_KEY);
+    const presenceOk=await renewIdentityPresence({quiet:true});
+    if(presenceOk){
+      try{
+        const data=await api('/api/pulse/me');
+        state.user=data.user;
+        updateAccount();
+        return true;
+      }catch{
+        clearSession();
+      }
     }
   }
 
