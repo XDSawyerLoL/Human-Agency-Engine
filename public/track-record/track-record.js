@@ -89,6 +89,16 @@
       $('#calibrationDomains').innerHTML = segmentRows(c.by_domain,'domain');
       $('#calibrationHorizons').innerHTML = segmentRows(c.by_horizon,'horizon');
       $('#calibrationText').textContent = c.calibration_ready ? `Calibration active sur ${n(c.scorable_resolutions)} scénarios binaires résolus. ECE mesure l’écart entre probabilité annoncée et fréquence observée ; le skill compare le Brier à une baseline de fréquence.` : `Le moteur calcule déjà les scores, mais ne les utilise pas pour modifier les probabilités publiques avant ${n(c.minimum_global_samples)||30} résolutions binaires vérifiées.`;
+      const threshold=Math.max(1,n(c.minimum_global_samples)||30);
+      const scorable=Math.max(0,n(c.scorable_resolutions));
+      const progress=Math.max(0,Math.min(100,Math.round((scorable/threshold)*100)));
+      const remaining=Math.max(0,threshold-scorable);
+      const progressBar=document.querySelector('[data-track-threshold-progress]');
+      const progressLabel=document.querySelector('[data-track-threshold-label]');
+      const progressRemaining=document.querySelector('[data-track-threshold-remaining]');
+      if(progressBar)progressBar.style.width=progress+'%';
+      if(progressLabel)progressLabel.textContent=scorable+' / '+threshold+' résolutions scorables';
+      if(progressRemaining)progressRemaining.textContent=remaining?(remaining+' résolution'+(remaining>1?'s':'')+' encore nécessaire'+(remaining>1?'s':'')):'Seuil de calibration atteint';
       const persistent=d.storage_mode==='mysql'&&d.persistent_learning;
       $('#storageWarning').textContent = persistent ? 'Historique persistant actif : probabilités, métadonnées, preuves et résolutions survivent aux redéploiements Hostinger.' : 'Apprentissage en mémoire : le moteur fonctionne, mais le corpus peut être perdu à un redémarrage tant que MySQL Hostinger n’est pas raccordé.';
       setStatus('#storageState',persistent?'MYSQL · PERSISTANT':'MÉMOIRE · À RACCORDER',persistent?'ok':'warn');
