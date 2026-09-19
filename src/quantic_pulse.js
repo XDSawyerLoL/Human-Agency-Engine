@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import { join } from 'node:path';
-import { randomBytes, createHash, createPublicKey, verify, scryptSync, timingSafeEqual } from 'node:crypto';
+import { randomBytes, createHash, createPublicKey, verify } from 'node:crypto';
 
 const DATA_DIR=process.env.DATA_DIR||'./data';
 const FILE=join(DATA_DIR,'pulse.json');
@@ -40,8 +40,6 @@ function clean(v,max=500){return String(v||'').replace(/\u0000/g,'').trim().slic
 function json(res,status,body,extra={}){res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store',...extra});res.end(JSON.stringify(body))}
 async function bodyJson(req,limit=65536){let size=0,chunks=[];for await(const chunk of req){size+=chunk.length;if(size>limit)throw Object.assign(new Error('body_too_large'),{status:413});chunks.push(chunk)}if(!chunks.length)return{};try{return JSON.parse(Buffer.concat(chunks).toString('utf8'))}catch{throw Object.assign(new Error('invalid_json'),{status:400})}}
 function bearer(req){return String(req.headers.authorization||'').match(/^Bearer\s+(.+)$/i)?.[1]||''}
-function hashPassword(password,salt=randomBytes(16).toString('hex')){return{salt,hash:scryptSync(String(password),salt,64).toString('hex')}}
-function verifyPassword(password,user){const a=scryptSync(String(password),user.passwordSalt,64),b=Buffer.from(user.passwordHash,'hex');return a.length===b.length&&timingSafeEqual(a,b)}
 function allowRate(req,bucket,max,windowMs){const ip=String(req.headers['x-forwarded-for']||req.socket?.remoteAddress||'unknown').split(',')[0].trim(),key=ip+':'+bucket,t=Date.now(),cur=rate.get(key);if(!cur||t-cur.start>windowMs){rate.set(key,{start:t,count:1});return true}cur.count++;return cur.count<=max}
 function cleanupIdentityChallenges(){const t=Date.now();for(const[key,value]of identityChallenges)if(value.expiresAt<=t)identityChallenges.delete(key)}
 function identityKeyId(publicKeyB64url){return'qid_'+createHash('sha256').update(Buffer.from(publicKeyB64url,'base64url')).digest('hex').slice(0,32)}
@@ -135,24 +133,23 @@ export async function handlePulse(req,res,url,corsHeaders={}){
 
     if(route==='/api/pulse/auth/challenge'&&req.method==='POST'){
       if(!allowRate(req,'identity_challenge',40,60000)){json(res,429,{error:'rate_limited'},corsHeaders);return true}
-      const b=await bodyJson(req),action=b.action==='register'?'register':'login',handle=clean(b.handle,24).toLowerCase().replace(/^@/,'');
-      if(!HANDLE_RE.test(handle)){json(res,400,{error:'invalid_handle'},corsHeaders);return true}
+      const b=await bodyJson(req),action=b.action==='register'?'register':'login',handle=action==='register'?clean(b.handle,24).toLowerCase().replace(/^@/,''):'';
+      if(action==='register'&&!HANDLE_RE.test(handle)){json(res,400,{error:'invalid_handle'},corsHeaders);return true}
       json(res,200,issueIdentityChallenge(action,handle),corsHeaders);return true
     }
 
     if(route==='/api/pulse/auth/register'&&req.method==='POST'){
       if(!allowRate(req,'register',8,3600000)){json(res,429,{error:'rate_limited'},corsHeaders);return true}
-      const b=await bodyJson(req),handle=clean(b.handle,24).toLowerCase().replace(/^@/,''),displayName=clean(b.displayName,50),password=String(b.password||'');
+      const b=await bodyJson(req),handle=clean(b.handle,24).toLowerCase().replace(/^@/,''),displayName=clean(b.displayName,50);
       if(!HANDLE_RE.test(handle)){json(res,400,{error:'invalid_handle'},corsHeaders);return true}
       if(displayName.length<2){json(res,400,{error:'invalid_display_name'},corsHeaders);return true}
-      if(password.length<10||password.length>128){json(res,400,{error:'weak_password'},corsHeaders);return true}
       const identity=verifyIdentityProof(b.identityProof,{action:'register',handle});
       if(identity.error){json(res,401,{error:identity.error},corsHeaders);return true}
       const out=await mutateStore(store=>{
         if(store.handles[handle])return{error:'handle_taken'};
         if(Object.values(store.users).some(user=>user.identityKeyId===identity.keyId))return{error:'identity_already_linked'};
-        const uid=id('u_'),pw=hashPassword(password);
-        store.users[uid]={id:uid,handle,displayName,bio:'',avatar:'',verified:false,passwordSalt:pw.salt,passwordHash:pw.hash,identityKeyId:identity.keyId,identityPublicKey:identity.publicKey,createdAt:now(),updatedAt:now()};
+        const uid=id('u_');
+        store.users[uid]={id:uid,handle,displayName,bio:'',avatar:'',verified:false,identityKeyId:identity.keyId,identityPublicKey:identity.publicKey,createdAt:now(),updatedAt:now()};
         store.handles[handle]=uid;store.follows[uid]=[];store.blocks[uid]=[];store.bookmarks[uid]=[];
         const token=createSession(store,uid);return{token,user:publicUser(store.users[uid],store,uid)}
       });
@@ -161,16 +158,14 @@ export async function handlePulse(req,res,url,corsHeaders={}){
 
     if(route==='/api/pulse/auth/login'&&req.method==='POST'){
       if(!allowRate(req,'login',20,900000)){json(res,429,{error:'rate_limited'},corsHeaders);return true}
-      const b=await bodyJson(req),handle=clean(b.handle,24).toLowerCase().replace(/^@/,''),password=String(b.password||'');
-      const identity=verifyIdentityProof(b.identityProof,{action:'login',handle});
+      const b=await bodyJson(req);
+      const identity=verifyIdentityProof(b.identityProof,{action:'login',handle:''});
       if(identity.error){json(res,401,{error:identity.error},corsHeaders);return true}
       const out=await mutateStore(store=>{
-        const uid=store.handles[handle],user=uid&&store.users[uid];
-        if(!user||!verifyPassword(password,user))return{error:'invalid_credentials'};
-        if(user.identityKeyId&&user.identityKeyId!==identity.keyId)return{error:'identity_mismatch'};
+        const user=Object.values(store.users).find(user=>user.identityKeyId===identity.keyId);
+        if(!user)return{error:'identity_not_registered'};
         if(user.identityPublicKey&&user.identityPublicKey!==identity.publicKey)return{error:'identity_mismatch'};
-        if(!user.identityKeyId){user.identityKeyId=identity.keyId;user.identityPublicKey=identity.publicKey;user.updatedAt=now()}
-        const token=createSession(store,uid);return{token,user:publicUser(user,store,uid)}
+        const token=createSession(store,user.id);return{token,user:publicUser(user,store,user.id)}
       });
       json(res,out.error?401:200,out,corsHeaders);return true
     }
