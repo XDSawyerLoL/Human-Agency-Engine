@@ -1,6 +1,6 @@
-import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=7';
-import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, ensureIdentityVault } from './session.js?v=7';
-import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview } from './views.js?v=7';
+import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=8';
+import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, ensureIdentityVault } from './session.js?v=8';
+import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview } from './views.js?v=8';
 
 function setReply(postId,handle){
   state.replyTo=postId;
@@ -25,16 +25,37 @@ function clearReply(){
   document.getElementById('cancel-context').hidden=true;
 }
 
+function safeHttpsUrl(value){
+  try{const u=new URL(String(value||''));return u.protocol==='https:'?u.href:''}catch{return''}
+}
+
+function updateMediaPreview(){
+  const box=document.getElementById('pulse-media-preview');
+  if(!box)return;
+  const media=state.attachment||{};
+  const image=safeHttpsUrl(media.mediaUrl||media.imageUrl);
+  const link=safeHttpsUrl(media.linkUrl);
+  if(!image&&!link){box.hidden=true;box.innerHTML='';return}
+  const label=media.mediaType==='gif'?'GIF':(media.linkTitle||'Aperçu');
+  box.hidden=false;
+  box.innerHTML=(image?'<img src="'+image.replace(/"/g,'&quot;')+'" alt="" referrerpolicy="no-referrer">':'')+
+    '<div><strong>'+String(label).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</strong>'+
+    (link?'<span>'+link.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</span>':'')+'</div>'+
+    '<button type="button" data-remove-media aria-label="Retirer">×</button>';
+}
+
 async function publishPost(){
   if(!requireAuth())return;
   const body=dom.textarea.value.trim();
   if(!body)return;
   dom.publish.disabled=true;
   try{
-    await api('/api/pulse/posts',{method:'POST',body:JSON.stringify({body,replyToId:state.replyTo})});
+    await api('/api/pulse/posts',{method:'POST',body:JSON.stringify({body,replyToId:state.replyTo,...(state.attachment||{})})});
     dom.textarea.value='';
     dom.count.textContent='0 / 420';
     clearReply();
+    state.attachment=null;
+    updateMediaPreview();
     await loadHome();
   }catch(error){
     alert(errorText(error));
@@ -118,6 +139,34 @@ function bindStaticEvents(){
   });
 
   dom.publish.addEventListener('click',publishPost);
+  document.querySelector('[data-tool="emoji"]')?.addEventListener('click',function(){
+    const picker=document.getElementById('pulse-emoji-picker');
+    picker.hidden=!picker.hidden;
+  });
+  document.getElementById('pulse-emoji-picker')?.addEventListener('click',function(event){
+    const button=event.target.closest('[data-emoji]');
+    if(!button)return;
+    const emoji=button.dataset.emoji||'';
+    const start=dom.textarea.selectionStart??dom.textarea.value.length;
+    const end=dom.textarea.selectionEnd??start;
+    dom.textarea.value=dom.textarea.value.slice(0,start)+emoji+dom.textarea.value.slice(end);
+    dom.textarea.dispatchEvent(new Event('input',{bubbles:true}));
+    dom.textarea.focus();
+    dom.textarea.setSelectionRange(start+emoji.length,start+emoji.length);
+  });
+  document.querySelector('[data-tool="gif"]')?.addEventListener('click',function(){
+    const value=prompt('Colle l’URL HTTPS d’un GIF (Tenor, Giphy ou fichier .gif).');
+    if(!value)return;
+    const url=safeHttpsUrl(value);
+    if(!url){alert('URL GIF invalide. Utilise une adresse HTTPS.');return}
+    state.attachment={mediaUrl:url,mediaType:'gif'};
+    updateMediaPreview();
+  });
+  document.getElementById('pulse-media-preview')?.addEventListener('click',function(event){
+    if(!event.target.closest('[data-remove-media]'))return;
+    state.attachment=null;
+    updateMediaPreview();
+  });
   document.getElementById('cancel-context').addEventListener('click',clearReply);
   document.getElementById('compose-focus').addEventListener('click',function(){
     if(requireAuth()){
@@ -326,10 +375,13 @@ function applyIncomingShare(){
   if(params.get('share')!=='news')return;
   const title=(params.get('title')||'').trim();
   const url=(params.get('url')||'').trim();
+  const image=(params.get('image')||'').trim();
   const parts=[];
   if(title)parts.push(title);
   if(url)parts.push(url);
   const draft=parts.join('\n\n').slice(0,420);
+  if(image||url)state.attachment={linkUrl:safeHttpsUrl(url),linkTitle:title,imageUrl:safeHttpsUrl(image)};
+  updateMediaPreview();
   if(draft){
     dom.textarea.value=draft;
     dom.count.textContent=dom.textarea.value.length+' / 420';
