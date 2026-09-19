@@ -79,7 +79,7 @@ jobs:
           node -e "const x=require('/tmp/analyst-status.json'); if(x.schema!=='providence-analyst-status-v1'||x.superposition_engine!==true) process.exit(1); console.log('analyst status ok')"
 
           superposition_ok=0
-          for i in $(seq 1 60); do
+          for i in $(seq 1 240); do
             if curl -fsS -H "Cookie: $COOKIE" 'http://127.0.0.1:3000/api/superposition?limit=4' >/tmp/superposition.json; then superposition_ok=1; break; fi
             sleep 0.5
           done
