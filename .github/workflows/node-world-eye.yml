@@ -68,7 +68,12 @@ jobs:
           curl -fsS -H "Cookie: $COOKIE" http://127.0.0.1:3000/api/analyst/status >/tmp/analyst-status.json
           node -e "const x=require('/tmp/analyst-status.json'); if(x.schema!=='providence-analyst-status-v1'||x.superposition_engine!==true) process.exit(1); console.log('analyst status ok')"
 
-          curl -fsS -H "Cookie: $COOKIE" 'http://127.0.0.1:3000/api/superposition?limit=4' >/tmp/superposition.json
+          superposition_ok=0
+          for i in $(seq 1 30); do
+            if curl -fsS -H "Cookie: $COOKIE" 'http://127.0.0.1:3000/api/superposition?limit=4' >/tmp/superposition.json; then superposition_ok=1; break; fi
+            sleep 0.5
+          done
+          test "$superposition_ok" = "1"
           node -e "const x=require('/tmp/superposition.json'); if(x.schema!=='providence-superposition-v1'||!Array.isArray(x.worlds)) process.exit(1); console.log('superposition ok')"
 
           curl -fsS -H "Cookie: $COOKIE" -X POST http://127.0.0.1:3000/api/analyst/chat \
