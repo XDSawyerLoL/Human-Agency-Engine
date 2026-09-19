@@ -189,3 +189,26 @@ def test_hostinger_relay_activates_only_with_https_url():
         )
     }
     assert invalid["relay-hostinger"].state == "pending"
+
+
+def test_quantic_id_is_primary_entrypoint():
+    root = text("public/index.html")
+    identity = text("public/quantic/index.html")
+    assert ">Quantic ID<" in root
+    assert "<title>Quantic ID" in identity
+    assert "quantic-id-runtime.js" in identity
+    assert "data-quantic-id-state" in identity
+
+
+def test_quantic_mail_requires_local_quantic_id_gate():
+    mail = text("public/mail/index.html")
+    gate = text("public/quantic-mail-id-gate.js")
+    runtime = text("public/quantic-id-runtime.js")
+    assert "quantic-mail-id-gate.js" in mail
+    assert "127.0.0.1:47621" in runtime
+    assert "identityAvailable" in runtime
+    assert "window.QuanticID" in runtime
+    assert "qid-mail-locked" in gate
+    assert "Quantic ID requis" in gate
+    assert "QuanticID.probe" in gate
+    assert "sessionStorage" not in gate
