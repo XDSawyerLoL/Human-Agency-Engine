@@ -7,7 +7,7 @@
   "main": "src/main.mjs",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/*.test.mjs",
+    "test": "node --check src/main.mjs && node --check src/preload.cjs && node --check src/renderer.js && node --check src/vault-core.mjs && node --test test/*.test.mjs",
     "dist:setup": "electron-builder --win nsis --x64 --config.artifactName=Quantic-Identity-Vault-Setup.exe",
     "dist:portable": "electron-builder --win portable --x64 --config.artifactName=Quantic-Identity-Vault-Portable.exe"
   },
