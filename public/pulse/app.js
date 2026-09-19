@@ -1,5 +1,5 @@
 import { TOKEN_KEY, state, dom, api, errorText } from './core.js';
-import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession } from './session.js';
+import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, ensureIdentityVault } from './session.js';
 import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview } from './views.js';
 
 function setReply(postId,handle){
@@ -9,6 +9,14 @@ function setReply(postId,handle){
   context.textContent='Réponse à @'+handle;
   document.getElementById('cancel-context').hidden=false;
   dom.textarea.focus();
+}
+
+async function identityProof(action,handle){
+  const identity=await ensureIdentityVault();
+  if(!identity)throw new Error('identity_vault_required');
+  const challenge=await api('/api/pulse/auth/challenge',{method:'POST',body:JSON.stringify({action,handle})});
+  if(!window.QuanticID?.assert)throw new Error('identity_vault_required');
+  return window.QuanticID.assert({challenge:challenge.challenge,audience:challenge.audience});
 }
 
 function clearReply(){
@@ -150,8 +158,10 @@ function bindStaticEvents(){
     const password=document.getElementById('auth-password').value;
     const displayName=document.getElementById('auth-display-name').value.trim();
     try{
-      const path=state.authMode==='register'?'/api/pulse/auth/register':'/api/pulse/auth/login';
-      const body=state.authMode==='register'?{handle,password,displayName}:{handle,password};
+      const action=state.authMode==='register'?'register':'login';
+      const path=action==='register'?'/api/pulse/auth/register':'/api/pulse/auth/login';
+      const proof=await identityProof(action,handle);
+      const body=action==='register'?{handle,password,displayName,identityProof:proof}:{handle,password,identityProof:proof};
       const data=await api(path,{method:'POST',body:JSON.stringify(body)});
       applySession(data);
       closeAuth();
