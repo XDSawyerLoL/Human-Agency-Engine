@@ -27,7 +27,9 @@ const files=[
   "public/products/index.html",
   "public/downloads/index.html",
   "public/quantic/index.html",
+  "public/mail/index.html",
   "public/pulse/index.html",
+  "public/news/index.html",
   "public/providence-v15-shell.js",
   "public/quantic-mail-portal-nav.js"
 ];
@@ -45,6 +47,10 @@ for(const path of files){
 }
 
 assert.ok(fs.existsSync("public/news/index.html"),"native Quantic News route missing");
+for(const path of ["public/index.html","public/products/index.html","public/quantic/index.html"]){
+  assert.ok(read(path).includes("Quantic News"),path+" must surface Quantic News as a product");
+}
+
 const news=read("public/news/index.html");
 assert.ok(news.includes("Quantic News"),"News page must identify product");
 assert.ok(news.includes("/news/news.js"),"News runtime missing");
