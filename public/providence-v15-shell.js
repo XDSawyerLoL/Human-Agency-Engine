@@ -1,6 +1,7 @@
 (()=>{'use strict';
 
 const page=(document.body.dataset.page||'home').trim();
+const nativeV9Pages=new Set(['alerts','sports','track-record','sources','backtest','settings']);
 const navPrimary=[
  ['home','/vision/','◉','Vision'],
  ['predictions','/predictions/','⌁','Prévisions'],
@@ -22,18 +23,23 @@ const loadCss=(href,match)=>{
   document.head.appendChild(link);
 };
 
-/* Legacy component styles remain available; the unified layer is authoritative and loads last. */
-loadCss('/providence-v15-fixes.css?v=clarity-1','providence-v15-fixes.css');
-loadCss('/providence-v16-platform.css?v=16.12','providence-v16-platform.css');
-loadCss('/providence-v16-rail.css?v=16.12','providence-v16-rail.css');
-loadCss('/providence-v16-ux.css?v=16.12','providence-v16-ux.css');
-loadCss('/providence-v16-mobile-fixes.css?v=16.12','providence-v16-mobile-fixes.css');
-loadCss('/providence-v16-product-cleanup.css?v=16.12','providence-v16-product-cleanup.css');
-if(page==='home')loadCss('/providence-timeline-v16-10.css?v=16.12','providence-timeline-v16-10.css');
-loadCss('/providence-v16-12-mobile.css?v=16.12','providence-v16-12-mobile.css');
+/* Legacy visual layers stay available only for pages not yet migrated.
+   Native V9 pages own their layout directly and must not inherit the dark Providence theme. */
+if(!nativeV9Pages.has(page)){
+  loadCss('/providence-v15-fixes.css?v=clarity-1','providence-v15-fixes.css');
+  loadCss('/providence-v16-platform.css?v=16.12','providence-v16-platform.css');
+  loadCss('/providence-v16-rail.css?v=16.12','providence-v16-rail.css');
+  loadCss('/providence-v16-ux.css?v=16.12','providence-v16-ux.css');
+  loadCss('/providence-v16-mobile-fixes.css?v=16.12','providence-v16-mobile-fixes.css');
+  loadCss('/providence-v16-product-cleanup.css?v=16.12','providence-v16-product-cleanup.css');
+  if(page==='home')loadCss('/providence-timeline-v16-10.css?v=16.12','providence-timeline-v16-10.css');
+  loadCss('/providence-v16-12-mobile.css?v=16.12','providence-v16-12-mobile.css');
+}
 const legacyVisualContract='quantic-unified.css?v=3.0';
-loadCss('/quantic-system-v6.css?v=6.0','quantic-system-v6.css');
-if(document.body?.dataset?.visionNative!=='true'){
+loadCss('/quantic-system-v6.css?v=6.1','quantic-system-v6.css');
+if(nativeV9Pages.has(page)){
+  loadCss('/quantic-vision-v9.css?v=9.0','quantic-vision-v9.css');
+}else if(document.body?.dataset?.visionNative!=='true'){
   const visionV7=document.querySelector('link[href*="quantic-vision-v7.css"]');
   if(visionV7)document.head.appendChild(visionV7);else loadCss('/quantic-vision-v7.css?v=7.0','quantic-vision-v7.css');
 }

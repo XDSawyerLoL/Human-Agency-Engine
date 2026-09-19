@@ -147,7 +147,8 @@ def test_unified_visual_layer_inherits_providence_color_language():
     assert "@media(prefers-reduced-motion:reduce)" in css
 
 
-def test_all_vision_product_routes_load_unified_css_before_runtime_shell():
+def test_all_vision_product_routes_load_their_native_visual_layer():
+    native_v9 = {"alerts", "backtest", "sports", "settings", "sources", "track-record"}
     routes = (
         "alerts", "analyst", "backtest", "cameras", "causal", "crypto",
         "horizons", "intelligence", "matches", "modules", "predictions",
@@ -155,7 +156,12 @@ def test_all_vision_product_routes_load_unified_css_before_runtime_shell():
     )
     for route in routes:
         page = text(f"public/{route}/index.html")
-        assert "quantic-unified.css?v=3.0" in page, route
+        if route in native_v9:
+            assert "quantic-vision-v9.css?v=9.0" in page, route
+            assert "quantic-vision-v7.css" not in page, route
+            assert "providence-v15.css" not in page, route
+        else:
+            assert "quantic-unified.css?v=3.0" in page, route
 
 
 def test_legacy_v14_shell_bridges_to_unified_v15_shell():
