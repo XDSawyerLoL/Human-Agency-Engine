@@ -162,7 +162,16 @@ export async function handlePulse(req,res,url,corsHeaders={}){
       const identity=verifyIdentityProof(b.identityProof,{action:'login',handle:''});
       if(identity.error){json(res,401,{error:identity.error},corsHeaders);return true}
       const out=await mutateStore(store=>{
-        const user=Object.values(store.users).find(user=>user.identityKeyId===identity.keyId);
+        let user=Object.values(store.users).find(user=>user.identityKeyId===identity.keyId);
+        if(!user&&b.provision===true){
+          const displayName=clean(b.displayName,50)||'Membre Quantic';
+          const base=displayName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9_]+/g,'_').replace(/^_+|_+$/g,'').slice(0,16)||'quantic';
+          let handle=base.length>=3?base:'quantic';
+          if(store.handles[handle])handle=(handle.slice(0,15)+'_'+identity.keyId.slice(-6)).slice(0,24);
+          const uid=id('u_');
+          user={id:uid,handle,displayName,bio:'',avatar:'',verified:false,identityKeyId:identity.keyId,identityPublicKey:identity.publicKey,createdAt:now(),updatedAt:now()};
+          store.users[uid]=user;store.handles[handle]=uid;store.follows[uid]=[];store.blocks[uid]=[];store.bookmarks[uid]=[];
+        }
         if(!user)return{error:'identity_not_registered'};
         if(user.identityPublicKey&&user.identityPublicKey!==identity.publicKey)return{error:'identity_mismatch'};
         const token=createSession(store,user.id);return{token,user:publicUser(user,store,user.id)}
