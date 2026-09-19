@@ -13,7 +13,12 @@ for(const route of routes){
   const html=fs.readFileSync(path,"utf8");
   assert.ok(html.includes("/quantic-id-runtime.js"),route+" must load Quantic ID runtime");
   assert.ok(html.includes("/quantic-vision-id-gate.js"),route+" must load Quantic Vision gate");
-  assert.ok(html.includes("/quantic-vision-v7.css"),route+" must load authoritative Vision V7 CSS");
+  if(route==="vision"){
+    assert.ok(html.includes("/quantic-vision-home-v8.css"),"Vision home must load native V8 CSS");
+    assert.ok(!html.includes("/quantic-vision-v7.css"),"Vision home must not load legacy overlay CSS");
+  }else{
+    assert.ok(html.includes("/quantic-vision-v7.css"),route+" must load authoritative Vision V7 CSS");
+  }
   assert.ok(html.indexOf("/quantic-vision-id-gate.js")<html.indexOf("</head>"),route+" gate must load in head");
 }
 
@@ -26,7 +31,8 @@ const shell=fs.readFileSync("public/providence-v15-shell.js","utf8");
 for(const route of ["/vision/","/predictions/","/analyst/","/alerts/","/sports/","/cameras/","/track-record/","/sources/","/backtest/","/settings/"]){
   assert.ok(shell.includes(route),route+" must remain visible in Vision navigation");
 }
-assert.ok(shell.includes("quantic-vision-v7.css"),"shell must load Vision V7 last");
+assert.ok(shell.includes("quantic-vision-v7.css"),"shell must keep Vision V7 for legacy feature pages");
+assert.ok(shell.includes("visionNative"),"shell must skip legacy V7 on native Vision home");
 
 const gate=fs.readFileSync("public/quantic-vision-id-gate.js","utf8");
 for(const marker of ["position:fixed","inset:0","z-index:2147483647","MutationObserver","Quantic Identity Vault","Quantic Vision verrouillé","window.QuanticID"]){
