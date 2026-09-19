@@ -11,7 +11,7 @@ function ensureTheme(){
     const link=document.createElement('link');link.id=MAIL_THEME_ID;link.rel='stylesheet';link.href='/quantic-mail-v7.css?v=7.0';document.head.appendChild(link);
   }
 }
-function navMarkup(){return '<a class="qn-global-brand" href="/" aria-label="Quantic Sillage accueil"><span class="qn-global-mark" aria-hidden="true"></span><span>QUANTIC SILLAGE</span></a><nav class="qn-global-links" aria-label="Navigation principale"><a href="/vision/">Vision</a><a class="active" href="/mail/" aria-current="page">Mail</a><a href="/pulse/">Pulse</a><a href="/network/">Network</a><a href="/products/">Produits</a><a href="/downloads/">Téléchargements</a><a class="centre" href="/quantic/">Quantic ID</a></nav>'}
+function navMarkup(){return '<a class="qn-global-brand" href="/" aria-label="Quantic Sillage accueil"><span class="qn-global-mark" aria-hidden="true"></span><span>QUANTIC SILLAGE</span></a><nav class="qn-global-links" aria-label="Navigation principale"><a href="/vision/">Vision</a><a class="active" href="/mail/" aria-current="page">Mail</a><a href="/pulse/">Pulse</a><a href="/news/">News</a><a href="/network/">Network</a><a href="/products/">Produits</a><a href="/downloads/">Téléchargements</a><a class="centre" href="/quantic/">Quantic ID</a></nav>'}
 function ensureNav(){
   ensureTheme();
   if(!document.body)return;
@@ -31,6 +31,6 @@ function settle(){
   setTimeout(ensureNav,250);
   setTimeout(ensureNav,900);
 }
-if(document.readyState==='complete')settle();
-else window.addEventListener('load',settle,{once:true});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',settle,{once:true});else settle();
+window.addEventListener('load',ensureNav,{once:true});
 })();
