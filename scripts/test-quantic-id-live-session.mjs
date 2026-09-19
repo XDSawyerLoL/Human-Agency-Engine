@@ -46,15 +46,6 @@ const cookie=setCookie.split(';')[0];
 if(!cookie.startsWith('quantic_id_session='))throw new Error('missing Quantic ID session cookie');
 fs.writeFileSync(cookieFile,cookie,'utf8');
 
-let snapshotReady=false;
-for(let i=0;i<80;i++){
-  const response=await fetch(base+'/api/snapshot',{headers:{cookie},cache:'no-store'});
-  if(response.ok){snapshotReady=true;break}
-  if(response.status!==503)throw new Error('authenticated snapshot failed: '+response.status);
-  await new Promise(resolve=>setTimeout(resolve,500));
-}
-if(!snapshotReady)throw new Error('authenticated snapshot did not become ready');
-
 const privatePage=await fetch(base+'/vision/',{headers:{cookie},redirect:'manual'});
 if(!privatePage.ok)throw new Error('authenticated Vision page failed: '+privatePage.status);
 const html=await privatePage.text();
