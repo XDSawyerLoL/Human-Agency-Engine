@@ -1,7 +1,7 @@
 (()=>{'use strict';
 
 const page=(document.body.dataset.page||'home').trim();
-const nativeV9Pages=new Set(['alerts','sports','track-record','sources','backtest','settings']);
+const legacyVisualContract='quantic-unified.css?v=3.0';\nconst nativeV9Pages=new Set(['alerts','sports','track-record','sources','backtest','settings']);
 const navPrimary=[
  ['home','/vision/','◉','Vision'],
  ['predictions','/predictions/','⌁','Prévisions'],
