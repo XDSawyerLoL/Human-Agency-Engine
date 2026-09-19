@@ -63,9 +63,8 @@ global.innerHTML=`
       <a href="/mail/">Mail</a>
       <a href="/pulse/">Pulse</a>
       <a href="/news/">News</a>
-      <a href="/network/">Network</a>
       <a href="/products/" class="q-hide-mobile">Produits</a>
-      <a href="/downloads/">Téléchargements</a>
+      <a href="/downloads/">Outils</a>
       <a href="/quantic/" class="q-global-centre"><span class="q-global-status" aria-hidden="true"></span>Quantic ID</a>
     </nav>
   </div>`;
@@ -101,7 +100,7 @@ if(main&&page==='predictions'&&!main.querySelector('.p16-time-rail')){
 if(main&&!document.querySelector('.q-unified-footer')){
   const footer=document.createElement('footer');
   footer.className='q-unified-footer';
-  footer.innerHTML='<span>QUANTIC VISION · moteur PROVIDENCE / HORIZON</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/downloads/">Téléchargements</a> · <a href="/products/">Écosystème Quantic</a></span>';
+  footer.innerHTML='<span>QUANTIC VISION · moteur PROVIDENCE / HORIZON</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/downloads/">Outils</a> · <a href="/products/">Écosystème Quantic</a></span>';
   main.insertAdjacentElement('afterend',footer);
 }
 
