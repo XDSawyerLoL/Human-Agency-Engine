@@ -1,13 +1,14 @@
 import {app,BrowserWindow,dialog,ipcMain,safeStorage,shell} from "electron";
 import {createServer} from "node:http";
-import {existsSync,mkdirSync,readFileSync,writeFileSync} from "node:fs";
+import {copyFileSync,existsSync,mkdirSync,readFileSync,writeFileSync} from "node:fs";
 import {dirname,join} from "node:path";
 import {fileURLToPath} from "node:url";
-import {generateIdentity,encryptPortable,decryptPortableRecord,normalizeIdentityProfile,signAssertion} from "./vault-core.mjs";
+import {generateIdentity,generateUsbUnlockToken,encryptPortable,decryptPortableRecord,normalizeIdentityProfile,signAssertion} from "./vault-core.mjs";
 
 const __dirname=dirname(fileURLToPath(import.meta.url));
 const HOST="127.0.0.1";
 const PORT=47621;
+const USB_KEY_FILENAME="identity-vault.key";
 const isPortable=Boolean(process.env.PORTABLE_EXECUTABLE_DIR);
 const allowedOrigins=new Set([
   "https://mediumorchid-badger-314305.hostingersite.com",
@@ -18,6 +19,7 @@ let vaultPath="";
 let activeIdentity=null;
 let bridge=null;
 let bridgeError="";
+let presenceTimer=null;
 
 function localOriginAllowed(origin){
   if(!origin)return true;
@@ -71,6 +73,10 @@ function ensureVaultPath(){
   return vaultPath;
 }
 
+function keyPathFor(path=ensureVaultPath()){
+  return join(dirname(path),USB_KEY_FILENAME);
+}
+
 function validateRecord(record){
   if(!record||typeof record!=="object")throw new Error("vault_format_invalid");
   if(!["portable","pc"].includes(record.mode))throw new Error("vault_format_invalid");
@@ -96,9 +102,36 @@ function saveRecord(record){
   writeFileSync(path,JSON.stringify(record,null,2),{encoding:"utf8",mode:0o600});
 }
 
+function readUsbUnlockToken(record=loadRecord()){
+  if(record?.mode!=="portable"||record?.unlockMode!=="usb-presence")throw new Error("usb_presence_not_supported");
+  const path=keyPathFor();
+  if(!existsSync(path))throw new Error("usb_key_missing");
+  const token=String(readFileSync(path,"utf8")||"").trim();
+  if(token.length<32)throw new Error("usb_key_invalid");
+  return token;
+}
+
+function usbPresenceAvailable(record=loadRecord()){
+  if(record?.mode!=="portable"||record?.unlockMode!=="usb-presence")return false;
+  try{return readUsbUnlockToken(record).length>=32}catch{return false}
+}
+
+function backupExistingPortableVault(){
+  const target=defaultVaultPath();
+  if(!existsSync(target))return null;
+  const stamp=new Date().toISOString().replace(/[:.]/g,"-");
+  const backup=join(dirname(target),`identity-vault.backup-${stamp}.json`);
+  copyFileSync(target,backup);
+  const oldKey=join(dirname(target),USB_KEY_FILENAME);
+  if(existsSync(oldKey)){
+    copyFileSync(oldKey,join(dirname(target),`identity-vault.backup-${stamp}.key`));
+  }
+  return backup;
+}
+
 function secretPayload(privateKeyPem,profile){
   return JSON.stringify({
-    version:2,
+    version:3,
     privateKeyPem:String(privateKeyPem),
     profile:normalizeIdentityProfile(profile)
   });
@@ -117,17 +150,24 @@ function parseSecret(value){
 
 function publicStatus(){
   const record=loadRecord();
+  if(activeIdentity&&record?.mode==="portable"&&record?.unlockMode==="usb-presence"&&!usbPresenceAvailable(record)){
+    activeIdentity=null;
+  }
+  const legacyVault=Boolean(record?.mode==="portable"&&record?.unlockMode!=="usb-presence");
   return {
     product:"Quantic Identity Vault",
-    version:2,
+    version:3,
     appVersion:app.getVersion(),
     bridge:{host:HOST,port:PORT,ready:Boolean(bridge),error:bridgeError||null},
     vaultMode:record?.mode||(isPortable?"portable":"pc"),
+    unlockMode:record?.unlockMode||(record?.mode==="portable"?"legacy-code":"system"),
     keyAlgorithm:"ed25519",
     portableCipher:"aes-256-gcm",
     vaultExists:Boolean(record),
     vaultLoaded:Boolean(record),
     identityAvailable:Boolean(activeIdentity),
+    usbPresenceAvailable:usbPresenceAvailable(record),
+    legacyVault,
     keyId:activeIdentity?.keyId||record?.keyId||null,
     label:activeIdentity?.label||record?.label||null,
     publicKey:activeIdentity?.publicKey||record?.publicKey||null,
@@ -138,7 +178,7 @@ function publicStatus(){
   };
 }
 
-function createIdentity({label="",passphrase="",profile={}}={}){
+function createIdentity({label="",profile={}}={}){
   const normalizedProfile=normalizeIdentityProfile(profile);
   const suggestedLabel=normalizedProfile.preferredName||[normalizedProfile.firstName,normalizedProfile.lastName].filter(Boolean).join(" ");
   const identity=generateIdentity(label||suggestedLabel||"Mon identité Quantic");
@@ -146,28 +186,43 @@ function createIdentity({label="",passphrase="",profile={}}={}){
   const secret=secretPayload(identity.privateKeyPem,normalizedProfile);
 
   if(isPortable){
-    const encryptedSecret=encryptPortable(secret,passphrase);
-    saveRecord({version:2,mode:"portable",keyId:identity.keyId,label:identity.label,publicKey:identity.publicKey,encryptedSecret,createdAt});
-    activeIdentity={...identity,profile:normalizedProfile,unlockCredential:String(passphrase)};
+    backupExistingPortableVault();
+    vaultPath=defaultVaultPath();
+    const token=generateUsbUnlockToken();
+    const encryptedSecret=encryptPortable(secret,token);
+    writeFileSync(keyPathFor(),token,{encoding:"utf8",mode:0o600});
+    saveRecord({
+      version:3,
+      mode:"portable",
+      unlockMode:"usb-presence",
+      keyId:identity.keyId,
+      label:identity.label,
+      publicKey:identity.publicKey,
+      encryptedSecret,
+      createdAt
+    });
+    activeIdentity={...identity,profile:normalizedProfile};
   }else{
     if(!safeStorage.isEncryptionAvailable())throw new Error("system_encryption_unavailable");
     const encryptedSecret=safeStorage.encryptString(secret).toString("base64");
-    saveRecord({version:2,mode:"pc",keyId:identity.keyId,label:identity.label,publicKey:identity.publicKey,encryptedSecret,createdAt});
-    activeIdentity={...identity,profile:normalizedProfile,unlockCredential:""};
+    saveRecord({version:3,mode:"pc",unlockMode:"system",keyId:identity.keyId,label:identity.label,publicKey:identity.publicKey,encryptedSecret,createdAt});
+    activeIdentity={...identity,profile:normalizedProfile};
   }
   return publicStatus();
 }
 
-function unlockIdentity(passphrase=""){
+function unlockIdentity(){
   const record=loadRecord();
   if(!record)throw new Error("vault_not_found");
   let secretValue="";
   if(record.mode==="portable"){
+    if(record.unlockMode!=="usb-presence")throw new Error("legacy_vault_requires_code");
     try{
-      secretValue=decryptPortableRecord(record,passphrase);
+      secretValue=decryptPortableRecord(record,readUsbUnlockToken(record));
     }catch(error){
-      if(String(error?.message||error)==="portable_passphrase_too_short")throw error;
-      throw new Error("portable_unlock_failed");
+      const code=String(error?.message||error);
+      if(["usb_key_missing","usb_key_invalid"].includes(code))throw error;
+      throw new Error("usb_vault_unlock_failed");
     }
   }else if(record.mode==="pc"){
     if(!safeStorage.isEncryptionAvailable())throw new Error("system_encryption_unavailable");
@@ -185,8 +240,7 @@ function unlockIdentity(passphrase=""){
     label:record.label,
     publicKey:record.publicKey,
     privateKeyPem:secret.privateKeyPem,
-    profile:secret.profile,
-    unlockCredential:record.mode==="portable"?String(passphrase):""
+    profile:secret.profile
   };
   return publicStatus();
 }
@@ -201,15 +255,17 @@ function updateProfile(profile={}){
   let encryptedSecret;
 
   if(record.mode==="portable"){
-    encryptedSecret=encryptPortable(secret,activeIdentity.unlockCredential);
+    if(record.unlockMode!=="usb-presence")throw new Error("legacy_vault_requires_code");
+    encryptedSecret=encryptPortable(secret,readUsbUnlockToken(record));
   }else{
     if(!safeStorage.isEncryptionAvailable())throw new Error("system_encryption_unavailable");
     encryptedSecret=safeStorage.encryptString(secret).toString("base64");
   }
 
   const next={
-    version:2,
+    version:3,
     mode:record.mode,
+    unlockMode:record.mode==="portable"?"usb-presence":"system",
     keyId:record.keyId,
     label:nextLabel,
     publicKey:record.publicKey,
@@ -250,7 +306,18 @@ function tryAutoUnlockInstalled(){
   if(isPortable)return;
   const record=loadRecord();
   if(record?.mode!=="pc")return;
-  try{unlockIdentity("")}catch{}
+  try{unlockIdentity()}catch{}
+}
+
+function startPresenceMonitor(){
+  if(presenceTimer)clearInterval(presenceTimer);
+  presenceTimer=setInterval(()=>{
+    if(!activeIdentity)return;
+    const record=loadRecord();
+    if(!record||(record.mode==="portable"&&record.unlockMode==="usb-presence"&&!usbPresenceAvailable(record))){
+      activeIdentity=null;
+    }
+  },1000);
 }
 
 function startBridge(){
@@ -258,9 +325,7 @@ function startBridge(){
   bridge=createServer(async(req,res)=>{
     const origin=String(req.headers.origin||"");
     const cors=corsHeaders(origin);
-    if(!cors){
-      return json(res,403,{error:"origin_not_allowed"});
-    }
+    if(!cors)return json(res,403,{error:"origin_not_allowed"});
     if(req.method==="OPTIONS"){
       res.writeHead(204,cors);res.end();return;
     }
@@ -268,7 +333,7 @@ function startBridge(){
     if(url.pathname==="/v1/status"&&req.method==="GET"){
       const status=publicStatus();
       return json(res,200,{
-        version:2,
+        version:3,
         product:"Quantic Identity Vault",
         identityAvailable:status.identityAvailable,
         keyId:status.keyId,
@@ -286,12 +351,7 @@ function startBridge(){
           challenge:body.challenge,
           audience:body.audience||origin||""
         });
-        return json(res,200,{
-          version:1,
-          keyId:activeIdentity.keyId,
-          publicKey:activeIdentity.publicKey,
-          ...assertion
-        },cors);
+        return json(res,200,{version:1,keyId:activeIdentity.keyId,publicKey:activeIdentity.publicKey,...assertion},cors);
       }catch(error){
         return json(res,400,{error:String(error?.message||error)},cors);
       }
@@ -327,7 +387,7 @@ function createWindow(){
 ipcMain.handle("vault:status",()=>publicStatus());
 ipcMain.handle("vault:create",(_event,options)=>createIdentity(options||{}));
 ipcMain.handle("vault:load-file",()=>loadVaultFile());
-ipcMain.handle("vault:unlock",(_event,{passphrase}={})=>unlockIdentity(passphrase||""));
+ipcMain.handle("vault:unlock",()=>unlockIdentity());
 ipcMain.handle("vault:update-profile",(_event,{profile}={})=>updateProfile(profile||{}));
 ipcMain.handle("vault:lock",()=>lockIdentity());
 ipcMain.handle("vault:reveal-location",()=>{
@@ -340,9 +400,14 @@ ipcMain.handle("vault:reveal-location",()=>{
 app.whenReady().then(()=>{
   ensureVaultPath();
   tryAutoUnlockInstalled();
+  startPresenceMonitor();
   startBridge();
   createWindow();
   app.on("activate",()=>{if(BrowserWindow.getAllWindows().length===0)createWindow();});
 });
 app.on("window-all-closed",()=>{if(process.platform!=="darwin")app.quit();});
-app.on("before-quit",()=>{bridge?.close();activeIdentity=null;});
+app.on("before-quit",()=>{
+  if(presenceTimer)clearInterval(presenceTimer);
+  bridge?.close();
+  activeIdentity=null;
+});

@@ -1,7 +1,9 @@
 const $=(selector)=>document.querySelector(selector);
 const statusBox=$("#status");
 const createForm=$("#create-form");
-const unlockForm=$("#unlock-form");
+const createNote=$("#create-note");
+const unlockCard=$("#unlock-card");
+const unlockButton=$("#unlock");
 const profileForm=$("#profile-form");
 const modeText=$("#mode");
 const locationText=$("#location");
@@ -9,8 +11,6 @@ const lockButton=$("#lock");
 const revealButton=$("#reveal");
 const loadVaultButton=$("#load-vault");
 const appVersionText=$("#app-version");
-const portablePass=$("#portable-pass-wrap");
-const portableUnlock=$("#portable-unlock-wrap");
 const photoInput=$("#photo-input");
 const photoPreview=$("#photo-preview");
 const photoPlaceholder=$("#photo-placeholder");
@@ -20,20 +20,18 @@ let profilePhotoDataUrl="";
 function humanError(error){
   const code=String(error?.message||error||"");
   const map={
-    portable_passphrase_too_short:"Le code local doit contenir au moins 8 caractères.",
     system_encryption_unavailable:"Le chiffrement système Windows n’est pas disponible.",
     vault_not_found:"Aucun coffre n’existe encore.",
     vault_format_invalid:"Ce fichier n’est pas un coffre Quantic Identity Vault valide.",
-    portable_vault_format_invalid:"Le coffre USB n’utilise pas un format de chiffrement compatible.",
-    portable_unlock_failed:"Impossible de déverrouiller ce coffre. Vérifiez le code local. Si le code est correct, rechargez le bon fichier de coffre.",
+    usb_key_missing:"Le fichier d’accès de la clé USB est absent. Vérifiez que vous avez bien sélectionné le coffre de la bonne clé.",
+    usb_key_invalid:"Le fichier d’accès USB est invalide.",
+    usb_vault_unlock_failed:"Le coffre et le fichier d’accès USB ne correspondent pas.",
+    legacy_vault_requires_code:"Cet ancien coffre a été créé avec le système de code local. Il est conservé, mais la nouvelle version ne demande plus ce code : créez une nouvelle identité USB sans code.",
     pc_unlock_failed:"Ce coffre PC ne peut pas être déchiffré sur ce compte Windows.",
     profile_photo_invalid:"La photo sélectionnée n’est pas dans un format accepté.",
     profile_photo_too_large:"La photo est trop volumineuse. Utilisez une image de moins de 2 Mo.",
-    identity_locked:"Déverrouillez d’abord l’identité.",
-    UnsupportedState:"Le coffre ne peut pas être déchiffré sur ce compte Windows."
+    identity_locked:"Déverrouillez d’abord l’identité."
   };
-  if(/portable_unlock_failed|Unsupported state|authenticate data|bad decrypt|unable to authenticate/i.test(code))return"Impossible de déverrouiller ce coffre. Vérifiez le code local puis, si nécessaire, utilisez « Charger / changer de coffre » pour sélectionner le bon fichier.";
-  if(/pc_unlock_failed/i.test(code))return"Ce coffre PC ne peut pas être déchiffré sur ce compte Windows.";
   const known=Object.entries(map).find(([key])=>code.includes(key));
   return known?known[1]:code;
 }
@@ -82,35 +80,55 @@ function basicProfileFromCreate(){
 
 function render(status){
   appVersionText.textContent=status.appVersion?"v"+status.appVersion:"";
-  modeText.textContent=status.vaultMode==="portable"?"Mode portable · clé USB":"Mode PC · chiffrement Windows";
+  modeText.textContent=status.vaultMode==="portable"?"Mode portable · présence USB":"Mode PC · chiffrement Windows";
   locationText.textContent=status.vaultPath||"";
   document.body.dataset.mode=status.vaultMode;
-  portablePass.hidden=status.vaultMode!=="portable";
-  portableUnlock.hidden=status.vaultMode!=="portable";
+
+  createForm.hidden=true;
+  unlockCard.hidden=true;
+  profileForm.hidden=true;
+  lockButton.hidden=true;
 
   if(status.identityAvailable){
     statusBox.dataset.state="ready";
     statusBox.innerHTML="<strong>Quantic ID déverrouillé</strong><span>"+escapeHtml(status.label||status.keyId)+"</span><small>"+escapeHtml(status.keyId||"")+"</small>";
-    createForm.hidden=true;
-    unlockForm.hidden=true;
     profileForm.hidden=false;
     lockButton.hidden=false;
     setProfileForm(status.profile||{});
-  }else if(status.vaultExists){
-    statusBox.dataset.state="locked";
-    statusBox.innerHTML="<strong>Coffre chargé · identité verrouillée</strong><span>Le fichier est chargé sans code. Saisissez le code local uniquement pour ouvrir les données privées.</span>";
-    createForm.hidden=true;
-    unlockForm.hidden=false;
-    profileForm.hidden=true;
-    lockButton.hidden=true;
-  }else{
-    statusBox.dataset.state="empty";
-    statusBox.innerHTML="<strong>Aucune identité chargée</strong><span>Chargez un coffre existant ou créez une nouvelle identité.</span>";
-    createForm.hidden=false;
-    unlockForm.hidden=true;
-    profileForm.hidden=true;
-    lockButton.hidden=true;
+    return;
   }
+
+  if(status.legacyVault){
+    statusBox.dataset.state="error";
+    statusBox.innerHTML="<strong>Ancien coffre protégé par code</strong><span>Ce coffre ne peut pas être converti sans son ancien code. Il ne sera pas supprimé : la création d’une nouvelle identité en fera d’abord une sauvegarde automatique.</span>";
+    createNote.textContent="Un nouveau coffre USB sans code va être créé. L’ancien identity-vault.json sera sauvegardé automatiquement avant remplacement.";
+    createForm.hidden=false;
+    return;
+  }
+
+  if(status.vaultExists&&status.vaultMode==="portable"){
+    if(status.usbPresenceAvailable){
+      statusBox.dataset.state="locked";
+      statusBox.innerHTML="<strong>Identity Vault verrouillé</strong><span>Clé USB détectée. Cliquez simplement sur Déverrouiller.</span>";
+      unlockCard.hidden=false;
+    }else{
+      statusBox.dataset.state="error";
+      statusBox.innerHTML="<strong>Clé USB incomplète</strong><span>Le coffre est présent mais son fichier identity-vault.key est absent. Chargez le coffre depuis la bonne clé USB.</span>";
+    }
+    return;
+  }
+
+  if(status.vaultExists){
+    statusBox.dataset.state="locked";
+    statusBox.innerHTML="<strong>Identity Vault verrouillé</strong><span>Cliquez sur Déverrouiller.</span>";
+    unlockCard.hidden=false;
+    return;
+  }
+
+  statusBox.dataset.state="empty";
+  statusBox.innerHTML="<strong>Aucune identité</strong><span>Créez votre Quantic ID. Sur clé USB, aucun code local ne sera demandé.</span>";
+  createNote.textContent="Le coffre sera protégé par la présence physique de la clé USB. Aucun code local ne sera créé.";
+  createForm.hidden=false;
 }
 
 async function refresh(){
@@ -129,7 +147,6 @@ createForm.addEventListener("submit",async event=>{
   try{
     const result=await window.IdentityVault.create({
       label:data.get("label"),
-      passphrase:data.get("passphrase"),
       profile:basicProfileFromCreate()
     });
     render(result);
@@ -137,20 +154,11 @@ createForm.addEventListener("submit",async event=>{
   }catch(error){alert(humanError(error))}
 });
 
-unlockForm.addEventListener("submit",async event=>{
-  event.preventDefault();
-  const data=new FormData(unlockForm);
-  try{
-    const result=await window.IdentityVault.unlock(data.get("passphrase")||"");
-    render(result);
-    unlockForm.reset();
-  }catch(error){
-    const message=humanError(error);
+unlockButton.addEventListener("click",async()=>{
+  try{render(await window.IdentityVault.unlock())}
+  catch(error){
     statusBox.dataset.state="error";
-    statusBox.innerHTML="<strong>Déverrouillage impossible</strong><span>"+escapeHtml(message)+"</span>";
-    const input=unlockForm.elements.namedItem("passphrase");
-    input?.focus();
-    input?.select?.();
+    statusBox.innerHTML="<strong>Déverrouillage impossible</strong><span>"+escapeHtml(humanError(error))+"</span>";
   }
 });
 
@@ -190,3 +198,4 @@ lockButton.addEventListener("click",async()=>render(await window.IdentityVault.l
 revealButton.addEventListener("click",()=>window.IdentityVault.revealLocation());
 
 refresh();
+setInterval(refresh,1500);

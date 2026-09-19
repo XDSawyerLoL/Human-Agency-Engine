@@ -72,6 +72,6 @@ jobs:
         run: |
           gh release view "$env:TAG" 2>$null
           if ($LASTEXITCODE -ne 0) {
-            gh release create "$env:TAG" --target "$env:GITHUB_SHA" --title "Quantic Identity Vault v$env:VERSION" --prerelease --notes "Quantic Identity Vault v$env:VERSION. Le fichier du coffre USB se charge sans code ; le code local sert uniquement au déverrouillage. Cette correction affiche clairement la version de l’application, remplace les erreurs cryptographiques brutes par un message compréhensible, permet de changer de coffre à tout moment et vérifie la compatibilité des coffres USB v1. Le profil personnel et la photo restent chiffrés localement. Inclut un installateur Windows et une version portable USB."
+            gh release create "$env:TAG" --target "$env:GITHUB_SHA" --title "Quantic Identity Vault v$env:VERSION" --prerelease --notes "Quantic Identity Vault v$env:VERSION remplace le code local USB par un modèle de présence physique : la clé USB contient le coffre chiffré et un fichier d’accès cryptographique généré automatiquement. Tant que la clé est connectée, un clic suffit pour verrouiller ou déverrouiller. Retirer la clé verrouille l’identité. Les anciens coffres protégés par code sont détectés et sauvegardés avant la création d’une nouvelle identité sans code. Le profil personnel et la photo restent chiffrés localement."
           }
           gh release upload "$env:TAG" "identity-vault/dist/Quantic-Identity-Vault-Setup-$env:VERSION.exe" "identity-vault/dist/Quantic-Identity-Vault-Portable-$env:VERSION.exe" --clobber

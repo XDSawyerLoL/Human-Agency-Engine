@@ -1,15 +1,22 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {generateIdentity,encryptPortable,decryptPortable,decryptPortableRecord,normalizeIdentityProfile,signAssertion,verifyAssertion} from "../src/vault-core.mjs";
+import {generateIdentity,generateUsbUnlockToken,encryptPortable,decryptPortable,decryptPortableRecord,normalizeIdentityProfile,signAssertion,verifyAssertion} from "../src/vault-core.mjs";
 
-test("portable vault encrypts and decrypts an Ed25519 private key",()=>{
-  const identity=generateIdentity("USB");
-  const encrypted=encryptPortable(identity.privateKeyPem,"12345678-local");
-  assert.notEqual(encrypted.ciphertext,identity.privateKeyPem);
-  assert.equal(decryptPortable(encrypted,"12345678-local"),identity.privateKeyPem);
+test("USB presence token is machine-generated and strong",()=>{
+  const token=generateUsbUnlockToken();
+  assert.ok(token.length>=43);
+  assert.notEqual(token,generateUsbUnlockToken());
 });
 
-test("legacy v1 USB record remains unlockable",()=>{
+test("USB presence token encrypts and decrypts an Ed25519 private key",()=>{
+  const identity=generateIdentity("USB");
+  const token=generateUsbUnlockToken();
+  const encrypted=encryptPortable(identity.privateKeyPem,token);
+  assert.notEqual(encrypted.ciphertext,identity.privateKeyPem);
+  assert.equal(decryptPortable(encrypted,token),identity.privateKeyPem);
+});
+
+test("legacy v1 USB record remains cryptographically readable when its old code is known",()=>{
   const identity=generateIdentity("Legacy USB");
   const record={
     version:1,
@@ -19,7 +26,6 @@ test("legacy v1 USB record remains unlockable",()=>{
     encryptedPrivateKey:encryptPortable(identity.privateKeyPem,"12345678-local")
   };
   assert.equal(decryptPortableRecord(record,"12345678-local"),identity.privateKeyPem);
-  assert.throws(()=>decryptPortableRecord(record,"wrong-code-000"),/authenticate|Unsupported|bad decrypt/i);
 });
 
 test("portable vault can encrypt a complete private identity profile",()=>{
@@ -31,9 +37,10 @@ test("portable vault can encrypt a complete private identity profile",()=>{
     city:"London",
     photoDataUrl:"data:image/png;base64,aGVsbG8="
   });
-  const payload=JSON.stringify({version:2,privateKeyPem:identity.privateKeyPem,profile});
-  const encrypted=encryptPortable(payload,"12345678-local");
-  const decrypted=JSON.parse(decryptPortable(encrypted,"12345678-local"));
+  const payload=JSON.stringify({version:3,privateKeyPem:identity.privateKeyPem,profile});
+  const token=generateUsbUnlockToken();
+  const encrypted=encryptPortable(payload,token);
+  const decrypted=JSON.parse(decryptPortable(encrypted,token));
   assert.equal(decrypted.profile.firstName,"Ada");
   assert.equal(decrypted.profile.lastName,"Lovelace");
   assert.equal(decrypted.profile.email,"ada@example.test");

@@ -17,8 +17,8 @@
 
     <section class="hero">
       <p class="kicker">QUANTIC ID</p>
-      <h2>Votre identité reste ici.</h2>
-      <p>Chargez votre coffre USB sans saisir de code. Le code local n’est demandé qu’au moment de déverrouiller les données privées et la clé cryptographique.</p>
+      <h2>La clé USB est votre accès.</h2>
+      <p>Aucun code local à saisir. Tant que la clé USB contenant votre coffre est connectée, un clic suffit pour verrouiller ou déverrouiller votre identité.</p>
     </section>
 
     <section id="status" class="status" data-state="checking"><strong>Chargement…</strong></section>
@@ -30,21 +30,20 @@
 
     <form id="create-form" class="card" hidden>
       <h3>Créer mon Quantic ID</h3>
+      <p class="card-intro" id="create-note">Le coffre sera protégé par la présence physique de la clé USB. Aucun code local ne sera créé.</p>
       <div class="form-grid">
         <label class="wide">Nom de l’identité<input name="label" maxlength="80" value="Mon identité Quantic" required></label>
         <label>Prénom<input name="firstName" maxlength="100"></label>
         <label>Nom<input name="lastName" maxlength="100"></label>
       </div>
-      <label id="portable-pass-wrap" hidden>Code local du coffre USB<input name="passphrase" type="password" minlength="8" autocomplete="new-password"><small>Le code sert au déverrouillage. Il n’est pas nécessaire pour charger le fichier du coffre.</small></label>
-      <button type="submit">Créer l’identité</button>
+      <button type="submit">Créer l’identité sans code</button>
     </form>
 
-    <form id="unlock-form" class="card" hidden>
-      <h3>Coffre chargé</h3>
-      <p class="card-intro">Le fichier est déjà chargé. Entrez maintenant le code local uniquement pour déverrouiller l’identité.</p>
-      <div id="portable-unlock-wrap" hidden><label>Code local du coffre USB<input name="passphrase" type="password" minlength="8" autocomplete="current-password"></label></div>
-      <button type="submit">Déverrouiller Quantic ID</button>
-    </form>
+    <section id="unlock-card" class="card" hidden>
+      <h3>Identity Vault verrouillé</h3>
+      <p class="card-intro">La clé USB est détectée. Aucun code n’est nécessaire.</p>
+      <button id="unlock" type="button">Déverrouiller</button>
+    </section>
 
     <form id="profile-form" class="card profile-card" hidden>
       <div class="profile-heading">
@@ -107,14 +106,14 @@
 
     <section class="meta">
       <div><small>MODE</small><strong id="mode">—</strong></div>
-      <div><small>COFFRE CHARGÉ</small><span id="location">—</span></div>
+      <div><small>COFFRE</small><span id="location">—</span></div>
     </section>
 
     <div class="actions">
       <button id="lock" class="secondary" hidden>Verrouiller</button>
     </div>
 
-    <footer>Quantic Identity Vault · profil personnel et clé privée chiffrés localement</footer>
+    <footer>Quantic Identity Vault · la présence de la clé USB autorise le déverrouillage local</footer>
   </main>
 <script src="./renderer.js"></script>
 </body>

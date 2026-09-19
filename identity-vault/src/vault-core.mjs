@@ -63,6 +63,10 @@ export function generateIdentity(label="Mon identité Quantic"){
   return {keyId,label:String(label||"Quantic ID").trim().slice(0,80)||"Quantic ID",publicKey:b64url(publicDer),privateKeyPem:privatePem};
 }
 
+export function generateUsbUnlockToken(){
+  return randomBytes(32).toString("base64url");
+}
+
 export function encryptPortable(secretValue,passphrase){
   const secret=requirePassphrase(passphrase);
   const salt=randomBytes(16),iv=randomBytes(12);

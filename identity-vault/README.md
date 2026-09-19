@@ -4,33 +4,27 @@ Compagnon local de **Quantic ID**.
 
 ## Modes
 
-- **PC** : la clé privée Ed25519 et le profil personnel sont chiffrés avec `Electron safeStorage` et stockés dans le profil local.
-- **Portable USB** : le coffre reste à côté de l’exécutable sur la clé. La clé privée **et le profil personnel** sont chiffrés avec AES-256-GCM. La clé de chiffrement est dérivée localement avec scrypt à partir du code choisi par l’utilisateur.
+- **PC** : la clé privée Ed25519 et le profil personnel sont chiffrés avec `Electron safeStorage`.
+- **Portable USB** : aucun code local n’est demandé. La présence physique de la clé USB est le facteur d’accès.
 
-## Chargement et déverrouillage
+## Déverrouillage USB sans code
 
-Le chargement du fichier du coffre et son déverrouillage sont deux opérations distinctes :
+Depuis la v0.3.0, un coffre USB est composé de deux éléments placés ensemble sur la clé :
 
-1. l’utilisateur peut sélectionner et charger `identity-vault.json` (ou un fichier `.qivault`) sans saisir son code ;
-2. le fichier chargé expose uniquement les métadonnées publiques nécessaires pour identifier le coffre ;
-3. le code local est demandé seulement pour déchiffrer la clé privée et le profil personnel.
+- `identity-vault.json` : coffre chiffré contenant la clé privée et le profil ;
+- `identity-vault.key` : secret cryptographique aléatoire généré automatiquement.
 
-Les coffres de format v1 restent lisibles. Lorsqu’un ancien coffre est déverrouillé puis qu’un profil est enregistré, il est migré vers le format v2.
+L’utilisateur ne saisit aucun mot de passe. Si les deux fichiers sont présents sur la clé, un clic sur **Déverrouiller** active Quantic ID. **Verrouiller** retire la clé privée de la mémoire. Si la clé USB disparaît, l’identité active est automatiquement invalidée.
+
+Ce modèle protège surtout contre l’utilisation de l’identité sans possession de la clé USB. Une personne qui obtient physiquement la clé complète obtient également le facteur de déverrouillage.
+
+## Anciens coffres
+
+Les coffres v1/v2 protégés par un code local sont détectés comme anciens formats. Ils ne peuvent pas être déchiffrés sans leur ancien code. Lorsqu’une nouvelle identité USB sans code est créée, l’ancien `identity-vault.json` est sauvegardé automatiquement sous un nom `identity-vault.backup-*.json` avant remplacement.
 
 ## Profil personnel chiffré
 
-Le format v2 peut conserver localement :
-
-- photo (PNG, JPEG ou WebP) ;
-- prénom, autres prénoms, nom et nom d’usage ;
-- date et lieu de naissance, nationalité, genre/civilité ;
-- email et téléphone ;
-- adresse complète ;
-- profession, organisation et site web ;
-- contact d’urgence ;
-- informations complémentaires.
-
-Ces données ne sont pas renvoyées par le bridge local. Leur éventuel partage avec un service Quantic devra passer par un mécanisme de consentement explicite.
+Le coffre peut conserver localement la photo, l’état civil, les coordonnées, l’adresse, l’activité professionnelle, un contact d’urgence et des informations complémentaires. Ces données ne sont jamais exposées par le bridge local sans mécanisme de partage explicite.
 
 ## Bridge local
 
@@ -40,7 +34,3 @@ Identity Vault écoute uniquement sur `127.0.0.1:47621`.
 - `POST /v1/assert` : signe un challenge avec Ed25519.
 
 La clé privée et le profil personnel ne sont jamais renvoyés par cette API locale.
-
-## État de sécurité
-
-La v0.2.0 sépare le chargement du coffre du déverrouillage, chiffre le profil avec la clé privée et conserve la compatibilité avec les coffres v1. Le portail Quantic peut vérifier qu’une identité est active via le bridge sans recevoir les données privées du profil.
