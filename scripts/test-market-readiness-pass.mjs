@@ -13,10 +13,10 @@ const visionHome=read("public/quantic-vision-home-v8.js");
 const products=read("public/products/index.html");
 const home=read("public/index.html");
 
-assert.ok(!network.includes("État du réseau inconnu"),"Network must not expose unknown status copy");
-assert.ok(network.includes('class="q-technical-details"'),"Network must move provider details behind a technical disclosure");
-assert.ok(network.includes("Si un chemin tombe, Quantic cherche un autre chemin disponible."),"Network must lead with user-facing resilience language");
-assert.ok(network.includes("data-network-continuity"),"Network must expose an aggregate continuity state");
+assert.ok(network.includes("/downloads/#network"),"Network route must redirect into the unified Outils surface");
+assert.ok(downloads.includes('id="network"'),"Downloads must own the Network section");
+assert.ok(downloads.includes("data-network-continuity"),"Unified Network section must expose an aggregate continuity state");
+assert.ok(downloads.includes("Disponibilité générale"),"Unified Network section must lead with readable service continuity");
 
 assert.ok(quantic.includes("STATUS_TIMEOUT_MS"),"Network status fetch must have an explicit timeout");
 assert.ok(quantic.includes("AbortController"),"Network status fetch must be abortable");
