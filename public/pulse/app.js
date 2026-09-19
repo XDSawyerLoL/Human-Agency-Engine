@@ -320,8 +320,28 @@ function bindDelegatedEvents(){
   });
 }
 
+function applyIncomingShare(){
+  const params=new URLSearchParams(location.search);
+  if(params.get('share')!=='news')return;
+  const title=(params.get('title')||'').trim();
+  const url=(params.get('url')||'').trim();
+  const parts=[];
+  if(title)parts.push(title);
+  if(url)parts.push(url);
+  const draft=parts.join('\n\n').slice(0,420);
+  if(draft){
+    dom.textarea.value=draft;
+    dom.count.textContent=dom.textarea.value.length+' / 420';
+    dom.publish.disabled=!dom.textarea.value.trim();
+    setView('home','Accueil');
+    setTimeout(()=>dom.textarea.focus(),0);
+  }
+  history.replaceState({},document.title,location.pathname);
+}
+
 async function init(){
   bindStaticEvents();
+  applyIncomingShare();
   bindDelegatedEvents();
   await health();
   await restoreSession();
