@@ -6,6 +6,8 @@ const CHALLENGE_TTL=120000;
 const SESSION_TTL=12*60*60*1000;
 const challenges=new Map();
 const sessions=new Map();
+const INTERNAL_HEADER='x-quantic-internal';
+const INTERNAL_TOKEN=randomBytes(32).toString('hex');
 
 const privatePagePrefixes=[
   '/vision','/predictions','/analyst','/alerts','/sports','/cameras',
@@ -128,8 +130,15 @@ function isPrivatePage(pathname){
 function isPublicApi(pathname){
   return pathname==='/api/health'||pathname.startsWith('/api/id/')||pathname.startsWith('/api/pulse/')||pathname.startsWith('/api/quantic-portal/');
 }
+export function quanticInternalHeaders(){
+  return {[INTERNAL_HEADER]:INTERNAL_TOKEN};
+}
+function internalRequest(req){
+  return req.get(INTERNAL_HEADER)===INTERNAL_TOKEN;
+}
 export function requireQuanticIdentity(req,res,next){
   const pathname=req.path||'/';
+  if(internalRequest(req))return next();
   const privatePage=isPrivatePage(pathname);
   const privateApi=pathname.startsWith('/api/')&&!isPublicApi(pathname);
   if(!privatePage&&!privateApi)return next();
