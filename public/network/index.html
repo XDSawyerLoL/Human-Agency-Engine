@@ -1,66 +1,14 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f5f7f9">
-  <title>Quantic Network — Continuité des services</title>
-  <meta name="description" content="Quantic Network aide les services Quantic à rester joignables lorsqu’un chemin devient indisponible.">
-  <link rel="stylesheet" href="/quantic.css?v=2.0" media="not all">
-  <link rel="stylesheet" href="/quantic-unified.css?v=3.0" media="not all">
-  <link rel="stylesheet" href="/quantic-finish-v4.css?v=4.1" media="not all">
-  <link rel="stylesheet" href="/quantic-premium-v5.css?v=5.0" media="not all">
-  <link rel="stylesheet" href="/quantic-system-v6.css?v=6.1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="refresh" content="0;url=/downloads/#network">
+  <title>Quantic Network</title>
+  <link rel="canonical" href="/downloads/#network">
 </head>
-<body class="q-body q-premium" data-status-endpoint="/api/quantic-portal/status">
-<div class="q-noise" aria-hidden="true"></div>
-<header class="q-topbar"><nav class="q-shell q-nav" aria-label="Navigation principale"><a class="q-brand" href="/"><span class="q-mark" aria-hidden="true"></span><span>QUANTIC SILLAGE</span></a><div class="q-links"><a href="/vision/">Vision</a><a href="/mail/">Mail</a><a href="/pulse/">Pulse</a><a href="/news/">News</a><a href="/network/" aria-current="page">Network</a><a href="/products/">Produits</a><a href="/downloads/">Téléchargements</a><a class="q-nav-cta" href="/quantic/">Quantic ID</a></div></nav></header>
-
-<main class="q-shell">
-  <section class="q-dashboard-hero q-unified-hero" data-q-reveal>
-    <p class="q-kicker">CONTINUITÉ</p>
-    <h1>Un chemin tombe.<br>Quantic continue.</h1>
-    <p>Quantic Network donne aux applications plusieurs chemins pour rester joignables. Si un chemin tombe, Quantic cherche un autre chemin disponible.</p>
-    <div class="q-status-summary" data-quantic-status-summary><span class="q-status-dot is-pending"></span><span data-status-label>Vérification des services…</span><span class="q-status-meta" data-status-meta>Première vérification en cours</span><button class="q-status-refresh" type="button" data-network-refresh>Actualiser</button></div>
-  </section>
-
-  <section class="q-section" data-q-reveal>
-    <div class="q-section-head">
-      <div><p class="q-kicker">ÉTAT DU SERVICE</p><h2>Ce qui compte maintenant.</h2><p class="q-section-copy">Le statut indique simplement si les principaux chemins répondent. Il ne constitue pas un audit de sécurité.</p></div>
-      <span class="q-section-index">01 / STATUS</span>
-    </div>
-    <div class="q-network-public-grid">
-      <article class="q-service" data-service-id="vision"><div class="q-service-head"><h3>Quantic Vision</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Accès au moteur d’analyse et de prévision.</p><small class="q-service-meta" data-service-meta>Jamais vérifié</small></article>
-      <article class="q-service" data-service-id="mail"><div class="q-service-head"><h3>Quantic Mail</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Accès à la messagerie Quantic protégée par Quantic ID.</p><small class="q-service-meta" data-service-meta>Jamais vérifié</small></article>
-      <article class="q-service" data-network-continuity><div class="q-service-head"><h3>Continuité réseau</h3><span class="q-service-state" data-network-continuity-state data-state="checking">Vérification…</span></div><p>Plusieurs chemins peuvent prendre le relais si l’un d’eux devient indisponible.</p><small class="q-service-meta" data-continuity-meta>Calculé à partir des relais surveillés</small></article>
-    </div>
-  </section>
-
-  <section class="q-section" data-q-reveal>
-    <div class="q-section-head">
-      <div><p class="q-kicker">POURQUOI NETWORK</p><h2>Rester disponible sans dépendre d’un seul passage.</h2></div>
-      <span class="q-section-index">02 / RESILIENCE</span>
-    </div>
-    <div class="q-grid">
-      <article class="q-card network"><span class="q-card-icon">01</span><span class="q-card-meta">identifier</span><h3>Retrouver</h3><p>Les applications savent où joindre les services Quantic sans faire d’une adresse unique l’identité de l’utilisateur.</p></article>
-      <article class="q-card network"><span class="q-card-icon">02</span><span class="q-card-meta">basculer</span><h3>Changer de chemin</h3><p>Lorsqu’un chemin ne répond plus, un autre peut reprendre le transport sans changer votre identité.</p></article>
-      <article class="q-card network"><span class="q-card-icon">03</span><span class="q-card-meta">continuer</span><h3>Continuer</h3><p>Le but est simple : réduire le risque qu’une panne unique coupe tout l’écosystème.</p></article>
-    </div>
-
-    <details class="q-technical-details">
-      <summary>Architecture technique</summary>
-      <div class="q-technical-details-body">
-        <p>Cette vue détaille les chemins actuellement surveillés. « Disponible » signifie qu’un endpoint répond au contrôle technique ; cela ne signifie ni audit de sécurité ni garantie d’absence de panne.</p>
-        <div class="q-service-grid">
-          <article class="q-service" data-service-id="relay-render"><div class="q-service-head"><h3>Relay Render</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Chemin de continuité sur un fournisseur distinct.</p><small class="q-service-meta" data-service-meta>Jamais vérifié</small></article>
-          <article class="q-service" data-service-id="relay-railway"><div class="q-service-head"><h3>Relay Railway</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Chemin de continuité sur un second fournisseur.</p><small class="q-service-meta" data-service-meta>Jamais vérifié</small></article>
-          <article class="q-service" data-service-id="relay-hostinger"><div class="q-service-head"><h3>Relay Hostinger</h3><span class="q-service-state" data-service-state data-state="checking">Vérification…</span></div><p>Relais intégré au runtime principal.</p><small class="q-service-meta" data-service-meta>Jamais vérifié</small></article>
-        </div>
-      </div>
-    </details>
-
-    <div class="q-band"><div><strong>La continuité est une fonction, pas une promesse absolue.</strong><p>Network réduit la dépendance à un seul chemin. L’état réel reste mesuré en continu et une panne peut toujours affecter temporairement un service.</p></div><a class="q-button secondary" href="/mail/">Ouvrir Quantic Mail</a></div>
-  </section>
-</main>
-
-<footer class="q-shell q-footer"><span>QUANTIC NETWORK · CONTINUITÉ</span><span><a href="/quantic/">Quantic ID</a> · <a href="/downloads/">Téléchargements</a> · <a href="/products/">Écosystème</a></span></footer>
-<script src="/quantic.js?v=2.1" defer></script>
-</body></html>
+<body>
+  <p>Quantic Network est désormais intégré à <a href="/downloads/#network">Network & téléchargements</a>.</p>
+  <script>location.replace('/downloads/#network');</script>
+</body>
+</html>
