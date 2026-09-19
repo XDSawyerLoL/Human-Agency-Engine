@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import { join } from 'node:path';
-import { randomBytes, createHash, scryptSync, timingSafeEqual } from 'node:crypto';
+import { randomBytes, createHash, createPublicKey, verify, scryptSync, timingSafeEqual } from 'node:crypto';
 
 const DATA_DIR=process.env.DATA_DIR||'./data';
 const FILE=join(DATA_DIR,'pulse.json');
@@ -28,6 +28,9 @@ const usePostgres=!!PULSE_DATABASE_URL;
 const useMysql=!usePostgres&&!!(MYSQL.host&&MYSQL.user&&MYSQL.database);
 let pgPool=null,mysqlPool=null,writeQueue=Promise.resolve();
 const rate=new Map();
+const identityChallenges=new Map();
+const IDENTITY_AUDIENCE='quantic-pulse';
+const IDENTITY_CHALLENGE_MS=120000;
 
 function emptyStore(){return{version:1,users:{},handles:{},sessions:{},posts:{},follows:{},likes:{},reposts:{},bookmarks:{},circles:{},circleMembers:{},notifications:{},reports:{},blocks:{},conversations:{},messages:{}}}
 function id(prefix=''){return prefix+randomBytes(12).toString('hex')}
@@ -40,6 +43,34 @@ function bearer(req){return String(req.headers.authorization||'').match(/^Bearer
 function hashPassword(password,salt=randomBytes(16).toString('hex')){return{salt,hash:scryptSync(String(password),salt,64).toString('hex')}}
 function verifyPassword(password,user){const a=scryptSync(String(password),user.passwordSalt,64),b=Buffer.from(user.passwordHash,'hex');return a.length===b.length&&timingSafeEqual(a,b)}
 function allowRate(req,bucket,max,windowMs){const ip=String(req.headers['x-forwarded-for']||req.socket?.remoteAddress||'unknown').split(',')[0].trim(),key=ip+':'+bucket,t=Date.now(),cur=rate.get(key);if(!cur||t-cur.start>windowMs){rate.set(key,{start:t,count:1});return true}cur.count++;return cur.count<=max}
+function cleanupIdentityChallenges(){const t=Date.now();for(const[key,value]of identityChallenges)if(value.expiresAt<=t)identityChallenges.delete(key)}
+function identityKeyId(publicKeyB64url){return'qid_'+createHash('sha256').update(Buffer.from(publicKeyB64url,'base64url')).digest('hex').slice(0,32)}
+function issueIdentityChallenge(action,handle){
+  cleanupIdentityChallenges();
+  const challenge=randomBytes(32).toString('base64url'),expiresAt=Date.now()+IDENTITY_CHALLENGE_MS;
+  identityChallenges.set(challenge,{action,handle,expiresAt});
+  return{challenge,audience:IDENTITY_AUDIENCE,expiresAt:new Date(expiresAt).toISOString()};
+}
+function verifyIdentityProof(proof,{action,handle}){
+  cleanupIdentityChallenges();
+  if(!proof||typeof proof!=='object')return{error:'identity_proof_required'};
+  const keyId=clean(proof.keyId,80),publicKey=clean(proof.publicKey,1200),payload=String(proof.payload||''),signature=clean(proof.signature,1000);
+  if(!keyId||!publicKey||!payload||!signature)return{error:'identity_proof_required'};
+  let parsed;
+  try{parsed=JSON.parse(payload)}catch{return{error:'identity_proof_invalid'}}
+  const challenge=clean(parsed.challenge,4096),entry=identityChallenges.get(challenge);
+  if(!entry||entry.expiresAt<=Date.now())return{error:'identity_challenge_expired'};
+  identityChallenges.delete(challenge);
+  if(entry.action!==action||entry.handle!==handle)return{error:'identity_challenge_mismatch'};
+  if(parsed.audience!==IDENTITY_AUDIENCE||parsed.keyId!==keyId)return{error:'identity_proof_invalid'};
+  if(identityKeyId(publicKey)!==keyId)return{error:'identity_proof_invalid'};
+  try{
+    const key=createPublicKey({key:Buffer.from(publicKey,'base64url'),type:'spki',format:'der'});
+    const ok=verify(null,Buffer.from(payload),key,Buffer.from(signature,'base64url'));
+    if(!ok)return{error:'identity_proof_invalid'};
+  }catch{return{error:'identity_proof_invalid'}}
+  return{keyId,publicKey};
+}
 
 async function pg(){
   if(!usePostgres)return null;
@@ -102,20 +133,45 @@ export async function handlePulse(req,res,url,corsHeaders={}){
 
     if(route==='/api/pulse/health'&&req.method==='GET'){json(res,200,{ok:true,service:'quantic-pulse',storage:usePostgres?'postgres':useMysql?'mysql':'json'},corsHeaders);return true}
 
+    if(route==='/api/pulse/auth/challenge'&&req.method==='POST'){
+      if(!allowRate(req,'identity_challenge',40,60000)){json(res,429,{error:'rate_limited'},corsHeaders);return true}
+      const b=await bodyJson(req),action=b.action==='register'?'register':'login',handle=clean(b.handle,24).toLowerCase().replace(/^@/,'');
+      if(!HANDLE_RE.test(handle)){json(res,400,{error:'invalid_handle'},corsHeaders);return true}
+      json(res,200,issueIdentityChallenge(action,handle),corsHeaders);return true
+    }
+
     if(route==='/api/pulse/auth/register'&&req.method==='POST'){
       if(!allowRate(req,'register',8,3600000)){json(res,429,{error:'rate_limited'},corsHeaders);return true}
       const b=await bodyJson(req),handle=clean(b.handle,24).toLowerCase().replace(/^@/,''),displayName=clean(b.displayName,50),password=String(b.password||'');
       if(!HANDLE_RE.test(handle)){json(res,400,{error:'invalid_handle'},corsHeaders);return true}
       if(displayName.length<2){json(res,400,{error:'invalid_display_name'},corsHeaders);return true}
       if(password.length<10||password.length>128){json(res,400,{error:'weak_password'},corsHeaders);return true}
-      const out=await mutateStore(store=>{if(store.handles[handle])return{error:'handle_taken'};const uid=id('u_'),pw=hashPassword(password);store.users[uid]={id:uid,handle,displayName,bio:'',avatar:'',verified:false,passwordSalt:pw.salt,passwordHash:pw.hash,createdAt:now(),updatedAt:now()};store.handles[handle]=uid;store.follows[uid]=[];store.blocks[uid]=[];store.bookmarks[uid]=[];const token=createSession(store,uid);return{token,user:publicUser(store.users[uid],store,uid)}});
-      json(res,out.error?409:201,out,corsHeaders);return true
+      const identity=verifyIdentityProof(b.identityProof,{action:'register',handle});
+      if(identity.error){json(res,401,{error:identity.error},corsHeaders);return true}
+      const out=await mutateStore(store=>{
+        if(store.handles[handle])return{error:'handle_taken'};
+        if(Object.values(store.users).some(user=>user.identityKeyId===identity.keyId))return{error:'identity_already_linked'};
+        const uid=id('u_'),pw=hashPassword(password);
+        store.users[uid]={id:uid,handle,displayName,bio:'',avatar:'',verified:false,passwordSalt:pw.salt,passwordHash:pw.hash,identityKeyId:identity.keyId,identityPublicKey:identity.publicKey,createdAt:now(),updatedAt:now()};
+        store.handles[handle]=uid;store.follows[uid]=[];store.blocks[uid]=[];store.bookmarks[uid]=[];
+        const token=createSession(store,uid);return{token,user:publicUser(store.users[uid],store,uid)}
+      });
+      json(res,out.error?(out.error==='identity_already_linked'?409:409):201,out,corsHeaders);return true
     }
 
     if(route==='/api/pulse/auth/login'&&req.method==='POST'){
       if(!allowRate(req,'login',20,900000)){json(res,429,{error:'rate_limited'},corsHeaders);return true}
       const b=await bodyJson(req),handle=clean(b.handle,24).toLowerCase().replace(/^@/,''),password=String(b.password||'');
-      const out=await mutateStore(store=>{const uid=store.handles[handle],user=uid&&store.users[uid];if(!user||!verifyPassword(password,user))return{error:'invalid_credentials'};const token=createSession(store,uid);return{token,user:publicUser(user,store,uid)}});
+      const identity=verifyIdentityProof(b.identityProof,{action:'login',handle});
+      if(identity.error){json(res,401,{error:identity.error},corsHeaders);return true}
+      const out=await mutateStore(store=>{
+        const uid=store.handles[handle],user=uid&&store.users[uid];
+        if(!user||!verifyPassword(password,user))return{error:'invalid_credentials'};
+        if(user.identityKeyId&&user.identityKeyId!==identity.keyId)return{error:'identity_mismatch'};
+        if(user.identityPublicKey&&user.identityPublicKey!==identity.publicKey)return{error:'identity_mismatch'};
+        if(!user.identityKeyId){user.identityKeyId=identity.keyId;user.identityPublicKey=identity.publicKey;user.updatedAt=now()}
+        const token=createSession(store,uid);return{token,user:publicUser(user,store,uid)}
+      });
       json(res,out.error?401:200,out,corsHeaders);return true
     }
 

@@ -59,7 +59,14 @@ export function errorText(e){
     not_found:'Élément introuvable.',
     blocked:'Cette conversation est bloquée.',
     network_error:'Connexion au service Pulse impossible. Recharge la page puis réessaie.',
-    request_failed:'La requête Pulse a échoué. Réessaie dans un instant.'
+    request_failed:'La requête Pulse a échoué. Réessaie dans un instant.',
+    identity_vault_required:'Quantic Identity Vault est requis pour créer un compte ou se connecter.',
+    identity_proof_required:'Identity Vault doit signer cette connexion.',
+    identity_proof_invalid:'La preuve Identity Vault est invalide.',
+    identity_challenge_expired:'La vérification Identity Vault a expiré. Réessaie.',
+    identity_challenge_mismatch:'La preuve Identity Vault ne correspond pas à cette connexion.',
+    identity_mismatch:'Ce compte Pulse est lié à une autre identité Quantic.',
+    identity_already_linked:'Cette identité Quantic est déjà liée à un compte Pulse.'
   };
   return map[e?.message]||e?.message||'Une erreur est survenue.';
 }
