@@ -126,7 +126,7 @@ function isPrivatePage(pathname){
   return privatePagePrefixes.some(prefix=>pathname===prefix||pathname===prefix+'/'||pathname.startsWith(prefix+'/'));
 }
 function isPublicApi(pathname){
-  return pathname==='/api/health'||pathname.startsWith('/api/id/')||pathname.startsWith('/api/pulse/');
+  return pathname==='/api/health'||pathname.startsWith('/api/id/')||pathname.startsWith('/api/pulse/')||pathname.startsWith('/api/quantic-portal/');
 }
 export function requireQuanticIdentity(req,res,next){
   const pathname=req.path||'/';
