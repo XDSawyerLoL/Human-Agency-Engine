@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#02050b">
+  <meta name="description" content="Quantic Pulse — le réseau social public de l’écosystème Quantic Sillage.">
+  <title>Quantic Pulse — Le réseau Quantic</title>
+  <link rel="stylesheet" href="/quantic.css?v=2.0">
+  <link rel="stylesheet" href="/quantic-unified.css?v=3.0">
+  <link rel="stylesheet" href="/quantic-finish-v4.css?v=4.1">
+  <link rel="stylesheet" href="/pulse/pulse.css?v=1.0">
+</head>
+<body class="q-body q-premium">
+<div class="q-noise" aria-hidden="true"></div>
+<header class="q-topbar">
+  <nav class="q-shell q-nav" aria-label="Navigation principale">
+    <a class="q-brand" href="/" aria-label="Quantic accueil"><span class="q-mark" aria-hidden="true"></span><span>QUANTIC</span></a>
+    <div class="q-links">
+      <a href="/vision/">Vision</a><a href="/mail/">Mail</a><a href="/pulse/" aria-current="page">Pulse</a><a href="/network/">Network</a><a href="/products/">Produits</a><a href="/downloads/">Téléchargements</a>
+      <a class="q-nav-cta" href="/quantic/">Centre</a>
+    </div>
+  </nav>
+</header>
+<main class="q-shell pulse-shell">
+  <section class="pulse-hero">
+    <div>
+      <p class="q-kicker">QUANTIC PULSE</p>
+      <h1>Le réseau social<br>de Quantic.</h1>
+      <p>Publie, réponds et suis ce qui circule dans l’écosystème Quantic. Pulse est hébergé sur la même infrastructure Hostinger, avec stockage MySQL dédié.</p>
+    </div>
+    <div class="pulse-state" id="pulseState"><i></i><span>Connexion à Pulse…</span></div>
+  </section>
+  <section class="pulse-layout">
+    <aside class="pulse-side">
+      <div class="pulse-panel">
+        <p class="q-kicker">IDENTITÉ LOCALE</p>
+        <label>Nom<input id="pulseAuthor" maxlength="80" placeholder="Membre Quantic"></label>
+        <label>Identifiant<div class="pulse-handle"><span>@</span><input id="pulseHandle" maxlength="32" placeholder="quantic"></div></label>
+        <p class="pulse-note">Ce profil est mémorisé uniquement dans ton navigateur. Une couche d’identité Quantic pourra le remplacer ensuite.</p>
+      </div>
+      <div class="pulse-panel pulse-links">
+        <a href="/quantic/">Centre Quantic <span>→</span></a>
+        <a href="/mail/">Quantic Mail <span>→</span></a>
+        <a href="/vision/">Quantic Vision <span>→</span></a>
+      </div>
+    </aside>
+    <section class="pulse-main" aria-label="Fil Quantic Pulse">
+      <form class="pulse-compose" id="pulseCompose">
+        <div class="pulse-avatar" aria-hidden="true">Q</div>
+        <div class="pulse-compose-body">
+          <textarea id="pulseBody" maxlength="500" rows="4" placeholder="Qu’est-ce qui traverse le réseau ?"></textarea>
+          <div class="pulse-compose-foot">
+            <span id="pulseCount">0 / 500</span>
+            <button type="submit" id="pulsePublish">Publier</button>
+          </div>
+        </div>
+      </form>
+      <div class="pulse-reply-banner" id="pulseReplyBanner" hidden>
+        <span>Réponse à la publication <b id="pulseReplyId"></b></span>
+        <button type="button" id="pulseReplyCancel">Annuler</button>
+      </div>
+      <div class="pulse-feed-head">
+        <div><p class="q-kicker">FIL PUBLIC</p><h2>Pulse</h2></div>
+        <button type="button" id="pulseRefresh">Actualiser</button>
+      </div>
+      <div id="pulseFeed" class="pulse-feed"><div class="pulse-loading">Chargement du fil…</div></div>
+      <button type="button" class="pulse-more" id="pulseMore" hidden>Afficher plus</button>
+    </section>
+  </section>
+</main>
+<footer class="q-shell q-footer"><span>QUANTIC PULSE · SOCIAL LAYER</span><span><a href="/">Accueil</a> · <a href="/products/">Produits</a> · <a href="/quantic/">Centre</a></span></footer>
+<script src="/pulse/pulse.js?v=1.0" defer></script>
+</body>
+</html>

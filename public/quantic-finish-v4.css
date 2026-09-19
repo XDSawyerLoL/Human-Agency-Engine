@@ -242,7 +242,7 @@ body.q-vision-surface .p1611-nav{
   .q-topbar .q-nav,.q-global-nav-inner,body.q-vision-surface .p1611-nav{
     min-height:58px!important;border-radius:16px!important;padding:6px 8px 6px 10px!important;
   }
-  .q-links a:not(.q-nav-cta):not([href="/downloads/"]),
+  .q-links a:not(.q-nav-cta):not([href="/downloads/"]):not([aria-current="page"]),
   .q-global-links a:not(.active):not(.q-global-centre):not([href="/downloads/"]){display:none}
   .p1611-nav-actions .p1611-download{display:none}
   .p1611-nav-actions .p1611-home{padding:0 11px}
