@@ -1,4 +1,4 @@
-import { TOKEN_KEY, state, dom, initials, api } from './core.js?v=7';
+import { TOKEN_KEY, state, dom, initials, api } from './core.js?v=8';
 
 export async function ensureIdentityVault(){
   const status=document.querySelector('[data-pulse-id-status]');
