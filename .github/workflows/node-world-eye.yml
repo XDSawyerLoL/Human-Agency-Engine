@@ -59,28 +59,53 @@ jobs:
           curl -fsS http://127.0.0.1:3000/api/quantic-portal/status >/tmp/quantic-status.json
           node -e "const x=require('/tmp/quantic-status.json'); const ids=new Set((x.services||[]).map(s=>s.id)); if(x.status!=='ok'||!ids.has('vision')||!ids.has('mail')||!ids.has('relay-render')||!ids.has('relay-railway')||!ids.has('relay-hostinger')) process.exit(1); console.log('quantic portal status ok')"
 
-          curl -fsS http://127.0.0.1:3000/api/analyst/status >/tmp/analyst-status.json
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/snapshot)" = "401"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/vision/)" = "302"
+
+          node scripts/test-quantic-id-live-session.mjs
+          COOKIE="$(cat /tmp/quantic-id-cookie.txt)"
+
+          snapshot_ready=0
+          for i in $(seq 1 240); do
+            if curl -fsS http://127.0.0.1:3000/api/health >/tmp/health-ready.json && node -e "const x=require('/tmp/health-ready.json'); process.exit(x.last_snapshot?0:1)"; then
+              snapshot_ready=1
+              break
+            fi
+            sleep 0.5
+          done
+          test "$snapshot_ready" = "1"
+
+          curl -fsS -H "Cookie: $COOKIE" http://127.0.0.1:3000/api/analyst/status >/tmp/analyst-status.json
           node -e "const x=require('/tmp/analyst-status.json'); if(x.schema!=='providence-analyst-status-v1'||x.superposition_engine!==true) process.exit(1); console.log('analyst status ok')"
 
-          curl -fsS 'http://127.0.0.1:3000/api/superposition?limit=4' >/tmp/superposition.json
+          superposition_ok=0
+          for i in $(seq 1 240); do
+            if curl -fsS -H "Cookie: $COOKIE" 'http://127.0.0.1:3000/api/superposition?limit=4' >/tmp/superposition.json; then superposition_ok=1; break; fi
+            sleep 0.5
+          done
+          test "$superposition_ok" = "1"
           node -e "const x=require('/tmp/superposition.json'); if(x.schema!=='providence-superposition-v1'||!Array.isArray(x.worlds)) process.exit(1); console.log('superposition ok')"
 
-          curl -fsS -X POST http://127.0.0.1:3000/api/analyst/chat \
+          curl -fsS -H "Cookie: $COOKIE" -X POST http://127.0.0.1:3000/api/analyst/chat \
             -H 'Content-Type: application/json' \
             -d '{"message":"Que vois-tu venir en priorité ?","mode":"analyst"}' >/tmp/analyst-chat.json
           node -e "const x=require('/tmp/analyst-chat.json'); if(x.schema!=='providence-analyst-response-v1'||typeof x.text!=='string'||!x.text.length) process.exit(1); console.log('analyst chat ok')"
 
-          curl -fsS http://127.0.0.1:3000/api/track-record >/tmp/track.json
+          curl -fsS -H "Cookie: $COOKIE" http://127.0.0.1:3000/api/track-record >/tmp/track.json
           node -e "const x=require('/tmp/track.json'); if(typeof x.tracked_scenarios!=='number'||!x.calibration) process.exit(1); console.log('track record ok')"
 
-          curl -fsS http://127.0.0.1:3000/api/sports/catalog >/tmp/sports.json
+          curl -fsS -H "Cookie: $COOKIE" http://127.0.0.1:3000/api/sports/catalog >/tmp/sports.json
           node -e "const x=require('/tmp/sports.json'); if(x.schema!=='evidence-sports-catalog-v2'||!Array.isArray(x.countries)||!x.countries.length) process.exit(1); console.log('sports catalog ok')"
 
-          curl -fsS http://127.0.0.1:3000/analyst/ >/tmp/analyst-page.html
+          curl -fsS -H "Cookie: $COOKIE" http://127.0.0.1:3000/vision/ >/tmp/vision-page.html
+          grep -q 'qv8-hero' /tmp/vision-page.html
+          grep -q 'quantic-vision-home-v8.css?v=8.0' /tmp/vision-page.html
+
+          curl -fsS -H "Cookie: $COOKIE" http://127.0.0.1:3000/analyst/ >/tmp/analyst-page.html
           grep -q 'Interrogez directement' /tmp/analyst-page.html
           grep -q 'SCÉNARIOS CONCURRENTS' /tmp/analyst-page.html
 
-          curl -fsS http://127.0.0.1:3000/predictions/ >/tmp/predictions-page.html
+          curl -fsS -H "Cookie: $COOKIE" http://127.0.0.1:3000/predictions/ >/tmp/predictions-page.html
           grep -q 'Ce que Providence voit venir' /tmp/predictions-page.html
           grep -q 'FUTURS PLAUSIBLES' /tmp/predictions-page.html
           grep -q 'Lignes temporelles' /tmp/predictions-page.html
@@ -88,7 +113,7 @@ jobs:
           grep -q 'predictions-v16-15.js?v=16.15' /tmp/predictions-page.html
           grep -q 'predictions-v16-15.css?v=16.15' /tmp/predictions-page.html
 
-          curl -fsS http://127.0.0.1:3000/sports/ >/tmp/sports-page.html
+          curl -fsS -H "Cookie: $COOKIE" http://127.0.0.1:3000/sports/ >/tmp/sports-page.html
           grep -q 'Prédire. Puis vérifier.' /tmp/sports-page.html
           grep -q 'PREUVE EN CONDITIONS RÉELLES' /tmp/sports-page.html
 

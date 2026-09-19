@@ -7,6 +7,7 @@ import { buildElectionModel, isFrench2027ElectionQuestion } from './election_mod
 import { buildElectionDeduction } from './election_deduction_engine.js';
 import { buildSituationalInference, applyInferenceToBranchWeights } from './situational_inference.js';
 import { buildElectionOutcomeProjection } from './election_outcome_inference.js';
+import { quanticInternalHeaders } from './quantic_identity.js';
 
 const analystRuns=new Map();
 const WINDOW_MS=60_000;
@@ -14,7 +15,7 @@ const MAX_CALLS=8;
 
 async function localJson(pathname,options={}){
   const url=`http://127.0.0.1:${config.port}${pathname}`;
-  const res=await fetch(url,{cache:'no-store',...options});
+  const res=await fetch(url,{cache:'no-store',...options,headers:{...quanticInternalHeaders(),...(options.headers||{})}});
   if(!res.ok)throw new Error(`internal_${res.status}_${pathname}`);
   return res.json();
 }

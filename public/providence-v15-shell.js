@@ -33,8 +33,10 @@ if(page==='home')loadCss('/providence-timeline-v16-10.css?v=16.12','providence-t
 loadCss('/providence-v16-12-mobile.css?v=16.12','providence-v16-12-mobile.css');
 const legacyVisualContract='quantic-unified.css?v=3.0';
 loadCss('/quantic-system-v6.css?v=6.0','quantic-system-v6.css');
-const visionV7=document.querySelector('link[href*="quantic-vision-v7.css"]');
-if(visionV7)document.head.appendChild(visionV7);else loadCss('/quantic-vision-v7.css?v=7.0','quantic-vision-v7.css');
+if(document.body?.dataset?.visionNative!=='true'){
+  const visionV7=document.querySelector('link[href*="quantic-vision-v7.css"]');
+  if(visionV7)document.head.appendChild(visionV7);else loadCss('/quantic-vision-v7.css?v=7.0','quantic-vision-v7.css');
+}
 
 
 
@@ -96,7 +98,7 @@ if(main&&!document.querySelector('.q-unified-footer')){
   main.insertAdjacentElement('afterend',footer);
 }
 
-if(page==='home'&&!document.querySelector('script[src*="providence-timeline-v16-10.js"]')){
+if(page==='home'&&document.body?.dataset?.visionNative!=='true'&&!document.querySelector('script[src*="providence-timeline-v16-10.js"]')){
   const script=document.createElement('script');
   script.src='/providence-timeline-v16-10.js?v=16.12';
   script.async=true;
