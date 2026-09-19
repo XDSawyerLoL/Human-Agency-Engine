@@ -1,4 +1,4 @@
-import { dom, esc, icon, initials, timeAgo, setStatus } from './core.js?v=7';
+import { dom, esc, icon, initials, timeAgo, setStatus } from './core.js?v=8';
 
 export function renderPost(post){
   const user=post.author||{};
@@ -6,6 +6,16 @@ export function renderPost(post){
   const reposted=post.viewer?.reposted;
   const bookmarked=post.viewer?.bookmarked;
   let quote='';
+  let media='';
+  const imageUrl=post.mediaUrl||post.imageUrl||'';
+  const linkUrl=post.linkUrl||'';
+  const linkTitle=post.linkTitle||'';
+  if(imageUrl){
+    const image='<img src="'+esc(imageUrl)+'" alt="" loading="lazy" referrerpolicy="no-referrer">';
+    media=linkUrl?'<a class="pulse-rich-card" href="'+esc(linkUrl)+'" target="_blank" rel="noopener noreferrer">'+image+'<div><strong>'+esc(linkTitle||'Ouvrir le lien')+'</strong><span>'+esc(linkUrl)+'</span></div></a>':'<div class="pulse-rich-card pulse-rich-media">'+image+(post.mediaType==='gif'?'<div><strong>GIF</strong></div>':'')+'</div>';
+  }else if(linkUrl){
+    media='<a class="pulse-rich-card pulse-rich-link" href="'+esc(linkUrl)+'" target="_blank" rel="noopener noreferrer"><div><strong>'+esc(linkTitle||'Ouvrir le lien')+'</strong><span>'+esc(linkUrl)+'</span></div></a>';
+  }
 
   if(post.quote){
     quote='<div class="pulse-post-link"><div><small>@'+esc(post.quote.author.handle)+'</small><strong>'+esc(post.quote.body)+'</strong></div></div>';
@@ -15,7 +25,7 @@ export function renderPost(post){
     '<div class="pulse-avatar">'+esc(initials(user))+'</div>'+
     '<div class="pulse-post-main">'+
       '<div class="pulse-post-head"><button data-profile="'+esc(user.handle)+'">'+esc(user.displayName||user.handle)+'</button>'+(user.verified?'<span class="pulse-badge" title="Compte vérifié">'+icon('pi-verified')+'</span>':'')+'<span>@'+esc(user.handle)+' · '+esc(timeAgo(post.createdAt))+'</span></div>'+
-      '<p>'+esc(post.body)+'</p>'+quote+
+      '<p>'+esc(post.body)+'</p>'+media+quote+
       '<div class="pulse-actions">'+
         '<button class="pulse-action" data-action="reply" aria-label="Répondre" title="Répondre">'+icon('pi-reply')+'<span class="pulse-action-name">Répondre</span><span class="pulse-action-count">'+Number(post.counts?.replies||0)+'</span></button>'+
         '<button class="pulse-action '+(reposted?'active':'')+'" data-action="repost" aria-label="Relay" title="Relayer cette publication">'+icon('pi-relay')+'<span class="pulse-action-name">Relayer</span><span class="pulse-action-count">'+Number(post.counts?.reposts||0)+'</span></button>'+
