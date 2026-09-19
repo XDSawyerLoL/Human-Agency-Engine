@@ -139,7 +139,7 @@ function bindStaticEvents(){
   document.getElementById('welcome-register').addEventListener('click',function(){openAuth('register')});
   document.getElementById('welcome-login').addEventListener('click',function(){openAuth('login')});
   document.getElementById('account-button').addEventListener('click',function(){
-    state.user?loadProfile(state.user.handle):openAuth('register');
+    state.user?loadProfile(state.user.handle):openAuth('login');
   });
   document.getElementById('auth-close').addEventListener('click',closeAuth);
   document.getElementById('auth-switch').addEventListener('click',function(){
