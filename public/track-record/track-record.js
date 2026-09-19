@@ -75,7 +75,7 @@
       $('#historyPoints').textContent = n(d.probability_history_points).toLocaleString('fr-FR');
       $('#revisedScenarios').textContent = n(d.scenarios_with_revisions).toLocaleString('fr-FR');
       $('#resolvedScenarios').textContent = n(c.scorable_resolutions).toLocaleString('fr-FR');
-      $('#trackNote').textContent = c.calibration_ready ? `${n(c.scorable_resolutions)} résolutions binaires entrent maintenant dans le score public.` : `${n(c.scorable_resolutions)} résolutions binaires scorables. Le seuil public de calibration est ${n(c.minimum_global_samples)||30}.`;
+      $('#trackNote').textContent = c.calibration_ready ? `${n(c.scorable_resolutions)} résolutions binaires entrent maintenant dans le score de calibration.` : `${n(c.scorable_resolutions)} résolutions binaires scorables. Le seuil public de calibration est ${n(c.minimum_global_samples)||30}.`;
       $('#brierScore').textContent = g.brier === null || g.brier === undefined ? '—' : Number(g.brier).toFixed(3);
       $('#brierMeta').textContent = g.brier === null || g.brier === undefined ? 'en collecte' : 'plus bas = meilleur';
       $('#logLoss').textContent = g.log_loss === null || g.log_loss === undefined ? '—' : Number(g.log_loss).toFixed(3);
@@ -88,7 +88,7 @@
       $('#probabilityBuckets').innerHTML = buckets(c.buckets);
       $('#calibrationDomains').innerHTML = segmentRows(c.by_domain,'domain');
       $('#calibrationHorizons').innerHTML = segmentRows(c.by_horizon,'horizon');
-      $('#calibrationText').textContent = c.calibration_ready ? `Calibration active sur ${n(c.scorable_resolutions)} scénarios binaires résolus. ECE mesure l’écart entre probabilité annoncée et fréquence observée ; le skill compare le Brier à une baseline de fréquence.` : `Le moteur calcule déjà les scores, mais ne les utilise pas pour modifier les probabilités publiques avant ${n(c.minimum_global_samples)||30} résolutions binaires vérifiées.`;
+      $('#calibrationText').textContent = c.calibration_ready ? `Calibration active sur ${n(c.scorable_resolutions)} scénarios binaires résolus. ECE mesure l’écart entre probabilité annoncée et fréquence observée ; le skill compare le Brier à une baseline de fréquence.` : `Le moteur calcule déjà les scores, mais ne les utilise pas pour modifier les probabilités affichées avant ${n(c.minimum_global_samples)||30} résolutions binaires vérifiées.`;
       const threshold=Math.max(1,n(c.minimum_global_samples)||30);
       const scorable=Math.max(0,n(c.scorable_resolutions));
       const progress=Math.max(0,Math.min(100,Math.round((scorable/threshold)*100)));
