@@ -22,6 +22,6 @@ for(const marker of ["hashPassword(","verifyPassword(","weak_password","password
 }
 assert.ok(backend.includes("Object.values(store.users).find(user=>user.identityKeyId===identity.keyId)"),"login must resolve the account from Quantic ID");
 assert.ok(backend.includes("identity_not_registered"),"unknown Quantic IDs need an explicit error");
-assert.ok(backend.includes("action==='login'"),"login challenge must support handle-free authentication");
+assert.ok(backend.includes("handle=action==='register'?")&&backend.includes("verifyIdentityProof(b.identityProof,{action:'login',handle:''})"),"login challenge must support handle-free authentication");
 
 console.log(JSON.stringify({ok:true,contract:"pulse-passwordless-quantic-id"}));
