@@ -8,6 +8,7 @@ const mail=read("public/mail/index.html");
 const mailResilience=read("public/quantic-mail-resilience.js");
 const predictions=read("public/predictions/predictions-v16-15.js");
 const track=read("public/track-record/track-record.js");
+const visionHome=read("public/quantic-vision-home-v8.js");
 const products=read("public/products/index.html");
 const home=read("public/index.html");
 
@@ -34,6 +35,10 @@ assert.ok(predictions.includes("data-p1615-retry"),"Predictions must expose retr
 assert.ok(track.includes("TRACK_TIMEOUT_MS"),"Track record must have a timeout");
 assert.ok(track.includes("AbortController"),"Track record fetch must be abortable");
 assert.ok(track.includes("data-track-retry"),"Track record must expose retry on failure");
+
+assert.ok(visionHome.includes("VISION_TIMEOUT_MS"),"Vision home must have a timeout");
+assert.ok(visionHome.includes("AbortController"),"Vision home fetch must be abortable");
+assert.ok(visionHome.includes("data-qv8-retry"),"Vision home must expose retry on failure");
 
 assert.ok(!products.includes("stockage MySQL Hostinger"),"Products page must not lead with infrastructure implementation");
 assert.ok(products.includes("La couche sociale native de Quantic"),"Pulse positioning must be ecosystem-first");
