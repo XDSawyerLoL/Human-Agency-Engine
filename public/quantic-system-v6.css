@@ -857,7 +857,6 @@ body.q-vision-surface,
 body.q-vision-shell,
 body[data-page="predictions"],
 body[data-page="alerts"],
-body[data-page="analyst"],
 body[data-page="track-record"],
 body[data-page="settings"],
 body[data-page="sources"],
@@ -914,16 +913,16 @@ body.q-vision-shell .q-global-nav{background:rgba(245,247,249,.76)!important}
 .p1611-btn.alt{background:#fff!important;color:#234958!important;border-color:var(--qs-line)!important}
 .ptl-timeline-card,.p17-pulse,.p1611-proofline,
 .pv-panel,.pv-kpi,.v5-proof,.v5-section,.pv-setting-card,.v8-segment-panel,
-.pa-chat,.pa-panel,.p1615-feed,.p1615-toolbar,.p16-time-rail,.v4-source-card,.p168-section{
+.p1615-feed,.p1615-toolbar,.p16-time-rail,.v4-source-card,.p168-section{
   border-color:var(--qs-line)!important;
   background:#fff!important;
   color:var(--qs-ink)!important;
   box-shadow:var(--qs-shadow-sm)!important;
 }
 .ptl-timeline-head h3,.p17-pulse h2,
-.pv-panel h2,.pv-setting-card h2,.pa-chat h2,.pa-panel h2,.p1615-feed h2,.v5-section h2,.p168-section h2{color:var(--qs-ink)!important}
+.pv-panel h2,.pv-setting-card h2,.p1615-feed h2,.v5-section h2,.p168-section h2{color:var(--qs-ink)!important}
 .ptl-timeline-head p,.p17-pulse p,
-.pv-panel p,.pv-setting-card p,.pa-footnote,.p1615-feed p,.v5-note,.p168-section p{color:var(--qs-muted)!important}
+.pv-panel p,.pv-setting-card p,.p1615-feed p,.v5-note,.p168-section p{color:var(--qs-muted)!important}
 .q-unified-footer{border-color:var(--qs-line)!important;background:#fff!important;color:#7f9098!important}
 
 /* ---------- FOOTER ---------- */
