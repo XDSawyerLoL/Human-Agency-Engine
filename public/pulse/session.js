@@ -41,7 +41,7 @@ export function closeAuth(){
 export function updateAuthModal(){
   const register=state.authMode==='register';
   document.getElementById('auth-title').textContent=register?'Créer avec Quantic ID':'Entrer avec Quantic ID';
-  document.getElementById('auth-copy').textContent=register?'Choisis ton @pseudo et ton nom affiché. Identity Vault devient la clé de ce compte.':'Aucun identifiant ni mot de passe. Identity Vault confirme directement ton compte Pulse.';
+  document.getElementById('auth-copy').textContent=register?'Choisis ton @pseudo et ton nom affiché. Identity Vault devient la clé de ce compte.':'Identity Vault confirme directement ton compte Pulse et restaure ta session.';
   document.getElementById('display-name-field').hidden=!register;
   const handleField=document.getElementById('handle-field');
   handleField.hidden=!register;
