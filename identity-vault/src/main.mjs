@@ -1,9 +1,9 @@
-import {app,BrowserWindow,ipcMain,safeStorage,shell} from "electron";
+import {app,BrowserWindow,dialog,ipcMain,safeStorage,shell} from "electron";
 import {createServer} from "node:http";
 import {existsSync,mkdirSync,readFileSync,writeFileSync} from "node:fs";
 import {dirname,join} from "node:path";
 import {fileURLToPath} from "node:url";
-import {generateIdentity,encryptPortable,decryptPortable,signAssertion} from "./vault-core.mjs";
+import {generateIdentity,encryptPortable,decryptPortable,normalizeIdentityProfile,signAssertion} from "./vault-core.mjs";
 
 const __dirname=dirname(fileURLToPath(import.meta.url));
 const HOST="127.0.0.1";
@@ -60,69 +60,174 @@ function vaultDirectory(){
   return app.getPath("userData");
 }
 
-function ensureVaultPath(){
+function defaultVaultPath(){
   const dir=vaultDirectory();
   mkdirSync(dir,{recursive:true});
-  vaultPath=join(dir,"identity-vault.json");
+  return join(dir,"identity-vault.json");
+}
+
+function ensureVaultPath(){
+  if(!vaultPath)vaultPath=defaultVaultPath();
   return vaultPath;
+}
+
+function validateRecord(record){
+  if(!record||typeof record!=="object")throw new Error("vault_format_invalid");
+  if(!["portable","pc"].includes(record.mode))throw new Error("vault_format_invalid");
+  if(!record.keyId||!record.publicKey)throw new Error("vault_format_invalid");
+  if(!record.encryptedSecret&&!record.encryptedPrivateKey)throw new Error("vault_format_invalid");
+  return record;
+}
+
+function readRecordAt(path){
+  const record=JSON.parse(readFileSync(path,"utf8"));
+  return validateRecord(record);
 }
 
 function loadRecord(){
   ensureVaultPath();
   if(!existsSync(vaultPath))return null;
-  try{return JSON.parse(readFileSync(vaultPath,"utf8"))}catch{return null}
+  try{return readRecordAt(vaultPath)}catch{return null}
 }
 
 function saveRecord(record){
-  ensureVaultPath();
-  writeFileSync(vaultPath,JSON.stringify(record,null,2),{encoding:"utf8",mode:0o600});
+  const path=ensureVaultPath();
+  mkdirSync(dirname(path),{recursive:true});
+  writeFileSync(path,JSON.stringify(record,null,2),{encoding:"utf8",mode:0o600});
+}
+
+function secretPayload(privateKeyPem,profile){
+  return JSON.stringify({
+    version:2,
+    privateKeyPem:String(privateKeyPem),
+    profile:normalizeIdentityProfile(profile)
+  });
+}
+
+function parseSecret(value){
+  const raw=String(value||"");
+  try{
+    const parsed=JSON.parse(raw);
+    if(parsed?.privateKeyPem){
+      return {privateKeyPem:String(parsed.privateKeyPem),profile:normalizeIdentityProfile(parsed.profile||{})};
+    }
+  }catch{}
+  return {privateKeyPem:raw,profile:normalizeIdentityProfile({})};
 }
 
 function publicStatus(){
   const record=loadRecord();
   return {
     product:"Quantic Identity Vault",
-    version:1,
+    version:2,
     bridge:{host:HOST,port:PORT,ready:Boolean(bridge),error:bridgeError||null},
-    vaultMode:isPortable?"portable":"pc",
+    vaultMode:record?.mode||(isPortable?"portable":"pc"),
     keyAlgorithm:"ed25519",
     portableCipher:"aes-256-gcm",
     vaultExists:Boolean(record),
+    vaultLoaded:Boolean(record),
     identityAvailable:Boolean(activeIdentity),
     keyId:activeIdentity?.keyId||record?.keyId||null,
     label:activeIdentity?.label||record?.label||null,
     publicKey:activeIdentity?.publicKey||record?.publicKey||null,
-    vaultPath
+    profile:activeIdentity?.profile||null,
+    profileAvailable:Boolean(activeIdentity?.profile),
+    formatVersion:Number(record?.version||1),
+    vaultPath:ensureVaultPath()
   };
 }
 
-function createIdentity({label="",passphrase=""}={}){
-  const identity=generateIdentity(label||"Mon identité Quantic");
+function createIdentity({label="",passphrase="",profile={}}={}){
+  const normalizedProfile=normalizeIdentityProfile(profile);
+  const suggestedLabel=normalizedProfile.preferredName||[normalizedProfile.firstName,normalizedProfile.lastName].filter(Boolean).join(" ");
+  const identity=generateIdentity(label||suggestedLabel||"Mon identité Quantic");
+  const createdAt=new Date().toISOString();
+  const secret=secretPayload(identity.privateKeyPem,normalizedProfile);
+
   if(isPortable){
-    const encryptedPrivateKey=encryptPortable(identity.privateKeyPem,passphrase);
-    saveRecord({version:1,mode:"portable",keyId:identity.keyId,label:identity.label,publicKey:identity.publicKey,encryptedPrivateKey,createdAt:new Date().toISOString()});
+    const encryptedSecret=encryptPortable(secret,passphrase);
+    saveRecord({version:2,mode:"portable",keyId:identity.keyId,label:identity.label,publicKey:identity.publicKey,encryptedSecret,createdAt});
+    activeIdentity={...identity,profile:normalizedProfile,unlockCredential:String(passphrase)};
   }else{
     if(!safeStorage.isEncryptionAvailable())throw new Error("system_encryption_unavailable");
-    const encryptedPrivateKey=safeStorage.encryptString(identity.privateKeyPem).toString("base64");
-    saveRecord({version:1,mode:"pc",keyId:identity.keyId,label:identity.label,publicKey:identity.publicKey,encryptedPrivateKey,createdAt:new Date().toISOString()});
+    const encryptedSecret=safeStorage.encryptString(secret).toString("base64");
+    saveRecord({version:2,mode:"pc",keyId:identity.keyId,label:identity.label,publicKey:identity.publicKey,encryptedSecret,createdAt});
+    activeIdentity={...identity,profile:normalizedProfile,unlockCredential:""};
   }
-  activeIdentity=identity;
   return publicStatus();
 }
 
 function unlockIdentity(passphrase=""){
   const record=loadRecord();
   if(!record)throw new Error("vault_not_found");
-  let privateKeyPem="";
+  let secretValue="";
   if(record.mode==="portable"){
-    privateKeyPem=decryptPortable(record.encryptedPrivateKey,passphrase);
+    secretValue=decryptPortable(record.encryptedSecret||record.encryptedPrivateKey,passphrase);
   }else if(record.mode==="pc"){
     if(!safeStorage.isEncryptionAvailable())throw new Error("system_encryption_unavailable");
-    privateKeyPem=safeStorage.decryptString(Buffer.from(record.encryptedPrivateKey,"base64"));
+    secretValue=safeStorage.decryptString(Buffer.from(record.encryptedSecret||record.encryptedPrivateKey,"base64"));
   }else{
     throw new Error("vault_format_invalid");
   }
-  activeIdentity={keyId:record.keyId,label:record.label,publicKey:record.publicKey,privateKeyPem};
+  const secret=parseSecret(secretValue);
+  activeIdentity={
+    keyId:record.keyId,
+    label:record.label,
+    publicKey:record.publicKey,
+    privateKeyPem:secret.privateKeyPem,
+    profile:secret.profile,
+    unlockCredential:record.mode==="portable"?String(passphrase):""
+  };
+  return publicStatus();
+}
+
+function updateProfile(profile={}){
+  if(!activeIdentity)throw new Error("identity_locked");
+  const record=loadRecord();
+  if(!record)throw new Error("vault_not_found");
+  const normalizedProfile=normalizeIdentityProfile(profile);
+  const nextLabel=normalizedProfile.preferredName||[normalizedProfile.firstName,normalizedProfile.lastName].filter(Boolean).join(" ")||record.label||activeIdentity.label;
+  const secret=secretPayload(activeIdentity.privateKeyPem,normalizedProfile);
+  let encryptedSecret;
+
+  if(record.mode==="portable"){
+    encryptedSecret=encryptPortable(secret,activeIdentity.unlockCredential);
+  }else{
+    if(!safeStorage.isEncryptionAvailable())throw new Error("system_encryption_unavailable");
+    encryptedSecret=safeStorage.encryptString(secret).toString("base64");
+  }
+
+  const next={
+    version:2,
+    mode:record.mode,
+    keyId:record.keyId,
+    label:nextLabel,
+    publicKey:record.publicKey,
+    encryptedSecret,
+    createdAt:record.createdAt||new Date().toISOString(),
+    updatedAt:new Date().toISOString()
+  };
+  saveRecord(next);
+  activeIdentity={...activeIdentity,label:nextLabel,profile:normalizedProfile};
+  return publicStatus();
+}
+
+async function loadVaultFile(){
+  const owner=BrowserWindow.getFocusedWindow()||BrowserWindow.getAllWindows()[0];
+  const options={
+    title:"Charger un coffre Quantic Identity Vault",
+    properties:["openFile"],
+    filters:[
+      {name:"Coffre Quantic Identity Vault",extensions:["json","qivault"]},
+      {name:"Tous les fichiers",extensions:["*"]}
+    ]
+  };
+  const result=owner?await dialog.showOpenDialog(owner,options):await dialog.showOpenDialog(options);
+  if(result.canceled||!result.filePaths?.[0])return publicStatus();
+  const selected=result.filePaths[0];
+  readRecordAt(selected);
+  vaultPath=selected;
+  activeIdentity=null;
   return publicStatus();
 }
 
@@ -153,7 +258,7 @@ function startBridge(){
     if(url.pathname==="/v1/status"&&req.method==="GET"){
       const status=publicStatus();
       return json(res,200,{
-        version:1,
+        version:2,
         product:"Quantic Identity Vault",
         identityAvailable:status.identityAvailable,
         keyId:status.keyId,
@@ -192,10 +297,10 @@ function startBridge(){
 
 function createWindow(){
   const win=new BrowserWindow({
-    width:900,
-    height:680,
-    minWidth:720,
-    minHeight:560,
+    width:980,
+    height:820,
+    minWidth:760,
+    minHeight:620,
     backgroundColor:"#f5f7f9",
     title:"Quantic Identity Vault",
     webPreferences:{
@@ -211,13 +316,15 @@ function createWindow(){
 
 ipcMain.handle("vault:status",()=>publicStatus());
 ipcMain.handle("vault:create",(_event,options)=>createIdentity(options||{}));
+ipcMain.handle("vault:load-file",()=>loadVaultFile());
 ipcMain.handle("vault:unlock",(_event,{passphrase}={})=>unlockIdentity(passphrase||""));
+ipcMain.handle("vault:update-profile",(_event,{profile}={})=>updateProfile(profile||{}));
 ipcMain.handle("vault:lock",()=>lockIdentity());
 ipcMain.handle("vault:reveal-location",()=>{
-  ensureVaultPath();
-  if(existsSync(vaultPath))shell.showItemInFolder(vaultPath);
-  else shell.openPath(vaultDirectory());
-  return vaultPath;
+  const path=ensureVaultPath();
+  if(existsSync(path))shell.showItemInFolder(path);
+  else shell.openPath(dirname(path));
+  return path;
 });
 
 app.whenReady().then(()=>{
