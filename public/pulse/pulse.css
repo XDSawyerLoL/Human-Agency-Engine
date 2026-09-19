@@ -1,0 +1,39 @@
+.pulse-shell{padding-top:42px}
+.pulse-hero{display:flex;align-items:end;justify-content:space-between;gap:30px;padding:48px 0 34px;border-bottom:1px solid var(--qf-line)}
+.pulse-hero h1{margin:0;font-size:clamp(3.2rem,7vw,6.6rem);line-height:.9;letter-spacing:-.07em}
+.pulse-hero>div>p:not(.q-kicker){max-width:720px;color:var(--qf-muted);font-size:1rem;line-height:1.7}
+.pulse-state{display:flex;align-items:center;gap:9px;padding:9px 13px;border:1px solid var(--qf-line);border-radius:999px;background:rgba(255,255,255,.025);font:700 11px/1 system-ui;color:#aebed0;white-space:nowrap}
+.pulse-state i{width:8px;height:8px;border-radius:50%;background:#8295aa}
+.pulse-state.online i{background:var(--qf-green);box-shadow:0 0 14px rgba(66,227,147,.55)}
+.pulse-state.offline i{background:#ff8192}
+.pulse-layout{display:grid;grid-template-columns:300px minmax(0,720px);justify-content:center;gap:22px;padding:30px 0 60px}
+.pulse-side{display:grid;align-content:start;gap:14px;position:sticky;top:94px;height:max-content}
+.pulse-panel,.pulse-compose,.pulse-post,.pulse-reply-banner{border:1px solid var(--qf-line);border-radius:20px;background:linear-gradient(145deg,rgba(8,24,42,.9),rgba(3,10,19,.96));box-shadow:0 18px 50px rgba(0,0,0,.22)}
+.pulse-panel{padding:20px}
+.pulse-panel label{display:grid;gap:7px;margin:14px 0;color:#9db0c5;font-size:12px;font-weight:700}
+.pulse-panel input,.pulse-compose textarea{width:100%;border:1px solid rgba(82,158,220,.28);border-radius:13px;background:rgba(0,0,0,.18);color:#f7fbff;outline:0}
+.pulse-panel input{height:42px;padding:0 12px}
+.pulse-panel input:focus,.pulse-compose textarea:focus{border-color:rgba(53,220,255,.62);box-shadow:0 0 0 3px rgba(53,220,255,.07)}
+.pulse-handle{display:flex;align-items:center;border:1px solid rgba(82,158,220,.28);border-radius:13px;background:rgba(0,0,0,.18)}
+.pulse-handle span{padding-left:12px;color:#748aa2}.pulse-handle input{border:0;background:none}
+.pulse-note{margin:14px 0 0;color:#71859b;font-size:11px;line-height:1.55}
+.pulse-links{padding:8px}.pulse-links a{display:flex;justify-content:space-between;padding:11px 12px;border-radius:12px;text-decoration:none;color:#b9cade;font-size:12px;font-weight:750}.pulse-links a:hover{background:rgba(255,255,255,.045);color:#fff}
+.pulse-main{min-width:0}
+.pulse-compose{display:flex;gap:14px;padding:18px}
+.pulse-avatar{width:42px;height:42px;flex:0 0 42px;border-radius:14px;display:grid;place-items:center;border:1px solid rgba(53,220,255,.25);background:rgba(53,220,255,.06);font-weight:900;color:#b9f4ff}
+.pulse-compose-body{min-width:0;flex:1}.pulse-compose textarea{resize:vertical;min-height:112px;padding:13px;font:500 15px/1.55 system-ui}
+.pulse-compose-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;color:#6f859b;font-size:11px}
+.pulse-compose-foot button,.pulse-feed-head button,.pulse-more,.pulse-reply-banner button{border:1px solid rgba(82,158,220,.3);border-radius:999px;background:#edf7ff;color:#07121f;font-weight:850;cursor:pointer}
+.pulse-compose-foot button{min-height:40px;padding:0 17px}.pulse-compose-foot button:disabled{opacity:.45;cursor:not-allowed}
+.pulse-reply-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:12px 14px;color:#93a8be;font-size:12px}.pulse-reply-banner button{padding:7px 10px;background:rgba(255,255,255,.04);color:#dbe9f8}
+.pulse-feed-head{display:flex;align-items:end;justify-content:space-between;margin:30px 0 12px}.pulse-feed-head h2{margin:0;font-size:30px}.pulse-feed-head .q-kicker{margin-bottom:6px}.pulse-feed-head button{padding:8px 11px;background:rgba(255,255,255,.04);color:#dbe9f8}
+.pulse-feed{display:grid;gap:12px}
+.pulse-post{padding:18px}.pulse-post-head{display:flex;align-items:center;gap:11px}.pulse-post-meta{min-width:0}.pulse-post-meta strong{display:block;font-size:14px}.pulse-post-meta span{color:#6f859b;font-size:11px}.pulse-post time{margin-left:auto;color:#5e7185;font-size:10px}
+.pulse-post-body{margin:14px 0 16px;color:#e9f2fb;font-size:15px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.pulse-post-reply{display:inline-block;margin:0 8px 8px 0;padding:4px 7px;border-radius:8px;background:rgba(154,104,255,.08);color:#aa91df;font-size:10px}
+.pulse-actions{display:flex;gap:8px}.pulse-actions button{border:0;background:transparent;color:#7f93a8;cursor:pointer;font-size:12px;padding:7px 9px;border-radius:10px}.pulse-actions button:hover{background:rgba(255,255,255,.04);color:#e7f3ff}.pulse-actions button.liked{color:#79e6cf}
+.pulse-loading,.pulse-empty{padding:24px;text-align:center;color:#71859b;border:1px dashed rgba(82,158,220,.2);border-radius:18px}
+.pulse-error{padding:12px 14px;border:1px solid rgba(255,129,146,.25);border-radius:14px;background:rgba(255,129,146,.05);color:#ffb1bd;font-size:12px}
+.pulse-more{display:block;margin:14px auto 0;padding:9px 14px;background:rgba(255,255,255,.04);color:#dbe9f8}
+@media(max-width:900px){.pulse-hero{display:block}.pulse-state{margin-top:18px;width:max-content}.pulse-layout{grid-template-columns:1fr}.pulse-side{position:static;grid-template-columns:1fr 1fr}.pulse-links{align-self:stretch}}
+@media(max-width:620px){.pulse-shell{padding-top:18px}.pulse-hero{padding-top:26px}.pulse-side{grid-template-columns:1fr}.pulse-compose{padding:14px}.pulse-avatar{width:36px;height:36px;flex-basis:36px}.pulse-post{padding:15px}}
