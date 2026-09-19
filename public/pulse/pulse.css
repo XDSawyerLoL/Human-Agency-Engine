@@ -103,3 +103,15 @@ button.pulse-account{width:100%;border:0;background:transparent;text-align:left;
   .pulse-mail-access{width:38px;height:38px;padding:0;justify-content:center}
   .pulse-back{display:none}
 }
+
+/* Pulse Identity Vault auth */
+.pulse-id-status{margin:16px 0 2px;padding:13px 14px;display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:11px;align-items:center;border:1px solid var(--pulse-line);border-radius:14px;background:#f7fafb}
+.pulse-id-dot{width:9px;height:9px;border-radius:50%;background:#91a1a8}
+.pulse-id-status[data-state="checking"] .pulse-id-dot{background:#16a7c4}
+.pulse-id-status[data-state="ready"]{border-color:#cfe9e2;background:#f1faf7}.pulse-id-status[data-state="ready"] .pulse-id-dot{background:#35b995}
+.pulse-id-status[data-state="inactive"]{border-color:#efdfb8;background:#fffaf0}.pulse-id-status[data-state="inactive"] .pulse-id-dot{background:#c99832}
+.pulse-id-status[data-state="missing"]{border-color:#efcfd4;background:#fff5f6}.pulse-id-status[data-state="missing"] .pulse-id-dot{background:#d96573}
+.pulse-id-status strong,.pulse-id-status small{display:block}.pulse-id-status strong{font-size:.75rem;color:#263f4b}.pulse-id-status small{margin-top:3px;color:#788b94;font-size:.67rem;line-height:1.4}
+.pulse-id-status a{padding:7px 10px;border:1px solid #d8e3e7;border-radius:999px;background:#fff;color:#2a5b6a;font-size:.66rem;font-weight:750;text-decoration:none}
+.pulse-auth-submit:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:520px){.pulse-id-status{grid-template-columns:10px 1fr}.pulse-id-status a{grid-column:2;width:max-content}}
