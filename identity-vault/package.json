@@ -1,0 +1,32 @@
+{
+  "name": "quantic-identity-vault",
+  "version": "0.1.0",
+  "private": true,
+  "productName": "Quantic Identity Vault",
+  "type": "module",
+  "main": "src/main.mjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.mjs",
+    "dist:setup": "electron-builder --win nsis --x64 --config.artifactName=Quantic-Identity-Vault-Setup.exe",
+    "dist:portable": "electron-builder --win portable --x64 --config.artifactName=Quantic-Identity-Vault-Portable.exe"
+  },
+  "devDependencies": {
+    "electron": "44.4.2",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.quanticsillage.identityvault",
+    "productName": "Quantic Identity Vault",
+    "directories": {"output": "dist"},
+    "files": ["src/**/*", "package.json"],
+    "asar": true,
+    "win": {"target": ["nsis", "portable"]},
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

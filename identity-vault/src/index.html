@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quantic Identity Vault</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="mark">Q</div>
+      <div><small>QUANTIC SILLAGE</small><h1>Identity Vault</h1></div>
+      <span class="bridge">127.0.0.1:47621</span>
+    </header>
+
+    <section class="hero">
+      <p class="kicker">QUANTIC ID</p>
+      <h2>Votre identité reste ici.</h2>
+      <p>Identity Vault conserve la clé privée sur votre PC ou votre clé USB. Les sites Quantic reçoivent uniquement un état, une clé publique et des signatures.</p>
+    </section>
+
+    <section id="status" class="status" data-state="checking"><strong>Chargement…</strong></section>
+
+    <form id="create-form" class="card" hidden>
+      <h3>Créer mon Quantic ID</h3>
+      <label>Nom de l’identité<input name="label" maxlength="80" value="Mon identité Quantic" required></label>
+      <label id="portable-pass-wrap" hidden>Code local du coffre USB<input name="passphrase" type="password" minlength="8" autocomplete="new-password"><small>Ce code déverrouille uniquement la clé USB. Il n’est jamais envoyé à Quantic Sillage.</small></label>
+      <button type="submit">Créer l’identité</button>
+    </form>
+
+    <form id="unlock-form" class="card" hidden>
+      <h3>Déverrouiller Identity Vault</h3>
+      <div id="portable-unlock-wrap" hidden><label>Code local du coffre USB<input name="passphrase" type="password" minlength="8" autocomplete="current-password"></label></div>
+      <button type="submit">Activer Quantic ID</button>
+    </form>
+
+    <section class="meta">
+      <div><small>MODE</small><strong id="mode">—</strong></div>
+      <div><small>COFFRE</small><span id="location">—</span></div>
+    </section>
+
+    <div class="actions">
+      <button id="lock" class="secondary" hidden>Verrouiller</button>
+      <button id="reveal" class="secondary">Afficher le coffre</button>
+    </div>
+
+    <footer>Quantic Identity Vault · clé privée non exportée vers le Web</footer>
+  </main>
+<script src="./renderer.js"></script>
+</body>
+</html>
