@@ -7,7 +7,7 @@
   <title>Quantic Pulse — Quantic Sillage</title>
   <meta name="description" content="Quantic Pulse : réseau social public et communautaire de l'écosystème Quantic Sillage.">
   <link rel="stylesheet" href="/pulse/site.css?v=1">
-  <link rel="stylesheet" href="/pulse/pulse.css?v=7">
+  <link rel="stylesheet" href="/pulse/pulse.css?v=8">
   <link rel="icon" type="image/svg+xml" href="/assets/quantic-sillage-mark.svg">
   <link rel="stylesheet" href="/quantic-system-v6.css?v=6.1">
 </head>
@@ -105,9 +105,15 @@
         <div class="pulse-compose-main">
           <div class="pulse-context" id="pulse-context" hidden></div>
           <textarea id="pulse-text" maxlength="420" placeholder="Qu'est-ce qui mérite de circuler ?"></textarea>
+          <div class="pulse-media-preview" id="pulse-media-preview" hidden></div>
+          <div class="pulse-emoji-picker" id="pulse-emoji-picker" hidden aria-label="Emojis Quantic">
+            <button type="button" data-emoji="🌀">🌀</button><button type="button" data-emoji="⚡">⚡</button><button type="button" data-emoji="🌌">🌌</button><button type="button" data-emoji="🧭">🧭</button><button type="button" data-emoji="🪐">🪐</button><button type="button" data-emoji="🐚">🐚</button><button type="button" data-emoji="🫧">🫧</button><button type="button" data-emoji="🛰️">🛰️</button><button type="button" data-emoji="🔭">🔭</button><button type="button" data-emoji="✨">✨</button>
+          </div>
           <div class="pulse-compose-tools">
             <div class="pulse-toolset">
               <button title="Partager Quantic News" data-tool="news" aria-label="Partager Quantic News"><svg class="pi " aria-hidden="true"><use href="#pi-news"></use></svg></button>
+              <button title="Emojis Quantic" data-tool="emoji" type="button" aria-label="Ajouter un emoji">✦</button>
+              <button title="Ajouter un GIF" data-tool="gif" type="button" aria-label="Ajouter un GIF">GIF</button>
               <button title="Annuler la réponse" id="cancel-context" hidden aria-label="Annuler la réponse"><svg class="pi " aria-hidden="true"><use href="#pi-close"></use></svg></button>
             </div>
             <div class="pulse-compose-right"><span id="pulse-count">0 / 420</span><button class="pulse-publish" id="pulse-publish" disabled>Publier</button></div>
@@ -162,6 +168,6 @@
 
   <script src="/quantic-id-runtime.js"></script>
   <script src="/pulse/pulse-config.js?v=1"></script>
-  <script type="module" src="/pulse/app.js?v=7"></script>
+  <script type="module" src="/pulse/app.js?v=8"></script>
 </body>
 </html>
