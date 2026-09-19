@@ -21,41 +21,39 @@ const canonical=[
   ["/products/","Produits"],
   ["/downloads/","Téléchargements"]
 ];
-const files=[
-  "public/index.html",
-  "public/network/index.html",
-  "public/products/index.html",
-  "public/downloads/index.html",
-  "public/quantic/index.html",
-  "public/pulse/index.html",
-  "public/news/index.html",
-  "public/providence-v15-shell.js",
-  "public/quantic-mail-portal-nav.js"
+const navSources=[
+  ["public/index.html","q-links"],
+  ["public/network/index.html","q-links"],
+  ["public/products/index.html","q-links"],
+  ["public/downloads/index.html","q-links"],
+  ["public/quantic/index.html","q-links"],
+  ["public/mail/index.html","qn-global-links"],
+  ["public/pulse/index.html","q-sillage-global-links"],
+  ["public/news/index.html","q-links"],
+  ["public/providence-v15-shell.js","q-global-links"],
+  ["public/quantic-mail-portal-nav.js","qn-global-links"]
 ];
-for(const path of files){
+
+function navFragment(path,className){
   const s=read(path);
+  const marker='class="'+className+'"';
+  const start=s.indexOf(marker);
+  assert.ok(start>=0,path+" missing "+className);
+  const window=s.slice(start,start+2400);
+  return window;
+}
+
+for(const [path,className] of navSources){
+  const nav=navFragment(path,className);
   let last=-1;
   for(const [href,label] of canonical){
-    const token=href;
-    const idx=s.indexOf(token);
+    const idx=nav.indexOf(href);
     assert.ok(idx>=0,path+" missing "+label);
     assert.ok(idx>last,path+" menu order changed at "+label);
     last=idx;
   }
-  assert.ok(s.includes("Quantic ID"),path+" missing Quantic ID");
+  assert.ok(nav.includes("Quantic ID"),path+" missing Quantic ID");
 }
-
-const mailHtml=read("public/mail/index.html");
-const mailNav=mailHtml.match(/<nav class="qn-global-links">([\s\S]*?)<\/nav>/)?.[1]||"";
-assert.ok(mailNav,"Mail canonical nav block missing");
-let mailLast=-1;
-for(const [href,label] of canonical){
-  const idx=mailNav.indexOf(href);
-  assert.ok(idx>=0,"Mail missing "+label);
-  assert.ok(idx>mailLast,"Mail menu order changed at "+label);
-  mailLast=idx;
-}
-assert.ok(mailNav.includes("Quantic ID"),"Mail missing Quantic ID");
 
 assert.ok(fs.existsSync("public/news/index.html"),"native Quantic News route missing");
 for(const path of ["public/index.html","public/products/index.html","public/quantic/index.html"]){
