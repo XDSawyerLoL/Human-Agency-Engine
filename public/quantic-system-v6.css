@@ -1102,3 +1102,6 @@ body.q-vision-shell .q-global-nav{background:rgba(245,247,249,.76)!important}
   .qs-principles-grid article:last-child{border-bottom:0}
   .qs-principles-grid h3{margin-top:30px}
 }
+
+/* Quantic ID */
+.qid-page{padding-top:36px}.qid-hero{padding:84px 0 48px;max-width:900px}.qid-hero h1{margin:12px 0 20px;font-size:clamp(4rem,8vw,6.5rem);line-height:.92;letter-spacing:-.065em;font-weight:560}.qid-hero>p:not(.q-kicker){max-width:720px;color:var(--qs-muted);font-size:1rem;line-height:1.75}.qid-state{margin:26px 0 18px;display:flex;align-items:center;gap:13px;width:min(560px,100%);padding:16px;border:1px solid var(--qs-line);border-radius:17px;background:#fff;box-shadow:var(--qs-shadow-sm)}.qid-state-dot{width:10px;height:10px;border-radius:50%;background:#92a1a8}.qid-state strong,.qid-state span{display:block}.qid-state strong{font-size:.9rem}.qid-state span{margin-top:4px;color:#7c8d95;font-size:.75rem}.qid-state[data-state="checking"] .qid-state-dot{background:var(--qs-cyan)}.qid-state[data-state="ready"] .qid-state-dot{background:#35c6a5}.qid-state[data-state="inactive"] .qid-state-dot{background:#d5a648}.qid-state[data-state="missing"] .qid-state-dot{background:#e46e79}.q-card.is-locked{opacity:.58}.q-card.is-locked .q-card-link{color:#8c6d26}

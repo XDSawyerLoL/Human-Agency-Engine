@@ -65,6 +65,27 @@ function syncRelaySource(){
   writeFileSync(join(relayTarget,"QUANTICMAIL_RELAY_COMMIT"),`${RELAY_SOURCE_COMMIT}\n`,"utf8");
 }
 
+function injectIdentityGate(directory){
+  const scripts='<script src="/quantic-id-runtime.js"></script><script src="/quantic-mail-id-gate.js"></script>';
+  let injected=0;
+  function visit(current){
+    for(const entry of readdirSync(current)){
+      if(entry===".git")continue;
+      const filePath=join(current,entry);
+      const info=statSync(filePath);
+      if(info.isDirectory()){visit(filePath);continue;}
+      if(!info.isFile()||!filePath.endsWith(".html"))continue;
+      const text=readFileSync(filePath,"utf8");
+      if(text.includes("quantic-mail-id-gate.js"))continue;
+      if(!text.includes("<head>"))continue;
+      writeFileSync(filePath,text.replace("<head>","<head>"+scripts),"utf8");
+      injected+=1;
+    }
+  }
+  visit(directory);
+  return injected;
+}
+
 function injectPortalNav(directory){
   const script='<script src="/quantic-mail-portal-nav.js" defer></script>';
   let injected=0;
@@ -142,6 +163,11 @@ try{
     throw new Error("La sentinelle de bootstrap QuanticMail est absente du bundle précompilé.");
   }
 
+  const identityGatePages=injectIdentityGate(work);
+  if(identityGatePages<3){
+    throw new Error(`Verrou Quantic ID non injecté dans assez de pages Mail: ${identityGatePages}.`);
+  }
+
   const portalNavPages=injectPortalNav(work);
   if(portalNavPages<3){
     throw new Error(`Navigation Quantic non injectée dans assez de pages Mail: ${portalNavPages}.`);
@@ -164,6 +190,7 @@ try{
     basePath:"/mail",
     relayInjected:relay,
     replacements,
+    identityGatePages,
     portalNavPages,
     relaySourceCommit:RELAY_SOURCE_COMMIT,
     relayVendor:"vendor/quanticmail-relay",
