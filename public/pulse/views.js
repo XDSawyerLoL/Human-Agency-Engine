@@ -1,6 +1,6 @@
-import { state, dom, api, esc, icon, initials, timeAgo, setStatus, errorText } from './core.js?v=7';
-import { requireAuth } from './session.js?v=7';
-import { renderPost, renderPosts, notificationLabel } from './render.js?v=7';
+import { state, dom, api, esc, icon, initials, timeAgo, setStatus, errorText } from './core.js?v=8';
+import { requireAuth } from './session.js?v=8';
+import { renderPost, renderPosts, notificationLabel } from './render.js?v=8';
 
 export function setView(view,title){
   state.view=view;
