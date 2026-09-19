@@ -1,8 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="News">
-<defs><linearGradient id="g" x1="14" y1="9" x2="87" y2="91" gradientUnits="userSpaceOnUse"><stop stop-color="#FF8063"/><stop offset=".58" stop-color="#FF5E59"/><stop offset="1" stop-color="#F33E55"/></linearGradient></defs>
-<rect x="8" y="8" width="84" height="84" rx="24" fill="url(#g)"/>
-<rect x="23" y="24" width="54" height="52" rx="12" fill="#fff"/>
-<rect x="31" y="34" width="38" height="7" rx="3.5" fill="#F85B58"/>
-<rect x="31" y="47" width="30" height="7" rx="3.5" fill="#F85B58"/>
-<rect x="31" y="60" width="23" height="7" rx="3.5" fill="#F85B58"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Quantic News"><defs><linearGradient id="g" x1="26" y1="22" x2="232" y2="236" gradientUnits="userSpaceOnUse"><stop stop-color="#FF8C62"/><stop offset=".48" stop-color="#FF5F55"/><stop offset="1" stop-color="#F52A5A"/></linearGradient></defs><rect x="10" y="10" width="236" height="236" rx="56" fill="url(#g)"/><rect x="47" y="50" width="162" height="157" rx="31" fill="#fff"/><rect x="68" y="77" width="119" height="20" rx="10" fill="#F9585A"/><rect x="68" y="116" width="77" height="19" rx="9.5" fill="#F9585A"/><rect x="68" y="153" width="61" height="19" rx="9.5" fill="#F9585A"/><rect x="153" y="115" width="34" height="57" rx="11" fill="#F9585A"/></svg>

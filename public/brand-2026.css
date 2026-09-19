@@ -92,3 +92,43 @@
 .qn-global-logo{width:38px;height:38px;display:block;flex:0 0 38px}.qn-global-wordmark{font-weight:800;letter-spacing:-.025em;color:#10294a}.qn-global-links a{gap:7px!important}.qn-global-links .q-nav-app-icon{width:22px;height:22px;border-radius:7px}
 @media(max-width:980px){.q-brand-copy{display:none}.q-brand2026-links .q-app-nav span{display:none}.q-brand2026-links .q-app-nav{min-width:40px!important;justify-content:center!important;padding:0 8px!important}}
 @media(max-width:680px){.q-brand-logo{width:36px!important;height:36px!important;flex-basis:36px!important}.q-brand2026-links>a:not(.q-app-nav):not(.q-nav-cta){display:none!important}.q-brand2026-links{overflow-x:auto;scrollbar-width:none}.q-menu-app-icon{width:24px;height:24px;flex-basis:24px}}
+
+/* BRAND 2026 SCALE SYSTEM — 2026-09-19
+   Sillage stays restrained; product icons carry the colour. */
+:root{
+  --qbrand-house-nav:30px;
+  --qbrand-app-nav:20px;
+  --qbrand-card:42px;
+  --qbrand-feature:52px;
+  --qbrand-product-hero:46px;
+}
+.q-brand-logo,.q-global-logo-mark{
+  width:var(--qbrand-house-nav)!important;height:var(--qbrand-house-nav)!important;
+  flex:0 0 var(--qbrand-house-nav)!important;object-fit:contain!important
+}
+.qn-global-logo,.q-sillage-global-logo{
+  width:30px!important;height:30px!important;flex:0 0 30px!important;object-fit:contain!important
+}
+.q-brand-copy strong,.q-global-wordmark strong{font-size:.80rem!important;line-height:.88!important}
+.q-menu-app-icon,.q-nav-app-icon,.q-sillage-app-icon{
+  width:var(--qbrand-app-nav)!important;height:var(--qbrand-app-nav)!important;flex:0 0 var(--qbrand-app-nav)!important;
+  border-radius:6px!important;object-fit:contain!important;box-shadow:0 3px 9px rgba(42,79,126,.08)!important
+}
+.q-product-logo,.q-card-logo,.q-service-logo,.q-download-logo{
+  object-fit:contain!important;box-shadow:0 7px 18px rgba(37,72,112,.075)!important
+}
+.qs-product-card .q-product-logo{width:40px!important;height:40px!important;margin:0 0 16px!important;border-radius:11px!important}
+.qs-product-card .q-product-logo-feature{width:var(--qbrand-feature)!important;height:var(--qbrand-feature)!important;border-radius:14px!important;margin-bottom:18px!important}
+.q-products .q-product-logo,.q-product-logo-row{width:40px!important;height:40px!important;border-radius:11px!important;margin:0 0 10px!important}
+.q-download-product-head .q-download-logo,.q-download-top>.q-download-logo{width:38px!important;height:38px!important;border-radius:10px!important;margin:0!important}
+.q-service-headline .q-service-logo{width:34px!important;height:34px!important;border-radius:9px!important;margin:0!important}
+.q-news-brandline img,.qv8-product-brand>img{width:var(--qbrand-product-hero)!important;height:var(--qbrand-product-hero)!important;border-radius:13px!important}
+.pulse-brand img{width:40px!important;height:40px!important;border-radius:11px!important;box-shadow:0 7px 18px rgba(133,54,201,.10)!important}
+.qn-mail-product-logo{width:46px!important;height:46px!important;border-radius:13px!important}
+.qs-hero-brand img{width:54px!important;height:54px!important;object-fit:contain!important}
+.q-unified-footer-brand img{width:20px!important;height:20px!important}
+.qv8-idmark-logo{width:38px!important;height:38px!important;object-fit:contain!important}
+@media(max-width:680px){
+  :root{--qbrand-house-nav:28px;--qbrand-app-nav:22px;--qbrand-card:40px;--qbrand-feature:48px;--qbrand-product-hero:42px}
+  .qs-hero-brand img{width:48px!important;height:48px!important}
+}

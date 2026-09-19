@@ -1,6 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Vision">
-<defs><linearGradient id="g" x1="12" y1="9" x2="90" y2="92" gradientUnits="userSpaceOnUse"><stop stop-color="#3C6FFF"/><stop offset=".48" stop-color="#6C4FF6"/><stop offset="1" stop-color="#8F59F6"/></linearGradient></defs>
-<rect x="8" y="8" width="84" height="84" rx="24" fill="url(#g)"/>
-<circle cx="50" cy="50" r="24" fill="none" stroke="#fff" stroke-width="10"/>
-<path d="M67 33A24 24 0 0 1 72.5 60.5" fill="none" stroke="#C8BAFF" stroke-width="10" stroke-linecap="butt"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Quantic Vision"><defs><linearGradient id="g" x1="25" y1="22" x2="232" y2="236" gradientUnits="userSpaceOnUse"><stop stop-color="#4B54FF"/><stop offset=".48" stop-color="#7146F5"/><stop offset="1" stop-color="#9B50F3"/></linearGradient></defs><rect x="10" y="10" width="236" height="236" rx="56" fill="url(#g)"/><circle cx="128" cy="128" r="67" fill="none" stroke="#fff" stroke-width="29"/><path d="M176 80A67 67 0 0 1 191 157" fill="none" stroke="#C9B8FF" stroke-width="29"/></svg>
