@@ -674,3 +674,34 @@ body[data-vision-ui="v9"] a:hover{color:#176173}
   body[data-vision-ui="v9"] .p168-section-head p{margin-top:10px!important}
   body[data-vision-ui="v9"] .q-vision-subnav{top:62px!important}
 }
+
+
+/* V9 stability hotfix: real crests must never escape Sports cards. */
+html,body[data-vision-ui="v9"]{height:auto!important;min-height:100%!important;overflow-x:hidden!important;overflow-y:auto!important}
+body[data-vision-ui="v9"] main{height:auto!important;max-height:none!important;overflow:visible!important}
+body[data-vision-ui="v9"] .fixtures-panel,
+body[data-vision-ui="v9"] .fixture-grid{overflow:visible!important}
+body[data-vision-ui="v9"] .fixture-card{overflow:hidden!important;min-width:0!important;isolation:isolate!important}
+body[data-vision-ui="v9"] .pv12-team-badge,
+body[data-vision-ui="v9"] .pv-team-badge{
+  width:50px!important;height:50px!important;min-width:50px!important;max-width:50px!important;
+  min-height:50px!important;max-height:50px!important;display:grid!important;place-items:center!important;
+  overflow:hidden!important;border-radius:15px!important;position:relative!important;contain:paint!important
+}
+body[data-vision-ui="v9"] .pv12-team-badge img,
+body[data-vision-ui="v9"] .pv-team-badge img{
+  display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+  object-fit:contain!important;object-position:center!important;position:static!important;inset:auto!important;
+  transform:none!important;margin:0!important;padding:3px!important
+}
+body[data-vision-ui="v9"] .pv12-club{min-width:0!important;overflow:hidden!important}
+body[data-vision-ui="v9"] .pv12-club strong{
+  display:block!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important
+}
+body[data-vision-ui="v9"] .fixture-probs>div{min-width:0!important}
+body[data-vision-ui="v9"] .fixture-probs small{
+  display:block!important;margin-bottom:3px!important;color:#85949b!important;font-size:.58rem!important;line-height:1!important
+}
+body[data-vision-ui="v9"] .fixture-probs strong{
+  display:block!important;color:var(--qv9-ink)!important;font-size:.9rem!important;line-height:1.15!important
+}
