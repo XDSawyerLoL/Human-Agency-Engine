@@ -161,7 +161,8 @@ function bindStaticEvents(){
       const action=register?'register':'login';
       const path=register?'/api/pulse/auth/register':'/api/pulse/auth/login';
       const proof=register?await identityProof('register',handle):await identityProof('login','');
-      const body=register?{handle,displayName,identityProof:proof}:{identityProof:proof};
+      const activeIdentity=!register?await ensureIdentityVault():null;
+      const body=register?{handle,displayName,identityProof:proof}:{identityProof:proof,provision:true,displayName:activeIdentity?.label||'Membre Quantic'};
       const data=await api(path,{method:'POST',body:JSON.stringify(body)});
       applySession(data);
       closeAuth();
