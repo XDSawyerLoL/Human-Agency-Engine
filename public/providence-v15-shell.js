@@ -23,8 +23,6 @@ const loadCss=(href,match)=>{
   document.head.appendChild(link);
 };
 
-/* Legacy visual layers stay available only for pages not yet migrated.
-   Native V9 pages own their layout directly and must not inherit the dark Providence theme. */
 if(!nativeV9Pages.has(page)){
   loadCss('/providence-v15-fixes.css?v=clarity-1','providence-v15-fixes.css');
   loadCss('/providence-v16-platform.css?v=16.12','providence-v16-platform.css');
@@ -35,7 +33,6 @@ if(!nativeV9Pages.has(page)){
   if(page==='home')loadCss('/providence-timeline-v16-10.css?v=16.12','providence-timeline-v16-10.css');
   loadCss('/providence-v16-12-mobile.css?v=16.12','providence-v16-12-mobile.css');
 }
-const legacyVisualContract='quantic-unified.css?v=3.0';
 loadCss('/quantic-system-v6.css?v=6.1','quantic-system-v6.css');
 if(nativeV9Pages.has(page)){
   loadCss('/quantic-vision-v9.css?v=9.0','quantic-vision-v9.css');
@@ -43,29 +40,30 @@ if(nativeV9Pages.has(page)){
   const visionV7=document.querySelector('link[href*="quantic-vision-v7.css"]');
   if(visionV7)document.head.appendChild(visionV7);else loadCss('/quantic-vision-v7.css?v=7.0','quantic-vision-v7.css');
 }
-
-
+loadCss('/brand-2026.css?v=20260919','brand-2026.css');
 
 document.body.classList.add('q-vision-shell');
 document.body.dataset.product='quantic-vision';
 if(document.title.startsWith('Providence'))document.title=document.title.replace(/^Providence\s*[—-]?\s*/,'Quantic Vision — ');
 
 const productActive='vision';
+const appLink=(key,href,label,icon)=>`<a href="${href}" class="${productActive===key?'active':''}" ${productActive===key?'aria-current="page"':''}><img class="q-nav-app-icon" src="/assets/brand-2026/${icon}" alt=""><span>${label}</span></a>`;
 const global=document.createElement('header');
 global.className='q-global-nav';
 global.innerHTML=`
   <div class="q-global-nav-inner">
-    <a class="q-global-brand" href="/" aria-label="Quantic accueil">
-      <span class="q-global-mark" aria-hidden="true"></span><span>QUANTIC SILLAGE</span>
+    <a class="q-global-brand" href="/" aria-label="Quantic Sillage — accueil">
+      <img class="q-global-logo-mark" src="/assets/brand-2026/quantic-sillage-mark.svg" alt="">
+      <span class="q-global-wordmark"><strong>Quantic</strong><strong>Sillage</strong></span>
     </a>
     <nav class="q-global-links" aria-label="Navigation Quantic">
-      <a href="/vision/" class="${productActive==='vision'?'active':''}" aria-current="page">Vision</a>
-      <a href="/mail/">Mail</a>
-      <a href="/pulse/">Pulse</a>
-      <a href="/news/">News</a>
-      <a href="/products/" class="q-hide-mobile">Produits</a>
-      <a href="/downloads/">Outils</a>
-      <a href="/quantic/" class="q-global-centre"><span class="q-global-status" aria-hidden="true"></span>Quantic ID</a>
+      ${appLink('pulse','/pulse/','Pulse','pulse-mark.svg')}
+      ${appLink('mail','/mail/','Mail','mail-mark.svg')}
+      ${appLink('news','/news/','News','news-mark.svg')}
+      ${appLink('vision','/vision/','Vision','vision-mark.svg')}
+      <a href="/products/" class="q-hide-mobile"><span>Produits</span></a>
+      <a href="/downloads/"><span>Outils</span></a>
+      <a href="/quantic/" class="q-global-centre"><span class="q-global-status" aria-hidden="true"></span><span>Quantic ID</span></a>
     </nav>
   </div>`;
 document.body.prepend(global);
@@ -100,7 +98,7 @@ if(main&&page==='predictions'&&!main.querySelector('.p16-time-rail')){
 if(main&&!document.querySelector('.q-unified-footer')){
   const footer=document.createElement('footer');
   footer.className='q-unified-footer';
-  footer.innerHTML='<span>QUANTIC VISION · moteur PROVIDENCE / HORIZON</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/downloads/">Outils</a> · <a href="/products/">Écosystème Quantic</a></span>';
+  footer.innerHTML='<span class="q-unified-footer-brand"><img src="/assets/brand-2026/quantic-sillage-mark.svg" alt="">Quantic Sillage · Quantic Vision</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/downloads/">Outils</a> · <a href="/products/">Écosystème Quantic</a></span>';
   main.insertAdjacentElement('afterend',footer);
 }
 

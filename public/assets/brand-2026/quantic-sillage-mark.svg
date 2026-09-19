@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-labelledby="title desc">
+<title id="title">Quantic Sillage</title><desc id="desc">Symbole Q bleu de Quantic Sillage</desc>
+<defs><linearGradient id="g" x1="14" y1="10" x2="88" y2="90" gradientUnits="userSpaceOnUse"><stop stop-color="#35B8F4"/><stop offset=".55" stop-color="#167AF1"/><stop offset="1" stop-color="#1757D9"/></linearGradient></defs>
+<path d="M76 63A34 34 0 1 0 39 82" fill="none" stroke="url(#g)" stroke-width="18" stroke-linecap="round"/>
+<circle cx="72.5" cy="80" r="10.5" fill="url(#g)"/>
+</svg>

@@ -1,0 +1,74 @@
+/* Quantic Sillage — consumer brand layer 2026 */
+:root{
+  --qs26-ink:#081a3a;
+  --qs26-muted:#6c7c99;
+  --qs26-blue:#167af1;
+  --qs26-blue2:#35b8f4;
+  --qs26-line:#dbe7f3;
+  --qs26-surface:rgba(255,255,255,.88);
+  --qs26-shadow:0 18px 48px rgba(38,82,130,.10);
+}
+.q-global-nav{padding:12px 18px 0!important}
+.q-global-nav-inner{
+  min-height:66px!important;
+  border:1px solid rgba(211,226,241,.9)!important;
+  border-radius:22px!important;
+  background:rgba(255,255,255,.86)!important;
+  backdrop-filter:blur(22px) saturate(150%)!important;
+  box-shadow:0 12px 38px rgba(37,83,130,.08)!important;
+}
+.q-global-brand{
+  gap:10px!important;
+  color:var(--qs26-ink)!important;
+  font-size:inherit!important;
+  letter-spacing:0!important;
+}
+.q-global-logo-mark{width:42px;height:42px;display:block;flex:0 0 auto}
+.q-global-wordmark{display:grid;line-height:.88}
+.q-global-wordmark strong{font-size:.92rem;font-weight:820;letter-spacing:-.04em;color:var(--qs26-ink)}
+.q-global-links{gap:4px!important}
+.q-global-links a{
+  gap:7px!important;
+  color:#6f7e98!important;
+  font-weight:650!important;
+  border-radius:999px!important;
+  padding:0 11px!important;
+}
+.q-global-links a:hover,.q-global-links a:focus-visible{
+  background:#f4f8fc!important;
+  color:#1d365d!important;
+}
+.q-global-links a.active,.q-global-links a[aria-current="page"]{
+  background:#eef5ff!important;
+  color:#0e5fc8!important;
+}
+.q-nav-app-icon{width:22px;height:22px;display:block;border-radius:7px;box-shadow:0 4px 12px rgba(44,94,145,.10)}
+.q-global-centre{
+  border:1px solid #cfe2f6!important;
+  background:#f7fbff!important;
+  color:#195b9d!important;
+}
+.q-global-status{background:#2bc780!important;box-shadow:0 0 10px rgba(43,199,128,.35)!important}
+.q-vision-subnav{
+  border-bottom:1px solid #e2ebf3!important;
+  background:rgba(250,253,255,.92)!important;
+}
+.q-unified-footer{color:#7d8da7!important}
+.q-unified-footer-brand{display:inline-flex;align-items:center;gap:8px;font-weight:760;color:#16355f}
+.q-unified-footer-brand img{width:24px;height:24px}
+@media(max-width:900px){
+  .q-global-nav{padding:8px 8px 0!important}
+  .q-global-nav-inner{min-height:58px!important;padding:7px 8px!important;border-radius:18px!important}
+  .q-global-logo-mark{width:36px;height:36px}
+  .q-global-wordmark strong{font-size:.78rem}
+  .q-global-links a{padding:0 8px!important}
+  .q-global-links a span:not(.q-global-status){display:none}
+  .q-nav-app-icon{width:24px;height:24px}
+}
+@media(max-width:640px){
+  .q-global-wordmark{display:none}
+  .q-global-links{overflow-x:auto;scrollbar-width:none}
+  .q-global-links::-webkit-scrollbar{display:none}
+  .q-global-links a{min-width:42px;justify-content:center}
+  .q-hide-mobile{display:none!important}
+}
