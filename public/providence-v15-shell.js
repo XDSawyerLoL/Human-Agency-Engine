@@ -53,7 +53,7 @@ global.innerHTML=`
       <a href="/network/">Network</a>
       <a href="/products/" class="q-hide-mobile">Produits</a>
       <a href="/downloads/">Téléchargements</a>
-      <a href="/quantic/" class="q-global-centre"><span class="q-global-status" aria-hidden="true"></span>Entrer</a>
+      <a href="/quantic/" class="q-global-centre"><span class="q-global-status" aria-hidden="true"></span>Quantic ID</a>
     </nav>
   </div>`;
 document.body.prepend(global);
