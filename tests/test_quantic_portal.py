@@ -117,13 +117,15 @@ def test_all_quantic_primary_surfaces_load_unified_providence_visual_layer():
     for path in (
         "public/index.html",
         "public/quantic/index.html",
-        "public/vision/index.html",
         "public/mail/index.html",
         "public/network/index.html",
         "public/products/index.html",
     ):
         page = text(path)
         assert "quantic-unified.css?v=3.0" in page, path
+    vision = text("public/vision/index.html")
+    assert "quantic-vision-home-v8.css?v=8.0" in vision
+    assert "providence-v15.css" not in vision
 
 
 def test_providence_internal_shell_uses_quantic_navigation_not_software_sidebar():
