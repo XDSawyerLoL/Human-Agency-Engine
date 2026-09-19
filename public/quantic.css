@@ -109,7 +109,7 @@ body.q-premium{position:relative;background:
 .q-card .q-card-link{margin-top:auto;padding-top:26px;font-weight:780;font-size:.87rem;color:#dfe9f5}
 .q-card .q-card-meta{position:absolute;right:22px;top:23px;font-family:var(--q-mono);font-size:.61rem;letter-spacing:.1em;color:#516076;text-transform:uppercase}
 .q-card.vision{--card-color:#80caff;--card-glow:rgba(63,161,255,.16)}
-.q-card.mail{--card-color:#7cead8;--card-glow:rgba(58,222,193,.13)}
+.q-card.mail{--card-color:#7cead8;--card-glow:rgba(58,222,193,.13)}\n.q-card.pulse{--card-color:#c58cff;--card-glow:rgba(183,104,255,.14)}
 .q-card.network{--card-color:#b397ff;--card-glow:rgba(140,92,255,.15)}
 .q-card.ecosystem{--card-color:#ffd177;--card-glow:rgba(255,190,74,.11)}
 .q-band{position:relative;margin:28px 0;padding:32px;border:1px solid rgba(255,255,255,.075);border-radius:var(--q-radius);background:linear-gradient(110deg,rgba(255,255,255,.035),rgba(255,255,255,.015));display:grid;grid-template-columns:1fr auto;gap:34px;align-items:center;overflow:hidden}
