@@ -6,7 +6,7 @@ function ensureNav(){
   header.id=NAV_ID;
   header.className='qn-global-nav';
   header.setAttribute('aria-label','Navigation Quantic');
-  header.innerHTML='<a class="qn-global-brand" href="/" aria-label="Quantic accueil"><span class="qn-global-mark" aria-hidden="true"></span><span>QUANTIC</span></a><nav class="qn-global-links" aria-label="Navigation principale"><a href="/vision/">Vision</a><a class="active" href="/mail/" aria-current="page">Mail</a><a href="/network/">Network</a><a href="/products/">Produits</a><a href="/downloads/">Téléchargements</a><a class="centre" href="/quantic/">Centre</a></nav>';
+  header.innerHTML='<a class="qn-global-brand" href="/" aria-label="Quantic accueil"><span class="qn-global-mark" aria-hidden="true"></span><span>QUANTIC</span></a><nav class="qn-global-links" aria-label="Navigation principale"><a href="/vision/">Vision</a><a class="active" href="/mail/" aria-current="page">Mail</a><a href="/pulse/">Pulse</a><a href="/network/">Network</a><a href="/products/">Produits</a><a href="/downloads/">Téléchargements</a><a class="centre" href="/quantic/">Centre</a></nav>';
   document.body.prepend(header);
 }
 function settle(){
