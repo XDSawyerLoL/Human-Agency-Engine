@@ -72,6 +72,6 @@ jobs:
         run: |
           gh release view "$env:TAG" 2>$null
           if ($LASTEXITCODE -ne 0) {
-            gh release create "$env:TAG" --target "$env:GITHUB_SHA" --title "Quantic Identity Vault v$env:VERSION" --prerelease --notes "Quantic Identity Vault v$env:VERSION conserve le déverrouillage USB sans code par présence physique de la clé et corrige la liaison avec le portail Quantic. Le bridge /v1/status annonce désormais correctement le protocole v1, tandis que la version de l’application et le format du coffre sont exposés séparément. Le profil personnel et la photo restent chiffrés localement."
+            gh release create "$env:TAG" --target "$env:GITHUB_SHA" --title "Quantic Identity Vault v$env:VERSION" --prerelease --notes "Quantic Identity Vault v$env:VERSION ajoute le protocole ouvert Quantic Hardware Key QHK/1. Identity Vault peut désormais créer et utiliser une identité dont la clé privée P-256 reste dans un périphérique USB HID sécurisé et ne sort jamais dans le coffre ni vers Sillage. Les identités USB Ed25519 existantes restent compatibles. Le mode Hardware exige un périphérique QHK/1 réel avec élément sécurisé ; une clé USB de stockage ordinaire ne fournit pas cette garantie."
           }
           gh release upload "$env:TAG" "identity-vault/dist/Quantic-Identity-Vault-Setup-$env:VERSION.exe" "identity-vault/dist/Quantic-Identity-Vault-Portable-$env:VERSION.exe" --clobber

@@ -4,33 +4,73 @@ Compagnon local de **Quantic ID**.
 
 ## Modes
 
-- **PC** : la clé privée Ed25519 et le profil personnel sont chiffrés avec `Electron safeStorage`.
-- **Portable USB** : aucun code local n’est demandé. La présence physique de la clé USB est le facteur d’accès.
+### USB standard
 
-## Déverrouillage USB sans code
+- aucun code local à mémoriser ;
+- `identity-vault.json` contient le coffre chiffré ;
+- `identity-vault.key` contient le secret logiciel qui ouvre le coffre ;
+- brancher la clé permet un déverrouillage en un clic ;
+- retirer la clé verrouille l’identité.
 
-Depuis la v0.3.0, un coffre USB est composé de deux éléments placés ensemble sur la clé :
+Ce mode est simple, mais une copie complète de la clé USB peut être clonée.
 
-- `identity-vault.json` : coffre chiffré contenant la clé privée et le profil ;
-- `identity-vault.key` : secret cryptographique aléatoire généré automatiquement.
+### Quantic Hardware Key
 
-L’utilisateur ne saisit aucun mot de passe. Si les deux fichiers sont présents sur la clé, un clic sur **Déverrouiller** active Quantic ID. **Verrouiller** retire la clé privée de la mémoire. Si la clé USB disparaît, l’identité active est automatiquement invalidée.
+Depuis la v0.4.0, Identity Vault comprend le protocole **QHK/1**.
 
-Ce modèle protège surtout contre l’utilisation de l’identité sans possession de la clé USB. Une personne qui obtient physiquement la clé complète obtient également le facteur de déverrouillage.
+Dans ce mode :
 
-## Anciens coffres
+- la clé privée d’identité est créée dans un composant sécurisé ;
+- elle n’est jamais écrite dans `identity-vault.json` ;
+- elle n’est jamais transmise à Identity Vault, au navigateur ou au serveur ;
+- la preuve Quantic ID est signée directement par la clé matérielle ;
+- le profil personnel reste chiffré sur la clé USB ;
+- la copie des fichiers USB ne suffit pas à reproduire l’identité.
 
-Les coffres v1/v2 protégés par un code local sont détectés comme anciens formats. Ils ne peuvent pas être déchiffrés sans leur ancien code. Lorsqu’une nouvelle identité USB sans code est créée, l’ancien `identity-vault.json` est sauvegardé automatiquement sous un nom `identity-vault.backup-*.json` avant remplacement.
+Le protocole est USB HID et ne dépend d’aucun fournisseur cryptographique Microsoft, Google ou Apple. Le transport utilise seulement la pile HID de l’OS.
 
-## Profil personnel chiffré
+Le mode Hardware utilise **ECDSA P-256 / SHA-256** avec une signature IEEE-P1363. Les identités Ed25519 existantes restent compatibles.
 
-Le coffre peut conserver localement la photo, l’état civil, les coordonnées, l’adresse, l’activité professionnelle, un contact d’urgence et des informations complémentaires. Ces données ne sont jamais exposées par le bridge local sans mécanisme de partage explicite.
+## Matériel requis
+
+Une clé USB de stockage ordinaire ne peut pas rendre une clé privée non exportable.
+
+La garantie Hardware exige un périphérique dédié avec :
+
+- microcontrôleur USB ;
+- élément sécurisé ou enclave matérielle ;
+- génération de clé P-256 interne ;
+- export de la clé privée interdit par configuration matérielle.
+
+Le protocole complet est documenté dans `hardware-key/PROTOCOL.md`.
+
+Le firmware de référence est séparé du backend de l’élément sécurisé afin de ne pas verrouiller Quantic sur un fabricant unique.
+
+## Profil personnel
+
+Le coffre peut conserver localement :
+
+- photo ;
+- état civil ;
+- coordonnées ;
+- adresse ;
+- activité professionnelle ;
+- contact d’urgence ;
+- informations complémentaires.
+
+Ces données ne sont pas renvoyées par le bridge local.
 
 ## Bridge local
 
 Identity Vault écoute uniquement sur `127.0.0.1:47621`.
 
-- `GET /v1/status` : présence et identité active, sans profil personnel.
-- `POST /v1/assert` : signe un challenge avec Ed25519.
+- `GET /v1/status` : présence et identité active, sans profil personnel ;
+- `POST /v1/assert` : demande une preuve cryptographique.
 
-La clé privée et le profil personnel ne sont jamais renvoyés par cette API locale.
+En mode Hardware, `/v1/assert` transmet le payload au périphérique QHK/1 et reçoit uniquement la signature.
+
+## Migration
+
+Créer une identité Hardware produit nécessairement une **nouvelle paire cryptographique** et donc un nouveau `qid_...`.
+
+Avant remplacement du coffre actif, Identity Vault sauvegarde automatiquement le coffre existant.

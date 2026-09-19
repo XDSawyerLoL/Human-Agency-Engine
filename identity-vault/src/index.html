@@ -17,8 +17,8 @@
 
     <section class="hero">
       <p class="kicker">QUANTIC ID</p>
-      <h2>La clé USB est votre accès.</h2>
-      <p>Aucun code local à saisir. Tant que la clé USB contenant votre coffre est connectée, un clic suffit pour verrouiller ou déverrouiller votre identité.</p>
+      <h2>Votre identité reste chez vous.</h2>
+      <p>Mode USB simple sans code ou mode Quantic Hardware : dans ce dernier, la clé privée est créée dans un composant sécurisé et n’est jamais écrite dans le coffre USB.</p>
     </section>
 
     <section id="status" class="status" data-state="checking"><strong>Chargement…</strong></section>
@@ -28,6 +28,23 @@
       <button id="reveal" type="button" class="secondary">Afficher le coffre</button>
     </div>
 
+    <section id="hardware-card" class="card hardware-card" hidden>
+      <div class="hardware-head">
+        <div>
+          <p class="kicker">QUANTIC HARDWARE</p>
+          <h3>Clé privée non exportable</h3>
+          <p class="card-intro">Aucun fournisseur cryptographique Microsoft, aucun cloud. Identity Vault parle directement au périphérique via le protocole USB HID Quantic.</p>
+        </div>
+        <span class="hardware-badge">USB HID</span>
+      </div>
+      <div id="hardware-state" class="hardware-state" data-state="idle">Option renforcée : identité non copiable avec une Quantic Hardware Key.</div>
+      <div class="hardware-actions">
+        <button id="hardware-pair" type="button" class="secondary">Associer une clé Hardware</button>
+        <button id="hardware-create" type="button" disabled>Créer l’identité Hardware</button>
+      </div>
+      <small class="hardware-note">La création Hardware génère une nouvelle identité cryptographique. Le coffre actuel est sauvegardé avant remplacement.</small>
+    </section>
+
     <form id="create-form" class="card" hidden>
       <h3>Créer mon Quantic ID</h3>
       <p class="card-intro" id="create-note">Le coffre sera protégé par la présence physique de la clé USB. Aucun code local ne sera créé.</p>
@@ -36,12 +53,12 @@
         <label>Prénom<input name="firstName" maxlength="100"></label>
         <label>Nom<input name="lastName" maxlength="100"></label>
       </div>
-      <button type="submit">Créer l’identité sans code</button>
+      <button type="submit">Créer l’identité USB</button>
     </form>
 
     <section id="unlock-card" class="card" hidden>
       <h3>Identity Vault verrouillé</h3>
-      <p class="card-intro">La clé USB est détectée. Aucun code n’est nécessaire.</p>
+      <p id="unlock-intro" class="card-intro">La clé USB est détectée. Aucun code n’est nécessaire.</p>
       <button id="unlock" type="button">Déverrouiller</button>
     </section>
 
@@ -113,8 +130,9 @@
       <button id="lock" class="secondary" hidden>Verrouiller</button>
     </div>
 
-    <footer>Quantic Identity Vault · la présence de la clé USB autorise le déverrouillage local</footer>
+    <footer>Quantic Identity Vault · cryptographie locale · aucune clé privée envoyée à Sillage</footer>
   </main>
+<script src="./hardware-key.js"></script>
 <script src="./renderer.js"></script>
 </body>
 </html>

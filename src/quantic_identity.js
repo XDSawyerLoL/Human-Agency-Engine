@@ -53,7 +53,7 @@ function clearSessionCookie(req,res){
   res.setHeader('Set-Cookie',parts.join('; '));
 }
 function publicSession(session){
-  return session?{authenticated:true,keyId:session.keyId,expiresAt:new Date(session.expiresAt).toISOString()}:{authenticated:false};
+  return session?{authenticated:true,keyId:session.keyId,algorithm:session.algorithm||"ed25519",expiresAt:new Date(session.expiresAt).toISOString()}:{authenticated:false};
 }
 function sessionFromRequest(req){
   cleanup();
@@ -65,7 +65,8 @@ function sessionFromRequest(req){
 }
 export function verifyIdentityProof(proof,expectedChallenge){
   if(!proof||typeof proof!=='object')return{error:'identity_proof_required'};
-  const publicKey=clean(proof.publicKey,1600),proofKeyId=clean(proof.keyId,90),payload=String(proof.payload||''),signature=clean(proof.signature,1200);
+  const publicKey=clean(proof.publicKey,1600),proofKeyId=clean(proof.keyId,90),payload=String(proof.payload||''),signature=clean(proof.signature,1400);
+  const algorithm=clean(proof.algorithm||'ed25519',80);
   if(!publicKey||!proofKeyId||!payload||!signature)return{error:'identity_proof_required'};
   let parsed;
   try{parsed=JSON.parse(payload)}catch{return{error:'identity_proof_invalid'}}
@@ -73,9 +74,19 @@ export function verifyIdentityProof(proof,expectedChallenge){
   if(keyId(publicKey)!==proofKeyId)return{error:'identity_proof_invalid'};
   try{
     const key=createPublicKey({key:Buffer.from(publicKey,'base64url'),type:'spki',format:'der'});
-    if(!verify(null,Buffer.from(payload),key,Buffer.from(signature,'base64url')))return{error:'identity_proof_invalid'};
+    let ok=false;
+    if(algorithm==='ed25519'){
+      if(key.asymmetricKeyType!=='ed25519')return{error:'identity_proof_invalid'};
+      ok=verify(null,Buffer.from(payload),key,Buffer.from(signature,'base64url'));
+    }else if(algorithm==='ecdsa-p256-sha256'){
+      if(key.asymmetricKeyType!=='ec'||key.asymmetricKeyDetails?.namedCurve!=='prime256v1')return{error:'identity_proof_invalid'};
+      ok=verify('sha256',Buffer.from(payload),{key,dsaEncoding:'ieee-p1363'},Buffer.from(signature,'base64url'));
+    }else{
+      return{error:'identity_algorithm_unsupported'};
+    }
+    if(!ok)return{error:'identity_proof_invalid'};
   }catch{return{error:'identity_proof_invalid'}}
-  return{keyId:proofKeyId,publicKey};
+  return{keyId:proofKeyId,publicKey,algorithm};
 }
 function issueChallenge(){
   cleanup();
@@ -94,7 +105,7 @@ function establishSession(req,res,proof){
   const verified=verifyIdentityProof(proof,challenge);
   if(verified.error)return verified;
   const token=randomBytes(32).toString('base64url');
-  const session={keyId:verified.keyId,publicKey:verified.publicKey,createdAt:now(),expiresAt:now()+SESSION_TTL};
+  const session={keyId:verified.keyId,publicKey:verified.publicKey,algorithm:verified.algorithm||"ed25519",createdAt:now(),expiresAt:now()+SESSION_TTL};
   sessions.set(hash(token),session);
   setSessionCookie(req,res,token);
   return publicSession(session);

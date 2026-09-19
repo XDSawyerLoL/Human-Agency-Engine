@@ -53,7 +53,8 @@ function issueIdentityChallenge(action,handle){
 function verifyIdentityProof(proof,{action,handle}){
   cleanupIdentityChallenges();
   if(!proof||typeof proof!=='object')return{error:'identity_proof_required'};
-  const keyId=clean(proof.keyId,80),publicKey=clean(proof.publicKey,1200),payload=String(proof.payload||''),signature=clean(proof.signature,1000);
+  const keyId=clean(proof.keyId,80),publicKey=clean(proof.publicKey,1600),payload=String(proof.payload||''),signature=clean(proof.signature,1400);
+  const algorithm=clean(proof.algorithm||'ed25519',80);
   if(!keyId||!publicKey||!payload||!signature)return{error:'identity_proof_required'};
   let parsed;
   try{parsed=JSON.parse(payload)}catch{return{error:'identity_proof_invalid'}}
@@ -65,10 +66,19 @@ function verifyIdentityProof(proof,{action,handle}){
   if(identityKeyId(publicKey)!==keyId)return{error:'identity_proof_invalid'};
   try{
     const key=createPublicKey({key:Buffer.from(publicKey,'base64url'),type:'spki',format:'der'});
-    const ok=verify(null,Buffer.from(payload),key,Buffer.from(signature,'base64url'));
+    let ok=false;
+    if(algorithm==='ed25519'){
+      if(key.asymmetricKeyType!=='ed25519')return{error:'identity_proof_invalid'};
+      ok=verify(null,Buffer.from(payload),key,Buffer.from(signature,'base64url'));
+    }else if(algorithm==='ecdsa-p256-sha256'){
+      if(key.asymmetricKeyType!=='ec'||key.asymmetricKeyDetails?.namedCurve!=='prime256v1')return{error:'identity_proof_invalid'};
+      ok=verify('sha256',Buffer.from(payload),{key,dsaEncoding:'ieee-p1363'},Buffer.from(signature,'base64url'));
+    }else{
+      return{error:'identity_algorithm_unsupported'};
+    }
     if(!ok)return{error:'identity_proof_invalid'};
   }catch{return{error:'identity_proof_invalid'}}
-  return{keyId,publicKey};
+  return{keyId,publicKey,algorithm};
 }
 
 async function pg(){
