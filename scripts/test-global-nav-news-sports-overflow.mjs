@@ -17,14 +17,10 @@ const canonical=[
   ["/mail/","Mail"],
   ["/pulse/","Pulse"],
   ["/news/","News"],
-  ["/network/","Network"],
-  ["/products/","Produits"],
-  ["/downloads/","Téléchargements"]
+  ["/downloads/","Produits & outils"]
 ];
 const navSources=[
   ["public/index.html","q-links"],
-  ["public/network/index.html","q-links"],
-  ["public/products/index.html","q-links"],
   ["public/downloads/index.html","q-links"],
   ["public/quantic/index.html","q-links"],
   ["public/mail/index.html","qn-global-links"],
@@ -56,7 +52,7 @@ for(const [path,className] of navSources){
 }
 
 assert.ok(fs.existsSync("public/news/index.html"),"native Quantic News route missing");
-for(const path of ["public/index.html","public/products/index.html","public/quantic/index.html"]){
+for(const path of ["public/index.html","public/downloads/index.html","public/quantic/index.html"]){
   assert.ok(read(path).includes("Quantic News"),path+" must surface Quantic News as a product");
 }
 
