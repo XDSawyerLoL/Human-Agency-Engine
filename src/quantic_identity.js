@@ -11,7 +11,7 @@ const INTERNAL_HEADER='x-quantic-internal';
 const INTERNAL_TOKEN=randomBytes(32).toString('hex');
 
 const privatePagePrefixes=[
-  '/vision','/predictions','/analyst','/alerts','/sports','/cameras',
+  '/vision','/mail','/predictions','/analyst','/alerts','/sports','/cameras',
   '/track-record','/sources','/backtest','/settings','/causal','/crypto',
   '/horizons','/intelligence','/matches','/modules'
 ];
