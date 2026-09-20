@@ -115,10 +115,8 @@
 
     try {
       const response = await fetchStatus();
-      if (!response.ok) throw new Error("status unavailable");
-      const payload = await response.json();
+      const payload = await response.json().catch(() => null);
       if (!payload || !Array.isArray(payload.services)) throw new Error("invalid status payload");
-
       let active = 0;
       let online = 0;
       const serviceStates = new Map();
@@ -126,9 +124,9 @@
       payload.services.forEach((service) => {
         const state = service.state === "pending"
           ? "pending"
-          : service.reachable === true
+          : service.functional === true
             ? "online"
-            : service.reachable === false
+            : service.functional === false
               ? "offline"
               : "unknown";
 
@@ -151,6 +149,7 @@
       });
 
       if (!active) setSummary("unknown", "Monitoring indisponible", summaryMeta);
+      else if (payload.status === "degraded" && online === active) setSummary("partial", "Continuité incomplète", summaryMeta);
       else if (online === active) setSummary("online", "Services principaux disponibles", summaryMeta);
       else if (online > 0) setSummary("partial", "Service partiellement disponible", summaryMeta);
       else setSummary("offline", "Services temporairement indisponibles", summaryMeta);
