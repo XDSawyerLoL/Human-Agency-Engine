@@ -32,7 +32,7 @@ const navSources=[
 
 function navFragment(path,className){
   const s=read(path);
-  const marker='class="'+className+'"';
+  const marker='class="'+className;
   const start=s.indexOf(marker);
   assert.ok(start>=0,path+" missing "+className);
   const window=s.slice(start,start+2400);
