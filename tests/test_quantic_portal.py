@@ -78,6 +78,21 @@ def test_quantic_studio_is_published_as_a_first_class_product():
     assert "quantic-studio-v2.7.3" in downloads
     assert "Quantic Studio" in studio_mark
 
+
+
+def test_no_public_page_restores_split_products_tools_navigation():
+    public_root = ROOT / "public"
+    legacy_pairs = (
+        '<a href="/products/"><span>Produits</span></a><a href="/downloads/"><span>Outils</span></a>',
+        '<a href="/products/"><span>Produits</span></a><a href="/downloads/"><span>Téléchargements</span></a>',
+    )
+    offenders = []
+    for page_path in public_root.rglob("*.html"):
+        page = page_path.read_text(encoding="utf-8")
+        if any(pair in page for pair in legacy_pairs):
+            offenders.append(str(page_path.relative_to(ROOT)))
+    assert offenders == []
+
 def test_nginx_proxies_portal_status_to_internal_api():
     config = text("hostinger/evidence-nginx.conf")
     assert "location /api/quantic-portal/" in config
