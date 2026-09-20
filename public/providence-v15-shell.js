@@ -58,12 +58,11 @@ global.innerHTML=`
       <span class="q-global-wordmark"><strong>Quantic</strong><strong>Sillage</strong></span>
     </a>
     <nav class="q-global-links" aria-label="Navigation Quantic">
-      ${appLink('pulse','/pulse/','Pulse','pulse-mark.svg')}
-      ${appLink('mail','/mail/','Mail','mail-mark.svg')}
-      ${appLink('news','/news/','News','news-mark.svg')}
       ${appLink('vision','/vision/','Vision','vision-mark.svg')}
-      <a href="/products/" class="q-hide-mobile"><span>Produits</span></a>
-      <a href="/downloads/"><span>Outils</span></a>
+      ${appLink('mail','/mail/','Mail','mail-mark.svg')}
+      ${appLink('pulse','/pulse/','Pulse','pulse-mark.svg')}
+      ${appLink('news','/news/','News','news-mark.svg')}
+      <a href="/downloads/"><span>Produits &amp; outils</span></a>
       <a href="/quantic/" class="q-global-centre"><span class="q-global-status" aria-hidden="true"></span><span>Quantic ID</span></a>
     </nav>
   </div>`;
@@ -99,7 +98,7 @@ if(main&&page==='predictions'&&!main.querySelector('.p16-time-rail')){
 if(main&&!document.querySelector('.q-unified-footer')){
   const footer=document.createElement('footer');
   footer.className='q-unified-footer';
-  footer.innerHTML='<span class="q-unified-footer-brand"><img src="/assets/brand-2026/quantic-sillage-mark.svg?v=20260919.7" alt="">Quantic Sillage · QUANTIC VISION</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/downloads/">Outils</a> · <a href="/products/">Écosystème Quantic</a></span>';
+  footer.innerHTML='<span class="q-unified-footer-brand"><img src="/assets/brand-2026/quantic-sillage-mark.svg?v=20260919.7" alt="">Quantic Sillage · QUANTIC VISION</span><span><a href="/track-record/">Méthode & transparence</a> · <a href="/downloads/">Produits & outils</a></span>';
   main.insertAdjacentElement('afterend',footer);
 }
 
