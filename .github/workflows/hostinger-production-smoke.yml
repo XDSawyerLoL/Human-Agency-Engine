@@ -33,11 +33,8 @@ jobs:
           for attempt in $(seq 1 36); do
             root="$(curl -fsSL --max-time 20 "$BASE_URL/" 2>/dev/null || true)"
             centre="$(curl -fsSL --max-time 20 "$BASE_URL/quantic/" 2>/dev/null || true)"
-            vision="$(curl -fsSL --max-time 20 "$BASE_URL/vision/" 2>/dev/null || true)"
             network="$(curl -fsSL --max-time 20 "$BASE_URL/network/" 2>/dev/null || true)"
-            predictions="$(curl -fsSL --max-time 20 "$BASE_URL/predictions/" 2>/dev/null || true)"
             plans="$(curl -fsSL --max-time 20 "$BASE_URL/plans/" 2>/dev/null || true)"
-            mail="$(curl -fsSL --max-time 20 "$BASE_URL/mail/" 2>/dev/null || true)"
             pulse="$(curl -fsSL --max-time 20 "$BASE_URL/pulse/" 2>/dev/null || true)"
             downloads="$(curl -fsSL --max-time 20 "$BASE_URL/downloads/" 2>/dev/null || true)"
             qmark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/quantic-sillage-mark.svg" 2>/dev/null || true)"
@@ -51,12 +48,8 @@ jobs:
               && grep -q 'quantic-finish-v4.css' <<<"$root" \
               && grep -q 'Quantic ID' <<<"$centre" \
               && grep -q 'quantic-unified.css?v=3.0' <<<"$centre" \
-              && grep -q 'Quantic Vision' <<<"$vision" \
-              && grep -q 'quantic-vision-home-v8.css?v=8.0' <<<"$vision" \
               && grep -q 'QUANTIC NETWORK' <<<"$network" \
               && grep -q 'id="network"' <<<"$downloads" \
-              && grep -q 'predictions-brand-2026.css?v=20260919' <<<"$predictions" \
-              && grep -q '/assets/brand-2026/vision-mark.svg' <<<"$predictions" \
               && grep -q 'quantic-unified.css?v=3.0' <<<"$plans" \
               && grep -q 'ACCÈS QUANTIC' <<<"$plans" \
               && grep -q 'Quantic Studio 2.7.4' <<<"$downloads" \
@@ -73,13 +66,6 @@ jobs:
               && grep -q '/assets/brand-2026/quantic-sillage-mark.svg' <<<"$pulse" \
               && grep -q '/assets/brand-2026/pulse-mark.svg' <<<"$pulse" \
               && grep -q '/pulse/app.js?v=10' <<<"$pulse" \
-              && grep -q 'QuanticMail' <<<"$mail" \
-              && grep -q '/assets/brand-2026/quantic-sillage-mark.svg' <<<"$mail" \
-              && grep -q '/assets/brand-2026/mail-mark.svg' <<<"$mail" \
-              && grep -q 'quantic-mail-portal-nav.js' <<<"$mail" \
-              && grep -Eq 'qn-onboarding|qn-app' <<<"$mail" \
-              && ! grep -q 'quanticmail.onrender.com' <<<"$mail" \
-              && ! grep -qi '<iframe' <<<"$mail" \
               && grep -q 'Quantic Sillage' <<<"$qmark" \
               && grep -q 'aria-label="Pulse"' <<<"$pulsemark" \
               && grep -q 'aria-label="Mail"' <<<"$mailmark" \
@@ -95,7 +81,16 @@ jobs:
           done
           test "$ready" = "1"
 
-          curl -fsSL --max-time 25 "$BASE_URL/api/quantic-portal/status" -o /tmp/quantic-status.json
+          # Private applications are healthy only when the anonymous server guard redirects to Quantic ID.
+          for private_path in /vision/ /predictions/ /mail/; do
+            headers="/tmp/private-headers-$(echo "$private_path" | tr -cd '[:alnum:]').txt"
+            code="$(curl -sS --max-time 20 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' "$BASE_URL$private_path")"
+            test "$code" = "302"
+            grep -Eqi '^location: .*\/quantic\/\?next=' "$headers"
+          done
+
+          status_code="$(curl -sS --max-time 25 --output /tmp/quantic-status.json --write-out '%{http_code}' "$BASE_URL/api/quantic-portal/status")"
+          test "$status_code" = "200"
           curl -fsSL --max-time 25 "$BASE_URL/api/quantic/health" -o /tmp/quantic-relay-health-a.json
           sleep 1
           curl -fsSL --max-time 25 "$BASE_URL/api/quantic/health" -o /tmp/quantic-relay-health-b.json
@@ -106,16 +101,19 @@ jobs:
           ids = {service.get('id') for service in payload.get('services', [])}
           expected = {'vision', 'mail', 'relay-render', 'relay-railway', 'relay-hostinger'}
           assert payload.get('status') == 'ok', payload
+          assert all(service.get('functional') is True for service in payload.get('services', []) if service.get('state') == 'active'), payload
           assert expected <= ids, (expected, ids)
           hostinger = next(service for service in payload['services'] if service.get('id') == 'relay-hostinger')
           mail = next(service for service in payload['services'] if service.get('id') == 'mail')
           assert hostinger.get('state') == 'active', hostinger
           assert hostinger.get('url') == 'https://mediumorchid-badger-314305.hostingersite.com', hostinger
           assert hostinger.get('reachable') is True, hostinger
+          assert hostinger.get('functional') is True, hostinger
           assert hostinger.get('http_status') == 200, hostinger
           assert mail.get('state') == 'active', mail
           assert mail.get('url') == '/mail/', mail
           assert mail.get('reachable') is True, mail
+          assert mail.get('functional') is True, mail
 
           with open('/tmp/quantic-relay-health-a.json', encoding='utf-8') as handle:
               health_a = json.load(handle)
