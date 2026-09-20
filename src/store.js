@@ -1,5 +1,6 @@
 import mysql from 'mysql2/promise';
 import { config } from './config.js';
+import { buildCalibrationReport } from './calibration_engine.js';
 
 const HISTORY_MAX_POINTS = 72;
 const DAY = 86_400_000;
@@ -118,7 +119,7 @@ export class EvidenceStore {
       const old = this.registry.get(f.scenario_key);
       this.registry.set(f.scenario_key, {
         scenario_key:f.scenario_key, scenario_id:f.scenario_id ?? null, title:f.title ?? f.headline ?? 'Scénario', domain:f.domain ?? null,
-        horizon_tier:f.horizon_tier ?? null, first_seen:old?.first_seen ?? at, last_seen:at, target_at:f.target_date ?? f.time_window?.end_at ?? null,
+        horizon_tier:f.horizon_tier ?? null, first_seen:old?.first_seen ?? at, last_seen:at, target_at:old?.target_at ?? f.target_date ?? f.time_window?.end_at ?? null,
         first_probability:old?.first_probability ?? Number(f.probability?.estimate ?? 0), last_probability:Number(f.probability?.estimate ?? 0),
         status:f.status ?? 'active', resolved_at:old?.resolved_at ?? null, outcome:old?.outcome ?? null
       });
@@ -132,7 +133,7 @@ export class EvidenceStore {
           (scenario_key, scenario_id, title, domain, horizon_tier, first_seen, last_seen, target_at, first_probability, last_probability, status)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON DUPLICATE KEY UPDATE scenario_id=VALUES(scenario_id), title=VALUES(title), domain=VALUES(domain), horizon_tier=VALUES(horizon_tier),
-          last_seen=VALUES(last_seen), target_at=VALUES(target_at), last_probability=VALUES(last_probability), status=VALUES(status)`, [
+          last_seen=VALUES(last_seen), last_probability=VALUES(last_probability), status=VALUES(status)`, [
           f.scenario_key,f.scenario_id ?? null,String(f.title ?? f.headline ?? 'Scénario').slice(0,500),f.domain ?? null,f.horizon_tier ?? null,
           seenAt,seenAt,target && !Number.isNaN(target.getTime()) ? target : null,Number(f.probability?.estimate ?? 0),Number(f.probability?.estimate ?? 0),f.status ?? 'active'
         ]);
@@ -205,6 +206,7 @@ export class EvidenceStore {
       } catch (error) { console.error('[store] track record MySQL:', error.message); }
     }
     const resolvedRows = registryRows.filter(r => ['resolved','invalidated'].includes(String(r.status)) && [0,1].includes(Number(r.outcome)));
+    const calibration = buildCalibrationReport(resolvedRows);
     const resolved = resolvedRows.length, successful = resolvedRows.filter(r=>Number(r.outcome)===1).length, failed = resolvedRows.filter(r=>Number(r.outcome)===0).length;
     const expiredUnresolved = registryRows.filter(r=>r.target_at && new Date(r.target_at).getTime()<now && !['resolved','invalidated'].includes(String(r.status))).length;
     const current = this.snapshot?.forecasts ?? [];
@@ -214,10 +216,10 @@ export class EvidenceStore {
     const logLoss=resolved?resolvedRows.reduce((sum,r)=>{const p=clampProbability(r.first_probability),y=Number(r.outcome);return sum-(y*Math.log(p)+(1-y)*Math.log(1-p));},0)/resolved:null;
     return {
       generated_at:new Date().toISOString(),storage_mode:this.mode,tracked_scenarios:registryRows.length,probability_history_points:historyPoints,scenarios_with_revisions:multiPoint,
-      resolved_scenarios:resolved,successful_scenarios:successful,failed_scenarios:failed,expired_unresolved:expiredUnresolved,calibration_ready:resolved>=30,empirical_calibration_enabled:resolved>=30,
+      resolved_scenarios:resolved,successful_scenarios:successful,failed_scenarios:failed,expired_unresolved:expiredUnresolved,calibration_ready:calibration.calibration_ready,calibration_sample_ready:calibration.calibration_sample_ready,calibration_quality_ready:calibration.calibration_quality_ready,empirical_calibration_enabled:calibration.calibration_ready,
       brier_score:brier===null?null:Math.round(brier*10000)/10000,log_loss:logLoss===null?null:Math.round(logLoss*10000)/10000,hit_rate:resolved?Math.round(successful/resolved*1000)/10:null,buckets,
       resolution_queue:registryRows.filter(r=>r.target_at&&new Date(r.target_at).getTime()<now&&!['resolved','invalidated'].includes(String(r.status))).slice(0,50),recent:registryRows.slice(0,20),
-      note:resolved>=30?'Calibration empirique calculable sur les scénarios résolus. Les scores reposent sur la probabilité enregistrée à la première publication.':'Collecte historique en cours. Aucun score de performance n’est inventé avant un nombre suffisant de prédictions réellement résolues.'
+      note:calibration.calibration_ready?'Calibration empirique prête selon les seuils de volume et de qualité publiés. Les scores reposent sur la probabilité enregistrée à la première publication.':calibration.calibration_sample_ready?'Volume minimal atteint, mais qualité de calibration insuffisante : les probabilités restent qualifiées comme estimations non calibrées.':'Collecte historique en cours. Aucun score de performance n’est présenté comme calibré avant un nombre suffisant de prédictions réellement résolues.'
     };
   }
 

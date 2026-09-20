@@ -65,7 +65,7 @@ export async function recordForecastMetadata(store, forecasts = [], at = new Dat
     const payload = {
       forecast:{
         scenario_key:f.scenario_key,scenario_id:f.scenario_id,title:f.title||f.headline,summary:f.summary,
-        domain:f.domain,horizon_tier:f.horizon_tier,region:f.region,target_date:f.target_date||f.time_window?.end_at,
+        domain:f.domain,horizon_tier:f.horizon_tier,region:f.region,target_date:previous?.forecast?.target_date||f.target_date||f.time_window?.end_at,
         event_type:f.event_type,origin_group:f.origin_group,first_probability:firstProbability,
         source_providers:f.consolidation?.source_providers||[],source_families:f.consolidation?.source_families||[],
         memory:f.memory||null,

@@ -68,9 +68,11 @@ function segment(rows, keyFn, minSamples=5) {
   return [...groups.entries()].map(([key,group])=>({key,...scoreRows(group),ready:group.length>=minSamples})).sort((a,b)=>b.n-a.n || String(a.key).localeCompare(String(b.key)));
 }
 
-export function buildCalibrationReport(rows = [], {minimumGlobal=30, minimumSegment=8}={}) {
+export function buildCalibrationReport(rows = [], {minimumGlobal=30, minimumSegment=8, maximumBrier=0.25, maximumEce=0.15, minimumBrierSkill=0}={}) {
   const scorable = rows.filter(isBinaryScorable);
   const global = scoreRows(scorable);
+  const sampleReady=global.n>=minimumGlobal;
+  const qualityReady=global.brier!==null&&global.brier<=maximumBrier&&global.ece!==null&&global.ece<=maximumEce&&(global.brier_skill_score===null||global.brier_skill_score>=minimumBrierSkill);
   const byDomain = segment(scorable,r=>r.domain,minimumSegment);
   const byHorizon = segment(scorable,r=>r.horizon_tier,minimumSegment);
   const byOrigin = segment(scorable,r=>r.origin_group || r.resolution_origin || 'native',minimumSegment);
@@ -81,7 +83,10 @@ export function buildCalibrationReport(rows = [], {minimumGlobal=30, minimumSegm
   }));
   return {
     generated_at:new Date().toISOString(),
-    calibration_ready:global.n>=minimumGlobal,
+    calibration_ready:sampleReady&&qualityReady,
+    calibration_sample_ready:sampleReady,
+    calibration_quality_ready:qualityReady,
+    readiness_thresholds:{maximum_brier:maximumBrier,maximum_ece:maximumEce,minimum_brier_skill:minimumBrierSkill},
     minimum_global_samples:minimumGlobal,
     minimum_segment_samples:minimumSegment,
     scorable_resolutions:global.n,
@@ -92,6 +97,6 @@ export function buildCalibrationReport(rows = [], {minimumGlobal=30, minimumSegm
     by_origin:byOrigin,
     shadow_weight_recommendations:weights,
     weights_applied_to_public_probability:false,
-    methodology:'Brier, log loss, ECE and Brier skill score are calculated on the first published probability of objectively resolved binary forecasts only.'
+    methodology:'Brier, log loss, ECE and Brier skill score are calculated on the first published probability of objectively resolved binary forecasts only. Readiness requires both enough resolved cases and minimum quality thresholds; sample count alone never certifies calibration.'
   };
 }

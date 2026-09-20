@@ -4,6 +4,7 @@ const COOKIE='quantic_id_session';
 const AUDIENCE='quantic-sillage';
 const CHALLENGE_TTL=120000;
 const SESSION_TTL=12*60*60*1000;
+const PRESENCE_LEASE_MS=Math.max(250,Number(process.env.QUANTIC_ID_PRESENCE_LEASE_MS||12000));
 const challenges=new Map();
 const sessions=new Map();
 const INTERNAL_HEADER='x-quantic-internal';
@@ -53,14 +54,15 @@ function clearSessionCookie(req,res){
   res.setHeader('Set-Cookie',parts.join('; '));
 }
 function publicSession(session){
-  return session?{authenticated:true,keyId:session.keyId,algorithm:session.algorithm||"ed25519",expiresAt:new Date(session.expiresAt).toISOString()}:{authenticated:false};
+  return session?{authenticated:true,keyId:session.keyId,algorithm:session.algorithm||"ed25519",expiresAt:new Date(session.expiresAt).toISOString(),presenceUntil:new Date(session.presenceUntil).toISOString(),presenceLeaseMs:PRESENCE_LEASE_MS}:{authenticated:false};
 }
-function sessionFromRequest(req){
+function sessionFromRequest(req,{requirePresence=true}={}){
   cleanup();
   const token=parseCookies(req)[COOKIE];
   if(!token)return null;
   const session=sessions.get(hash(token));
   if(!session||session.expiresAt<=now())return null;
+  if(requirePresence&&(!session.presenceUntil||session.presenceUntil<=now()))return null;
   return session;
 }
 export function verifyIdentityProof(proof,expectedChallenge){
@@ -88,10 +90,10 @@ export function verifyIdentityProof(proof,expectedChallenge){
   }catch{return{error:'identity_proof_invalid'}}
   return{keyId:proofKeyId,publicKey,algorithm};
 }
-function issueChallenge(){
+function issueChallenge(meta={}){
   cleanup();
   const challenge=randomBytes(32).toString('base64url');
-  challenges.set(challenge,{expiresAt:now()+CHALLENGE_TTL});
+  challenges.set(challenge,{expiresAt:now()+CHALLENGE_TTL,...meta});
   return{challenge,audience:AUDIENCE,expiresAt:new Date(now()+CHALLENGE_TTL).toISOString()};
 }
 function establishSession(req,res,proof){
@@ -101,11 +103,12 @@ function establishSession(req,res,proof){
   const challenge=clean(parsed?.challenge,4096);
   const record=challenges.get(challenge);
   if(!record||record.expiresAt<=now())return{error:'identity_challenge_expired'};
+  if(record.purpose&&record.purpose!=='session')return{error:'identity_challenge_mismatch'};
   challenges.delete(challenge);
   const verified=verifyIdentityProof(proof,challenge);
   if(verified.error)return verified;
   const token=randomBytes(32).toString('base64url');
-  const session={keyId:verified.keyId,publicKey:verified.publicKey,algorithm:verified.algorithm||"ed25519",createdAt:now(),expiresAt:now()+SESSION_TTL};
+  const session={keyId:verified.keyId,publicKey:verified.publicKey,algorithm:verified.algorithm||"ed25519",createdAt:now(),expiresAt:now()+SESSION_TTL,presenceUntil:now()+PRESENCE_LEASE_MS};
   sessions.set(hash(token),session);
   setSessionCookie(req,res,token);
   return publicSession(session);
@@ -114,7 +117,7 @@ function establishSession(req,res,proof){
 export function installQuanticIdentity(app){
   app.post('/api/id/challenge',(_req,res)=>{
     res.set('Cache-Control','no-store');
-    res.json(issueChallenge());
+    res.json(issueChallenge({purpose:'session'}));
   });
   app.post('/api/id/session',(req,res)=>{
     res.set('Cache-Control','no-store');
@@ -125,6 +128,28 @@ export function installQuanticIdentity(app){
   app.get('/api/id/session',(req,res)=>{
     res.set('Cache-Control','no-store');
     res.json(publicSession(sessionFromRequest(req)));
+  });
+  app.post('/api/id/presence/challenge',(req,res)=>{
+    res.set('Cache-Control','no-store');
+    const session=sessionFromRequest(req,{requirePresence:false});
+    if(!session)return res.status(401).json({error:'quantic_id_required'});
+    res.json(issueChallenge({purpose:'presence',keyId:session.keyId}));
+  });
+  app.post('/api/id/presence',(req,res)=>{
+    res.set('Cache-Control','no-store');
+    const session=sessionFromRequest(req,{requirePresence:false});
+    if(!session)return res.status(401).json({error:'quantic_id_required'});
+    let parsed;
+    try{parsed=JSON.parse(String(req.body?.proof?.payload||''));}catch{return res.status(401).json({error:'identity_proof_invalid'});}
+    const challenge=clean(parsed?.challenge,4096),record=challenges.get(challenge);
+    if(!record||record.expiresAt<=now())return res.status(401).json({error:'identity_challenge_expired'});
+    if(record.purpose!=='presence'||record.keyId!==session.keyId)return res.status(401).json({error:'identity_challenge_mismatch'});
+    challenges.delete(challenge);
+    const verified=verifyIdentityProof(req.body?.proof,challenge);
+    if(verified.error)return res.status(401).json(verified);
+    if(verified.keyId!==session.keyId||verified.publicKey!==session.publicKey)return res.status(401).json({error:'identity_mismatch'});
+    session.presenceUntil=now()+PRESENCE_LEASE_MS;
+    res.json(publicSession(session));
   });
   app.post('/api/id/logout',(req,res)=>{
     const token=parseCookies(req)[COOKIE];

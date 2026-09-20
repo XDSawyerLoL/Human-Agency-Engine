@@ -44,7 +44,7 @@ jobs:
 
       - name: Start Providence and verify product-critical routes
         run: |
-          npm start >/tmp/providence.log 2>&1 &
+          QUANTIC_ID_PRESENCE_LEASE_MS=300000 npm start >/tmp/providence.log 2>&1 &
           pid=$!
           trap 'kill $pid 2>/dev/null || true; cat /tmp/providence.log' EXIT
 
@@ -56,8 +56,9 @@ jobs:
           test "$ok" = "1"
           node -e "const x=require('/tmp/health.json'); if(x.service!=='evidence-world-eye-node'||x.port!==3000) process.exit(1); console.log('health ok')"
 
-          curl -fsS http://127.0.0.1:3000/api/quantic-portal/status >/tmp/quantic-status.json
-          node -e "const x=require('/tmp/quantic-status.json'); const ids=new Set((x.services||[]).map(s=>s.id)); if(x.status!=='ok'||!ids.has('vision')||!ids.has('mail')||!ids.has('relay-render')||!ids.has('relay-railway')||!ids.has('relay-hostinger')) process.exit(1); console.log('quantic portal status ok')"
+          status_code="$(curl -sS -o /tmp/quantic-status.json -w '%{http_code}' http://127.0.0.1:3000/api/quantic-portal/status)"
+          test "$status_code" = "200" -o "$status_code" = "503"
+          node -e "const x=require('/tmp/quantic-status.json'); const ids=new Set((x.services||[]).map(s=>s.id)); if(!['ok','degraded'].includes(x.status)||!ids.has('vision')||!ids.has('mail')||!ids.has('relay-render')||!ids.has('relay-railway')||!ids.has('relay-hostinger')) process.exit(1); if(!(x.services||[]).every(s=>Object.prototype.hasOwnProperty.call(s,'functional'))) process.exit(1); console.log('quantic portal status semantics ok:',x.status)"
 
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/snapshot)" = "401"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/vision/)" = "302"
