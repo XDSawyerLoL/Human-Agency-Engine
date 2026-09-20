@@ -38,3 +38,25 @@ The audit's distribution-signing, macOS/Linux/mobile support, legal/privacy/supp
 6. Production health reports durable storage and all required relay checks functional.
 7. Hostinger production smoke green.
 8. Only then consider a limited pilot; commercial launch remains a separate decision.
+
+
+## Production verification after merge
+
+Verified against `https://mediumorchid-badger-314305.hostingersite.com` after the remediation merge:
+
+- Quantic ID server guard: `/vision/`, `/predictions/` and `/mail/` all return `302` to `/quantic/?next=...` for an anonymous request.
+- Render relay: functional health `200`.
+- Railway backup relay: functional health `200`; its Railway runtime reports PostgreSQL persistence.
+- Hostinger application health: `status=degraded`, `storage=memory`, `ready_for_production=false`, `persistent_learning=false`.
+- Pulse health: `storage=json`.
+- Hostinger embedded relay: `503` with `persistance MySQL non configurée`.
+- Portal status: `degraded`; `relay-hostinger` remains `pending`.
+
+**A03 remains a hard production blocker and is now isolated to Hostinger environment/infrastructure configuration, not application fallback logic.**
+
+The production gate intentionally fails until the Hostinger Node Web App receives a durable MySQL connection through `MYSQL_URL` or the five `MYSQL_*` variables and the resulting deployment reports:
+
+- `/api/health`: `ready_for_production=true`, `storage=mysql`, `persistent_learning=true`
+- `/api/pulse/health`: persistent storage (`mysql` or `postgres`)
+- `/api/quantic/health`: `200`, `ok=true`, `protocol=quantic-relay/1`
+- `/api/quantic-portal/status`: `200`, `status=ok`
