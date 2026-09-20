@@ -43,7 +43,7 @@ assert.ok(visionHome.includes("data-qv8-retry"),"Vision home must expose retry o
 
 assert.ok(!products.includes("stockage MySQL Hostinger"),"Unified catalogue must not lead with infrastructure implementation");
 assert.ok(products.includes("Quantic Pulse"),"Unified catalogue must expose Pulse");
-assert.ok(products.includes("Quantic Network"),"Unified catalogue must expose Network");
+assert.ok(products.includes('id="network"'),"Unified catalogue must expose Network");
 assert.ok(home.includes("continuer à fonctionner si un chemin devient indisponible"),"Home Network card must explain the benefit");
 
 console.log(JSON.stringify({ok:true,contract:"market-readiness-pass"}));
