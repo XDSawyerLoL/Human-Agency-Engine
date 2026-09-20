@@ -89,6 +89,8 @@ jobs:
             grep -Eqi '^location: .*\/quantic\/\?next=' "$headers"
           done
 
+          curl -fsSL --max-time 25 "$BASE_URL/api/health" -o /tmp/quantic-app-health.json
+          curl -fsSL --max-time 25 "$BASE_URL/api/pulse/health" -o /tmp/quantic-pulse-health.json
           status_code="$(curl -sS --max-time 25 --output /tmp/quantic-status.json --write-out '%{http_code}' "$BASE_URL/api/quantic-portal/status")"
           test "$status_code" = "200"
           curl -fsSL --max-time 25 "$BASE_URL/api/quantic/health" -o /tmp/quantic-relay-health-a.json
@@ -96,6 +98,17 @@ jobs:
           curl -fsSL --max-time 25 "$BASE_URL/api/quantic/health" -o /tmp/quantic-relay-health-b.json
           python - <<'PY'
           import json
+          with open('/tmp/quantic-app-health.json', encoding='utf-8') as handle:
+              app_health = json.load(handle)
+          with open('/tmp/quantic-pulse-health.json', encoding='utf-8') as handle:
+              pulse_health = json.load(handle)
+          assert app_health.get('status') == 'ok', app_health
+          assert app_health.get('ready_for_production') is True, app_health
+          assert app_health.get('persistent_learning') is True, app_health
+          assert app_health.get('storage') == 'mysql', app_health
+          assert pulse_health.get('ok') is True, pulse_health
+          assert pulse_health.get('storage') in {'mysql','postgres'}, pulse_health
+
           with open('/tmp/quantic-status.json', encoding='utf-8') as handle:
               payload = json.load(handle)
           ids = {service.get('id') for service in payload.get('services', [])}
@@ -124,6 +137,8 @@ jobs:
               assert health.get('protocol') == 'quantic-relay/1', health
               assert isinstance(health.get('relayId'), str) and len(health['relayId']) == 64, health
           assert health_a['relayId'] == health_b['relayId'], (health_a, health_b)
+          print('Hostinger durable app health verified:', app_health.get('storage'), 'persistent_learning=', app_health.get('persistent_learning'))
+          print('Hostinger Pulse storage verified:', pulse_health.get('storage'))
           print('Hostinger Quantic Relay verified:', health_a['relayId'])
           print('Hostinger production status API verified:', sorted(ids), 'mail=', mail)
           PY
