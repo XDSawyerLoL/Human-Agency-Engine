@@ -44,8 +44,8 @@ def test_operational_surfaces_exist():
     assert 'url=/downloads/' in products
     assert "Quantic Glide" in downloads
     assert "Quantic OS" in downloads
-    assert "Quantic Studio 2.7.3" in downloads
-    assert "QuanticStudio-Setup-2.7.3.exe" in downloads
+    assert "Quantic Studio 2.7.4" in downloads
+    assert "QuanticStudio-Setup-2.7.4.exe" in downloads
     assert "/assets/brand-2026/studio-mark.svg" in downloads
 
 
@@ -73,9 +73,9 @@ def test_quantic_studio_is_published_as_a_first_class_product():
     assert "Quantic Studio" in root
     assert 'href="/downloads/#quantic-studio"' in root
     assert 'id="quantic-studio"' in downloads
-    assert "Quantic Studio 2.7.3" in downloads
-    assert "QuanticStudio-Setup-2.7.3.exe" in downloads
-    assert "quantic-studio-v2.7.3" in downloads
+    assert "Quantic Studio 2.7.4" in downloads
+    assert "QuanticStudio-Setup-2.7.4.exe" in downloads
+    assert "quantic-studio-v2.7.4" in downloads
     assert "Quantic Studio" in studio_mark
 
 
