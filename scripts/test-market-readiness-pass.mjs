@@ -10,7 +10,7 @@ const mailResilience=read("public/quantic-mail-resilience.js");
 const predictions=read("public/predictions/predictions-v16-15.js");
 const track=read("public/track-record/track-record.js");
 const visionHome=read("public/quantic-vision-home-v8.js");
-const products=read("public/products/index.html");
+const products=read("public/downloads/index.html");
 const home=read("public/index.html");
 
 assert.ok(network.includes("/downloads/#network"),"Network route must redirect into the unified Outils surface");
@@ -41,9 +41,9 @@ assert.ok(visionHome.includes("VISION_TIMEOUT_MS"),"Vision home must have a time
 assert.ok(visionHome.includes("AbortController"),"Vision home fetch must be abortable");
 assert.ok(visionHome.includes("data-qv8-retry"),"Vision home must expose retry on failure");
 
-assert.ok(!products.includes("stockage MySQL Hostinger"),"Products page must not lead with infrastructure implementation");
-assert.ok(products.includes("Quantic Pulse"),"Products page must expose Pulse");
-assert.ok(products.includes("Quantic Network"),"Products page must expose Network");
+assert.ok(!products.includes("stockage MySQL Hostinger"),"Unified catalogue must not lead with infrastructure implementation");
+assert.ok(products.includes("Quantic Pulse"),"Unified catalogue must expose Pulse");
+assert.ok(products.includes('id="network"'),"Unified catalogue must expose Network");
 assert.ok(home.includes("continuer à fonctionner si un chemin devient indisponible"),"Home Network card must explain the benefit");
 
 console.log(JSON.stringify({ok:true,contract:"market-readiness-pass"}));

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title">
+  <title id="title">Quantic Studio</title>
+  <defs>
+    <linearGradient id="front" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ef2bd8"/>
+      <stop offset="0.52" stop-color="#b01fcb"/>
+      <stop offset="1" stop-color="#5a178f"/>
+    </linearGradient>
+    <linearGradient id="mid" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d36bff"/>
+      <stop offset="1" stop-color="#7e36ef"/>
+    </linearGradient>
+    <linearGradient id="back" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff0bd"/>
+      <stop offset="1" stop-color="#e9a55d"/>
+    </linearGradient>
+  </defs>
+  <rect x="110" y="36" width="98" height="184" rx="27" fill="url(#back)"/>
+  <rect x="72" y="22" width="108" height="198" rx="29" fill="url(#mid)" opacity=".96"/>
+  <rect x="31" y="48" width="116" height="184" rx="31" fill="url(#front)"/>
+  <path d="M67 103c0-8 9-13 16-8l48 33c7 5 7 15 0 20l-48 33c-7 5-16 0-16-8z" fill="#fff8ed"/>
+  <path d="M49 67c24-17 49-24 76-26" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="4" stroke-linecap="round"/>
+</svg>

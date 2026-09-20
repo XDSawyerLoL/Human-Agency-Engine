@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 const read=p=>fs.readFileSync(p,"utf8");
 
-const network=read("public/network/index.html");
+const network=read("public/downloads/index.html");
 const portal=read("public/quantic.js");
 assert.ok(network.includes("data-status-meta"),"Network must display verification metadata");
 assert.ok(network.includes("data-network-refresh"),"Network must offer manual refresh");
@@ -20,8 +20,9 @@ assert.ok(mailSync.includes("Quantic ID requis."),"Mail sync must preserve expli
 assert.ok(mailSync.includes("data-qm-static-actions"),"Mail sync must preserve immediate recovery actions");
 
 const qid=read("public/quantic/index.html");
-assert.ok(qid.includes('data-icon="V"'),"Quantic ID cards must use decorative data icons");
-assert.ok(qid.includes('data-icon="M"'),"Quantic ID Mail icon must be decorative");
+assert.ok(qid.includes('q-card-logo-wrap'),"Quantic ID cards must use product logo containers");
+assert.ok(qid.includes('/assets/brand-2026/vision-mark.svg'),"Quantic ID Vision card must use the Vision logo");
+assert.ok(qid.includes('/assets/brand-2026/mail-mark.svg'),"Quantic ID Mail card must use the Mail logo");
 assert.ok(!qid.includes('<span class="q-card-icon">V</span>'),"Quantic ID must not concatenate icon letters into readable text");
 assert.ok(!qid.includes('<span class="q-card-icon">M</span>'),"Quantic ID must not concatenate icon letters into readable text");
 assert.ok(qid.includes("Quantic ID est la clé"),"Quantic ID positioning must be explicit");

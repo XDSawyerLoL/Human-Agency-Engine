@@ -45,6 +45,7 @@ jobs:
             mailmark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/mail-mark.svg" 2>/dev/null || true)"
             newsmark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/news-mark.svg" 2>/dev/null || true)"
             visionmark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/vision-mark.svg" 2>/dev/null || true)"
+            studiomark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/studio-mark.svg" 2>/dev/null || true)"
             if grep -q 'q-hero-stage' <<<"$root" \
               && grep -q 'quantic-unified.css?v=3.0' <<<"$root" \
               && grep -q 'quantic-finish-v4.css' <<<"$root" \
@@ -58,6 +59,10 @@ jobs:
               && grep -q '/assets/brand-2026/vision-mark.svg' <<<"$predictions" \
               && grep -q 'quantic-unified.css?v=3.0' <<<"$plans" \
               && grep -q 'ACCÈS QUANTIC' <<<"$plans" \
+              && grep -q 'Quantic Studio 2.7.3' <<<"$downloads" \
+              && grep -q 'QuanticStudio-Setup-2.7.3.exe' <<<"$downloads" \
+              && grep -q '/assets/brand-2026/studio-mark.svg' <<<"$downloads" \
+              && grep -q 'Produits &amp; outils' <<<"$downloads" \
               && grep -q 'Quantic Glide 1.2.6' <<<"$downloads" \
               && grep -q 'Quantic-Glide-1.2.6-x64.exe' <<<"$downloads" \
               && grep -q 'quantic-v2-d9f379d4f6a3' <<<"$downloads" \
@@ -79,7 +84,8 @@ jobs:
               && grep -q 'aria-label="Pulse"' <<<"$pulsemark" \
               && grep -q 'aria-label="Mail"' <<<"$mailmark" \
               && grep -q 'aria-label="News"' <<<"$newsmark" \
-              && grep -q 'aria-label="Vision"' <<<"$visionmark"; then
+              && grep -q 'aria-label="Vision"' <<<"$visionmark" \
+              && grep -q 'Quantic Studio' <<<"$studiomark"; then
               ready=1
               echo "Hostinger is serving Quantic 2026 branding and product logos."
               break
