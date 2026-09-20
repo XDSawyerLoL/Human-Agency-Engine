@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 const read=p=>fs.readFileSync(p,"utf8");
 
-const network=read("public/network/index.html");
+const network=read("public/downloads/index.html");
 const portal=read("public/quantic.js");
 assert.ok(network.includes("data-status-meta"),"Network must display verification metadata");
 assert.ok(network.includes("data-network-refresh"),"Network must offer manual refresh");
