@@ -85,17 +85,28 @@ jobs:
           for private_path in /vision/ /predictions/ /mail/; do
             headers="/tmp/private-headers-$(echo "$private_path" | tr -cd '[:alnum:]').txt"
             code="$(curl -sS --max-time 20 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' "$BASE_URL$private_path")"
+            location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/\r$/,""); print substr($0,index($0,":")+2); exit}' "$headers")"
+            echo "Private guard $private_path -> HTTP $code location=$location"
             test "$code" = "302"
             grep -Eqi '^location: .*\/quantic\/\?next=' "$headers"
           done
 
-          curl -fsSL --max-time 25 "$BASE_URL/api/health" -o /tmp/quantic-app-health.json
-          curl -fsSL --max-time 25 "$BASE_URL/api/pulse/health" -o /tmp/quantic-pulse-health.json
+          app_health_code="$(curl -sS --max-time 25 --output /tmp/quantic-app-health.json --write-out '%{http_code}' "$BASE_URL/api/health")"
+          pulse_health_code="$(curl -sS --max-time 25 --output /tmp/quantic-pulse-health.json --write-out '%{http_code}' "$BASE_URL/api/pulse/health")"
           status_code="$(curl -sS --max-time 25 --output /tmp/quantic-status.json --write-out '%{http_code}' "$BASE_URL/api/quantic-portal/status")"
-          test "$status_code" = "200"
-          curl -fsSL --max-time 25 "$BASE_URL/api/quantic/health" -o /tmp/quantic-relay-health-a.json
+          relay_a_code="$(curl -sS --max-time 25 --output /tmp/quantic-relay-health-a.json --write-out '%{http_code}' "$BASE_URL/api/quantic/health")"
           sleep 1
-          curl -fsSL --max-time 25 "$BASE_URL/api/quantic/health" -o /tmp/quantic-relay-health-b.json
+          relay_b_code="$(curl -sS --max-time 25 --output /tmp/quantic-relay-health-b.json --write-out '%{http_code}' "$BASE_URL/api/quantic/health")"
+          echo "Health HTTP codes: app=$app_health_code pulse=$pulse_health_code portal=$status_code relayA=$relay_a_code relayB=$relay_b_code"
+          echo "App health: $(cat /tmp/quantic-app-health.json)"
+          echo "Pulse health: $(cat /tmp/quantic-pulse-health.json)"
+          echo "Portal status: $(cat /tmp/quantic-status.json)"
+          echo "Relay health A: $(cat /tmp/quantic-relay-health-a.json)"
+          test "$app_health_code" = "200"
+          test "$pulse_health_code" = "200"
+          test "$status_code" = "200"
+          test "$relay_a_code" = "200"
+          test "$relay_b_code" = "200"
           python - <<'PY'
           import json
           with open('/tmp/quantic-app-health.json', encoding='utf-8') as handle:
