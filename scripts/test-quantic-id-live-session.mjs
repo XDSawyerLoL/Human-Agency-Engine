@@ -14,6 +14,11 @@ if(deniedPage.status!==302)throw new Error('expected /vision/ 302 without Quanti
 const location=deniedPage.headers.get('location')||'';
 if(!location.startsWith('/quantic/?next='))throw new Error('Vision did not redirect to Quantic ID');
 
+const deniedMail=await fetch(base+'/mail/',{redirect:'manual'});
+if(deniedMail.status!==302)throw new Error('expected /mail/ 302 without Quantic ID, got '+deniedMail.status);
+const mailLocation=deniedMail.headers.get('location')||'';
+if(!mailLocation.startsWith('/quantic/?next='))throw new Error('Mail did not redirect to Quantic ID');
+
 const challengeResponse=await fetch(base+'/api/id/challenge',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
 if(!challengeResponse.ok)throw new Error('challenge failed');
 const challenge=await challengeResponse.json();
@@ -50,5 +55,10 @@ const privatePage=await fetch(base+'/vision/',{headers:{cookie},redirect:'manual
 if(!privatePage.ok)throw new Error('authenticated Vision page failed: '+privatePage.status);
 const html=await privatePage.text();
 if(!html.includes('qv8-hero'))throw new Error('native Vision V8 home not served');
+
+const privateMail=await fetch(base+'/mail/',{headers:{cookie},redirect:'manual'});
+if(!privateMail.ok)throw new Error('authenticated Mail page failed: '+privateMail.status);
+const mailHtml=await privateMail.text();
+if(!mailHtml.includes('QuanticMail'))throw new Error('native Quantic Mail page not served');
 
 console.log(JSON.stringify({ok:true,keyId,cookieFile,redirect:location}));
