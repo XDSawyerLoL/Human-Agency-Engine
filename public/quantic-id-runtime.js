@@ -74,11 +74,50 @@ async function assert({challenge,audience='',timeoutMs=2500}={}){
   }
 }
 
+let presenceTimer=null;
+let presenceInFlight=null;
+
+async function renewServerPresence(){
+  if(presenceInFlight)return presenceInFlight;
+  presenceInFlight=(async()=>{
+    try{
+      const challengeResponse=await fetch('/api/id/presence/challenge',{
+        method:'POST',cache:'no-store',credentials:'same-origin',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},body:'{}'
+      });
+      if(!challengeResponse.ok)return false;
+      const challenge=await challengeResponse.json();
+      const proof=await assert({challenge:challenge.challenge,audience:challenge.audience,timeoutMs:2200});
+      const response=await fetch('/api/id/presence',{
+        method:'POST',cache:'no-store',credentials:'same-origin',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body:JSON.stringify({proof})
+      });
+      return response.ok;
+    }catch{return false}
+    finally{presenceInFlight=null}
+  })();
+  return presenceInFlight;
+}
+
+function startPresenceHeartbeat({intervalMs=5000}={}){
+  if(presenceTimer)return presenceTimer;
+  const tick=()=>{if(document.visibilityState!=='hidden')void renewServerPresence()};
+  presenceTimer=setInterval(tick,Math.max(2500,intervalMs));
+  document.addEventListener('visibilitychange',tick,{passive:true});
+  window.addEventListener('pageshow',tick,{passive:true});
+  setTimeout(tick,250);
+  return presenceTimer;
+}
+
 window.QuanticID=Object.freeze({
   bridgeOrigin:BRIDGE_ORIGIN,
   statusUrl:STATUS_URL,
   assertUrl:ASSERT_URL,
   probe,
-  assert
+  assert,
+  renewServerPresence,
+  startPresenceHeartbeat
 });
+startPresenceHeartbeat();
 })();
