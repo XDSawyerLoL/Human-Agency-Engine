@@ -33,6 +33,7 @@ def test_operational_surfaces_exist():
     mail = text("public/mail/index.html")
     network = text("public/network/index.html")
     products = text("public/products/index.html")
+    downloads = text("public/downloads/index.html")
     assert "Quantic Vision" in dashboard
     assert "Quantic Mail" in dashboard
     assert "Quantic Network" in dashboard
@@ -40,9 +41,42 @@ def test_operational_surfaces_exist():
     assert "Quantic Mail" in mail
     assert '/downloads/#network' in network
     assert 'location.replace(\'/downloads/#network\')' in network
-    assert "Quantic Glide" in products
-    assert "Quantic OS" in products
+    assert 'url=/downloads/' in products
+    assert "Quantic Glide" in downloads
+    assert "Quantic OS" in downloads
+    assert "Quantic Studio 2.7.3" in downloads
+    assert "QuanticStudio-Setup-2.7.3.exe" in downloads
+    assert "/assets/brand-2026/studio-mark.svg" in downloads
 
+
+
+
+def test_products_and_tools_are_one_catalogue():
+    root = text("public/index.html")
+    downloads = text("public/downloads/index.html")
+    products = text("public/products/index.html")
+    mail_nav = text("public/quantic-mail-portal-nav.js")
+
+    assert "Produits &amp; outils" in root
+    assert "Produits &amp; outils" in downloads
+    assert "<span>Produits</span>" not in root
+    assert "<span>Outils</span>" not in root
+    assert 'location.replace(\'/downloads/\'' in products
+    assert "Produits &amp; outils" in mail_nav
+
+
+def test_quantic_studio_is_published_as_a_first_class_product():
+    root = text("public/index.html")
+    downloads = text("public/downloads/index.html")
+    studio_mark = text("public/assets/brand-2026/studio-mark.svg")
+
+    assert "Quantic Studio" in root
+    assert 'href="/downloads/#quantic-studio"' in root
+    assert 'id="quantic-studio"' in downloads
+    assert "Quantic Studio 2.7.3" in downloads
+    assert "QuanticStudio-Setup-2.7.3.exe" in downloads
+    assert "quantic-studio-v2.7.3" in downloads
+    assert "Quantic Studio" in studio_mark
 
 def test_nginx_proxies_portal_status_to_internal_api():
     config = text("hostinger/evidence-nginx.conf")
@@ -105,7 +139,7 @@ def test_quantic_surfaces_share_premium_shell():
     for path in (
         "public/quantic/index.html",
         "public/mail/index.html",
-        "public/products/index.html",
+        "public/downloads/index.html",
         "public/plans/index.html",
     ):
         page = text(path)
@@ -119,7 +153,7 @@ def test_all_quantic_primary_surfaces_load_unified_providence_visual_layer():
         "public/index.html",
         "public/quantic/index.html",
         "public/mail/index.html",
-        "public/products/index.html",
+        "public/downloads/index.html",
     ):
         page = text(path)
         assert "quantic-unified.css?v=3.0" in page, path
