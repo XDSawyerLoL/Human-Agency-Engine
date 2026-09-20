@@ -59,8 +59,8 @@ jobs:
               && grep -q '/assets/brand-2026/vision-mark.svg' <<<"$predictions" \
               && grep -q 'quantic-unified.css?v=3.0' <<<"$plans" \
               && grep -q 'ACCÈS QUANTIC' <<<"$plans" \
-              && grep -q 'Quantic Studio 2.7.3' <<<"$downloads" \
-              && grep -q 'QuanticStudio-Setup-2.7.3.exe' <<<"$downloads" \
+              && grep -q 'Quantic Studio 2.7.4' <<<"$downloads" \
+              && grep -q 'QuanticStudio-Setup-2.7.4.exe' <<<"$downloads" \
               && grep -q '/assets/brand-2026/studio-mark.svg' <<<"$downloads" \
               && grep -q 'Produits &amp; outils' <<<"$downloads" \
               && grep -q 'Quantic Glide 1.2.6' <<<"$downloads" \
