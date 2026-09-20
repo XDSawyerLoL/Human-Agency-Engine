@@ -118,7 +118,7 @@ export class EvidenceStore {
       const old = this.registry.get(f.scenario_key);
       this.registry.set(f.scenario_key, {
         scenario_key:f.scenario_key, scenario_id:f.scenario_id ?? null, title:f.title ?? f.headline ?? 'Scénario', domain:f.domain ?? null,
-        horizon_tier:f.horizon_tier ?? null, first_seen:old?.first_seen ?? at, last_seen:at, target_at:f.target_date ?? f.time_window?.end_at ?? null,
+        horizon_tier:f.horizon_tier ?? null, first_seen:old?.first_seen ?? at, last_seen:at, target_at:old?.target_at ?? f.target_date ?? f.time_window?.end_at ?? null,
         first_probability:old?.first_probability ?? Number(f.probability?.estimate ?? 0), last_probability:Number(f.probability?.estimate ?? 0),
         status:f.status ?? 'active', resolved_at:old?.resolved_at ?? null, outcome:old?.outcome ?? null
       });
@@ -132,7 +132,7 @@ export class EvidenceStore {
           (scenario_key, scenario_id, title, domain, horizon_tier, first_seen, last_seen, target_at, first_probability, last_probability, status)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON DUPLICATE KEY UPDATE scenario_id=VALUES(scenario_id), title=VALUES(title), domain=VALUES(domain), horizon_tier=VALUES(horizon_tier),
-          last_seen=VALUES(last_seen), target_at=VALUES(target_at), last_probability=VALUES(last_probability), status=VALUES(status)`, [
+          last_seen=VALUES(last_seen), last_probability=VALUES(last_probability), status=VALUES(status)`, [
           f.scenario_key,f.scenario_id ?? null,String(f.title ?? f.headline ?? 'Scénario').slice(0,500),f.domain ?? null,f.horizon_tier ?? null,
           seenAt,seenAt,target && !Number.isNaN(target.getTime()) ? target : null,Number(f.probability?.estimate ?? 0),Number(f.probability?.estimate ?? 0),f.status ?? 'active'
         ]);
