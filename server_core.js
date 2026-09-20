@@ -319,11 +319,14 @@ async function refreshWorld() {
 app.get('/api/health', async (_req, res) => {
   const snapshot = await store.getSnapshot();
   const storage = await storageReadiness(store);
+  const productionReady=Boolean(snapshot)&&storage.persistent;
   res.json({
-    status: snapshot ? 'ok' : 'warming',
+    status: !snapshot ? 'warming' : productionReady ? 'ok' : 'degraded',
     service: 'evidence-world-eye-node',
     version:'v11',
     storage: store.mode,
+    ready_for_production: productionReady,
+    readiness_reasons: productionReady ? [] : [!snapshot?'snapshot_unavailable':null,!storage.persistent?'persistent_storage_unavailable':null].filter(Boolean),
     learning_ready: learningReady,
     persistent_learning: storage.persistent,
     supabase_mirror_configured:supabase.enabled,
