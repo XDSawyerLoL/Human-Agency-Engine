@@ -296,12 +296,33 @@ function ensureSecureState(store){
   if(!store.secureDevices||typeof store.secureDevices!=='object')store.secureDevices={};
   return store.secureDevices;
 }
-function secureBundleMaterial({deviceId,encryptionPublicKey,signingPublicKey}){
+function normalizeSecureTransport(transport){
+  if(!transport||typeof transport!=='object')return null;
+  const canonicalAddress=clean(transport.canonicalAddress,160).toLowerCase();
+  const deviceId=clean(transport.deviceId,80);
+  const publicKey=transport.publicKey&&typeof transport.publicKey==='object'?transport.publicKey:null;
+  const relays=Array.isArray(transport.relays)?transport.relays.map(value=>clean(value,500).replace(/\/$/,'')).filter(Boolean).slice(0,8):[];
+  if(!/^[a-z0-9][a-z0-9._-]{2,31}~(?:[0-9a-f]{10}|[0-9a-f]{32})@quantic$/.test(canonicalAddress))return null;
+  if(!/^d-[0-9a-f]{10,32}$/.test(deviceId))return null;
+  if(!publicKey||publicKey.kty!=='EC'||publicKey.crv!=='P-256'||typeof publicKey.x!=='string'||typeof publicKey.y!=='string')return null;
+  for(const relay of relays){
+    try{
+      const url=new URL(relay);
+      const local=['localhost','127.0.0.1','::1','[::1]'].includes(url.hostname);
+      if(url.protocol!=='https:'&&!(url.protocol==='http:'&&local))return null;
+      if(url.username||url.password||url.search||url.hash)return null;
+    }catch{return null}
+  }
+  if(!relays.length)return null;
+  return{canonicalAddress,deviceId,publicKey:{kty:'EC',crv:'P-256',x:publicKey.x,y:publicKey.y},relays:[...new Set(relays)].sort()};
+}
+function secureBundleMaterial({deviceId,encryptionPublicKey,signingPublicKey,transport}){
   return JSON.stringify({
     protocol:'pulse-e2ee-v1',
     deviceId:clean(deviceId,80),
     encryptionPublicKey:clean(encryptionPublicKey,160),
-    signingPublicKey:clean(signingPublicKey,160)
+    signingPublicKey:clean(signingPublicKey,160),
+    transport:normalizeSecureTransport(transport)
   });
 }
 function secureBundleHash(bundle){return sha(secureBundleMaterial(bundle))}
@@ -318,6 +339,7 @@ function secureDeviceView(device){
     signingPublicKey:device.signingPublicKey,
     identityKeyId:device.identityKeyId,
     registeredAt:device.registeredAt,
+    transport:normalizeSecureTransport(device.transport),
     protocol:'pulse-e2ee-v1'
   };
 }
@@ -375,16 +397,16 @@ export async function handlePulse(req,res,url,corsHeaders={}){
     if(route==='/api/pulse/secure/challenge'&&req.method==='POST'){
       const store=await readStore(),a=await auth(req,store);
       if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}
-      const b=await bodyJson(req),deviceId=clean(b.deviceId,80),encryptionPublicKey=clean(b.encryptionPublicKey,160),signingPublicKey=clean(b.signingPublicKey,160);
-      if(!deviceId||!validRawCurveKey(encryptionPublicKey)||!validRawCurveKey(signingPublicKey)){json(res,400,{error:'secure_device_invalid'},corsHeaders);return true}
-      const bundleHash=secureBundleHash({deviceId,encryptionPublicKey,signingPublicKey});
+      const b=await bodyJson(req),deviceId=clean(b.deviceId,80),encryptionPublicKey=clean(b.encryptionPublicKey,160),signingPublicKey=clean(b.signingPublicKey,160),transport=normalizeSecureTransport(b.transport);
+      if(!deviceId||!validRawCurveKey(encryptionPublicKey)||!validRawCurveKey(signingPublicKey)||!transport){json(res,400,{error:'secure_device_invalid'},corsHeaders);return true}
+      const bundleHash=secureBundleHash({deviceId,encryptionPublicKey,signingPublicKey,transport});
       json(res,200,{...issueIdentityChallenge('secure_device',bundleHash),bundleHash,protocol:'pulse-e2ee-v1'},corsHeaders);return true
     }
 
     if(route==='/api/pulse/secure/devices'&&req.method==='POST'){
-      const b=await bodyJson(req),deviceId=clean(b.deviceId,80),encryptionPublicKey=clean(b.encryptionPublicKey,160),signingPublicKey=clean(b.signingPublicKey,160);
-      if(!deviceId||!validRawCurveKey(encryptionPublicKey)||!validRawCurveKey(signingPublicKey)){json(res,400,{error:'secure_device_invalid'},corsHeaders);return true}
-      const bundleHash=secureBundleHash({deviceId,encryptionPublicKey,signingPublicKey});
+      const b=await bodyJson(req),deviceId=clean(b.deviceId,80),encryptionPublicKey=clean(b.encryptionPublicKey,160),signingPublicKey=clean(b.signingPublicKey,160),transport=normalizeSecureTransport(b.transport);
+      if(!deviceId||!validRawCurveKey(encryptionPublicKey)||!validRawCurveKey(signingPublicKey)||!transport){json(res,400,{error:'secure_device_invalid'},corsHeaders);return true}
+      const bundleHash=secureBundleHash({deviceId,encryptionPublicKey,signingPublicKey,transport});
       const out=await mutateStore(store=>{
         const user=sessionUser(store,bearer(req));if(!user)return{error:'unauthorized'};
         const identity=verifyIdentityProof(b.identityProof,{action:'secure_device',handle:bundleHash});
@@ -395,7 +417,7 @@ export async function handlePulse(req,res,url,corsHeaders={}){
         const existing=devices[deviceId];
         if(existing&&(existing.encryptionPublicKey!==encryptionPublicKey||existing.signingPublicKey!==signingPublicKey))return{error:'secure_device_conflict'};
         devices[deviceId]={
-          deviceId,encryptionPublicKey,signingPublicKey,identityKeyId:identity.keyId,
+          deviceId,encryptionPublicKey,signingPublicKey,identityKeyId:identity.keyId,transport,
           registeredAt:existing?.registeredAt||now(),lastSeenAt:now(),protocol:'pulse-e2ee-v1'
         };
         return{ok:true,device:secureDeviceView(devices[deviceId])};
