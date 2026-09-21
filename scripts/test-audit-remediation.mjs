@@ -31,7 +31,12 @@ async function testPulsePrivacy(){
       },
       follows:{u_a:[],u_b:[]},likes:{},reposts:{},bookmarks:{u_a:[],u_b:[]},
       circles:{c_private:{id:'c_private',ownerId:'u_a',name:'Private',description:'',visibility:'private',createdAt:new Date().toISOString()}},
-      circleMembers:{c_private:{u_a:'owner'}},notifications:{},reports:{},blocks:{u_a:[],u_b:[]},conversations:{},messages:{}
+      circleMembers:{c_private:{u_a:'owner'}},notifications:{},reports:{},blocks:{u_a:[],u_b:[]},
+      conversations:{'u_a:u_b':{members:['u_a','u_b'],messageIds:['m_old','m_recent'],createdAt:new Date(Date.now()-26*60*60*1000).toISOString()}},
+      messages:{
+        m_old:{id:'m_old',conversationKey:'u_a:u_b',senderId:'u_a',recipientId:'u_b',body:'expired-message',createdAt:new Date(Date.now()-25*60*60*1000).toISOString(),readAt:null},
+        m_recent:{id:'m_recent',conversationKey:'u_a:u_b',senderId:'u_a',recipientId:'u_b',body:'recent-message',createdAt:new Date(Date.now()-60*60*1000).toISOString(),readAt:null}
+      }
     };
     await writeFile(join(dir,'pulse.json'),JSON.stringify(store),'utf8');
     process.env.DATA_DIR=dir;
@@ -76,6 +81,16 @@ async function testPulsePrivacy(){
     assert.ok(wrapper,'public wrapper should still render');
     assert.equal(wrapper.quote,null,'nested serialization must filter an inaccessible quoted post');
     assert.doesNotMatch(JSON.stringify(publicFeed.body),/PRIVATE-AUDIT-SECRET/,'private body must never escape through a public quote');
+
+    const messages=await call('GET','/api/pulse/messages/alpha',{authToken:token});
+    assert.equal(messages.status,200);
+    assert.equal(messages.body.retentionHours,24,'Pulse direct-message retention must be 24 hours by default');
+    assert.deepEqual(messages.body.messages.map(message=>message.id),['m_recent'],'messages older than 24 hours must expire while recent messages remain');
+    assert.ok(messages.body.messages[0].expiresAt,'live messages expose their 24-hour expiry');
+
+    const health=await call('GET','/api/pulse/health');
+    assert.equal(health.status,200);
+    assert.equal(health.body.messageRetentionHours,24,'Pulse health must publish the configured 24-hour retention contract');
   }finally{
     delete process.env.DATA_DIR;
     await rm(dir,{recursive:true,force:true});
