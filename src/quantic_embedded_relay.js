@@ -125,6 +125,50 @@ async function relay(){
   }
   return relayPromise;
 }
+async function proxyToDurableRelay(req,res){
+  const base=String(process.env.QUANTIC_RELAY_FALLBACK_ENDPOINT||DEFAULT_BOOTSTRAPS[0]||"").trim().replace(/\/$/,"");
+  if(!base)throw new Error("Aucun relais Quantic durable de secours configuré.");
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),12_000);
+  try{
+    const method=String(req.method||"GET").toUpperCase();
+    let body;
+    if(!["GET","HEAD"].includes(method)){
+      const chunks=[];
+      let size=0;
+      for await(const chunk of req){
+        const buffer=Buffer.isBuffer(chunk)?chunk:Buffer.from(chunk);
+        size+=buffer.length;
+        if(size>512*1024)throw Object.assign(new Error("Corps Quantic trop volumineux."),{status:413});
+        chunks.push(buffer);
+      }
+      body=chunks.length?Buffer.concat(chunks):undefined;
+    }
+    const target=new URL(req.originalUrl||req.url||"/",base);
+    const response=await fetch(target,{
+      method,
+      redirect:"error",
+      cache:"no-store",
+      signal:controller.signal,
+      headers:{
+        accept:String(req.headers.accept||"application/json"),
+        ...(req.headers.authorization?{authorization:String(req.headers.authorization)}:{}),
+        ...(req.headers["content-type"]?{"content-type":String(req.headers["content-type"])}:{})
+      },
+      body
+    });
+    const payload=Buffer.from(await response.arrayBuffer());
+    res.status(response.status);
+    res.set("Content-Type",response.headers.get("content-type")||"application/json; charset=utf-8");
+    res.set("Cache-Control","no-store");
+    res.set("X-Quantic-Relay-Backend","durable-fallback");
+    res.send(payload);
+    return true;
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
 
 export function installEmbeddedQuanticRelay(app){
   if(app.__embeddedQuanticRelayInstalled)return;
@@ -137,9 +181,7 @@ export function installEmbeddedQuanticRelay(app){
     try{
       const instance=await relay();
       if(!instance){
-        res.status(503).json({
-          error:"Quantic Relay Hostinger indisponible: persistance MySQL non configurée.",
-        });
+        await proxyToDurableRelay(req,res);
         return;
       }
       const handled=await instance.handle(req,res);
@@ -147,7 +189,12 @@ export function installEmbeddedQuanticRelay(app){
     }catch(error){
       console.error("[quantic-relay]",error?.message||error);
       if(!res.headersSent){
-        res.status(503).json({error:"Quantic Relay Hostinger temporairement indisponible."});
+        try{
+          await proxyToDurableRelay(req,res);
+        }catch(fallbackError){
+          console.error("[quantic-relay-fallback]",fallbackError?.message||fallbackError);
+          if(!res.headersSent)res.status(fallbackError?.status||503).json({error:"Quantic Relay temporairement indisponible."});
+        }
       }else if(!res.writableEnded){
         res.end();
       }
