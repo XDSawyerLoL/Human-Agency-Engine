@@ -1,7 +1,7 @@
 # Pulse Secure — sécurité et décentralisation
 
 Date: 2026-09-21
-Status: architecture active, E2EE V1 implemented
+Status: Pulse session v2 active; DH Double Ratchet implemented; hybrid ML-KEM profile negotiated when the browser supports the modern Web Crypto KEM API
 
 ## Product rule
 
@@ -16,7 +16,7 @@ For Pulse:
 - a transport outage must never reset a mailbox or replace durable state with an empty local file;
 - encrypted envelopes must remain portable between transports so no single relay becomes mandatory.
 
-## Pulse Secure V1 — implemented
+## Pulse Secure V1 — legacy compatibility
 
 Private-message clients now generate device-local cryptographic material:
 
@@ -47,20 +47,32 @@ V1 does not yet provide a complete X3DH/PQXDH + Double Ratchet state machine. Co
 
 This limitation is explicit until the ratchet layer is implemented and audited.
 
-## V2 cryptographic target
+## Pulse session v2 — implemented
 
-The next cryptographic layer must add:
+Pulse session v2 now adds:
 
-1. signed one-time prekeys per device;
-2. asynchronous initial key agreement following the PQXDH/X3DH model;
-3. a Double Ratchet session with per-message key deletion;
-4. skipped-message-key handling for out-of-order delivery;
-5. multi-device session management;
-6. device revocation and key-change warnings;
-7. encrypted local history and secure device transfer;
-8. protocol-version negotiation with fail-closed downgrade protection.
+1. signed one-time X25519 prekeys per device;
+2. asynchronous authenticated initial key agreement;
+3. an actual DH Double Ratchet with root, sending and receiving chains;
+4. deletion/replacement of message keys after use;
+5. bounded skipped-message-key storage for out-of-order delivery;
+6. replay rejection after a message key has been consumed;
+7. persistent per-device ratchet state in IndexedDB;
+8. encrypted local plaintext cache using a non-extractable AES-GCM key;
+9. linked-device ciphertext copies for multi-device history;
+10. fail-closed profile pinning so a peer previously seen on the hybrid profile cannot silently fall back to a weaker profile.
 
-No home-grown shortcut may be marketed as Double Ratchet.
+When the runtime implements the modern Web Crypto KEM API, signed prekeys include an ML-KEM-768 public key and the initial secret is hybridized from X25519 and ML-KEM-768. If a hybrid prekey is advertised but ML-KEM is unavailable locally, the client fails closed rather than silently negotiating the classical profile.
+
+The hybrid profile is capability-dependent today. It must not be marketed as universally post-quantum until the supported-client matrix is measured and an independent cryptographic review is complete.
+
+## Remaining cryptographic work
+
+- independent cryptographic review and interoperability vectors;
+- explicit secure device revocation UX and convergence testing;
+- encrypted device-to-device history transfer/recovery;
+- wider browser compatibility for ML-KEM-768 or a separately audited portable implementation;
+- formal protocol versioning and long-term migration policy.
 
 ## Decentralized transport target
 
