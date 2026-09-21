@@ -44,6 +44,7 @@ jobs:
           assert p.get('postQuantum') == 'hybrid-ml-kem-768-when-supported', p
           assert p.get('postRetentionHours') == 24, p
           assert p.get('privateMessages') == 'persistent', p
+          assert p.get('writeDurability') == 'ack-after-durable-commit', p
           PY
               then
                 ready=1
