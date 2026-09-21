@@ -552,7 +552,9 @@ export async function handlePulse(req,res,url,corsHeaders={}){
     if(route==='/api/pulse/secure/devices'&&req.method==='GET'){
       const store=await readStore(),a=await auth(req,store);
       if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}
-      json(res,200,{protocol:'pulse-e2ee-v1',devices:secureDevicesFor(store,a.user.id).map(secureDeviceView)},corsHeaders);return true
+      ensureSecureState(store);pruneSecurePreKeys(store);
+      const devices=secureDevicesFor(store,a.user.id).map(device=>({...secureDeviceView(device),preKeyCount:Object.keys(store.securePreKeys[a.user.id]?.[device.deviceId]||{}).length}));
+      json(res,200,{protocol:'pulse-e2ee-v1',prekeys:'pulse-prekey-v1',devices},corsHeaders);return true
     }
 
     if(route==='/api/pulse/secure/prekeys'&&req.method==='POST'){
@@ -617,8 +619,9 @@ export async function handlePulse(req,res,url,corsHeaders={}){
       if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}
       const uid=store.handles[secureMatch[1]],user=uid&&store.users[uid];
       if(!user||blocked(store,a.user.id,uid)){json(res,404,{error:'not_found'},corsHeaders);return true}
-      const devices=secureDevicesFor(store,uid).map(secureDeviceView);
-      json(res,200,{protocol:'pulse-e2ee-v1',handle:user.handle,identityKeyId:user.identityKeyId||'',devices},corsHeaders);return true
+      ensureSecureState(store);pruneSecurePreKeys(store);
+      const devices=secureDevicesFor(store,uid).map(device=>({...secureDeviceView(device),preKeyCount:Object.keys(store.securePreKeys[uid]?.[device.deviceId]||{}).length}));
+      json(res,200,{protocol:'pulse-e2ee-v1',prekeys:'pulse-prekey-v1',handle:user.handle,identityKeyId:user.identityKeyId||'',devices},corsHeaders);return true
     }
 
     if(route==='/api/pulse/auth/challenge'&&req.method==='POST'){
