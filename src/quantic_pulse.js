@@ -6,6 +6,7 @@ const DATA_DIR=process.env.DATA_DIR||'./data';
 const FILE=join(DATA_DIR,'pulse.json');
 const SESSION_MS=2592000000;
 const PRESENCE_LEASE_MS=12000;
+const MESSAGE_TTL_MS=Math.max(60000,Number(process.env.PULSE_MESSAGE_TTL_MS||86400000));
 const HANDLE_RE=/^[a-z0-9_]{3,24}$/;
 const PULSE_DATABASE_URL=process.env.PULSE_DATABASE_URL||'';
 let parsedMysql=null;
@@ -109,9 +110,9 @@ async function readStore(){
   await ensureFile();try{return JSON.parse(await readFile(FILE,'utf8'))}catch{return emptyStore()}
 }
 async function mutateStore(fn){
-  if(usePostgres){const p=await pg(),client=await p.connect();try{await client.query('BEGIN');const r=await client.query('SELECT data FROM quantic_pulse_store WHERE store_key=$1 FOR UPDATE',['pulse']);const raw=r.rows.length?r.rows[0].data:emptyStore(),store=typeof raw==='string'?JSON.parse(raw):raw,out=await fn(store);await client.query('INSERT INTO quantic_pulse_store (store_key,data,updated_at) VALUES ($1,$2::jsonb,NOW()) ON CONFLICT (store_key) DO UPDATE SET data=EXCLUDED.data,updated_at=NOW()',['pulse',JSON.stringify(store)]);await client.query('COMMIT');return out}catch(e){await client.query('ROLLBACK');throw e}finally{client.release()}}
-  if(useMysql){const p=await pool(),conn=await p.getConnection();try{await conn.beginTransaction();const[rows]=await conn.query('SELECT data FROM quantic_pulse_store WHERE store_key=? FOR UPDATE',['pulse']);const store=rows.length?JSON.parse(rows[0].data):emptyStore(),out=await fn(store);await conn.query('INSERT INTO quantic_pulse_store (store_key,data) VALUES (?,?) ON DUPLICATE KEY UPDATE data=VALUES(data)',['pulse',JSON.stringify(store)]);await conn.commit();return out}catch(e){await conn.rollback();throw e}finally{conn.release()}}
-  let out;writeQueue=writeQueue.then(async()=>{const store=await readStore();out=await fn(store);const tmp=FILE+'.'+process.pid+'.'+Date.now()+'.tmp';await writeFile(tmp,JSON.stringify(store,null,2));await rename(tmp,FILE)});await writeQueue;return out
+  if(usePostgres){const p=await pg(),client=await p.connect();try{await client.query('BEGIN');const r=await client.query('SELECT data FROM quantic_pulse_store WHERE store_key=$1 FOR UPDATE',['pulse']);const raw=r.rows.length?r.rows[0].data:emptyStore(),store=typeof raw==='string'?JSON.parse(raw):raw;pruneExpiredMessages(store);const out=await fn(store);pruneExpiredMessages(store);await client.query('INSERT INTO quantic_pulse_store (store_key,data,updated_at) VALUES ($1,$2::jsonb,NOW()) ON CONFLICT (store_key) DO UPDATE SET data=EXCLUDED.data,updated_at=NOW()',['pulse',JSON.stringify(store)]);await client.query('COMMIT');return out}catch(e){await client.query('ROLLBACK');throw e}finally{client.release()}}
+  if(useMysql){const p=await pool(),conn=await p.getConnection();try{await conn.beginTransaction();const[rows]=await conn.query('SELECT data FROM quantic_pulse_store WHERE store_key=? FOR UPDATE',['pulse']);const store=rows.length?JSON.parse(rows[0].data):emptyStore();pruneExpiredMessages(store);const out=await fn(store);pruneExpiredMessages(store);await conn.query('INSERT INTO quantic_pulse_store (store_key,data) VALUES (?,?) ON DUPLICATE KEY UPDATE data=VALUES(data)',['pulse',JSON.stringify(store)]);await conn.commit();return out}catch(e){await conn.rollback();throw e}finally{conn.release()}}
+  let out;writeQueue=writeQueue.then(async()=>{const store=await readStore();pruneExpiredMessages(store);out=await fn(store);pruneExpiredMessages(store);const tmp=FILE+'.'+process.pid+'.'+Date.now()+'.tmp';await writeFile(tmp,JSON.stringify(store,null,2));await rename(tmp,FILE)});await writeQueue;return out
 }
 function mapSet(map,key){if(!map[key])map[key]=[];return map[key]}
 function blocked(store,a,b){return!!((store.blocks[a]||[]).includes(b)||(store.blocks[b]||[]).includes(a))}
@@ -153,8 +154,36 @@ function createSession(store,userId){
 }
 function notify(store,userId,payload){if(!userId||userId===payload.actorId)return;if(!store.notifications[userId])store.notifications[userId]=[];store.notifications[userId].unshift({id:id('n_'),createdAt:now(),read:false,...payload});store.notifications[userId]=store.notifications[userId].slice(0,300)}
 function conversationKey(a,b){return[a,b].sort().join(':')}
+function messageExpiresAt(message){
+  const explicit=Date.parse(String(message?.expiresAt||''));
+  if(Number.isFinite(explicit))return explicit;
+  const created=Date.parse(String(message?.createdAt||''));
+  return Number.isFinite(created)?created+MESSAGE_TTL_MS:0;
+}
+function liveMessage(message,at=Date.now()){return!!message&&messageExpiresAt(message)>at}
+function messageExpiryIso(message){const t=messageExpiresAt(message);return t?new Date(t).toISOString():null}
+function pruneExpiredMessages(store,at=Date.now()){
+  const expired=new Set();
+  for(const [mid,message] of Object.entries(store.messages||{})){
+    if(!liveMessage(message,at)){expired.add(mid);delete store.messages[mid]}
+  }
+  for(const [key,conversation] of Object.entries(store.conversations||{})){
+    conversation.messageIds=(conversation.messageIds||[]).filter(mid=>!expired.has(mid)&&!!store.messages[mid]);
+    if(!conversation.messageIds.length)delete store.conversations[key];
+  }
+  if(expired.size){
+    for(const [uid,items] of Object.entries(store.notifications||{})){
+      store.notifications[uid]=(items||[]).filter(item=>item.type!=='message'||!expired.has(item.objectId));
+    }
+  }
+  return expired.size;
+}
 
-export async function pulseInfo(){return{storage:usePostgres?'postgres':useMysql?'mysql':'json',postgresConfigured:usePostgres,mysqlConfigured:useMysql}}
+export async function pulseInfo(){
+  if(usePostgres)await pg();
+  else if(useMysql)await pool();
+  return{storage:usePostgres?'postgres':useMysql?'mysql':'json',persistent:usePostgres||useMysql,postgresConfigured:usePostgres,mysqlConfigured:useMysql,messageRetentionHours:MESSAGE_TTL_MS/3600000}
+}
 
 export async function handlePulse(req,res,url,corsHeaders={}){
   if(!url.pathname.startsWith('/api/pulse/'))return false;
@@ -162,7 +191,7 @@ export async function handlePulse(req,res,url,corsHeaders={}){
   try{
     if(!allowRate(req,'all',180,60000)){json(res,429,{error:'rate_limited'},corsHeaders);return true}
 
-    if(route==='/api/pulse/health'&&req.method==='GET'){json(res,200,{ok:true,service:'quantic-pulse',storage:usePostgres?'postgres':useMysql?'mysql':'json'},corsHeaders);return true}
+    if(route==='/api/pulse/health'&&req.method==='GET'){const info=await pulseInfo();json(res,200,{ok:true,service:'quantic-pulse',...info},corsHeaders);return true}
 
     if(route==='/api/pulse/auth/challenge'&&req.method==='POST'){
       if(!allowRate(req,'identity_challenge',40,60000)){json(res,429,{error:'rate_limited'},corsHeaders);return true}
@@ -295,14 +324,14 @@ export async function handlePulse(req,res,url,corsHeaders={}){
 
     if(route==='/api/pulse/report'&&req.method==='POST'){const b=await bodyJson(req),out=await mutateStore(store=>{const user=sessionUser(store,bearer(req));if(!user)return{error:'unauthorized'};const targetType=['post','user'].includes(b.targetType)?b.targetType:'post',targetId=clean(b.targetId,80),reason=clean(b.reason,240);if(!targetId||reason.length<3)return{error:'invalid_report'};const rid=id('r_');store.reports[rid]={id:rid,reporterId:user.id,targetType,targetId,reason,status:'open',createdAt:now()};return{ok:true,id:rid}});json(res,out.error?(out.error==='unauthorized'?401:400):201,out,corsHeaders);return true}
 
-    if(route==='/api/pulse/conversations'&&req.method==='GET'){const store=await readStore(),a=await auth(req,store);if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}const list=Object.entries(store.conversations).filter(([,c])=>c.members.includes(a.user.id)).map(([key,c])=>{const otherId=c.members.find(x=>x!==a.user.id),other=store.users[otherId],last=c.messageIds.length?store.messages[c.messageIds[c.messageIds.length-1]]:null;return{key,user:other?publicUser(other,store,a.user.id):null,lastMessage:last?{body:last.body,createdAt:last.createdAt,senderId:last.senderId}:null}}).sort((x,y)=>Date.parse(y.lastMessage?.createdAt||0)-Date.parse(x.lastMessage?.createdAt||0));json(res,200,{conversations:list},corsHeaders);return true}
+    if(route==='/api/pulse/conversations'&&req.method==='GET'){const store=await readStore(),a=await auth(req,store);if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}const list=Object.entries(store.conversations).filter(([,c])=>c.members.includes(a.user.id)).map(([key,c])=>{const otherId=c.members.find(x=>x!==a.user.id),other=store.users[otherId],messages=(c.messageIds||[]).map(mid=>store.messages[mid]).filter(msg=>liveMessage(msg)),last=messages.length?messages[messages.length-1]:null;return{key,user:other?publicUser(other,store,a.user.id):null,lastMessage:last?{body:last.body,createdAt:last.createdAt,expiresAt:messageExpiryIso(last),senderId:last.senderId}:null}}).filter(item=>item.lastMessage).sort((x,y)=>Date.parse(y.lastMessage?.createdAt||0)-Date.parse(x.lastMessage?.createdAt||0));json(res,200,{conversations:list,retentionHours:MESSAGE_TTL_MS/3600000},corsHeaders);return true}
 
-    if(route==='/api/pulse/messages'&&req.method==='POST'){const b=await bodyJson(req),text=clean(b.body,2000),handle=clean(b.handle,24).toLowerCase().replace(/^@/,'');if(!text){json(res,400,{error:'empty_message'},corsHeaders);return true}const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req)),targetId=store.handles[handle];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};if(targetId===user.id)return{error:'self_message'};if(blocked(store,user.id,targetId))return{error:'blocked'};const key=conversationKey(user.id,targetId),conv=store.conversations[key]||(store.conversations[key]={members:[user.id,targetId],messageIds:[],createdAt:now()}),mid=id('m_'),msg={id:mid,conversationKey:key,senderId:user.id,recipientId:targetId,body:text,createdAt:now(),readAt:null};store.messages[mid]=msg;conv.messageIds.push(mid);conv.messageIds=conv.messageIds.slice(-1000);notify(store,targetId,{actorId:user.id,type:'message',objectId:mid});return{message:msg}});json(res,out.error?(out.error==='unauthorized'?401:out.error==='not_found'?404:400):201,out,corsHeaders);return true}
+    if(route==='/api/pulse/messages'&&req.method==='POST'){const b=await bodyJson(req),text=clean(b.body,2000),handle=clean(b.handle,24).toLowerCase().replace(/^@/,'');if(!text){json(res,400,{error:'empty_message'},corsHeaders);return true}const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req)),targetId=store.handles[handle];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};if(targetId===user.id)return{error:'self_message'};if(blocked(store,user.id,targetId))return{error:'blocked'};const key=conversationKey(user.id,targetId),conv=store.conversations[key]||(store.conversations[key]={members:[user.id,targetId],messageIds:[],createdAt:now()}),mid=id('m_'),createdAt=now(),msg={id:mid,conversationKey:key,senderId:user.id,recipientId:targetId,body:text,createdAt,expiresAt:new Date(Date.parse(createdAt)+MESSAGE_TTL_MS).toISOString(),readAt:null};store.messages[mid]=msg;conv.messageIds.push(mid);conv.messageIds=conv.messageIds.slice(-1000);notify(store,targetId,{actorId:user.id,type:'message',objectId:mid});return{message:msg}});json(res,out.error?(out.error==='unauthorized'?401:out.error==='not_found'?404:400):201,out,corsHeaders);return true}
 
     m=route.match(/^\/api\/pulse\/messages\/([a-z0-9_]{3,24})$/);
-    if(m&&req.method==='GET'){const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req)),targetId=store.handles[m[1]];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};const key=conversationKey(user.id,targetId),conv=store.conversations[key],ids=conv?.messageIds||[],messages=ids.map(mid=>store.messages[mid]).filter(Boolean);messages.forEach(msg=>{if(msg.recipientId===user.id&&!msg.readAt)msg.readAt=now()});return{user:publicUser(store.users[targetId],store,user.id),messages}});json(res,out.error?(out.error==='unauthorized'?401:404):200,out,corsHeaders);return true}
+    if(m&&req.method==='GET'){const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req)),targetId=store.handles[m[1]];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};const key=conversationKey(user.id,targetId),conv=store.conversations[key],ids=conv?.messageIds||[],messages=ids.map(mid=>store.messages[mid]).filter(msg=>liveMessage(msg)).map(msg=>({...msg,expiresAt:messageExpiryIso(msg)}));messages.forEach(msg=>{if(msg.recipientId===user.id&&!msg.readAt){msg.readAt=now();if(store.messages[msg.id])store.messages[msg.id].readAt=msg.readAt}});return{user:publicUser(store.users[targetId],store,user.id),messages,retentionHours:MESSAGE_TTL_MS/3600000}});json(res,out.error?(out.error==='unauthorized'?401:404):200,out,corsHeaders);return true}
 
-    if(route==='/api/pulse/export'&&req.method==='GET'){const store=await readStore(),a=await auth(req,store);if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}const uid=a.user.id,data={user:publicUser(a.user,store,uid),posts:Object.values(store.posts).filter(p=>p.authorId===uid),follows:store.follows[uid]||[],likes:Object.entries(store.likes).filter(([,ids])=>ids.includes(uid)).map(([pid])=>pid),bookmarks:store.bookmarks[uid]||[],circles:Object.values(store.circles).filter(c=>(store.circleMembers[c.id]||{})[uid]),notifications:store.notifications[uid]||[],messages:Object.values(store.messages).filter(msg=>msg.senderId===uid||msg.recipientId===uid)};json(res,200,{exportedAt:now(),data},corsHeaders);return true}
+    if(route==='/api/pulse/export'&&req.method==='GET'){const store=await readStore(),a=await auth(req,store);if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}const uid=a.user.id,data={user:publicUser(a.user,store,uid),posts:Object.values(store.posts).filter(p=>p.authorId===uid),follows:store.follows[uid]||[],likes:Object.entries(store.likes).filter(([,ids])=>ids.includes(uid)).map(([pid])=>pid),bookmarks:store.bookmarks[uid]||[],circles:Object.values(store.circles).filter(c=>(store.circleMembers[c.id]||{})[uid]),notifications:store.notifications[uid]||[],messages:Object.values(store.messages).filter(msg=>liveMessage(msg)&&(msg.senderId===uid||msg.recipientId===uid)).map(msg=>({...msg,expiresAt:messageExpiryIso(msg)}))};json(res,200,{exportedAt:now(),data},corsHeaders);return true}
 
     json(res,404,{error:'not_found'},corsHeaders);return true
   }catch(e){console.error('[pulse]',e);json(res,e.status||500,{error:e.message||'internal_error'},corsHeaders);return true}
