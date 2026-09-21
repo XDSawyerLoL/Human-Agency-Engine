@@ -651,7 +651,10 @@ export async function handlePulse(req,res,url,corsHeaders={}){
         const targetDevice=store.secureDevices[targetId]?.[deviceId];
         if(!targetDevice)return{error:'secure_device_required'};
         const pool=store.securePreKeys[targetId]?.[deviceId]||{};
-        const record=Object.values(pool).sort((a,b)=>Date.parse(a.createdAt)-Date.parse(b.createdAt))[0];
+        const record=Object.values(pool).sort((a,b)=>{
+          const rank=value=>value?.protocol==='pulse-prekey-v2'?2:1;
+          return rank(b)-rank(a)||Date.parse(a.createdAt)-Date.parse(b.createdAt);
+        })[0];
         if(!record)return{error:'secure_prekey_unavailable'};
         delete pool[record.preKeyId];
         store.securePreKeyUsed[targetId+':'+deviceId+':'+record.preKeyId]=Date.parse(record.expiresAt)||Date.now()+31*24*60*60*1000;
