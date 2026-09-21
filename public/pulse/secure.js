@@ -1,10 +1,12 @@
 import { api, state } from './core.js?v=13';
+import { ensurePulseNetworkDevice, publicPulseNetworkRoute, sendOverQuanticNetwork, pullFromQuanticNetwork } from './network.js?v=13';
 
 const PROTOCOL='pulse-e2ee-v1';
 const DB_NAME='quantic-pulse-secure';
-const DB_VERSION=1;
+const DB_VERSION=2;
 const DEVICE_STORE='device';
 const TRUST_STORE='trust';
+const INBOX_STORE='inbox';
 const DEVICE_KEY='primary';
 const te=new TextEncoder();
 const td=new TextDecoder();
@@ -38,6 +40,7 @@ function openDb(){
       const db=request.result;
       if(!db.objectStoreNames.contains(DEVICE_STORE))db.createObjectStore(DEVICE_STORE);
       if(!db.objectStoreNames.contains(TRUST_STORE))db.createObjectStore(TRUST_STORE);
+      if(!db.objectStoreNames.contains(INBOX_STORE))db.createObjectStore(INBOX_STORE);
     };
     request.onsuccess=()=>resolve(request.result);
     request.onerror=()=>reject(request.error||new Error('secure_store_unavailable'));
@@ -59,6 +62,15 @@ async function dbPut(store,key,value){
     tx.objectStore(store).put(value,key);
     tx.oncomplete=()=>{db.close();resolve(value)};
     tx.onerror=()=>{db.close();reject(tx.error||new Error('secure_store_unavailable'))};
+  });
+}
+async function dbGetAll(store){
+  const db=await openDb();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(store,'readonly'),request=tx.objectStore(store).getAll();
+    request.onsuccess=()=>resolve(request.result||[]);
+    request.onerror=()=>reject(request.error||new Error('secure_store_unavailable'));
+    tx.oncomplete=()=>db.close();
   });
 }
 
@@ -90,21 +102,28 @@ export async function getSecureDevice(){
   if(existing?.deviceId&&existing?.encryptionPrivateKey&&existing?.signingPrivateKey&&existing?.encryptionPublicKey&&existing?.signingPublicKey)return existing;
   return createDevice();
 }
-function registrationBundle(device){
+function registrationBundle(device,transport){
   return{
     deviceId:device.deviceId,
     encryptionPublicKey:device.encryptionPublicKey,
-    signingPublicKey:device.signingPublicKey
+    signingPublicKey:device.signingPublicKey,
+    transport:publicPulseNetworkRoute(transport)
   };
 }
 export async function ensureSecureDevice(){
   if(!state.user)return null;
   const device=await getSecureDevice();
+  const transport=await ensurePulseNetworkDevice(device.deviceId);
+  const bundle=registrationBundle(device,transport);
   const current=await api('/api/pulse/secure/devices').catch(()=>({devices:[]}));
-  const found=(current.devices||[]).find(item=>item.deviceId===device.deviceId&&item.encryptionPublicKey===device.encryptionPublicKey&&item.signingPublicKey===device.signingPublicKey);
+  const found=(current.devices||[]).find(item=>
+    item.deviceId===device.deviceId&&
+    item.encryptionPublicKey===device.encryptionPublicKey&&
+    item.signingPublicKey===device.signingPublicKey&&
+    item.transport?.canonicalAddress===bundle.transport.canonicalAddress
+  );
   if(found)return device;
   if(!window.QuanticID?.assert)throw new Error('identity_vault_required');
-  const bundle=registrationBundle(device);
   const challenge=await api('/api/pulse/secure/challenge',{method:'POST',body:JSON.stringify(bundle)});
   const identityProof=await window.QuanticID.assert({challenge:challenge.challenge,audience:challenge.audience});
   await api('/api/pulse/secure/devices',{method:'POST',body:JSON.stringify({...bundle,identityProof})});
