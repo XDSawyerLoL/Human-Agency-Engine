@@ -62,7 +62,7 @@ jobs:
           for attempt in $(seq 1 36); do
             page="$(curl -fsSL --max-time 25 "$HOSTINGER/pulse/" 2>/dev/null || true)"
             code="$(curl -sS --max-time 25 --output /tmp/hostinger-pulse-health.json --write-out '%{http_code}' "$HOSTINGER/api/pulse/health" || true)"
-            if grep -q '/pulse/app.js?v=17' <<<"$page" && [ "$code" = "200" ]; then
+            if grep -q '/pulse/app.js?v=18' <<<"$page" && [ "$code" = "200" ]; then
               if python - <<'PY'
           import json
           p=json.load(open('/tmp/hostinger-pulse-health.json',encoding='utf-8'))
@@ -84,3 +84,19 @@ jobs:
           done
           test "$ready" = "1"
           cat /tmp/hostinger-pulse-health.json
+
+      - name: Verify Hostinger Pulse auth proxy
+        run: |
+          set -euo pipefail
+          core="$(curl -fsSL --max-time 25 "$HOSTINGER/pulse/core.js?v=18")"
+          grep -q "window.QUANTIC_PULSE_API_BASE||''" <<<"$core"
+          ! grep -q "DEFAULT_DURABLE_API" <<<"$core"
+
+          auth_code="$(curl -sS --max-time 25             --output /tmp/pulse-auth-challenge.json             --write-out '%{http_code}'             -X POST             -H 'Content-Type: application/json'             --data '{"action":"login","handle":""}'             "$HOSTINGER/api/pulse/auth/challenge")"
+          test "$auth_code" = "200"
+          python - <<'PY'
+          import json
+          p=json.load(open('/tmp/pulse-auth-challenge.json',encoding='utf-8'))
+          assert isinstance(p.get('challenge'), str) and p['challenge'], p
+          assert p.get('audience') == 'quantic-pulse', p
+          PY
