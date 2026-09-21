@@ -127,7 +127,7 @@ export async function loadMessages(){
   setStatus('Chargement','');
   try{
     const data=await api('/api/pulse/conversations');
-    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>Messages privés</h2><p>Conversations directes entre comptes Pulse · messages conservés 24 h.</p></div><form class="pulse-inline-form two" id="new-message"><input name="handle" placeholder="@identifiant" required><input name="body" maxlength="2000" placeholder="Message" required><button class="pulse-mini-button primary">Envoyer</button></form><div class="pulse-card-list">';
+    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>Messages privés</h2><p>Conversations privées persistantes entre comptes Pulse.</p></div><form class="pulse-inline-form two" id="new-message"><input name="handle" placeholder="@identifiant" required><input name="body" maxlength="2000" placeholder="Message" required><button class="pulse-mini-button primary">Envoyer</button></form><div class="pulse-card-list">';
     if(!data.conversations.length)html+='<div class="pulse-card"><p>Aucune conversation.</p></div>';
     data.conversations.forEach(function(conversation){
       if(!conversation.user)return;
