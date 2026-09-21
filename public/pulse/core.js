@@ -58,6 +58,8 @@ export function errorText(e){
     blocked:'Cette conversation est bloquée.',
     network_error:'Connexion au service Pulse impossible. Recharge la page puis réessaie.',
     request_failed:'La requête Pulse a échoué. Réessaie dans un instant.',
+    pulse_storage_unavailable:'Le stockage Pulse est momentanément indisponible. Tes données ne sont pas remplacées par un état vide ; réessaie dans un instant.',
+    'fetch failed':'Le stockage Pulse a rencontré une coupure temporaire. Réessaie dans un instant.',
     identity_vault_required:'Quantic Identity Vault est requis pour créer un compte ou se connecter.',
     identity_proof_required:'Identity Vault doit signer cette connexion.',
     identity_proof_invalid:'La preuve Identity Vault est invalide.',
