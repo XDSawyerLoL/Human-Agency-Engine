@@ -1,0 +1,81 @@
+name: Pulse Production Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/pulse/**'
+      - 'src/quantic_pulse.js'
+      - '.github/workflows/pulse-production-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pulse-production-smoke
+  cancel-in-progress: true
+
+jobs:
+  pulse-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      HOSTINGER: https://mediumorchid-badger-314305.hostingersite.com
+      DURABLE_API: https://quantic-pulse-api.onrender.com
+    steps:
+      - name: Verify durable Pulse API
+        run: |
+          set -euo pipefail
+          ready=0
+          for attempt in $(seq 1 24); do
+            code="$(curl -sS --max-time 25 --output /tmp/pulse-api-health.json --write-out '%{http_code}' "$DURABLE_API/api/pulse/health" || true)"
+            if [ "$code" = "200" ]; then
+              if python - <<'PY'
+          import json
+          p=json.load(open('/tmp/pulse-api-health.json',encoding='utf-8'))
+          assert p.get('ok') is True, p
+          assert p.get('storage') == 'quantic-relay', p
+          assert p.get('persistent') is True, p
+          assert p.get('e2ee') == 'pulse-e2ee-v1', p
+          assert p.get('prekeys') == 'pulse-prekey-v1', p
+          assert p.get('postRetentionHours') == 24, p
+          assert p.get('privateMessages') == 'persistent', p
+          PY
+              then
+                ready=1
+                break
+              fi
+            fi
+            sleep 10
+          done
+          test "$ready" = "1"
+          cat /tmp/pulse-api-health.json
+
+      - name: Verify Hostinger Pulse client and route
+        run: |
+          set -euo pipefail
+          ready=0
+          for attempt in $(seq 1 36); do
+            page="$(curl -fsSL --max-time 25 "$HOSTINGER/pulse/" 2>/dev/null || true)"
+            code="$(curl -sS --max-time 25 --output /tmp/hostinger-pulse-health.json --write-out '%{http_code}' "$HOSTINGER/api/pulse/health" || true)"
+            if grep -q '/pulse/app.js?v=16' <<<"$page" && [ "$code" = "200" ]; then
+              if python - <<'PY'
+          import json
+          p=json.load(open('/tmp/hostinger-pulse-health.json',encoding='utf-8'))
+          assert p.get('ok') is True, p
+          assert p.get('storage') == 'quantic-relay', p
+          assert p.get('persistent') is True, p
+          assert p.get('e2ee') == 'pulse-e2ee-v1', p
+          assert p.get('prekeys') == 'pulse-prekey-v1', p
+          PY
+              then
+                ready=1
+                break
+              fi
+            fi
+            echo "Pulse deployment not ready (attempt $attempt/36; HTTP $code)."
+            sleep 10
+          done
+          test "$ready" = "1"
+          cat /tmp/hostinger-pulse-health.json
