@@ -242,7 +242,7 @@ function bindStaticEvents(){
       const body=register?{handle,displayName,identityProof:proof}:{identityProof:proof,provision:true,displayName:activeIdentity?.label||'Membre Quantic'};
       const data=await api(path,{method:'POST',body:JSON.stringify(body)});
       applySession(data);
-      await ensureSecureDevice();
+      await ensureSecureDevice().catch(()=>{});
       closeAuth();
       dom.authForm.reset();
       await loadHome();
