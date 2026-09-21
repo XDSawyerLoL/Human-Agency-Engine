@@ -668,7 +668,7 @@ export async function handlePulse(req,res,url,corsHeaders={}){
       if(!user||blocked(store,a.user.id,uid)){json(res,404,{error:'not_found'},corsHeaders);return true}
       ensureSecureState(store);pruneSecurePreKeys(store);
       const devices=secureDevicesFor(store,uid).map(device=>({...secureDeviceView(device),preKeyCount:Object.keys(store.securePreKeys[uid]?.[device.deviceId]||{}).length}));
-      json(res,200,{protocol:'pulse-e2ee-v1',prekeys:'pulse-prekey-v1',handle:user.handle,identityKeyId:user.identityKeyId||'',devices},corsHeaders);return true
+      json(res,200,{protocol:'pulse-e2ee-v1',sessions:'pulse-session-v2',prekeys:'pulse-prekey-v2',handle:user.handle,identityKeyId:user.identityKeyId||'',devices},corsHeaders);return true
     }
 
     if(route==='/api/pulse/auth/challenge'&&req.method==='POST'){
