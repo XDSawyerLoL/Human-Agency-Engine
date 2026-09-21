@@ -1,6 +1,7 @@
 import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=12';
 import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, ensureIdentityVault, startIdentityPresenceGuard } from './session.js?v=12';
 import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview } from './views.js?v=12';
+import { ensureSecureDevice, encryptMessageForHandle } from './secure.js?v=13';
 
 function setReply(postId,handle){
   state.replyTo=postId;
@@ -241,6 +242,7 @@ function bindStaticEvents(){
       const body=register?{handle,displayName,identityProof:proof}:{identityProof:proof,provision:true,displayName:activeIdentity?.label||'Membre Quantic'};
       const data=await api(path,{method:'POST',body:JSON.stringify(body)});
       applySession(data);
+      await ensureSecureDevice();
       closeAuth();
       dom.authForm.reset();
       await loadHome();
@@ -380,7 +382,9 @@ function bindDelegatedEvents(){
       event.preventDefault();
       const form=new FormData(event.target);
       try{
-        await api('/api/pulse/messages',{method:'POST',body:JSON.stringify({handle:String(form.get('handle')||'').replace(/^@/,''),body:form.get('body')})});
+        const handle=String(form.get('handle')||'').replace(/^@/,'');
+        const payload=await encryptMessageForHandle(handle,String(form.get('body')||''));
+        await api('/api/pulse/messages',{method:'POST',body:JSON.stringify(payload)});
         await loadMessages();
       }catch(error){alert(errorText(error))}
     }
@@ -390,7 +394,8 @@ function bindDelegatedEvents(){
       const form=new FormData(event.target);
       const handle=event.target.dataset.handle;
       try{
-        await api('/api/pulse/messages',{method:'POST',body:JSON.stringify({handle,body:form.get('body')})});
+        const payload=await encryptMessageForHandle(handle,String(form.get('body')||''));
+        await api('/api/pulse/messages',{method:'POST',body:JSON.stringify(payload)});
         await loadConversation(handle);
       }catch(error){alert(errorText(error))}
     }
@@ -425,6 +430,7 @@ async function init(){
   bindDelegatedEvents();
   await health();
   await restoreSession();
+  if(state.user)await ensureSecureDevice().catch(()=>{});
   startIdentityPresenceGuard();
   await Promise.all([loadHome(),loadCirclePreview()]);
 }
