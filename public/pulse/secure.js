@@ -115,18 +115,28 @@ export async function ensureSecureDevice(){
   const device=await getSecureDevice();
   const transport=await ensurePulseNetworkDevice(device.deviceId);
   const bundle=registrationBundle(device,transport);
-  const current=await api('/api/pulse/secure/devices').catch(()=>({devices:[]}));
+  let current;
+  try{current=await api('/api/pulse/secure/devices')}
+  catch(error){
+    if(device.pulseRegistered===true)return device;
+    throw error;
+  }
   const found=(current.devices||[]).find(item=>
     item.deviceId===device.deviceId&&
     item.encryptionPublicKey===device.encryptionPublicKey&&
     item.signingPublicKey===device.signingPublicKey&&
     item.transport?.canonicalAddress===bundle.transport.canonicalAddress
   );
-  if(found)return device;
+  if(found){
+    if(device.pulseRegistered!==true){device.pulseRegistered=true;await dbPut(DEVICE_STORE,DEVICE_KEY,device)}
+    return device;
+  }
   if(!window.QuanticID?.assert)throw new Error('identity_vault_required');
   const challenge=await api('/api/pulse/secure/challenge',{method:'POST',body:JSON.stringify(bundle)});
   const identityProof=await window.QuanticID.assert({challenge:challenge.challenge,audience:challenge.audience});
   await api('/api/pulse/secure/devices',{method:'POST',body:JSON.stringify({...bundle,identityProof})});
+  device.pulseRegistered=true;
+  await dbPut(DEVICE_STORE,DEVICE_KEY,device);
   return device;
 }
 async function trustBundle(handle,bundle){
@@ -160,8 +170,21 @@ export async function getSecureBundle(handle){
   }
 }
 async function ownDevices(){
-  const data=await api('/api/pulse/secure/devices');
-  return (data.devices||[]).filter(device=>device.protocol===PROTOCOL);
+  try{
+    const data=await api('/api/pulse/secure/devices');
+    const devices=(data.devices||[]).filter(device=>device.protocol===PROTOCOL);
+    if(devices.length)return devices;
+  }catch{}
+  const device=await getSecureDevice(),transport=await ensurePulseNetworkDevice(device.deviceId);
+  return[{
+    deviceId:device.deviceId,
+    encryptionPublicKey:device.encryptionPublicKey,
+    signingPublicKey:device.signingPublicKey,
+    identityKeyId:'',
+    registeredAt:device.createdAt,
+    protocol:PROTOCOL,
+    transport:publicPulseNetworkRoute(transport)
+  }];
 }
 async function importX25519Public(raw){return crypto.subtle.importKey('raw',fromB64u(raw),{name:'X25519'},false,[])}
 async function importEd25519Public(raw){return crypto.subtle.importKey('raw',fromB64u(raw),{name:'Ed25519'},false,['verify'])}
