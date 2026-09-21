@@ -1,5 +1,5 @@
-import { api, state } from './core.js?v=13';
-import { ensurePulseNetworkDevice, publicPulseNetworkRoute, sendOverQuanticNetwork, pullFromQuanticNetwork } from './network.js?v=13';
+import { api, state } from './core.js?v=14';
+import { ensurePulseNetworkDevice, publicPulseNetworkRoute, sendOverQuanticNetwork, pullFromQuanticNetwork } from './network.js?v=14';
 
 const PROTOCOL='pulse-e2ee-v1';
 const DB_NAME='quantic-pulse-secure';
