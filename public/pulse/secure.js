@@ -1,6 +1,6 @@
-import { api, state } from './core.js?v=15';
-import { ensurePulseNetworkDevice, publicPulseNetworkRoute, sendOverQuanticNetwork, pullFromQuanticNetwork, ackQuanticNetworkPackets } from './network.js?v=15';
-import { ensureSignedPreKeys } from './ratchet.js?v=15';
+import { api, state } from './core.js?v=16';
+import { ensurePulseNetworkDevice, publicPulseNetworkRoute, sendOverQuanticNetwork, pullFromQuanticNetwork, ackQuanticNetworkPackets } from './network.js?v=16';
+import { ensureSignedPreKeys } from './ratchet.js?v=16';
 
 const PROTOCOL='pulse-e2ee-v1';
 const DB_NAME='quantic-pulse-secure';
