@@ -2,6 +2,7 @@ import { TOKEN_KEY, state, dom, initials, api } from './core.js?v=14';
 
 const PRESENCE_RENEW_MS=5000;
 const PRESENCE_PROBE_MS=1000;
+const USER_CACHE_KEY='quantic_pulse_user_cache_v1';
 let presenceGuardTimer=null;
 let presenceBusy=false;
 let lastPresenceRenewal=0;
@@ -95,19 +96,46 @@ export function requireAuth(){
   return false;
 }
 
+function cacheLocalUser(identityKeyId=''){
+  if(!state.user)return;
+  try{
+    localStorage.setItem(USER_CACHE_KEY,JSON.stringify({
+      identityKeyId:String(identityKeyId||''),
+      user:state.user,
+      cachedAt:new Date().toISOString()
+    }));
+  }catch{}
+}
+async function cacheLocalUserFromVault(){
+  try{
+    const identity=window.QuanticID?.probe?await window.QuanticID.probe({timeoutMs:1000}):null;
+    if(identity?.ok&&identity.keyId)cacheLocalUser(identity.keyId);
+  }catch{}
+}
+function restoreCachedUser(identity){
+  try{
+    const cached=JSON.parse(localStorage.getItem(USER_CACHE_KEY)||'null');
+    if(!cached?.user||!identity?.ok||!identity.keyId||cached.identityKeyId!==identity.keyId)return false;
+    state.user=cached.user;
+    updateAccount();
+    return true;
+  }catch{return false}
+}
 export function applySession(data){
   state.token=data.token;
   state.user=data.user;
   localStorage.setItem(TOKEN_KEY,data.token);
   lastPresenceRenewal=Date.now();
   updateAccount();
+  void cacheLocalUserFromVault();
 }
 
-export function clearSession(){
+export function clearSession(forgetCachedUser=false){
   state.token='';
   state.user=null;
   lastPresenceRenewal=0;
   localStorage.removeItem(TOKEN_KEY);
+  if(forgetCachedUser)localStorage.removeItem(USER_CACHE_KEY);
   updateAccount();
 }
 
@@ -137,7 +165,8 @@ export async function renewIdentityPresence({quiet=false}={}){
     return true;
   }catch(error){
     if(!quiet)console.warn('Pulse Quantic ID presence renewal failed');
-    await revokePulseSession();
+    const fatal=error?.status===401||['identity_mismatch','identity_not_registered','identity_proof_invalid'].includes(error?.message);
+    if(fatal)await revokePulseSession();
     return false;
   }
 }
@@ -155,7 +184,7 @@ async function presenceGuardTick(){
       await renewIdentityPresence({quiet:true});
     }
   }catch{
-    await revokePulseSession();
+    // A central Pulse outage must not destroy the local Quantic identity session.
   }finally{
     presenceBusy=false;
   }
@@ -191,6 +220,7 @@ async function restoreFromIdentity(){
 }
 
 export async function restoreSession(){
+  const identity=window.QuanticID?.probe?await window.QuanticID.probe({timeoutMs:1200}).catch(()=>null):null;
   if(state.token){
     const presenceOk=await renewIdentityPresence({quiet:true});
     if(presenceOk){
@@ -198,14 +228,20 @@ export async function restoreSession(){
         const data=await api('/api/pulse/me');
         state.user=data.user;
         updateAccount();
+        cacheLocalUser(identity?.keyId||'');
         return true;
-      }catch{
-        clearSession();
+      }catch(error){
+        if(error?.status===401)clearSession();
+        else if(restoreCachedUser(identity))return true;
       }
+    }else if(state.token&&restoreCachedUser(identity)){
+      return true;
     }
   }
 
   const restored=await restoreFromIdentity();
-  if(!restored)updateAccount();
-  return restored;
+  if(restored)return true;
+  if(restoreCachedUser(identity))return true;
+  updateAccount();
+  return false;
 }
