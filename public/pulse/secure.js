@@ -1,4 +1,4 @@
-import { api, state } from './core.js?v=14';
+import { api, state } from './core.js?v=15';
 import { ensurePulseNetworkDevice, publicPulseNetworkRoute, sendOverQuanticNetwork, pullFromQuanticNetwork, ackQuanticNetworkPackets } from './network.js?v=15';
 import { ensureSignedPreKeys } from './ratchet.js?v=15';
 
