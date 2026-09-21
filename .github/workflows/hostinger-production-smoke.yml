@@ -36,6 +36,7 @@ jobs:
             network="$(curl -fsSL --max-time 20 "$BASE_URL/network/" 2>/dev/null || true)"
             plans="$(curl -fsSL --max-time 20 "$BASE_URL/plans/" 2>/dev/null || true)"
             pulse="$(curl -fsSL --max-time 20 "$BASE_URL/pulse/" 2>/dev/null || true)"
+            pulse_health="$(curl -fsSL --max-time 20 "$BASE_URL/api/pulse/health" 2>/dev/null || true)"
             downloads="$(curl -fsSL --max-time 20 "$BASE_URL/downloads/" 2>/dev/null || true)"
             qmark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/quantic-sillage-mark.svg" 2>/dev/null || true)"
             pulsemark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/pulse-mark.svg" 2>/dev/null || true)"
@@ -66,6 +67,7 @@ jobs:
               && grep -q '/assets/brand-2026/quantic-sillage-mark.svg' <<<"$pulse" \
               && grep -q '/assets/brand-2026/pulse-mark.svg' <<<"$pulse" \
               && grep -q '/pulse/app.js?v=10' <<<"$pulse" \
+              && grep -q '"schema":"quantic-pulse-health-v2"' <<<"$pulse_health" \
               && grep -q 'Quantic Sillage' <<<"$qmark" \
               && grep -q 'aria-label="Quantic Pulse"' <<<"$pulsemark" \
               && grep -q 'aria-label="Quantic Mail"' <<<"$mailmark" \
