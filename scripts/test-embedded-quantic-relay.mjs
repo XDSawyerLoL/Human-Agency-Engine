@@ -2,7 +2,7 @@ import fs from "node:fs";
 import assert from "node:assert/strict";
 
 const sync=fs.readFileSync("scripts/sync-quantic-mail.mjs","utf8");
-assert.match(sync,/86fe4ba39c1fab0df43a84137cb197a6142309f8/);
+assert.match(sync,/46794c67ec5729cb368b390f0690c2cf220f7016/);
 assert.match(sync,/standalone-relay/);
 assert.match(sync,/lib/);
 assert.match(sync,/vendor[\\/]quanticmail-relay|vendor",\s*"quanticmail-relay"/);
