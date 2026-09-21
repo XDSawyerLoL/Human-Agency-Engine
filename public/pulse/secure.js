@@ -248,6 +248,140 @@ export async function decryptConversationMessages(messages){
   for(const message of messages||[])out.push(await decryptOne(device,message));
   return out;
 }
+
+function messageStoreKey(message){
+  return [String(message.clientMessageId||''),String(message.senderDeviceId||'')].join(':');
+}
+async function saveLocalMessage(message){
+  await dbPut(INBOX_STORE,messageStoreKey(message),message);
+  return message;
+}
+async function currentPublicDevice(){
+  const device=await getSecureDevice();
+  try{
+    const data=await api('/api/pulse/secure/devices');
+    const current=(data.devices||[]).find(item=>item.deviceId===device.deviceId);
+    if(current)return current;
+  }catch{}
+  const transport=await ensurePulseNetworkDevice(device.deviceId);
+  return{
+    deviceId:device.deviceId,
+    encryptionPublicKey:device.encryptionPublicKey,
+    signingPublicKey:device.signingPublicKey,
+    identityKeyId:'',
+    protocol:PROTOCOL,
+    transport:publicPulseNetworkRoute(transport)
+  };
+}
+function sameSecureDevice(first,second){
+  return !!first&&!!second&&
+    first.deviceId===second.deviceId&&
+    first.encryptionPublicKey===second.encryptionPublicKey&&
+    first.signingPublicKey===second.signingPublicKey&&
+    first.transport?.canonicalAddress===second.transport?.canonicalAddress;
+}
+export async function sendSecureMessage(handle,plaintext){
+  const payload=await encryptMessageForHandle(handle,plaintext);
+  const peerHandle=String(handle||'').replace(/^@/,'').toLowerCase();
+  const senderDevice=await currentPublicDevice();
+  let relayDelivered=0;
+
+  for(const peerDevice of payload.peer.devices||[]){
+    if(!peerDevice.transport)continue;
+    const envelope=payload.envelopes.find(item=>item.recipientDeviceId===peerDevice.deviceId);
+    if(!envelope)continue;
+    const packet={
+      format:'pulse-secure-relay-v1',
+      version:1,
+      senderHandle:state.user?.handle||'',
+      recipientHandle:peerHandle,
+      message:{
+        id:'relay_'+payload.clientMessageId,
+        clientMessageId:payload.clientMessageId,
+        protocol:PROTOCOL,
+        senderId:state.user?.id||'',
+        recipientId:'',
+        senderDeviceId:payload.senderDeviceId,
+        createdAt:payload.sentAt,
+        readAt:null,
+        envelopes:[envelope],
+        senderDevice
+      }
+    };
+    const relayId=('ps:'+payload.clientMessageId+':'+peerDevice.deviceId.slice(-8)).slice(0,100);
+    const delivered=await sendOverQuanticNetwork(payload.senderDeviceId,peerDevice.transport,relayId,packet).catch(()=>({ok:false}));
+    if(delivered?.ok)relayDelivered++;
+  }
+
+  let central=false,centralError=null;
+  try{
+    await api('/api/pulse/messages',{
+      method:'POST',
+      body:JSON.stringify({
+        handle:peerHandle,
+        protocol:payload.protocol,
+        clientMessageId:payload.clientMessageId,
+        senderDeviceId:payload.senderDeviceId,
+        sentAt:payload.sentAt,
+        envelopes:payload.envelopes
+      })
+    });
+    central=true;
+  }catch(error){centralError=error}
+
+  await saveLocalMessage({
+    id:'local_'+payload.clientMessageId,
+    clientMessageId:payload.clientMessageId,
+    protocol:PROTOCOL,
+    senderId:state.user?.id||'local',
+    senderHandle:state.user?.handle||'',
+    recipientHandle:peerHandle,
+    recipientId:'',
+    senderDeviceId:payload.senderDeviceId,
+    createdAt:payload.sentAt,
+    readAt:null,
+    envelopes:payload.envelopes,
+    senderDevice
+  });
+
+  if(!central&&!relayDelivered)throw centralError||new Error('secure_network_unavailable');
+  return{ok:true,central,relayDelivered,clientMessageId:payload.clientMessageId};
+}
+export async function syncDecentralizedInbox(){
+  const localDevice=await getSecureDevice();
+  const packets=await pullFromQuanticNetwork(localDevice.deviceId).catch(()=>[]);
+  let accepted=0;
+  for(const packet of packets){
+    try{
+      if(packet?.format!=='pulse-secure-relay-v1'||packet.version!==1||packet.message?.protocol!==PROTOCOL)continue;
+      const senderHandle=String(packet.senderHandle||'').toLowerCase();
+      const bundle=await getSecureBundle(senderHandle);
+      const trusted=(bundle.devices||[]).find(item=>item.deviceId===packet.message.senderDeviceId);
+      if(!trusted||!sameSecureDevice(trusted,packet.message.senderDevice))continue;
+      if(trusted.transport?.canonicalAddress!==packet._relayFrom)continue;
+      const message={
+        ...packet.message,
+        senderId:'remote:'+senderHandle,
+        senderHandle,
+        recipientHandle:String(packet.recipientHandle||'').toLowerCase(),
+        senderDevice:trusted
+      };
+      await saveLocalMessage(message);
+      accepted++;
+    }catch{}
+  }
+  return accepted;
+}
+export async function decentralizedMessagesFor(handle){
+  await syncDecentralizedInbox().catch(()=>{});
+  const peer=String(handle||'').replace(/^@/,'').toLowerCase();
+  const ours=String(state.user?.handle||'').toLowerCase();
+  return (await dbGetAll(INBOX_STORE)).filter(message=>
+    (message.senderHandle===peer&&message.recipientHandle===ours)||
+    (message.senderHandle===ours&&message.recipientHandle===peer)
+  );
+}
+
 export async function safetyNumber(handle){
   const [device,bundle,identity]=await Promise.all([ensureSecureDevice(),getSecureBundle(handle),window.QuanticID?.probe?.()]);
   const ids=[String(identity?.keyId||device.signingPublicKey),String(bundle.identityKeyId||'')].sort();
