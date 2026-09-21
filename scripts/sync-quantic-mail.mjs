@@ -23,9 +23,9 @@ const relayTarget=join(root,"vendor","quanticmail-relay");
 const stage=join(root,"public",".mail-stage");
 
 const REPO="https://github.com/XDSawyerLoL/QuanticMail.git";
-const DIST_COMMIT="f726e484dc1221073eb2e1ea3b80fb8d88372ecb";
-const SOURCE_COMMIT="86fe4ba39c1fab0df43a84137cb197a6142309f8";
-const RELAY_SOURCE_COMMIT="86fe4ba39c1fab0df43a84137cb197a6142309f8";
+const DIST_COMMIT="5891f79e3f7c0e70678eb8a50d925a32d61c4420";
+const SOURCE_COMMIT="46794c67ec5729cb368b390f0690c2cf220f7016";
+const RELAY_SOURCE_COMMIT="46794c67ec5729cb368b390f0690c2cf220f7016";
 const BOOTSTRAP_SENTINEL="https://quantic-hostinger-relay.invalid";
 const RAILWAY_RELAY="https://quantic-network-relay-backup-production.up.railway.app";
 const LEGACY_PORTAL_ORIGIN="https://mediumorchid-badger-314305.hostingersite.com";
