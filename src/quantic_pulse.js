@@ -398,7 +398,7 @@ export async function handlePulse(req,res,url,corsHeaders={}){
       const store=await readStore(),a=await auth(req,store);
       if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}
       const b=await bodyJson(req),deviceId=clean(b.deviceId,80),encryptionPublicKey=clean(b.encryptionPublicKey,160),signingPublicKey=clean(b.signingPublicKey,160),transport=normalizeSecureTransport(b.transport);
-      if(!deviceId||!validRawCurveKey(encryptionPublicKey)||!validRawCurveKey(signingPublicKey)||!transport){json(res,400,{error:'secure_device_invalid'},corsHeaders);return true}
+      if(!deviceId||!validRawCurveKey(encryptionPublicKey)||!validRawCurveKey(signingPublicKey)){json(res,400,{error:'secure_device_invalid'},corsHeaders);return true}
       const bundleHash=secureBundleHash({deviceId,encryptionPublicKey,signingPublicKey,transport});
       json(res,200,{...issueIdentityChallenge('secure_device',bundleHash),bundleHash,protocol:'pulse-e2ee-v1'},corsHeaders);return true
     }
