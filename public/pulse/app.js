@@ -59,7 +59,10 @@ async function publishPost(){
     updateMediaPreview();
     await loadHome();
   }catch(error){
-    alert(errorText(error));
+    const durabilityFailure=['pulse_storage_unavailable','pulse_remote_store_unavailable','pulse_storage_conflict','network_error'].includes(error?.message);
+    alert(durabilityFailure
+      ? 'Publication non enregistrée : le stockage durable Pulse n’a pas confirmé l’écriture. Ton texte est conservé ici, tu peux réessayer.'
+      : errorText(error));
     dom.publish.disabled=false;
   }
 }
