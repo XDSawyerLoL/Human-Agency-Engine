@@ -201,6 +201,7 @@ export async function pulseInfo(){
     if(!health.connected)throw new Error(health.last_error||'pulse_supabase_unavailable');
   }
   return{
+    schema:'quantic-pulse-health-v2',
     storage:usePostgres?'postgres':useMysql?'mysql':useSupabase?'supabase':'json',
     persistent:usePostgres||useMysql||useSupabase,
     postgresConfigured:usePostgres,
