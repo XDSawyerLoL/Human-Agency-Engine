@@ -1,5 +1,5 @@
-import { api } from './core.js?v=15';
-import { b64u, preKeyTranscript, verifyPreKeyRecord, deriveInitiatorSession, deriveRecipientSession, advanceChain } from './ratchet-core.js?v=15';
+import { api } from './core.js?v=16';
+import { b64u, preKeyTranscript, verifyPreKeyRecord, deriveInitiatorSession, deriveRecipientSession, advanceChain } from './ratchet-core.js?v=16';
 
 const DB='quantic-pulse-ratchet';
 const VERSION=1;
