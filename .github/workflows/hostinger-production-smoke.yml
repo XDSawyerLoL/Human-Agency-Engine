@@ -99,16 +99,19 @@ jobs:
           relay_a_code="$(curl -sS --max-time 25 --output /tmp/quantic-relay-health-a.json --write-out '%{http_code}' "$BASE_URL/api/quantic/health")"
           sleep 1
           relay_b_code="$(curl -sS --max-time 25 --output /tmp/quantic-relay-health-b.json --write-out '%{http_code}' "$BASE_URL/api/quantic/health")"
-          echo "Health HTTP codes: app=$app_health_code pulse=$pulse_health_code portal=$status_code relayA=$relay_a_code relayB=$relay_b_code"
+manifest_code="$(curl -sS --max-time 25 --output /tmp/quantic-manifest-probe.json --write-out '%{http_code}' "$BASE_URL/api/quantic/manifest?handle=smoke~00000000000000000000000000000000%40quantic")"
+          echo "Health HTTP codes: app=$app_health_code pulse=$pulse_health_code portal=$status_code relayA=$relay_a_code relayB=$relay_b_code manifest=$manifest_code"
           echo "App health: $(cat /tmp/quantic-app-health.json)"
           echo "Pulse health: $(cat /tmp/quantic-pulse-health.json)"
           echo "Portal status: $(cat /tmp/quantic-status.json)"
           echo "Relay health A: $(cat /tmp/quantic-relay-health-a.json)"
+echo "Manifest probe: $(cat /tmp/quantic-manifest-probe.json)"
           test "$app_health_code" = "200"
           test "$pulse_health_code" = "200"
           test "$status_code" = "200"
           test "$relay_a_code" = "200"
           test "$relay_b_code" = "200"
+test "$manifest_code" = "404"
           python - <<'PY'
           import json
           with open('/tmp/quantic-app-health.json', encoding='utf-8') as handle:
