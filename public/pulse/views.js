@@ -1,6 +1,7 @@
 import { state, dom, api, esc, icon, initials, timeAgo, setStatus, errorText } from './core.js?v=12';
 import { requireAuth } from './session.js?v=12';
 import { renderPost, renderPosts, notificationLabel } from './render.js?v=12';
+import { decryptConversationMessages, safetyNumber } from './secure.js?v=13';
 
 export function setView(view,title){
   state.view=view;
@@ -127,11 +128,12 @@ export async function loadMessages(){
   setStatus('Chargement','');
   try{
     const data=await api('/api/pulse/conversations');
-    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>Messages privés</h2><p>Conversations privées persistantes entre comptes Pulse.</p></div><form class="pulse-inline-form two" id="new-message"><input name="handle" placeholder="@identifiant" required><input name="body" maxlength="2000" placeholder="Message" required><button class="pulse-mini-button primary">Envoyer</button></form><div class="pulse-card-list">';
+    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>Messages privés</h2><p>Conversations privées persistantes · chiffrement de bout en bout Pulse Secure.</p></div><form class="pulse-inline-form two" id="new-message"><input name="handle" placeholder="@identifiant" required><input name="body" maxlength="2000" placeholder="Message" required><button class="pulse-mini-button primary">Envoyer</button></form><div class="pulse-card-list">';
     if(!data.conversations.length)html+='<div class="pulse-card"><p>Aucune conversation.</p></div>';
     data.conversations.forEach(function(conversation){
       if(!conversation.user)return;
-      html+='<button class="pulse-card pulse-user-card" data-conversation="'+esc(conversation.user.handle)+'"><div class="pulse-avatar">'+esc(initials(conversation.user))+'</div><div><strong>'+esc(conversation.user.displayName)+'</strong><small>'+esc(conversation.lastMessage?.body||'Nouvelle conversation')+'</small></div><span class="circle-chevron">'+icon('pi-chevron')+'</span></button>';
+      const preview=conversation.lastMessage?.encrypted?'🔒 Message chiffré':(conversation.lastMessage?.body||'Nouvelle conversation');
+      html+='<button class="pulse-card pulse-user-card" data-conversation="'+esc(conversation.user.handle)+'"><div class="pulse-avatar">'+esc(initials(conversation.user))+'</div><div><strong>'+esc(conversation.user.displayName)+'</strong><small>'+esc(preview)+'</small></div><span class="circle-chevron">'+icon('pi-chevron')+'</span></button>';
     });
     dom.feed.innerHTML=html+'</div></section>';
   }catch(error){
@@ -145,11 +147,16 @@ export async function loadConversation(handle){
   setStatus('Chargement','');
   try{
     const data=await api('/api/pulse/messages/'+encodeURIComponent(handle));
-    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>'+esc(data.user.displayName)+'</h2><p>@'+esc(data.user.handle)+' · conservation 24 h</p></div><div class="pulse-message-list">';
-    data.messages.forEach(function(message){
-      html+='<div class="pulse-message '+(message.senderId===state.user.id?'mine':'')+'">'+esc(message.body)+'<small>'+esc(timeAgo(message.createdAt))+'</small></div>';
+    const [messages,number]=await Promise.all([
+      decryptConversationMessages(data.messages),
+      safetyNumber(handle).catch(()=>null)
+    ]);
+    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>'+esc(data.user.displayName)+'</h2><p>@'+esc(data.user.handle)+' · 🔒 chiffrement de bout en bout</p>'+(number?'<small class="pulse-security-number">Numéro de sécurité : '+esc(number)+'</small>':'')+'</div><div class="pulse-message-list">';
+    messages.forEach(function(message){
+      const body=message.secureInvalid?'⚠️ Message chiffré invalide':message.secureUnavailable?'🔒 Message chiffré pour un autre appareil':(message.plaintext||'');
+      html+='<div class="pulse-message '+(message.senderId===state.user.id?'mine':'')+'">'+esc(body)+'<small>'+esc(timeAgo(message.createdAt))+(message.secure?' · 🔒':'')+'</small></div>';
     });
-    html+='</div><form class="pulse-message-form" id="conversation-form" data-handle="'+esc(handle)+'"><input name="body" maxlength="2000" placeholder="Écrire un message…" required><button class="pulse-mini-button primary">Envoyer</button></form></section>';
+    html+='</div><form class="pulse-message-form" id="conversation-form" data-handle="'+esc(handle)+'"><input name="body" maxlength="2000" placeholder="Message chiffré de bout en bout…" required autocomplete="off"><button class="pulse-mini-button primary">Envoyer sécurisé</button></form></section>';
     dom.feed.innerHTML=html;
   }catch(error){
     setStatus('Conversation indisponible',errorText(error));
