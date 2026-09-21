@@ -1,4 +1,4 @@
-import { dom, esc, icon, initials, timeAgo, setStatus } from './core.js?v=13';
+import { dom, esc, icon, initials, timeAgo, setStatus } from './core.js?v=14';
 
 export function renderPost(post){
   const user=post.author||{};
