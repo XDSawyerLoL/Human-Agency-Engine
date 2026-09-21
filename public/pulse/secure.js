@@ -258,12 +258,19 @@ export async function encryptMessageForHandle(handle,plaintext){
   if(te.encode(text).length>3000)throw new Error('message_too_large');
   const peerHandle=String(handle||'').replace(/^@/,'').toLowerCase();
   const device=await ensureSecureDevice();
-  const peer=await getSecureBundle(peerHandle);
-  const targets=(peer.devices||[]).filter(target=>target.deviceId!==device.deviceId);
-  if(!targets.length)throw new Error('secure_recipient_unavailable');
+  const [peer,ours]=await Promise.all([getSecureBundle(peerHandle),ownDevices()]);
+  const targets=new Map();
+  for(const target of peer.devices||[]){
+    if(target.deviceId!==device.deviceId)targets.set(target.deviceId,{device:target,handle:peerHandle,peer:true});
+  }
+  for(const target of ours||[]){
+    if(target.deviceId!==device.deviceId)targets.set(target.deviceId,{device:target,handle:String(state.user?.handle||''),peer:false});
+  }
+  const peerTargets=[...targets.values()].filter(target=>target.peer);
+  if(!peerTargets.length)throw new Error('secure_recipient_unavailable');
   const clientMessageId=crypto.randomUUID(),sentAt=new Date().toISOString(),envelopes=[];
-  for(const target of targets){
-    envelopes.push(await encryptSessionMessage(device,target,peerHandle,text,{
+  for(const target of targets.values()){
+    envelopes.push(await encryptSessionMessage(device,target.device,target.handle,text,{
       clientMessageId,
       senderDeviceId:device.deviceId,
       sentAt
