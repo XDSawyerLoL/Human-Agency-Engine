@@ -1,7 +1,7 @@
 import { state, dom, api, esc, icon, initials, timeAgo, setStatus, errorText } from './core.js?v=13';
 import { requireAuth } from './session.js?v=13';
 import { renderPost, renderPosts, notificationLabel } from './render.js?v=13';
-import { decryptConversationMessages, safetyNumber } from './secure.js?v=13';
+import { decryptConversationMessages, safetyNumber, decentralizedMessagesFor, decentralizedConversationSummaries } from './secure.js?v=13';
 
 export function setView(view,title){
   state.view=view;
@@ -127,13 +127,26 @@ export async function loadMessages(){
   setView('messages','Messages');
   setStatus('Chargement','');
   try{
-    const data=await api('/api/pulse/conversations');
-    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>Messages privés</h2><p>Conversations privées persistantes · chiffrement de bout en bout Pulse Secure.</p></div><form class="pulse-inline-form two" id="new-message"><input name="handle" placeholder="@identifiant" required><input name="body" maxlength="2000" placeholder="Message" required><button class="pulse-mini-button primary">Envoyer</button></form><div class="pulse-card-list">';
-    if(!data.conversations.length)html+='<div class="pulse-card"><p>Aucune conversation.</p></div>';
-    data.conversations.forEach(function(conversation){
+    let central={conversations:[]};
+    try{central=await api('/api/pulse/conversations')}catch{}
+    const local=await decentralizedConversationSummaries().catch(()=>[]);
+    const conversations=new Map();
+    for(const conversation of central.conversations||[])if(conversation.user)conversations.set(conversation.user.handle,conversation);
+    for(const summary of local){
+      if(!conversations.has(summary.handle)){
+        conversations.set(summary.handle,{
+          user:{handle:summary.handle,displayName:summary.handle},
+          lastMessage:{body:'',createdAt:summary.createdAt,encrypted:true}
+        });
+      }
+    }
+    const list=[...conversations.values()].sort((a,b)=>Date.parse(b.lastMessage?.createdAt||0)-Date.parse(a.lastMessage?.createdAt||0));
+    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>Messages privés</h2><p>🔒 Pulse Secure · chiffrement de bout en bout · transport multi-relais Quantic Network.</p></div><form class="pulse-inline-form two" id="new-message"><input name="handle" placeholder="@identifiant" required><input name="body" maxlength="2000" placeholder="Message sécurisé" required><button class="pulse-mini-button primary">Envoyer</button></form><div class="pulse-card-list">';
+    if(!list.length)html+='<div class="pulse-card"><p>Aucune conversation.</p></div>';
+    list.forEach(function(conversation){
       if(!conversation.user)return;
       const preview=conversation.lastMessage?.encrypted?'🔒 Message chiffré':(conversation.lastMessage?.body||'Nouvelle conversation');
-      html+='<button class="pulse-card pulse-user-card" data-conversation="'+esc(conversation.user.handle)+'"><div class="pulse-avatar">'+esc(initials(conversation.user))+'</div><div><strong>'+esc(conversation.user.displayName)+'</strong><small>'+esc(preview)+'</small></div><span class="circle-chevron">'+icon('pi-chevron')+'</span></button>';
+      html+='<button class="pulse-card pulse-user-card" data-conversation="'+esc(conversation.user.handle)+'"><div class="pulse-avatar">'+esc(initials(conversation.user))+'</div><div><strong>'+esc(conversation.user.displayName||conversation.user.handle)+'</strong><small>'+esc(preview)+'</small></div><span class="circle-chevron">'+icon('pi-chevron')+'</span></button>';
     });
     dom.feed.innerHTML=html+'</div></section>';
   }catch(error){
@@ -146,9 +159,17 @@ export async function loadConversation(handle){
   setView('messages','@'+handle);
   setStatus('Chargement','');
   try{
-    const data=await api('/api/pulse/messages/'+encodeURIComponent(handle));
+    let data;
+    try{data=await api('/api/pulse/messages/'+encodeURIComponent(handle))}
+    catch{data={user:{handle,displayName:handle},messages:[]}}
+    const localMessages=await decentralizedMessagesFor(handle).catch(()=>[]);
+    const merged=new Map();
+    for(const message of [...localMessages,...(data.messages||[])]){
+      const key=String(message.clientMessageId||message.id||'')+':'+String(message.senderDeviceId||'');
+      merged.set(key,message);
+    }
     const [messages,number]=await Promise.all([
-      decryptConversationMessages(data.messages),
+      decryptConversationMessages([...merged.values()].sort((a,b)=>Date.parse(a.createdAt||0)-Date.parse(b.createdAt||0))),
       safetyNumber(handle).catch(()=>null)
     ]);
     let html='<section class="pulse-view"><div class="pulse-view-head"><h2>'+esc(data.user.displayName)+'</h2><p>@'+esc(data.user.handle)+' · 🔒 chiffrement de bout en bout</p>'+(number?'<small class="pulse-security-number">Numéro de sécurité : '+esc(number)+'</small>':'')+'</div><div class="pulse-message-list">';
