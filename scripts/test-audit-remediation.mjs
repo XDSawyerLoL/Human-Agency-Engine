@@ -101,6 +101,9 @@ async function testPulsePrivacy(){
     assert.equal(health.status,200);
     assert.equal(health.body.postRetentionHours,24,'Pulse health must publish the 24-hour public-post retention contract');
     assert.equal(health.body.privateMessages,'persistent','Pulse health must distinguish persistent private messages from ephemeral posts');
+    assert.equal(health.body.sessions,'pulse-session-v2','Pulse must advertise the active session-v2 protocol');
+    assert.equal(health.body.ratchet,'dh-double-ratchet-v1','Pulse must advertise its DH Double Ratchet contract');
+    assert.equal(health.body.prekeys,'pulse-prekey-v2','Pulse must advertise hybrid-capable signed prekeys');
 
     const plaintextSend=await call('POST','/api/pulse/messages',{authToken:token,body:{handle:'alpha',body:'server must never store me'}});
     assert.equal(plaintextSend.status,400);
@@ -129,6 +132,44 @@ async function testPulsePrivacy(){
     assert.equal(secureMessage.protocol,'pulse-e2ee-v1');
     assert.equal('body' in secureMessage,false,'server must not persist private-message plaintext');
     assert.equal(secureMessage.envelopes[0].ciphertext,ciphertext);
+
+    const sessionCiphertext=b64url(Buffer.alloc(48,11));
+    const sessionSend=await call('POST','/api/pulse/messages',{authToken:token,body:{
+      handle:'alpha',
+      protocol:'pulse-session-v2',
+      clientMessageId:'audit-session-v2-message',
+      senderDeviceId:'dev_b',
+      sentAt:new Date().toISOString(),
+      envelopes:[{
+        protocol:'pulse-session-v2',
+        recipientDeviceId:'dev_a',
+        header:{
+          sessionId:'00000000-0000-4000-8000-000000000002',
+          dh:b64url(Buffer.alloc(32,12)),
+          pn:0,
+          n:0,
+          handshake:{
+            protocol:'pulse-handshake-v2',
+            preKeyId:'0123456789abcdef0123456789abcdef',
+            ephemeralPublicKey:b64url(Buffer.alloc(32,13)),
+            profile:'classical-v2',
+            pqAlgorithm:'',
+            pqCiphertext:''
+          }
+        },
+        iv:b64url(Buffer.alloc(12,14)),
+        ciphertext:sessionCiphertext,
+        signature:b64url(Buffer.alloc(64,15))
+      }]
+    }});
+    assert.equal(sessionSend.status,201,'Pulse session-v2 opaque envelope should be accepted');
+    const persistedV2=JSON.parse(await (await import('node:fs/promises')).readFile(join(dir,'pulse.json'),'utf8'));
+    const sessionMessage=Object.values(persistedV2.messages).find(message=>message.clientMessageId==='audit-session-v2-message');
+    assert.ok(sessionMessage,'session-v2 message must persist');
+    assert.equal(sessionMessage.protocol,'pulse-session-v2');
+    assert.equal('body' in sessionMessage,false,'session-v2 server record must not contain plaintext');
+    assert.equal(sessionMessage.envelopes[0].header.n,0);
+    assert.equal(sessionMessage.envelopes[0].ciphertext,sessionCiphertext);
   }finally{
     delete process.env.DATA_DIR;
     await rm(dir,{recursive:true,force:true});
