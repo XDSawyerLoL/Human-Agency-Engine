@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomBytes, createHash, createPublicKey, verify } from 'node:crypto';
+import { SupabaseBridge } from './supabase_bridge.js';
 
 const DATA_DIR=process.env.DATA_DIR||'./data';
 const FILE=join(DATA_DIR,'pulse.json');
@@ -28,6 +29,8 @@ const MYSQL={
 };
 const usePostgres=!!PULSE_DATABASE_URL;
 const useMysql=!usePostgres&&!!(MYSQL.host&&MYSQL.user&&MYSQL.database);
+const supabase=new SupabaseBridge();
+const useSupabase=!usePostgres&&!useMysql&&supabase.enabled;
 let pgPool=null,mysqlPool=null,writeQueue=Promise.resolve();
 const rate=new Map();
 const identityChallenges=new Map();
@@ -107,12 +110,23 @@ async function ensureFile(){await mkdir(DATA_DIR,{recursive:true});try{await rea
 async function readStore(){
   if(usePostgres){const p=await pg(),r=await p.query('SELECT data FROM quantic_pulse_store WHERE store_key=$1',['pulse']);if(!r.rows.length)return emptyStore();const data=r.rows[0].data;return typeof data==='string'?JSON.parse(data):data}
   if(useMysql){const p=await pool(),[rows]=await p.query('SELECT data FROM quantic_pulse_store WHERE store_key=?',['pulse']);if(!rows.length)return emptyStore();try{return JSON.parse(rows[0].data)}catch{return emptyStore()}}
+  if(useSupabase){const row=await supabase.readState('quantic_pulse');return row?.payload&&typeof row.payload==='object'?row.payload:emptyStore()}
   await ensureFile();try{return JSON.parse(await readFile(FILE,'utf8'))}catch{return emptyStore()}
 }
 async function mutateStore(fn){
   if(usePostgres){const p=await pg(),client=await p.connect();try{await client.query('BEGIN');const r=await client.query('SELECT data FROM quantic_pulse_store WHERE store_key=$1 FOR UPDATE',['pulse']);const raw=r.rows.length?r.rows[0].data:emptyStore(),store=typeof raw==='string'?JSON.parse(raw):raw;pruneExpiredMessages(store);const out=await fn(store);pruneExpiredMessages(store);await client.query('INSERT INTO quantic_pulse_store (store_key,data,updated_at) VALUES ($1,$2::jsonb,NOW()) ON CONFLICT (store_key) DO UPDATE SET data=EXCLUDED.data,updated_at=NOW()',['pulse',JSON.stringify(store)]);await client.query('COMMIT');return out}catch(e){await client.query('ROLLBACK');throw e}finally{client.release()}}
   if(useMysql){const p=await pool(),conn=await p.getConnection();try{await conn.beginTransaction();const[rows]=await conn.query('SELECT data FROM quantic_pulse_store WHERE store_key=? FOR UPDATE',['pulse']);const store=rows.length?JSON.parse(rows[0].data):emptyStore();pruneExpiredMessages(store);const out=await fn(store);pruneExpiredMessages(store);await conn.query('INSERT INTO quantic_pulse_store (store_key,data) VALUES (?,?) ON DUPLICATE KEY UPDATE data=VALUES(data)',['pulse',JSON.stringify(store)]);await conn.commit();return out}catch(e){await conn.rollback();throw e}finally{conn.release()}}
-  let out;writeQueue=writeQueue.then(async()=>{const store=await readStore();pruneExpiredMessages(store);out=await fn(store);pruneExpiredMessages(store);const tmp=FILE+'.'+process.pid+'.'+Date.now()+'.tmp';await writeFile(tmp,JSON.stringify(store,null,2));await rename(tmp,FILE)});await writeQueue;return out
+  if(useSupabase){
+    let out;
+    writeQueue=writeQueue.catch(()=>{}).then(async()=>{
+      const row=await supabase.readState('quantic_pulse'),store=row?.payload&&typeof row.payload==='object'?row.payload:emptyStore();
+      pruneExpiredMessages(store);out=await fn(store);pruneExpiredMessages(store);
+      const saved=await supabase.writeState('quantic_pulse',store);
+      if(!saved?.ok)throw new Error(saved?.error||'pulse_supabase_write_failed');
+    });
+    await writeQueue;return out;
+  }
+  let out;writeQueue=writeQueue.catch(()=>{}).then(async()=>{const store=await readStore();pruneExpiredMessages(store);out=await fn(store);pruneExpiredMessages(store);const tmp=FILE+'.'+process.pid+'.'+Date.now()+'.tmp';await writeFile(tmp,JSON.stringify(store,null,2));await rename(tmp,FILE)});await writeQueue;return out
 }
 function mapSet(map,key){if(!map[key])map[key]=[];return map[key]}
 function blocked(store,a,b){return!!((store.blocks[a]||[]).includes(b)||(store.blocks[b]||[]).includes(a))}
@@ -182,7 +196,18 @@ function pruneExpiredMessages(store,at=Date.now()){
 export async function pulseInfo(){
   if(usePostgres)await pg();
   else if(useMysql)await pool();
-  return{storage:usePostgres?'postgres':useMysql?'mysql':'json',persistent:usePostgres||useMysql,postgresConfigured:usePostgres,mysqlConfigured:useMysql,messageRetentionHours:MESSAGE_TTL_MS/3600000}
+  else if(useSupabase){
+    const health=await supabase.health();
+    if(!health.connected)throw new Error(health.last_error||'pulse_supabase_unavailable');
+  }
+  return{
+    storage:usePostgres?'postgres':useMysql?'mysql':useSupabase?'supabase':'json',
+    persistent:usePostgres||useMysql||useSupabase,
+    postgresConfigured:usePostgres,
+    mysqlConfigured:useMysql,
+    supabaseConfigured:useSupabase,
+    messageRetentionHours:MESSAGE_TTL_MS/3600000
+  }
 }
 
 export async function handlePulse(req,res,url,corsHeaders={}){
@@ -339,6 +364,7 @@ export async function handlePulse(req,res,url,corsHeaders={}){
 
 if(usePostgres)pg().catch(e=>console.error('[pulse] postgres init failed',e));
 else if(useMysql)pool().catch(e=>console.error('[pulse] mysql init failed',e));
+else if(useSupabase)supabase.health().then(h=>{if(!h.connected)console.error('[pulse] supabase init failed',h.last_error)}).catch(e=>console.error('[pulse] supabase init failed',e));
 else ensureFile().catch(e=>console.error('[pulse] file init failed',e));
 
 
