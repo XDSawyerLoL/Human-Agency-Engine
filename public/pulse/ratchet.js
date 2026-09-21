@@ -11,10 +11,11 @@ import {
 } from './double-ratchet.js?v=17';
 
 const DB='quantic-pulse-ratchet';
-const VERSION=2;
+const VERSION=3;
 const PREKEYS='prekeys';
 const SESSIONS='sessions';
 const ACTIVE='active';
+const PROFILES='profiles';
 const te=new TextEncoder();
 
 function openDb(){
@@ -22,7 +23,7 @@ function openDb(){
     const request=indexedDB.open(DB,VERSION);
     request.onupgradeneeded=()=>{
       const db=request.result;
-      for(const store of [PREKEYS,SESSIONS,ACTIVE])if(!db.objectStoreNames.contains(store))db.createObjectStore(store);
+      for(const store of [PREKEYS,SESSIONS,ACTIVE,PROFILES])if(!db.objectStoreNames.contains(store))db.createObjectStore(store);
     };
     request.onsuccess=()=>resolve(request.result);
     request.onerror=()=>reject(request.error||new Error('ratchet_store_unavailable'));
@@ -117,6 +118,15 @@ export async function consumeLocalPreKey(deviceId,preKeyId){
   await del(PREKEYS,key);
   return stored;
 }
+function profileRank(profile){return profile==='hybrid-pq-v1'?2:profile==='classical-v2'?1:0}
+async function enforcePeerProfile(peerDeviceId,profile){
+  const key='peer:'+String(peerDeviceId),previous=await get(PROFILES,key);
+  if(previous&&profileRank(profile)<profileRank(previous.profile))throw new Error('secure_pq_downgrade');
+  if(!previous||profileRank(profile)>profileRank(previous.profile)){
+    await put(PROFILES,key,{profile,updatedAt:new Date().toISOString()});
+  }
+  return profile;
+}
 function activeKey(peerDeviceId){return 'peer:'+String(peerDeviceId)}
 async function setActive(peerDeviceId,sessionId){await put(ACTIVE,activeKey(peerDeviceId),String(sessionId))}
 async function getActive(peerDeviceId){return get(ACTIVE,activeKey(peerDeviceId))}
@@ -167,10 +177,12 @@ export async function encryptSessionMessage(senderDevice,recipientDevice,handle,
   if(!state){
     const preKey=await claimSignedPreKey(handle,recipientDevice);
     const handshake=await deriveInitiatorSession(senderDevice,recipientDevice,preKey);
+    await enforcePeerProfile(recipientDevice.deviceId,handshake.handshake.profile);
     state=await initInitiatorRatchet(handshake.rootKey,preKey.publicKey,{
       sessionId:crypto.randomUUID(),
       pendingHandshake:handshake.handshake
     });
+    state.securityProfile=handshake.handshake.profile;
   }
   const recipientMeta={...meta,recipientDeviceId:recipientDevice.deviceId};
   const encrypted=await encryptRatchet(state,plaintext,recipientMeta);
@@ -200,7 +212,9 @@ export async function decryptSessionMessage(localDevice,senderDevice,message,env
     if(!handshake)throw new Error('ratchet_session_missing');
     const stored=await consumeLocalPreKey(localDevice.deviceId,handshake.preKeyId);
     const initial=await deriveRecipientSession(localDevice,senderDevice,stored,handshake);
+    await enforcePeerProfile(senderDevice.deviceId,initial.profile);
     state=await initResponderRatchet(initial.rootKey,initial.ratchetKeyPair,{sessionId});
+    state.securityProfile=initial.profile;
   }
   const plaintext=await decryptRatchet(state,envelope,meta);
   acknowledgeRatchetHandshake(state);
