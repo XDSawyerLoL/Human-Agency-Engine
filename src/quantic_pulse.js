@@ -803,7 +803,7 @@ const purgeExpiredPulsePosts=()=>mutateStore(store=>({pruned:pruneExpiredPosts(s
 setTimeout(purgeExpiredPulsePosts,1500).unref?.();
 setInterval(purgeExpiredPulsePosts,5*60*1000).unref?.();
 
-const HOSTINGER_PULSE_PROXY='https://human-agency-engine.onrender.com';
+const HOSTINGER_PULSE_PROXY='https://quantic-pulse-api.onrender.com';
 function shouldProxyPulse(req){
   const host=String(req.headers.host||'').toLowerCase();
   return host.includes('hostingersite.com')&&!usePostgres&&!useRemoteStore&&!useMysql;
