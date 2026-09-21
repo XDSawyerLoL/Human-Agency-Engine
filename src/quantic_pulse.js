@@ -113,26 +113,37 @@ async function pool(){
 async function ensureFile(){await mkdir(DATA_DIR,{recursive:true});try{await readFile(FILE,'utf8')}catch{await writeFile(FILE,JSON.stringify(emptyStore(),null,2))}}
 async function remotePulseRequest(method='GET',body=null){
   if(!useRemoteStore)throw new Error('pulse_remote_store_not_configured');
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
-  try{
-    const response=await fetch(PULSE_REMOTE_STORE_URL,{
-      method,
-      cache:'no-store',
-      headers:{
-        authorization:'Bearer '+PULSE_REMOTE_STORE_TOKEN,
-        accept:'application/json',
-        ...(body===null?{}:{'content-type':'application/json'})
-      },
-      body:body===null?undefined:JSON.stringify(body),
-      signal:controller.signal
-    });
-    const data=await response.json().catch(()=>({}));
-    if(!response.ok){
+  let lastError=null;
+  for(let attempt=0;attempt<4;attempt++){
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+    try{
+      const response=await fetch(PULSE_REMOTE_STORE_URL,{
+        method,
+        cache:'no-store',
+        headers:{
+          authorization:'Bearer '+PULSE_REMOTE_STORE_TOKEN,
+          accept:'application/json',
+          ...(body===null?{}:{'content-type':'application/json'})
+        },
+        body:body===null?undefined:JSON.stringify(body),
+        signal:controller.signal
+      });
+      const data=await response.json().catch(()=>({}));
+      if(response.ok)return data;
       const error=Object.assign(new Error(data.error||('pulse_remote_http_'+response.status)),{status:response.status,data});
-      throw error;
+      if(response.status===409)throw error;
+      if(![408,425,429,500,502,503,504].includes(response.status))throw error;
+      lastError=error;
+    }catch(error){
+      if(error?.status===409)throw error;
+      lastError=error;
+      if(error?.status&&![408,425,429,500,502,503,504].includes(error.status))throw error;
+    }finally{
+      clearTimeout(timer);
     }
-    return data;
-  }finally{clearTimeout(timer)}
+    if(attempt<3)await new Promise(resolve=>setTimeout(resolve,300*(2**attempt)));
+  }
+  throw Object.assign(new Error('pulse_remote_store_unavailable'),{status:503,cause:lastError});
 }
 async function readRemoteStore(){
   if(!useRemoteStore)return null;
@@ -148,15 +159,25 @@ async function readRemoteStore(){
 async function mutateRemoteStore(fn){
   let out;
   writeQueue=writeQueue.catch(()=>{}).then(async()=>{
-    const snapshot=await readRemoteStore();
-    if(!snapshot)throw Object.assign(new Error('pulse_storage_unavailable'),{status:503});
-    const store=snapshot.store;
-    pruneExpiredPosts(store);
-    out=await fn(store);
-    pruneExpiredPosts(store);
-    const saved=await remotePulseRequest('PUT',{payload:store,expectedRevision:snapshot.revision});
-    cacheStore(store,'quantic-relay');
-    return saved;
+    let lastError=null;
+    for(let attempt=0;attempt<5;attempt++){
+      const snapshot=await readRemoteStore();
+      if(!snapshot)throw Object.assign(new Error('pulse_storage_unavailable'),{status:503});
+      const store=structuredClone(snapshot.store);
+      pruneExpiredPosts(store);
+      out=await fn(store);
+      pruneExpiredPosts(store);
+      try{
+        const saved=await remotePulseRequest('PUT',{payload:store,expectedRevision:snapshot.revision});
+        cacheStore(store,'quantic-relay');
+        return saved;
+      }catch(error){
+        lastError=error;
+        if(error?.status!==409)throw error;
+        if(attempt<4)await new Promise(resolve=>setTimeout(resolve,80*(attempt+1)));
+      }
+    }
+    throw Object.assign(new Error('pulse_storage_conflict'),{status:503,cause:lastError});
   });
   await writeQueue;
   return out;
@@ -203,8 +224,8 @@ async function readStore(){
       return cacheStore(store,'mysql');
     }catch(error){console.error('[pulse] mysql read failed',String(error?.message||error))}
   }
-  if(pulseCacheReady)return pulseCache;
   if(usePostgres||useRemoteStore||useSupabase||useMysql)throw Object.assign(new Error('pulse_storage_unavailable'),{status:503});
+  if(pulseCacheReady)return pulseCache;
   return cacheStore(await readLocalStore(),'json');
 }
 async function mutateStore(fn){
@@ -271,7 +292,7 @@ async function mutateStore(fn){
   }
 
   // If a durable backend is configured but unreachable, fail closed instead of overwriting durable state with an empty ephemeral file.
-  if(usePostgres||useSupabase||useMysql)throw Object.assign(new Error('pulse_storage_unavailable'),{status:503});
+  if(usePostgres||useRemoteStore||useSupabase||useMysql)throw Object.assign(new Error('pulse_storage_unavailable'),{status:503});
 
   // Local storage is only for development when no durable backend exists.
   let out;
