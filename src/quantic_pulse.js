@@ -147,6 +147,7 @@ async function readStore(){
     }catch(error){console.error('[pulse] mysql read failed',String(error?.message||error))}
   }
   if(pulseCacheReady)return pulseCache;
+  if(usePostgres||useSupabase||useMysql)throw Object.assign(new Error('pulse_storage_unavailable'),{status:503});
   return cacheStore(await readLocalStore(),'json');
 }
 async function mutateStore(fn){
@@ -175,7 +176,8 @@ async function mutateStore(fn){
     let out;
     writeQueue=writeQueue.catch(()=>{}).then(async()=>{
       let store=await readSupabaseStore();
-      if(!store)store=pulseCacheReady?pulseCache:await readLocalStore();
+      if(!store&&pulseCacheReady)store=pulseCache;
+      if(!store)throw Object.assign(new Error('pulse_storage_unavailable'),{status:503});
       pruneExpiredPosts(store);
       out=await fn(store);
       pruneExpiredPosts(store);
@@ -206,7 +208,10 @@ async function mutateStore(fn){
     }catch(error){console.error('[pulse] mysql write failed',String(error?.message||error))}
   }
 
-  // Local storage is a last-resort availability fallback only; never advertise it as durable.
+  // If a durable backend is configured but unreachable, fail closed instead of overwriting durable state with an empty ephemeral file.
+  if(usePostgres||useSupabase||useMysql)throw Object.assign(new Error('pulse_storage_unavailable'),{status:503});
+
+  // Local storage is only for development when no durable backend exists.
   let out;
   writeQueue=writeQueue.catch(()=>{}).then(async()=>{
     const store=pulseCacheReady?pulseCache:await readLocalStore();
