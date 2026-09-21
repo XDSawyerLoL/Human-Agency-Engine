@@ -1,14 +1,14 @@
-import { api } from './core.js?v=18';
+import { api } from './core.js?v=19';
 import {
   b64u,fromB64u,preKeyTranscript,verifyPreKeyRecord,
   deriveInitiatorSession,deriveRecipientSession,
   generatePostQuantumPreKey
-} from './ratchet-core.js?v=18';
+} from './ratchet-core.js?v=19';
 import {
   initInitiatorRatchet,initResponderRatchet,
   encryptRatchet,decryptRatchet,acknowledgeRatchetHandshake,
   RATCHET_PROTOCOL
-} from './double-ratchet.js?v=18';
+} from './double-ratchet.js?v=19';
 
 const DB='quantic-pulse-ratchet';
 const VERSION=3;
