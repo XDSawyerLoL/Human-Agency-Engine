@@ -7,7 +7,7 @@ const DATA_DIR=process.env.DATA_DIR||'./data';
 const FILE=join(DATA_DIR,'pulse.json');
 const SESSION_MS=2592000000;
 const PRESENCE_LEASE_MS=12000;
-const MESSAGE_TTL_MS=Math.max(60000,Number(process.env.PULSE_MESSAGE_TTL_MS||86400000));
+const POST_TTL_MS=Math.max(60000,Number(process.env.PULSE_POST_TTL_MS||86400000));
 const HANDLE_RE=/^[a-z0-9_]{3,24}$/;
 const PULSE_DATABASE_URL=process.env.PULSE_DATABASE_URL||'';
 let parsedMysql=null;
@@ -30,8 +30,9 @@ const MYSQL={
 const usePostgres=!!PULSE_DATABASE_URL;
 const useMysql=!usePostgres&&!!(MYSQL.host&&MYSQL.user&&MYSQL.database);
 const supabase=new SupabaseBridge();
-const useSupabase=!usePostgres&&!useMysql&&supabase.enabled;
-let pgPool=null,mysqlPool=null,writeQueue=Promise.resolve();
+const useSupabase=supabase.enabled;
+let pgPool=null,mysqlPool=null,writeQueue=Promise.resolve(),pulseCache=emptyStore(),pulseCacheReady=false;
+let activeStorage='json';
 const rate=new Map();
 const identityChallenges=new Map();
 const IDENTITY_AUDIENCE='quantic-pulse';
@@ -107,26 +108,118 @@ async function pool(){
   return mysqlPool;
 }
 async function ensureFile(){await mkdir(DATA_DIR,{recursive:true});try{await readFile(FILE,'utf8')}catch{await writeFile(FILE,JSON.stringify(emptyStore(),null,2))}}
+function hasPulseData(store){return!!store&&(['users','posts','messages','circles'].some(key=>Object.keys(store[key]||{}).length>0))}
+function cacheStore(store,backend){if(store&&typeof store==='object'){pulseCache=store;pulseCacheReady=true;if(backend)activeStorage=backend}return store}
+async function readLocalStore(){await ensureFile();try{return JSON.parse(await readFile(FILE,'utf8'))}catch{return emptyStore()}}
+async function readSupabaseStore(){
+  if(!useSupabase)return null;
+  try{
+    const row=await supabase.readState('quantic_pulse');
+    if(row?.payload&&typeof row.payload==='object')return cacheStore(row.payload,'supabase');
+    const local=await readLocalStore();
+    if(hasPulseData(local)){
+      const saved=await supabase.writeState('quantic_pulse',local);
+      if(saved?.ok)return cacheStore(local,'supabase');
+    }
+    return cacheStore(emptyStore(),'supabase');
+  }catch(error){
+    console.error('[pulse] supabase read failed',String(error?.message||error));
+    return pulseCacheReady?pulseCache:null;
+  }
+}
 async function readStore(){
-  if(usePostgres){const p=await pg(),r=await p.query('SELECT data FROM quantic_pulse_store WHERE store_key=$1',['pulse']);if(!r.rows.length)return emptyStore();const data=r.rows[0].data;return typeof data==='string'?JSON.parse(data):data}
-  if(useMysql){const p=await pool(),[rows]=await p.query('SELECT data FROM quantic_pulse_store WHERE store_key=?',['pulse']);if(!rows.length)return emptyStore();try{return JSON.parse(rows[0].data)}catch{return emptyStore()}}
-  if(useSupabase){const row=await supabase.readState('quantic_pulse');return row?.payload&&typeof row.payload==='object'?row.payload:emptyStore()}
-  await ensureFile();try{return JSON.parse(await readFile(FILE,'utf8'))}catch{return emptyStore()}
+  if(usePostgres){
+    try{
+      const p=await pg(),r=await p.query('SELECT data FROM quantic_pulse_store WHERE store_key=$1',['pulse']);
+      const data=r.rows.length?r.rows[0].data:emptyStore();
+      return cacheStore(typeof data==='string'?JSON.parse(data):data,'postgres');
+    }catch(error){console.error('[pulse] postgres read failed',String(error?.message||error))}
+  }
+  if(useSupabase){
+    const store=await readSupabaseStore();
+    if(store)return store;
+  }
+  if(useMysql){
+    try{
+      const p=await pool(),[rows]=await p.query('SELECT data FROM quantic_pulse_store WHERE store_key=?',['pulse']);
+      const store=rows.length?JSON.parse(rows[0].data):emptyStore();
+      return cacheStore(store,'mysql');
+    }catch(error){console.error('[pulse] mysql read failed',String(error?.message||error))}
+  }
+  if(pulseCacheReady)return pulseCache;
+  return cacheStore(await readLocalStore(),'json');
 }
 async function mutateStore(fn){
-  if(usePostgres){const p=await pg(),client=await p.connect();try{await client.query('BEGIN');const r=await client.query('SELECT data FROM quantic_pulse_store WHERE store_key=$1 FOR UPDATE',['pulse']);const raw=r.rows.length?r.rows[0].data:emptyStore(),store=typeof raw==='string'?JSON.parse(raw):raw;pruneExpiredMessages(store);const out=await fn(store);pruneExpiredMessages(store);await client.query('INSERT INTO quantic_pulse_store (store_key,data,updated_at) VALUES ($1,$2::jsonb,NOW()) ON CONFLICT (store_key) DO UPDATE SET data=EXCLUDED.data,updated_at=NOW()',['pulse',JSON.stringify(store)]);await client.query('COMMIT');return out}catch(e){await client.query('ROLLBACK');throw e}finally{client.release()}}
-  if(useMysql){const p=await pool(),conn=await p.getConnection();try{await conn.beginTransaction();const[rows]=await conn.query('SELECT data FROM quantic_pulse_store WHERE store_key=? FOR UPDATE',['pulse']);const store=rows.length?JSON.parse(rows[0].data):emptyStore();pruneExpiredMessages(store);const out=await fn(store);pruneExpiredMessages(store);await conn.query('INSERT INTO quantic_pulse_store (store_key,data) VALUES (?,?) ON DUPLICATE KEY UPDATE data=VALUES(data)',['pulse',JSON.stringify(store)]);await conn.commit();return out}catch(e){await conn.rollback();throw e}finally{conn.release()}}
+  // Explicit Pulse Postgres remains first choice.
+  if(usePostgres){
+    try{
+      const p=await pg(),client=await p.connect();
+      try{
+        await client.query('BEGIN');
+        const r=await client.query('SELECT data FROM quantic_pulse_store WHERE store_key=$1 FOR UPDATE',['pulse']);
+        const raw=r.rows.length?r.rows[0].data:emptyStore(),store=typeof raw==='string'?JSON.parse(raw):raw;
+        pruneExpiredPosts(store);
+        const out=await fn(store);
+        pruneExpiredPosts(store);
+        await client.query('INSERT INTO quantic_pulse_store (store_key,data,updated_at) VALUES ($1,$2::jsonb,NOW()) ON CONFLICT (store_key) DO UPDATE SET data=EXCLUDED.data,updated_at=NOW()',['pulse',JSON.stringify(store)]);
+        await client.query('COMMIT');
+        cacheStore(store,'postgres');
+        return out;
+      }catch(error){await client.query('ROLLBACK');throw error}
+      finally{client.release()}
+    }catch(error){console.error('[pulse] postgres write failed',String(error?.message||error))}
+  }
+
+  // Supabase is the deployment-safe canonical fallback because Hostinger's local filesystem is ephemeral.
   if(useSupabase){
     let out;
     writeQueue=writeQueue.catch(()=>{}).then(async()=>{
-      const row=await supabase.readState('quantic_pulse'),store=row?.payload&&typeof row.payload==='object'?row.payload:emptyStore();
-      pruneExpiredMessages(store);out=await fn(store);pruneExpiredMessages(store);
+      let store=await readSupabaseStore();
+      if(!store)store=pulseCacheReady?pulseCache:await readLocalStore();
+      pruneExpiredPosts(store);
+      out=await fn(store);
+      pruneExpiredPosts(store);
       const saved=await supabase.writeState('quantic_pulse',store);
-      if(!saved?.ok)throw new Error(saved?.error||'pulse_supabase_write_failed');
+      if(!saved?.ok)throw new Error('pulse_storage_unavailable');
+      cacheStore(store,'supabase');
     });
-    await writeQueue;return out;
+    try{await writeQueue;return out}
+    catch(error){console.error('[pulse] supabase write failed',String(error?.message||error))}
   }
-  let out;writeQueue=writeQueue.catch(()=>{}).then(async()=>{const store=await readStore();pruneExpiredMessages(store);out=await fn(store);pruneExpiredMessages(store);const tmp=FILE+'.'+process.pid+'.'+Date.now()+'.tmp';await writeFile(tmp,JSON.stringify(store,null,2));await rename(tmp,FILE)});await writeQueue;return out
+
+  if(useMysql){
+    try{
+      const p=await pool(),conn=await p.getConnection();
+      try{
+        await conn.beginTransaction();
+        const[rows]=await conn.query('SELECT data FROM quantic_pulse_store WHERE store_key=? FOR UPDATE',['pulse']);
+        const store=rows.length?JSON.parse(rows[0].data):(pulseCacheReady?pulseCache:emptyStore());
+        pruneExpiredPosts(store);
+        const out=await fn(store);
+        pruneExpiredPosts(store);
+        await conn.query('INSERT INTO quantic_pulse_store (store_key,data) VALUES (?,?) ON DUPLICATE KEY UPDATE data=VALUES(data)',['pulse',JSON.stringify(store)]);
+        await conn.commit();
+        cacheStore(store,'mysql');
+        return out;
+      }catch(error){await conn.rollback();throw error}
+      finally{conn.release()}
+    }catch(error){console.error('[pulse] mysql write failed',String(error?.message||error))}
+  }
+
+  // Local storage is a last-resort availability fallback only; never advertise it as durable.
+  let out;
+  writeQueue=writeQueue.catch(()=>{}).then(async()=>{
+    const store=pulseCacheReady?pulseCache:await readLocalStore();
+    pruneExpiredPosts(store);
+    out=await fn(store);
+    pruneExpiredPosts(store);
+    const tmp=FILE+'.'+process.pid+'.'+Date.now()+'.tmp';
+    await writeFile(tmp,JSON.stringify(store,null,2));
+    await rename(tmp,FILE);
+    cacheStore(store,'json');
+  });
+  await writeQueue;
+  return out;
 }
 function mapSet(map,key){if(!map[key])map[key]=[];return map[key]}
 function blocked(store,a,b){return!!((store.blocks[a]||[]).includes(b)||(store.blocks[b]||[]).includes(a))}
@@ -134,13 +227,13 @@ function publicUser(user,store,viewerId=''){
   const followers=Object.values(store.follows||{}).filter(arr=>arr.includes(user.id)).length;
   return{id:user.id,handle:user.handle,displayName:user.displayName,bio:user.bio||'',avatar:user.avatar||'',verified:!!user.verified,createdAt:user.createdAt,followers,following:(store.follows[user.id]||[]).length,isFollowing:viewerId?(store.follows[viewerId]||[]).includes(user.id):false}
 }
-function visibleTo(store,post,viewerId=''){if(!post||post.deletedAt)return false;if(post.circleId)return!!viewerId&&!!(store.circleMembers[post.circleId]||{})[viewerId];return!viewerId||!blocked(store,viewerId,post.authorId)}
+function visibleTo(store,post,viewerId=''){if(!postAlive(post))return false;if(post.circleId)return!!viewerId&&!!(store.circleMembers[post.circleId]||{})[viewerId];return!viewerId||!blocked(store,viewerId,post.authorId)}
 function postView(post,store,viewerId=''){
   const author=store.users[post.authorId];if(!author)return null;
   const likes=store.likes[post.id]||[],reposts=store.reposts[post.id]||[],bookmarks=store.bookmarks[viewerId]||[];
-  const replies=Object.values(store.posts).filter(p=>!p.deletedAt&&p.replyToId===post.id).length;
+  const replies=Object.values(store.posts).filter(p=>p.replyToId===post.id&&visibleTo(store,p,viewerId)).length;
   const q=post.quotePostId&&store.posts[post.quotePostId];
-  return{id:post.id,author:publicUser(author,store,viewerId),body:post.body,createdAt:post.createdAt,replyToId:post.replyToId||null,quotePostId:post.quotePostId||null,circleId:post.circleId||null,linkUrl:post.linkUrl||'',linkTitle:post.linkTitle||'',imageUrl:post.imageUrl||'',mediaUrl:post.mediaUrl||'',mediaType:post.mediaType||'',quote:q&&visibleTo(store,q,viewerId)?{id:q.id,body:q.body,createdAt:q.createdAt,author:publicUser(store.users[q.authorId],store,viewerId)}:null,counts:{likes:likes.length,reposts:reposts.length,replies},viewer:{liked:likes.includes(viewerId),reposted:reposts.includes(viewerId),bookmarked:bookmarks.includes(post.id)}}
+  return{id:post.id,author:publicUser(author,store,viewerId),body:post.body,createdAt:post.createdAt,expiresAt:postExpiryIso(post),replyToId:post.replyToId||null,quotePostId:post.quotePostId||null,circleId:post.circleId||null,linkUrl:post.linkUrl||'',linkTitle:post.linkTitle||'',imageUrl:post.imageUrl||'',mediaUrl:post.mediaUrl||'',mediaType:post.mediaType||'',quote:q&&visibleTo(store,q,viewerId)?{id:q.id,body:q.body,createdAt:q.createdAt,author:publicUser(store.users[q.authorId],store,viewerId)}:null,counts:{likes:likes.length,reposts:reposts.length,replies},viewer:{liked:likes.includes(viewerId),reposted:reposts.includes(viewerId),bookmarked:bookmarks.includes(post.id)}}
 }
 function cleanupSessions(store){const t=Date.now();for(const[h,s]of Object.entries(store.sessions||{}))if(s.expiresAt<=t)delete store.sessions[h]}
 function sessionRecord(store,token,{requirePresence=true}={}){
@@ -168,46 +261,54 @@ function createSession(store,userId){
 }
 function notify(store,userId,payload){if(!userId||userId===payload.actorId)return;if(!store.notifications[userId])store.notifications[userId]=[];store.notifications[userId].unshift({id:id('n_'),createdAt:now(),read:false,...payload});store.notifications[userId]=store.notifications[userId].slice(0,300)}
 function conversationKey(a,b){return[a,b].sort().join(':')}
-function messageExpiresAt(message){
-  const explicit=Date.parse(String(message?.expiresAt||''));
+function postExpiresAt(post){
+  const explicit=Date.parse(String(post?.expiresAt||''));
   if(Number.isFinite(explicit))return explicit;
-  const created=Date.parse(String(message?.createdAt||''));
-  return Number.isFinite(created)?created+MESSAGE_TTL_MS:0;
+  const created=Date.parse(String(post?.createdAt||''));
+  return Number.isFinite(created)?created+POST_TTL_MS:0;
 }
-function liveMessage(message,at=Date.now()){return!!message&&messageExpiresAt(message)>at}
-function messageExpiryIso(message){const t=messageExpiresAt(message);return t?new Date(t).toISOString():null}
-function pruneExpiredMessages(store,at=Date.now()){
+function postAlive(post,at=Date.now()){return!!post&&!post.deletedAt&&postExpiresAt(post)>at}
+function postExpiryIso(post){const t=postExpiresAt(post);return t?new Date(t).toISOString():null}
+function pruneExpiredPosts(store,at=Date.now()){
   const expired=new Set();
-  for(const [mid,message] of Object.entries(store.messages||{})){
-    if(!liveMessage(message,at)){expired.add(mid);delete store.messages[mid]}
+  for(const [pid,post] of Object.entries(store.posts||{})){
+    if(!postAlive(post,at)){expired.add(pid);delete store.posts[pid]}
   }
-  for(const [key,conversation] of Object.entries(store.conversations||{})){
-    conversation.messageIds=(conversation.messageIds||[]).filter(mid=>!expired.has(mid)&&!!store.messages[mid]);
-    if(!conversation.messageIds.length)delete store.conversations[key];
-  }
-  if(expired.size){
-    for(const [uid,items] of Object.entries(store.notifications||{})){
-      store.notifications[uid]=(items||[]).filter(item=>item.type!=='message'||!expired.has(item.objectId));
-    }
-  }
+  if(!expired.size)return 0;
+  for(const pid of expired){delete store.likes[pid];delete store.reposts[pid]}
+  for(const uid of Object.keys(store.bookmarks||{}))store.bookmarks[uid]=(store.bookmarks[uid]||[]).filter(pid=>!expired.has(pid));
+  for(const uid of Object.keys(store.notifications||{}))store.notifications[uid]=(store.notifications[uid]||[]).filter(item=>!expired.has(item.objectId));
   return expired.size;
+}
+function messageView(message){
+  if(!message)return null;
+  const {expiresAt:_legacyExpiry,...view}=message;
+  return view;
 }
 
 export async function pulseInfo(){
-  if(usePostgres)await pg();
-  else if(useMysql)await pool();
-  else if(useSupabase){
-    const health=await supabase.health();
-    if(!health.connected)throw new Error(health.last_error||'pulse_supabase_unavailable');
+  let connected=false,lastError=null;
+  if(usePostgres){
+    try{await pg();connected=true;activeStorage='postgres'}catch(error){lastError=String(error?.message||error)}
   }
+  if(!connected&&useSupabase){
+    const health=await supabase.health().catch(error=>({connected:false,last_error:String(error?.message||error)}));
+    if(health.connected){connected=true;activeStorage='supabase'}else lastError=health.last_error||lastError;
+  }
+  if(!connected&&useMysql){
+    try{await pool();connected=true;activeStorage='mysql'}catch(error){lastError=String(error?.message||error)}
+  }
+  if(!connected)activeStorage='json';
   return{
-    schema:'quantic-pulse-health-v2',
-    storage:usePostgres?'postgres':useMysql?'mysql':useSupabase?'supabase':'json',
-    persistent:usePostgres||useMysql||useSupabase,
+    schema:'quantic-pulse-health-v3',
+    storage:activeStorage,
+    persistent:connected,
     postgresConfigured:usePostgres,
     mysqlConfigured:useMysql,
     supabaseConfigured:useSupabase,
-    messageRetentionHours:MESSAGE_TTL_MS/3600000
+    postRetentionHours:POST_TTL_MS/3600000,
+    privateMessages:'persistent',
+    storageError:lastError
   }
 }
 
@@ -310,7 +411,7 @@ export async function handlePulse(req,res,url,corsHeaders={}){
       if(!allowRate(req,'post',24,60000)){json(res,429,{error:'rate_limited'},corsHeaders);return true}
       const b=await bodyJson(req),text=clean(b.body,420);if(!text){json(res,400,{error:'empty_post'},corsHeaders);return true}
       const linkUrl=safeHttpsUrl(b.linkUrl),linkTitle=clean(b.linkTitle,240),imageUrl=safeHttpsUrl(b.imageUrl),mediaUrl=safeHttpsUrl(b.mediaUrl),mediaType=clean(b.mediaType,20)==='gif'?'gif':'';
-      const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req));if(!user)return{error:'unauthorized'};const replyToId=clean(b.replyToId,80)||null,quotePostId=clean(b.quotePostId,80)||null,circleId=clean(b.circleId,80)||null;const replyTarget=replyToId?store.posts[replyToId]:null,quoteTarget=quotePostId?store.posts[quotePostId]:null;if(replyToId&&(!replyTarget||!visibleTo(store,replyTarget,user.id)))return{error:'reply_target_not_found'};if(quotePostId&&(!quoteTarget||!visibleTo(store,quoteTarget,user.id)))return{error:'quote_target_not_found'};if(circleId&&!(store.circleMembers[circleId]||{})[user.id])return{error:'circle_forbidden'};if(replyTarget?.circleId&&circleId!==replyTarget.circleId)return{error:'reply_target_private'};if(quoteTarget?.circleId&&circleId!==quoteTarget.circleId)return{error:'quote_target_private'};const pid=id('p_'),post={id:pid,authorId:user.id,body:text,createdAt:now(),replyToId,quotePostId,circleId,linkUrl,linkTitle,imageUrl,mediaUrl,mediaType,deletedAt:null};store.posts[pid]=post;if(replyToId)notify(store,store.posts[replyToId].authorId,{actorId:user.id,type:'reply',objectId:pid});if(quotePostId)notify(store,store.posts[quotePostId].authorId,{actorId:user.id,type:'quote',objectId:pid});return{post:postView(post,store,user.id)}});
+      const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req));if(!user)return{error:'unauthorized'};const replyToId=clean(b.replyToId,80)||null,quotePostId=clean(b.quotePostId,80)||null,circleId=clean(b.circleId,80)||null;const replyTarget=replyToId?store.posts[replyToId]:null,quoteTarget=quotePostId?store.posts[quotePostId]:null;if(replyToId&&(!replyTarget||!visibleTo(store,replyTarget,user.id)))return{error:'reply_target_not_found'};if(quotePostId&&(!quoteTarget||!visibleTo(store,quoteTarget,user.id)))return{error:'quote_target_not_found'};if(circleId&&!(store.circleMembers[circleId]||{})[user.id])return{error:'circle_forbidden'};if(replyTarget?.circleId&&circleId!==replyTarget.circleId)return{error:'reply_target_private'};if(quoteTarget?.circleId&&circleId!==quoteTarget.circleId)return{error:'quote_target_private'};const pid=id('p_'),createdAt=now(),post={id:pid,authorId:user.id,body:text,createdAt,expiresAt:new Date(Date.parse(createdAt)+POST_TTL_MS).toISOString(),replyToId,quotePostId,circleId,linkUrl,linkTitle,imageUrl,mediaUrl,mediaType,deletedAt:null};store.posts[pid]=post;if(replyToId)notify(store,store.posts[replyToId].authorId,{actorId:user.id,type:'reply',objectId:pid});if(quotePostId)notify(store,store.posts[quotePostId].authorId,{actorId:user.id,type:'quote',objectId:pid});return{post:postView(post,store,user.id)}});
       json(res,out.error?(out.error==='unauthorized'?401:/_target_(?:not_found|private)$/.test(out.error)?404:400):201,out,corsHeaders);return true
     }
 
@@ -350,17 +451,17 @@ export async function handlePulse(req,res,url,corsHeaders={}){
 
     if(route==='/api/pulse/report'&&req.method==='POST'){const b=await bodyJson(req),out=await mutateStore(store=>{const user=sessionUser(store,bearer(req));if(!user)return{error:'unauthorized'};const targetType=['post','user'].includes(b.targetType)?b.targetType:'post',targetId=clean(b.targetId,80),reason=clean(b.reason,240);if(!targetId||reason.length<3)return{error:'invalid_report'};const rid=id('r_');store.reports[rid]={id:rid,reporterId:user.id,targetType,targetId,reason,status:'open',createdAt:now()};return{ok:true,id:rid}});json(res,out.error?(out.error==='unauthorized'?401:400):201,out,corsHeaders);return true}
 
-    if(route==='/api/pulse/conversations'&&req.method==='GET'){const store=await readStore(),a=await auth(req,store);if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}const list=Object.entries(store.conversations).filter(([,c])=>c.members.includes(a.user.id)).map(([key,c])=>{const otherId=c.members.find(x=>x!==a.user.id),other=store.users[otherId],messages=(c.messageIds||[]).map(mid=>store.messages[mid]).filter(msg=>liveMessage(msg)),last=messages.length?messages[messages.length-1]:null;return{key,user:other?publicUser(other,store,a.user.id):null,lastMessage:last?{body:last.body,createdAt:last.createdAt,expiresAt:messageExpiryIso(last),senderId:last.senderId}:null}}).filter(item=>item.lastMessage).sort((x,y)=>Date.parse(y.lastMessage?.createdAt||0)-Date.parse(x.lastMessage?.createdAt||0));json(res,200,{conversations:list,retentionHours:MESSAGE_TTL_MS/3600000},corsHeaders);return true}
+    if(route==='/api/pulse/conversations'&&req.method==='GET'){const store=await readStore(),a=await auth(req,store);if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}const list=Object.entries(store.conversations).filter(([,c])=>c.members.includes(a.user.id)).map(([key,c])=>{const otherId=c.members.find(x=>x!==a.user.id),other=store.users[otherId],messages=(c.messageIds||[]).map(mid=>store.messages[mid]).filter(Boolean),last=messages.length?messages[messages.length-1]:null;return{key,user:other?publicUser(other,store,a.user.id):null,lastMessage:last?{body:last.body,createdAt:last.createdAt,senderId:last.senderId}:null}}).filter(item=>item.user).sort((x,y)=>Date.parse(y.lastMessage?.createdAt||0)-Date.parse(x.lastMessage?.createdAt||0));json(res,200,{conversations:list,messageMode:'persistent'},corsHeaders);return true}
 
-    if(route==='/api/pulse/messages'&&req.method==='POST'){const b=await bodyJson(req),text=clean(b.body,2000),handle=clean(b.handle,24).toLowerCase().replace(/^@/,'');if(!text){json(res,400,{error:'empty_message'},corsHeaders);return true}const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req)),targetId=store.handles[handle];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};if(targetId===user.id)return{error:'self_message'};if(blocked(store,user.id,targetId))return{error:'blocked'};const key=conversationKey(user.id,targetId),conv=store.conversations[key]||(store.conversations[key]={members:[user.id,targetId],messageIds:[],createdAt:now()}),mid=id('m_'),createdAt=now(),msg={id:mid,conversationKey:key,senderId:user.id,recipientId:targetId,body:text,createdAt,expiresAt:new Date(Date.parse(createdAt)+MESSAGE_TTL_MS).toISOString(),readAt:null};store.messages[mid]=msg;conv.messageIds.push(mid);conv.messageIds=conv.messageIds.slice(-1000);notify(store,targetId,{actorId:user.id,type:'message',objectId:mid});return{message:msg}});json(res,out.error?(out.error==='unauthorized'?401:out.error==='not_found'?404:400):201,out,corsHeaders);return true}
+    if(route==='/api/pulse/messages'&&req.method==='POST'){const b=await bodyJson(req),text=clean(b.body,2000),handle=clean(b.handle,24).toLowerCase().replace(/^@/,'');if(!text){json(res,400,{error:'empty_message'},corsHeaders);return true}const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req)),targetId=store.handles[handle];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};if(targetId===user.id)return{error:'self_message'};if(blocked(store,user.id,targetId))return{error:'blocked'};const key=conversationKey(user.id,targetId),conv=store.conversations[key]||(store.conversations[key]={members:[user.id,targetId],messageIds:[],createdAt:now()}),mid=id('m_'),createdAt=now(),msg={id:mid,conversationKey:key,senderId:user.id,recipientId:targetId,body:text,createdAt,readAt:null};store.messages[mid]=msg;conv.messageIds.push(mid);conv.messageIds=conv.messageIds.slice(-1000);notify(store,targetId,{actorId:user.id,type:'message',objectId:mid});return{message:msg}});json(res,out.error?(out.error==='unauthorized'?401:out.error==='not_found'?404:400):201,out,corsHeaders);return true}
 
     m=route.match(/^\/api\/pulse\/messages\/([a-z0-9_]{3,24})$/);
-    if(m&&req.method==='GET'){const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req)),targetId=store.handles[m[1]];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};const key=conversationKey(user.id,targetId),conv=store.conversations[key],ids=conv?.messageIds||[],messages=ids.map(mid=>store.messages[mid]).filter(msg=>liveMessage(msg)).map(msg=>({...msg,expiresAt:messageExpiryIso(msg)}));messages.forEach(msg=>{if(msg.recipientId===user.id&&!msg.readAt){msg.readAt=now();if(store.messages[msg.id])store.messages[msg.id].readAt=msg.readAt}});return{user:publicUser(store.users[targetId],store,user.id),messages,retentionHours:MESSAGE_TTL_MS/3600000}});json(res,out.error?(out.error==='unauthorized'?401:404):200,out,corsHeaders);return true}
+    if(m&&req.method==='GET'){const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req)),targetId=store.handles[m[1]];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};const key=conversationKey(user.id,targetId),conv=store.conversations[key],ids=conv?.messageIds||[],messages=ids.map(mid=>store.messages[mid]).filter(Boolean);messages.forEach(msg=>{if(msg.recipientId===user.id&&!msg.readAt)msg.readAt=now()});return{user:publicUser(store.users[targetId],store,user.id),messages:messages.map(messageView),messageMode:'persistent'}});json(res,out.error?(out.error==='unauthorized'?401:404):200,out,corsHeaders);return true}
 
-    if(route==='/api/pulse/export'&&req.method==='GET'){const store=await readStore(),a=await auth(req,store);if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}const uid=a.user.id,data={user:publicUser(a.user,store,uid),posts:Object.values(store.posts).filter(p=>p.authorId===uid),follows:store.follows[uid]||[],likes:Object.entries(store.likes).filter(([,ids])=>ids.includes(uid)).map(([pid])=>pid),bookmarks:store.bookmarks[uid]||[],circles:Object.values(store.circles).filter(c=>(store.circleMembers[c.id]||{})[uid]),notifications:store.notifications[uid]||[],messages:Object.values(store.messages).filter(msg=>liveMessage(msg)&&(msg.senderId===uid||msg.recipientId===uid)).map(msg=>({...msg,expiresAt:messageExpiryIso(msg)}))};json(res,200,{exportedAt:now(),data},corsHeaders);return true}
+    if(route==='/api/pulse/export'&&req.method==='GET'){const store=await readStore(),a=await auth(req,store);if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}const uid=a.user.id,data={user:publicUser(a.user,store,uid),posts:Object.values(store.posts).filter(p=>p.authorId===uid),follows:store.follows[uid]||[],likes:Object.entries(store.likes).filter(([,ids])=>ids.includes(uid)).map(([pid])=>pid),bookmarks:store.bookmarks[uid]||[],circles:Object.values(store.circles).filter(c=>(store.circleMembers[c.id]||{})[uid]),notifications:store.notifications[uid]||[],messages:Object.values(store.messages).filter(msg=>msg.senderId===uid||msg.recipientId===uid).map(messageView)};json(res,200,{exportedAt:now(),data},corsHeaders);return true}
 
     json(res,404,{error:'not_found'},corsHeaders);return true
-  }catch(e){console.error('[pulse]',e);json(res,e.status||500,{error:e.message||'internal_error'},corsHeaders);return true}
+  }catch(e){console.error('[pulse]',e);const raw=String(e?.message||'internal_error');const error=/fetch failed|ECONN|ENOTFOUND|ETIMEDOUT|storage_unavailable/i.test(raw)?'pulse_storage_unavailable':raw;json(res,e.status||503,{error},corsHeaders);return true}
 }
 
 if(usePostgres)pg().catch(e=>console.error('[pulse] postgres init failed',e));
@@ -368,6 +469,9 @@ else if(useMysql)pool().catch(e=>console.error('[pulse] mysql init failed',e));
 else if(useSupabase)supabase.health().then(h=>{if(!h.connected)console.error('[pulse] supabase init failed',h.last_error)}).catch(e=>console.error('[pulse] supabase init failed',e));
 else ensureFile().catch(e=>console.error('[pulse] file init failed',e));
 
+const purgeExpiredPulsePosts=()=>mutateStore(store=>({pruned:pruneExpiredPosts(store)})).catch(error=>console.error('[pulse] post expiry purge failed',String(error?.message||error)));
+setTimeout(purgeExpiredPulsePosts,1500).unref?.();
+setInterval(purgeExpiredPulsePosts,5*60*1000).unref?.();
 
 export function installQuanticPulse(app){
   if(app.__quanticPulseInstalled)return;
