@@ -66,7 +66,7 @@ jobs:
               && grep -q '/assets/brand-2026/news-mark.svg' <<<"$downloads" \
               && grep -q '/assets/brand-2026/quantic-sillage-mark.svg' <<<"$pulse" \
               && grep -q '/assets/brand-2026/pulse-mark.svg' <<<"$pulse" \
-              && grep -q '/pulse/app.js?v=15' <<<"$pulse" \
+              && grep -q '/pulse/app.js?v=16' <<<"$pulse" \
               && grep -q '"schema":"quantic-pulse-health-v3"' <<<"$pulse_health" \
               && grep -q 'Quantic Sillage' <<<"$qmark" \
               && grep -q 'aria-label="Quantic Pulse"' <<<"$pulsemark" \
