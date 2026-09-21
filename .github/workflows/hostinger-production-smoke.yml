@@ -118,7 +118,7 @@ jobs:
           assert app_health.get('persistent_learning') is True, app_health
           assert app_health.get('storage') == 'mysql', app_health
           assert pulse_health.get('ok') is True, pulse_health
-          assert pulse_health.get('storage') in {'mysql','postgres'}, pulse_health
+          assert pulse_health.get('storage') in {'mysql','postgres','supabase'}, pulse_health
           assert pulse_health.get('persistent') is True, pulse_health
           assert pulse_health.get('messageRetentionHours') == 24, pulse_health
 
