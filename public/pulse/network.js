@@ -107,10 +107,18 @@ async function registerRelay(transport,base){
   });
   return{baseUrl:base,canonicalAddress:result.canonicalAddress,deviceId:result.rootDeviceId};
 }
-export async function ensurePulseNetworkDevice(pulseDeviceId){
+export async function ensurePulseNetworkDevice(pulseDeviceId,{refresh=false}={}){
   let transport=await readTransport();
   if(!transport?.encryptionPrivateKey||!transport?.signingPrivateKey)transport=await createTransport(pulseDeviceId);
   transport.registrations=transport.registrations||{};
+  const known=Object.values(transport.registrations).filter(item=>item?.canonicalAddress&&item?.deviceId);
+  const checkedAt=Date.parse(String(transport.lastCheckedAt||''));
+  if(!refresh&&known.length&&Number.isFinite(checkedAt)&&Date.now()-checkedAt<5*60*1000){
+    transport.canonicalAddress=known[0].canonicalAddress;
+    transport.deviceId=known[0].deviceId;
+    transport.relays=known.map(item=>item.baseUrl);
+    return transport;
+  }
   const relays=relayCandidates();
   await Promise.allSettled(relays.map(async base=>{transport.registrations[base]=await registerRelay(transport,base)}));
   const registrations=Object.values(transport.registrations).filter(item=>item?.canonicalAddress&&item?.deviceId);
@@ -120,6 +128,7 @@ export async function ensurePulseNetworkDevice(pulseDeviceId){
   transport.canonicalAddress=first.canonicalAddress;
   transport.deviceId=first.deviceId;
   transport.relays=registrations.map(item=>item.baseUrl);
+  transport.lastCheckedAt=new Date().toISOString();
   await saveTransport(transport);
   return transport;
 }
