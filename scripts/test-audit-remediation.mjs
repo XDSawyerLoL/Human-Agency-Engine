@@ -27,14 +27,16 @@ async function testPulsePrivacy(){
       sessions:{[sha(token)]:{userId:'u_b',createdAt:Date.now(),expiresAt:Date.now()+60_000,presenceUntil:Date.now()+60_000}},
       posts:{
         p_private:{id:'p_private',authorId:'u_a',body:'PRIVATE-AUDIT-SECRET',createdAt:new Date().toISOString(),replyToId:null,quotePostId:null,circleId:'c_private',linkUrl:'',linkTitle:'',imageUrl:'',mediaUrl:'',mediaType:'',deletedAt:null},
-        p_public_quote:{id:'p_public_quote',authorId:'u_b',body:'Public wrapper',createdAt:new Date().toISOString(),replyToId:null,quotePostId:'p_private',circleId:null,linkUrl:'',linkTitle:'',imageUrl:'',mediaUrl:'',mediaType:'',deletedAt:null}
+        p_public_quote:{id:'p_public_quote',authorId:'u_b',body:'Public wrapper',createdAt:new Date().toISOString(),replyToId:null,quotePostId:'p_private',circleId:null,linkUrl:'',linkTitle:'',imageUrl:'',mediaUrl:'',mediaType:'',deletedAt:null},
+        p_expired:{id:'p_expired',authorId:'u_b',body:'expired-public-post',createdAt:new Date(Date.now()-25*60*60*1000).toISOString(),replyToId:null,quotePostId:null,circleId:null,linkUrl:'',linkTitle:'',imageUrl:'',mediaUrl:'',mediaType:'',deletedAt:null},
+        p_recent:{id:'p_recent',authorId:'u_b',body:'recent-public-post',createdAt:new Date(Date.now()-60*60*1000).toISOString(),replyToId:null,quotePostId:null,circleId:null,linkUrl:'',linkTitle:'',imageUrl:'',mediaUrl:'',mediaType:'',deletedAt:null}
       },
       follows:{u_a:[],u_b:[]},likes:{},reposts:{},bookmarks:{u_a:[],u_b:[]},
       circles:{c_private:{id:'c_private',ownerId:'u_a',name:'Private',description:'',visibility:'private',createdAt:new Date().toISOString()}},
       circleMembers:{c_private:{u_a:'owner'}},notifications:{},reports:{},blocks:{u_a:[],u_b:[]},
       conversations:{'u_a:u_b':{members:['u_a','u_b'],messageIds:['m_old','m_recent'],createdAt:new Date(Date.now()-26*60*60*1000).toISOString()}},
       messages:{
-        m_old:{id:'m_old',conversationKey:'u_a:u_b',senderId:'u_a',recipientId:'u_b',body:'expired-message',createdAt:new Date(Date.now()-25*60*60*1000).toISOString(),readAt:null},
+        m_old:{id:'m_old',conversationKey:'u_a:u_b',senderId:'u_a',recipientId:'u_b',body:'old-persistent-message',createdAt:new Date(Date.now()-25*60*60*1000).toISOString(),expiresAt:new Date(Date.now()-60*60*1000).toISOString(),readAt:null},
         m_recent:{id:'m_recent',conversationKey:'u_a:u_b',senderId:'u_a',recipientId:'u_b',body:'recent-message',createdAt:new Date(Date.now()-60*60*1000).toISOString(),readAt:null}
       }
     };
@@ -82,15 +84,19 @@ async function testPulsePrivacy(){
     assert.equal(wrapper.quote,null,'nested serialization must filter an inaccessible quoted post');
     assert.doesNotMatch(JSON.stringify(publicFeed.body),/PRIVATE-AUDIT-SECRET/,'private body must never escape through a public quote');
 
+    assert.equal(publicFeed.body.posts.some(post=>post.id==='p_expired'),false,'public posts older than 24 hours must disappear');
+    assert.equal(publicFeed.body.posts.some(post=>post.id==='p_recent'),true,'public posts younger than 24 hours must remain');
+
     const messages=await call('GET','/api/pulse/messages/alpha',{authToken:token});
     assert.equal(messages.status,200);
-    assert.equal(messages.body.retentionHours,24,'Pulse direct-message retention must be 24 hours by default');
-    assert.deepEqual(messages.body.messages.map(message=>message.id),['m_recent'],'messages older than 24 hours must expire while recent messages remain');
-    assert.ok(messages.body.messages[0].expiresAt,'live messages expose their 24-hour expiry');
+    assert.equal(messages.body.messageMode,'persistent','private messages must be persistent');
+    assert.deepEqual(messages.body.messages.map(message=>message.id),['m_old','m_recent'],'private messages must not inherit the 24-hour post expiry');
+    assert.equal('expiresAt' in messages.body.messages[0],false,'legacy message expiry metadata must not control private-message retention');
 
     const health=await call('GET','/api/pulse/health');
     assert.equal(health.status,200);
-    assert.equal(health.body.messageRetentionHours,24,'Pulse health must publish the configured 24-hour retention contract');
+    assert.equal(health.body.postRetentionHours,24,'Pulse health must publish the 24-hour public-post retention contract');
+    assert.equal(health.body.privateMessages,'persistent','Pulse health must distinguish persistent private messages from ephemeral posts');
   }finally{
     delete process.env.DATA_DIR;
     await rm(dir,{recursive:true,force:true});
