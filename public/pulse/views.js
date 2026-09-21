@@ -1,6 +1,6 @@
-import { state, dom, api, esc, icon, initials, timeAgo, setStatus, errorText } from './core.js?v=12';
-import { requireAuth } from './session.js?v=12';
-import { renderPost, renderPosts, notificationLabel } from './render.js?v=12';
+import { state, dom, api, esc, icon, initials, timeAgo, setStatus, errorText } from './core.js?v=13';
+import { requireAuth } from './session.js?v=13';
+import { renderPost, renderPosts, notificationLabel } from './render.js?v=13';
 import { decryptConversationMessages, safetyNumber } from './secure.js?v=13';
 
 export function setView(view,title){
