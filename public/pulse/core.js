@@ -75,20 +75,28 @@ export function errorText(e){
 export async function api(path,options={}){
   const headers={'content-type':'application/json',...(options.headers||{})};
   if(state.token)headers.authorization='Bearer '+state.token;
-  let response;
-  try{
-    response=await fetch(API_BASE+path,{...options,headers});
-  }catch(cause){
-    const err=new Error('network_error');
-    err.cause=cause;
-    throw err;
-  }
-  const data=await response.json().catch(function(){return{}});
-  if(!response.ok){
+  const method=String(options.method||'GET').toUpperCase();
+  const attempts=method==='GET'?3:1;
+  let lastCause=null;
+  for(let attempt=0;attempt<attempts;attempt++){
+    let response;
+    try{
+      response=await fetch(API_BASE+path,{cache:'no-store',...options,headers});
+    }catch(cause){
+      lastCause=cause;
+      if(attempt+1<attempts){await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));continue}
+      const err=new Error('network_error');err.cause=cause;throw err;
+    }
+    const data=await response.json().catch(function(){return{}});
+    if(response.ok)return data;
+    if(method==='GET'&&response.status>=500&&attempt+1<attempts){
+      await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));
+      continue;
+    }
     const err=new Error(data.error||'request_failed');
     err.status=response.status;
     err.data=data;
     throw err;
   }
-  return data;
+  const err=new Error('network_error');err.cause=lastCause;throw err;
 }
