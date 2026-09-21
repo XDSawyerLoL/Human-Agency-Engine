@@ -38,7 +38,7 @@ const identityChallenges=new Map();
 const IDENTITY_AUDIENCE='quantic-pulse';
 const IDENTITY_CHALLENGE_MS=120000;
 
-function emptyStore(){return{version:1,users:{},handles:{},sessions:{},posts:{},follows:{},likes:{},reposts:{},bookmarks:{},circles:{},circleMembers:{},notifications:{},reports:{},blocks:{},conversations:{},messages:{}}}
+function emptyStore(){return{version:2,users:{},handles:{},sessions:{},posts:{},follows:{},likes:{},reposts:{},bookmarks:{},circles:{},circleMembers:{},notifications:{},reports:{},blocks:{},conversations:{},messages:{},secureDevices:{}}}
 function id(prefix=''){return prefix+randomBytes(12).toString('hex')}
 function sha(v){return createHash('sha256').update(String(v)).digest('hex')}
 function now(){return new Date().toISOString()}
@@ -291,6 +291,53 @@ function messageView(message){
   return view;
 }
 
+
+function ensureSecureState(store){
+  if(!store.secureDevices||typeof store.secureDevices!=='object')store.secureDevices={};
+  return store.secureDevices;
+}
+function secureBundleMaterial({deviceId,encryptionPublicKey,signingPublicKey}){
+  return JSON.stringify({
+    protocol:'pulse-e2ee-v1',
+    deviceId:clean(deviceId,80),
+    encryptionPublicKey:clean(encryptionPublicKey,160),
+    signingPublicKey:clean(signingPublicKey,160)
+  });
+}
+function secureBundleHash(bundle){return sha(secureBundleMaterial(bundle))}
+function validRawCurveKey(value){
+  const raw=clean(value,160);
+  if(!/^[A-Za-z0-9_-]{40,60}$/.test(raw))return false;
+  try{return Buffer.from(raw,'base64url').length===32}catch{return false}
+}
+function secureDeviceView(device){
+  if(!device)return null;
+  return{
+    deviceId:device.deviceId,
+    encryptionPublicKey:device.encryptionPublicKey,
+    signingPublicKey:device.signingPublicKey,
+    identityKeyId:device.identityKeyId,
+    registeredAt:device.registeredAt,
+    protocol:'pulse-e2ee-v1'
+  };
+}
+function secureDevicesFor(store,userId){
+  ensureSecureState(store);
+  return Object.values(store.secureDevices[userId]||{}).filter(Boolean);
+}
+function validSecureEnvelope(envelope){
+  if(!envelope||typeof envelope!=='object')return false;
+  if(!clean(envelope.recipientDeviceId,80)||!clean(envelope.ephemeralPublicKey,160)||!clean(envelope.salt,160)||!clean(envelope.iv,80)||!clean(envelope.ciphertext,8000)||!clean(envelope.signature,800))return false;
+  if(!validRawCurveKey(envelope.ephemeralPublicKey))return false;
+  try{
+    if(Buffer.from(String(envelope.salt),'base64url').length!==32)return false;
+    if(Buffer.from(String(envelope.iv),'base64url').length!==12)return false;
+    if(Buffer.from(String(envelope.signature),'base64url').length!==64)return false;
+    const cipherBytes=Buffer.from(String(envelope.ciphertext),'base64url').length;
+    return cipherBytes>=16&&cipherBytes<=4096;
+  }catch{return false}
+}
+
 export async function pulseInfo(){
   let connected=false,lastError=null;
   if(usePostgres){
@@ -323,7 +370,54 @@ export async function handlePulse(req,res,url,corsHeaders={}){
   try{
     if(!allowRate(req,'all',180,60000)){json(res,429,{error:'rate_limited'},corsHeaders);return true}
 
-    if(route==='/api/pulse/health'&&req.method==='GET'){const info=await pulseInfo();json(res,200,{ok:true,service:'quantic-pulse',...info},corsHeaders);return true}
+    if(route==='/api/pulse/health'&&req.method==='GET'){const info=await pulseInfo();json(res,200,{ok:true,service:'quantic-pulse',...info,e2ee:'pulse-e2ee-v1'},corsHeaders);return true}
+
+    if(route==='/api/pulse/secure/challenge'&&req.method==='POST'){
+      const store=await readStore(),a=await auth(req,store);
+      if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}
+      const b=await bodyJson(req),deviceId=clean(b.deviceId,80),encryptionPublicKey=clean(b.encryptionPublicKey,160),signingPublicKey=clean(b.signingPublicKey,160);
+      if(!deviceId||!validRawCurveKey(encryptionPublicKey)||!validRawCurveKey(signingPublicKey)){json(res,400,{error:'secure_device_invalid'},corsHeaders);return true}
+      const bundleHash=secureBundleHash({deviceId,encryptionPublicKey,signingPublicKey});
+      json(res,200,{...issueIdentityChallenge('secure_device',bundleHash),bundleHash,protocol:'pulse-e2ee-v1'},corsHeaders);return true
+    }
+
+    if(route==='/api/pulse/secure/devices'&&req.method==='POST'){
+      const b=await bodyJson(req),deviceId=clean(b.deviceId,80),encryptionPublicKey=clean(b.encryptionPublicKey,160),signingPublicKey=clean(b.signingPublicKey,160);
+      if(!deviceId||!validRawCurveKey(encryptionPublicKey)||!validRawCurveKey(signingPublicKey)){json(res,400,{error:'secure_device_invalid'},corsHeaders);return true}
+      const bundleHash=secureBundleHash({deviceId,encryptionPublicKey,signingPublicKey});
+      const out=await mutateStore(store=>{
+        const user=sessionUser(store,bearer(req));if(!user)return{error:'unauthorized'};
+        const identity=verifyIdentityProof(b.identityProof,{action:'secure_device',handle:bundleHash});
+        if(identity.error)return identity;
+        if(identity.keyId!==user.identityKeyId||identity.publicKey!==user.identityPublicKey)return{error:'identity_mismatch'};
+        ensureSecureState(store);
+        const devices=store.secureDevices[user.id]||(store.secureDevices[user.id]={});
+        const existing=devices[deviceId];
+        if(existing&&(existing.encryptionPublicKey!==encryptionPublicKey||existing.signingPublicKey!==signingPublicKey))return{error:'secure_device_conflict'};
+        devices[deviceId]={
+          deviceId,encryptionPublicKey,signingPublicKey,identityKeyId:identity.keyId,
+          registeredAt:existing?.registeredAt||now(),lastSeenAt:now(),protocol:'pulse-e2ee-v1'
+        };
+        return{ok:true,device:secureDeviceView(devices[deviceId])};
+      });
+      json(res,out.error?(out.error==='unauthorized'?401:out.error==='secure_device_conflict'?409:400):200,out,corsHeaders);return true
+    }
+
+    if(route==='/api/pulse/secure/devices'&&req.method==='GET'){
+      const store=await readStore(),a=await auth(req,store);
+      if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}
+      json(res,200,{protocol:'pulse-e2ee-v1',devices:secureDevicesFor(store,a.user.id).map(secureDeviceView)},corsHeaders);return true
+    }
+
+    let secureMatch=route.match(/^\/api\/pulse\/secure\/bundle\/([a-z0-9_]{3,24})$/);
+    if(secureMatch&&req.method==='GET'){
+      const store=await readStore(),a=await auth(req,store);
+      if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}
+      const uid=store.handles[secureMatch[1]],user=uid&&store.users[uid];
+      if(!user||blocked(store,a.user.id,uid)){json(res,404,{error:'not_found'},corsHeaders);return true}
+      const devices=secureDevicesFor(store,uid).map(secureDeviceView);
+      json(res,200,{protocol:'pulse-e2ee-v1',handle:user.handle,identityKeyId:user.identityKeyId||'',devices},corsHeaders);return true
+    }
 
     if(route==='/api/pulse/auth/challenge'&&req.method==='POST'){
       if(!allowRate(req,'identity_challenge',40,60000)){json(res,429,{error:'rate_limited'},corsHeaders);return true}
@@ -456,22 +550,50 @@ export async function handlePulse(req,res,url,corsHeaders={}){
 
     if(route==='/api/pulse/report'&&req.method==='POST'){const b=await bodyJson(req),out=await mutateStore(store=>{const user=sessionUser(store,bearer(req));if(!user)return{error:'unauthorized'};const targetType=['post','user'].includes(b.targetType)?b.targetType:'post',targetId=clean(b.targetId,80),reason=clean(b.reason,240);if(!targetId||reason.length<3)return{error:'invalid_report'};const rid=id('r_');store.reports[rid]={id:rid,reporterId:user.id,targetType,targetId,reason,status:'open',createdAt:now()};return{ok:true,id:rid}});json(res,out.error?(out.error==='unauthorized'?401:400):201,out,corsHeaders);return true}
 
-    if(route==='/api/pulse/conversations'&&req.method==='GET'){const store=await readStore(),a=await auth(req,store);if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}const list=Object.entries(store.conversations).filter(([,c])=>c.members.includes(a.user.id)).map(([key,c])=>{const otherId=c.members.find(x=>x!==a.user.id),other=store.users[otherId],messages=(c.messageIds||[]).map(mid=>store.messages[mid]).filter(Boolean),last=messages.length?messages[messages.length-1]:null;return{key,user:other?publicUser(other,store,a.user.id):null,lastMessage:last?{body:last.body,createdAt:last.createdAt,senderId:last.senderId}:null}}).filter(item=>item.user).sort((x,y)=>Date.parse(y.lastMessage?.createdAt||0)-Date.parse(x.lastMessage?.createdAt||0));json(res,200,{conversations:list,messageMode:'persistent'},corsHeaders);return true}
+    if(route==='/api/pulse/conversations'&&req.method==='GET'){const store=await readStore(),a=await auth(req,store);if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}const list=Object.entries(store.conversations).filter(([,c])=>c.members.includes(a.user.id)).map(([key,c])=>{const otherId=c.members.find(x=>x!==a.user.id),other=store.users[otherId],messages=(c.messageIds||[]).map(mid=>store.messages[mid]).filter(Boolean),last=messages.length?messages[messages.length-1]:null;return{key,user:other?publicUser(other,store,a.user.id):null,lastMessage:last?{body:last.protocol==='pulse-e2ee-v1'?'':(last.body||''),encrypted:last.protocol==='pulse-e2ee-v1',createdAt:last.createdAt,senderId:last.senderId}:null}}).filter(item=>item.user).sort((x,y)=>Date.parse(y.lastMessage?.createdAt||0)-Date.parse(x.lastMessage?.createdAt||0));json(res,200,{conversations:list,messageMode:'persistent',encryption:'end-to-end'},corsHeaders);return true}
 
-    if(route==='/api/pulse/messages'&&req.method==='POST'){const b=await bodyJson(req),text=clean(b.body,2000),handle=clean(b.handle,24).toLowerCase().replace(/^@/,'');if(!text){json(res,400,{error:'empty_message'},corsHeaders);return true}const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req)),targetId=store.handles[handle];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};if(targetId===user.id)return{error:'self_message'};if(blocked(store,user.id,targetId))return{error:'blocked'};const key=conversationKey(user.id,targetId),conv=store.conversations[key]||(store.conversations[key]={members:[user.id,targetId],messageIds:[],createdAt:now()}),mid=id('m_'),createdAt=now(),msg={id:mid,conversationKey:key,senderId:user.id,recipientId:targetId,body:text,createdAt,readAt:null};store.messages[mid]=msg;conv.messageIds.push(mid);conv.messageIds=conv.messageIds.slice(-1000);notify(store,targetId,{actorId:user.id,type:'message',objectId:mid});return{message:msg}});json(res,out.error?(out.error==='unauthorized'?401:out.error==='not_found'?404:400):201,out,corsHeaders);return true}
+    if(route==='/api/pulse/messages'&&req.method==='POST'){
+      const b=await bodyJson(req),handle=clean(b.handle,24).toLowerCase().replace(/^@/,''),protocol=clean(b.protocol,40),clientMessageId=clean(b.clientMessageId,80),senderDeviceId=clean(b.senderDeviceId,80),sentAt=clean(b.sentAt,80);
+      if(protocol!=='pulse-e2ee-v1'||!clientMessageId||!senderDeviceId||!Array.isArray(b.envelopes)||!b.envelopes.length){json(res,400,{error:'e2ee_required'},corsHeaders);return true}
+      if(b.envelopes.length>24||b.envelopes.some(envelope=>!validSecureEnvelope(envelope))){json(res,400,{error:'secure_envelope_invalid'},corsHeaders);return true}
+      const out=await mutateStore(store=>{
+        const user=sessionUser(store,bearer(req)),targetId=store.handles[handle];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};if(targetId===user.id)return{error:'self_message'};if(blocked(store,user.id,targetId))return{error:'blocked'};
+        ensureSecureState(store);
+        const senderDevice=store.secureDevices[user.id]?.[senderDeviceId];
+        if(!senderDevice)return{error:'secure_device_required'};
+        if(Object.values(store.messages||{}).some(message=>message.clientMessageId===clientMessageId&&message.senderId===user.id))return{error:'duplicate_message'};
+        const allowedDevices=new Set([...secureDevicesFor(store,targetId).map(device=>device.deviceId),...secureDevicesFor(store,user.id).map(device=>device.deviceId)]);
+        if(!secureDevicesFor(store,targetId).length)return{error:'secure_recipient_unavailable'};
+        if(b.envelopes.some(envelope=>!allowedDevices.has(clean(envelope.recipientDeviceId,80))))return{error:'secure_envelope_recipient_invalid'};
+        const key=conversationKey(user.id,targetId),conv=store.conversations[key]||(store.conversations[key]={members:[user.id,targetId],messageIds:[],createdAt:now()}),mid=id('m_'),createdAt=sentAt&&Number.isFinite(Date.parse(sentAt))?new Date(sentAt).toISOString():now();
+        const envelopes=b.envelopes.map(envelope=>({
+          recipientDeviceId:clean(envelope.recipientDeviceId,80),
+          ephemeralPublicKey:clean(envelope.ephemeralPublicKey,160),
+          salt:clean(envelope.salt,160),
+          iv:clean(envelope.iv,80),
+          ciphertext:clean(envelope.ciphertext,8000),
+          signature:clean(envelope.signature,800)
+        }));
+        const msg={id:mid,clientMessageId,conversationKey:key,senderId:user.id,recipientId:targetId,senderDeviceId,protocol:'pulse-e2ee-v1',envelopes,createdAt,readAt:null};
+        store.messages[mid]=msg;conv.messageIds.push(mid);conv.messageIds=conv.messageIds.slice(-1000);
+        notify(store,targetId,{actorId:user.id,type:'message',objectId:mid});
+        return{message:{id:mid,clientMessageId,protocol:msg.protocol,createdAt,senderId:user.id,recipientId:targetId,senderDeviceId}};
+      });
+      json(res,out.error?(out.error==='unauthorized'?401:out.error==='not_found'?404:out.error==='duplicate_message'?409:400):201,out,corsHeaders);return true
+    }
 
     m=route.match(/^\/api\/pulse\/messages\/([a-z0-9_]{3,24})$/);
-    if(m&&req.method==='GET'){const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req)),targetId=store.handles[m[1]];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};const key=conversationKey(user.id,targetId),conv=store.conversations[key],ids=conv?.messageIds||[],messages=ids.map(mid=>store.messages[mid]).filter(Boolean);messages.forEach(msg=>{if(msg.recipientId===user.id&&!msg.readAt)msg.readAt=now()});return{user:publicUser(store.users[targetId],store,user.id),messages:messages.map(messageView),messageMode:'persistent'}});json(res,out.error?(out.error==='unauthorized'?401:404):200,out,corsHeaders);return true}
+    if(m&&req.method==='GET'){const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req)),targetId=store.handles[m[1]];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};const key=conversationKey(user.id,targetId),conv=store.conversations[key],ids=conv?.messageIds||[],messages=ids.map(mid=>store.messages[mid]).filter(Boolean);messages.forEach(msg=>{if(msg.recipientId===user.id&&!msg.readAt)msg.readAt=now()});const safeMessages=messages.map(msg=>{if(msg.protocol!=='pulse-e2ee-v1')return messageView(msg);const senderDevice=store.secureDevices?.[msg.senderId]?.[msg.senderDeviceId];return{id:msg.id,clientMessageId:msg.clientMessageId,protocol:msg.protocol,senderId:msg.senderId,recipientId:msg.recipientId,senderDeviceId:msg.senderDeviceId,createdAt:msg.createdAt,readAt:msg.readAt,envelopes:msg.envelopes||[],senderDevice:secureDeviceView(senderDevice)}});return{user:publicUser(store.users[targetId],store,user.id),messages:safeMessages,messageMode:'persistent',encryption:'end-to-end'}});json(res,out.error?(out.error==='unauthorized'?401:404):200,out,corsHeaders);return true}
 
-    if(route==='/api/pulse/export'&&req.method==='GET'){const store=await readStore(),a=await auth(req,store);if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}const uid=a.user.id,data={user:publicUser(a.user,store,uid),posts:Object.values(store.posts).filter(p=>p.authorId===uid),follows:store.follows[uid]||[],likes:Object.entries(store.likes).filter(([,ids])=>ids.includes(uid)).map(([pid])=>pid),bookmarks:store.bookmarks[uid]||[],circles:Object.values(store.circles).filter(c=>(store.circleMembers[c.id]||{})[uid]),notifications:store.notifications[uid]||[],messages:Object.values(store.messages).filter(msg=>msg.senderId===uid||msg.recipientId===uid).map(messageView)};json(res,200,{exportedAt:now(),data},corsHeaders);return true}
+    if(route==='/api/pulse/export'&&req.method==='GET'){const store=await readStore(),a=await auth(req,store);if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}const uid=a.user.id,data={user:publicUser(a.user,store,uid),posts:Object.values(store.posts).filter(p=>p.authorId===uid),follows:store.follows[uid]||[],likes:Object.entries(store.likes).filter(([,ids])=>ids.includes(uid)).map(([pid])=>pid),bookmarks:store.bookmarks[uid]||[],circles:Object.values(store.circles).filter(c=>(store.circleMembers[c.id]||{})[uid]),notifications:store.notifications[uid]||[],messages:Object.values(store.messages).filter(msg=>msg.senderId===uid||msg.recipientId===uid).map(messageView),secureDevices:secureDevicesFor(store,uid).map(secureDeviceView)};json(res,200,{exportedAt:now(),data},corsHeaders);return true}
 
     json(res,404,{error:'not_found'},corsHeaders);return true
   }catch(e){console.error('[pulse]',e);const raw=String(e?.message||'internal_error');const error=/fetch failed|ECONN|ENOTFOUND|ETIMEDOUT|storage_unavailable/i.test(raw)?'pulse_storage_unavailable':raw;json(res,e.status||503,{error},corsHeaders);return true}
 }
 
 if(usePostgres)pg().catch(e=>console.error('[pulse] postgres init failed',e));
-else if(useMysql)pool().catch(e=>console.error('[pulse] mysql init failed',e));
 else if(useSupabase)supabase.health().then(h=>{if(!h.connected)console.error('[pulse] supabase init failed',h.last_error)}).catch(e=>console.error('[pulse] supabase init failed',e));
+else if(useMysql)pool().catch(e=>console.error('[pulse] mysql init failed',e));
 else ensureFile().catch(e=>console.error('[pulse] file init failed',e));
 
 const purgeExpiredPulsePosts=()=>mutateStore(store=>({pruned:pruneExpiredPosts(store)})).catch(error=>console.error('[pulse] post expiry purge failed',String(error?.message||error)));
