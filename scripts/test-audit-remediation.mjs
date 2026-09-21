@@ -91,15 +91,6 @@ async function testPulsePrivacy(){
     assert.equal(publicFeed.body.posts.some(post=>post.id==='p_expired'),false,'public posts older than 24 hours must disappear');
     assert.equal(publicFeed.body.posts.some(post=>post.id==='p_recent'),true,'public posts younger than 24 hours must remain');
 
-    const logout=await call('POST','/api/pulse/auth/logout',{authToken:token,body:{}});
-    assert.equal(logout.status,200,'locking/leaving Pulse must be able to revoke the session');
-    const anonymousFeedAfterLogout=await call('GET','/api/pulse/feed?mode=discover');
-    assert.equal(anonymousFeedAfterLogout.status,200);
-    assert.equal(
-      anonymousFeedAfterLogout.body.posts.some(post=>post.id==='p_recent'),
-      true,
-      'revoking the identity/session must never delete a public post before its 24-hour expiry'
-    );
 
     const messages=await call('GET','/api/pulse/messages/alpha',{authToken:token});
     assert.equal(messages.status,200);
@@ -181,6 +172,16 @@ async function testPulsePrivacy(){
     assert.equal('body' in sessionMessage,false,'session-v2 server record must not contain plaintext');
     assert.equal(sessionMessage.envelopes[0].header.n,0);
     assert.equal(sessionMessage.envelopes[0].ciphertext,sessionCiphertext);
+
+    const logout=await call('POST','/api/pulse/auth/logout',{authToken:token,body:{}});
+    assert.equal(logout.status,200,'locking/leaving Pulse must be able to revoke the session');
+    const anonymousFeedAfterLogout=await call('GET','/api/pulse/feed?mode=discover');
+    assert.equal(anonymousFeedAfterLogout.status,200);
+    assert.equal(
+      anonymousFeedAfterLogout.body.posts.some(post=>post.id==='p_recent'),
+      true,
+      'revoking the identity/session must never delete a public post before its 24-hour expiry'
+    );
   }finally{
     delete process.env.DATA_DIR;
     await rm(dir,{recursive:true,force:true});
