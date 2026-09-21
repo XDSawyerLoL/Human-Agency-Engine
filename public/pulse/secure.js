@@ -1,0 +1,233 @@
+import { api, state } from './core.js?v=13';
+
+const PROTOCOL='pulse-e2ee-v1';
+const DB_NAME='quantic-pulse-secure';
+const DB_VERSION=1;
+const DEVICE_STORE='device';
+const TRUST_STORE='trust';
+const DEVICE_KEY='primary';
+const te=new TextEncoder();
+const td=new TextDecoder();
+
+function b64u(bytes){
+  const data=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
+  let binary='';
+  for(let i=0;i<data.length;i++)binary+=String.fromCharCode(data[i]);
+  return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function fromB64u(value){
+  const normalized=String(value||'').replace(/-/g,'+').replace(/_/g,'/');
+  const padded=normalized+'='.repeat((4-normalized.length%4)%4);
+  const binary=atob(padded),out=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++)out[i]=binary.charCodeAt(i);
+  return out;
+}
+function concat(...parts){
+  const arrays=parts.map(part=>part instanceof Uint8Array?part:new Uint8Array(part));
+  const total=arrays.reduce((n,part)=>n+part.length,0),out=new Uint8Array(total);
+  let offset=0;
+  for(const part of arrays){out.set(part,offset);offset+=part.length}
+  return out;
+}
+async function sha256Text(value){return new Uint8Array(await crypto.subtle.digest('SHA-256',te.encode(String(value))))}
+
+function openDb(){
+  return new Promise((resolve,reject)=>{
+    const request=indexedDB.open(DB_NAME,DB_VERSION);
+    request.onupgradeneeded=()=>{
+      const db=request.result;
+      if(!db.objectStoreNames.contains(DEVICE_STORE))db.createObjectStore(DEVICE_STORE);
+      if(!db.objectStoreNames.contains(TRUST_STORE))db.createObjectStore(TRUST_STORE);
+    };
+    request.onsuccess=()=>resolve(request.result);
+    request.onerror=()=>reject(request.error||new Error('secure_store_unavailable'));
+  });
+}
+async function dbGet(store,key){
+  const db=await openDb();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(store,'readonly'),request=tx.objectStore(store).get(key);
+    request.onsuccess=()=>resolve(request.result);
+    request.onerror=()=>reject(request.error||new Error('secure_store_unavailable'));
+    tx.oncomplete=()=>db.close();
+  });
+}
+async function dbPut(store,key,value){
+  const db=await openDb();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(store,'readwrite');
+    tx.objectStore(store).put(value,key);
+    tx.oncomplete=()=>{db.close();resolve(value)};
+    tx.onerror=()=>{db.close();reject(tx.error||new Error('secure_store_unavailable'))};
+  });
+}
+
+async function nonExtractablePrivate(pair,algorithm,usages){
+  const pkcs8=await crypto.subtle.exportKey('pkcs8',pair.privateKey);
+  return crypto.subtle.importKey('pkcs8',pkcs8,algorithm,false,usages);
+}
+async function createDevice(){
+  if(!crypto?.subtle)throw new Error('secure_crypto_unsupported');
+  let encPair,signPair;
+  try{
+    encPair=await crypto.subtle.generateKey({name:'X25519'},true,['deriveBits']);
+    signPair=await crypto.subtle.generateKey({name:'Ed25519'},true,['sign','verify']);
+  }catch{throw new Error('secure_crypto_unsupported')}
+  const encryptionPrivateKey=await nonExtractablePrivate(encPair,{name:'X25519'},['deriveBits']);
+  const signingPrivateKey=await nonExtractablePrivate(signPair,{name:'Ed25519'},['sign']);
+  const encryptionPublicKey=b64u(await crypto.subtle.exportKey('raw',encPair.publicKey));
+  const signingPublicKey=b64u(await crypto.subtle.exportKey('raw',signPair.publicKey));
+  const device={
+    deviceId:'pd_'+crypto.randomUUID().replace(/-/g,''),
+    encryptionPrivateKey,signingPrivateKey,encryptionPublicKey,signingPublicKey,
+    createdAt:new Date().toISOString(),protocol:PROTOCOL
+  };
+  await dbPut(DEVICE_STORE,DEVICE_KEY,device);
+  return device;
+}
+export async function getSecureDevice(){
+  const existing=await dbGet(DEVICE_STORE,DEVICE_KEY).catch(()=>null);
+  if(existing?.deviceId&&existing?.encryptionPrivateKey&&existing?.signingPrivateKey&&existing?.encryptionPublicKey&&existing?.signingPublicKey)return existing;
+  return createDevice();
+}
+function registrationBundle(device){
+  return{
+    deviceId:device.deviceId,
+    encryptionPublicKey:device.encryptionPublicKey,
+    signingPublicKey:device.signingPublicKey
+  };
+}
+export async function ensureSecureDevice(){
+  if(!state.user)return null;
+  const device=await getSecureDevice();
+  const current=await api('/api/pulse/secure/devices').catch(()=>({devices:[]}));
+  const found=(current.devices||[]).find(item=>item.deviceId===device.deviceId&&item.encryptionPublicKey===device.encryptionPublicKey&&item.signingPublicKey===device.signingPublicKey);
+  if(found)return device;
+  if(!window.QuanticID?.assert)throw new Error('identity_vault_required');
+  const bundle=registrationBundle(device);
+  const challenge=await api('/api/pulse/secure/challenge',{method:'POST',body:JSON.stringify(bundle)});
+  const identityProof=await window.QuanticID.assert({challenge:challenge.challenge,audience:challenge.audience});
+  await api('/api/pulse/secure/devices',{method:'POST',body:JSON.stringify({...bundle,identityProof})});
+  return device;
+}
+async function trustBundle(handle,bundle){
+  const key=String(handle||'').toLowerCase();
+  const previous=await dbGet(TRUST_STORE,key).catch(()=>null);
+  if(previous?.identityKeyId&&previous.identityKeyId!==bundle.identityKeyId){
+    const error=new Error('secure_identity_changed');
+    error.previous=previous.identityKeyId;
+    error.current=bundle.identityKeyId;
+    throw error;
+  }
+  if(!previous)await dbPut(TRUST_STORE,key,{identityKeyId:bundle.identityKeyId,firstSeenAt:new Date().toISOString()});
+  return bundle;
+}
+export async function getSecureBundle(handle){
+  const clean=String(handle||'').replace(/^@/,'').toLowerCase();
+  const bundle=await api('/api/pulse/secure/bundle/'+encodeURIComponent(clean));
+  if(bundle.protocol!==PROTOCOL)throw new Error('secure_protocol_mismatch');
+  if(!(bundle.devices||[]).length)throw new Error('secure_recipient_unavailable');
+  return trustBundle(clean,bundle);
+}
+async function ownDevices(){
+  const data=await api('/api/pulse/secure/devices');
+  return (data.devices||[]).filter(device=>device.protocol===PROTOCOL);
+}
+async function importX25519Public(raw){return crypto.subtle.importKey('raw',fromB64u(raw),{name:'X25519'},false,[])}
+async function importEd25519Public(raw){return crypto.subtle.importKey('raw',fromB64u(raw),{name:'Ed25519'},false,['verify'])}
+async function deriveAesKey(privateKey,publicKey,salt,info){
+  const secret=new Uint8Array(await crypto.subtle.deriveBits({name:'X25519',public:publicKey},privateKey,256));
+  const material=await crypto.subtle.importKey('raw',secret,'HKDF',false,['deriveKey']);
+  secret.fill(0);
+  return crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-256',salt,info:te.encode(info)},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+function envelopeUnsigned(envelope){
+  return JSON.stringify({
+    protocol:PROTOCOL,
+    clientMessageId:envelope.clientMessageId,
+    senderDeviceId:envelope.senderDeviceId,
+    recipientDeviceId:envelope.recipientDeviceId,
+    ephemeralPublicKey:envelope.ephemeralPublicKey,
+    salt:envelope.salt,
+    iv:envelope.iv,
+    ciphertext:envelope.ciphertext,
+    sentAt:envelope.sentAt
+  });
+}
+async function encryptEnvelope(device,target,{clientMessageId,sentAt,plaintext}){
+  const ephemeral=await crypto.subtle.generateKey({name:'X25519'},true,['deriveBits']);
+  const ephemeralPublicKey=b64u(await crypto.subtle.exportKey('raw',ephemeral.publicKey));
+  const targetPublic=await importX25519Public(target.encryptionPublicKey);
+  const salt=crypto.getRandomValues(new Uint8Array(32));
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const info=[PROTOCOL,clientMessageId,device.deviceId,target.deviceId].join('|');
+  const aes=await deriveAesKey(ephemeral.privateKey,targetPublic,salt,info);
+  const aad=te.encode([PROTOCOL,clientMessageId,device.deviceId,target.deviceId,sentAt].join('|'));
+  const ciphertext=b64u(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:aad,tagLength:128},aes,te.encode(plaintext)));
+  const envelope={clientMessageId,senderDeviceId:device.deviceId,recipientDeviceId:target.deviceId,ephemeralPublicKey,salt:b64u(salt),iv:b64u(iv),ciphertext,sentAt};
+  envelope.signature=b64u(await crypto.subtle.sign({name:'Ed25519'},device.signingPrivateKey,te.encode(envelopeUnsigned(envelope))));
+  return envelope;
+}
+export async function encryptMessageForHandle(handle,plaintext){
+  const text=String(plaintext||'');
+  if(!text.trim())throw new Error('empty_message');
+  if(te.encode(text).length>3000)throw new Error('message_too_large');
+  const device=await ensureSecureDevice();
+  const [peer,ours]=await Promise.all([getSecureBundle(handle),ownDevices()]);
+  const targets=new Map();
+  for(const target of [...peer.devices,...ours])targets.set(target.deviceId,target);
+  if(!targets.size)throw new Error('secure_recipient_unavailable');
+  const clientMessageId=crypto.randomUUID(),sentAt=new Date().toISOString(),envelopes=[];
+  for(const target of targets.values())envelopes.push(await encryptEnvelope(device,target,{clientMessageId,sentAt,plaintext:text}));
+  return{handle:String(handle||'').replace(/^@/,''),protocol:PROTOCOL,clientMessageId,senderDeviceId:device.deviceId,sentAt,envelopes};
+}
+async function verifyEnvelope(message,envelope){
+  const sender=message.senderDevice;
+  if(!sender?.signingPublicKey||sender.deviceId!==message.senderDeviceId)throw new Error('secure_sender_unverified');
+  const publicKey=await importEd25519Public(sender.signingPublicKey);
+  const material={
+    clientMessageId:message.clientMessageId,
+    senderDeviceId:message.senderDeviceId,
+    recipientDeviceId:envelope.recipientDeviceId,
+    ephemeralPublicKey:envelope.ephemeralPublicKey,
+    salt:envelope.salt,
+    iv:envelope.iv,
+    ciphertext:envelope.ciphertext,
+    sentAt:message.createdAt
+  };
+  return crypto.subtle.verify({name:'Ed25519'},publicKey,fromB64u(envelope.signature),te.encode(envelopeUnsigned(material)));
+}
+async function decryptOne(device,message){
+  if(message.protocol!==PROTOCOL)return{...message,plaintext:String(message.body||''),legacy:true};
+  const envelope=(message.envelopes||[]).find(item=>item.recipientDeviceId===device.deviceId);
+  if(!envelope)return{...message,plaintext:'',secureUnavailable:true};
+  if(!await verifyEnvelope(message,envelope))return{...message,plaintext:'',secureInvalid:true};
+  const ephemeralPublic=await importX25519Public(envelope.ephemeralPublicKey);
+  const salt=fromB64u(envelope.salt),iv=fromB64u(envelope.iv);
+  const info=[PROTOCOL,message.clientMessageId,message.senderDeviceId,device.deviceId].join('|');
+  const aes=await deriveAesKey(device.encryptionPrivateKey,ephemeralPublic,salt,info);
+  const aad=te.encode([PROTOCOL,message.clientMessageId,message.senderDeviceId,device.deviceId,message.createdAt].join('|'));
+  try{
+    const clear=await crypto.subtle.decrypt({name:'AES-GCM',iv,additionalData:aad,tagLength:128},aes,fromB64u(envelope.ciphertext));
+    return{...message,plaintext:td.decode(clear),secure:true};
+  }catch{return{...message,plaintext:'',secureInvalid:true}}
+}
+export async function decryptConversationMessages(messages){
+  const device=await ensureSecureDevice();
+  const out=[];
+  for(const message of messages||[])out.push(await decryptOne(device,message));
+  return out;
+}
+export async function safetyNumber(handle){
+  const [device,bundle,identity]=await Promise.all([ensureSecureDevice(),getSecureBundle(handle),window.QuanticID?.probe?.()]);
+  const ids=[String(identity?.keyId||device.signingPublicKey),String(bundle.identityKeyId||'')].sort();
+  const digest=await sha256Text(ids.join('|'));
+  const digits=Array.from(digest.slice(0,15)).map(byte=>String(byte).padStart(3,'0')).join('');
+  return digits.match(/.{1,5}/g).slice(0,9).join(' ');
+}
+export async function secureCapability(){
+  try{
+    const device=await ensureSecureDevice();
+    return{ok:true,protocol:PROTOCOL,deviceId:device.deviceId};
+  }catch(error){return{ok:false,error:error?.message||'secure_unavailable'}}
+}
