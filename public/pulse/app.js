@@ -1,7 +1,7 @@
 import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=13';
 import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, ensureIdentityVault, startIdentityPresenceGuard } from './session.js?v=13';
 import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview } from './views.js?v=13';
-import { ensureSecureDevice, encryptMessageForHandle } from './secure.js?v=13';
+import { ensureSecureDevice, sendSecureMessage } from './secure.js?v=13';
 
 function setReply(postId,handle){
   state.replyTo=postId;
@@ -383,8 +383,7 @@ function bindDelegatedEvents(){
       const form=new FormData(event.target);
       try{
         const handle=String(form.get('handle')||'').replace(/^@/,'');
-        const payload=await encryptMessageForHandle(handle,String(form.get('body')||''));
-        await api('/api/pulse/messages',{method:'POST',body:JSON.stringify(payload)});
+        await sendSecureMessage(handle,String(form.get('body')||''));
         await loadMessages();
       }catch(error){alert(errorText(error))}
     }
@@ -394,8 +393,7 @@ function bindDelegatedEvents(){
       const form=new FormData(event.target);
       const handle=event.target.dataset.handle;
       try{
-        const payload=await encryptMessageForHandle(handle,String(form.get('body')||''));
-        await api('/api/pulse/messages',{method:'POST',body:JSON.stringify(payload)});
+        await sendSecureMessage(handle,String(form.get('body')||''));
         await loadConversation(handle);
       }catch(error){alert(errorText(error))}
     }
