@@ -29,6 +29,9 @@ const MYSQL={
 };
 const usePostgres=!!PULSE_DATABASE_URL;
 const useMysql=!usePostgres&&!!(MYSQL.host&&MYSQL.user&&MYSQL.database);
+const PULSE_REMOTE_STORE_URL=String(process.env.PULSE_REMOTE_STORE_URL||'').trim().replace(/\/$/,'');
+const PULSE_REMOTE_STORE_TOKEN=String(process.env.PULSE_REMOTE_STORE_TOKEN||'').trim();
+const useRemoteStore=Boolean(PULSE_REMOTE_STORE_URL&&PULSE_REMOTE_STORE_TOKEN.length>=32);
 const supabase=new SupabaseBridge();
 const useSupabase=supabase.enabled;
 let pgPool=null,mysqlPool=null,writeQueue=Promise.resolve(),pulseCache=emptyStore(),pulseCacheReady=false;
@@ -108,6 +111,56 @@ async function pool(){
   return mysqlPool;
 }
 async function ensureFile(){await mkdir(DATA_DIR,{recursive:true});try{await readFile(FILE,'utf8')}catch{await writeFile(FILE,JSON.stringify(emptyStore(),null,2))}}
+async function remotePulseRequest(method='GET',body=null){
+  if(!useRemoteStore)throw new Error('pulse_remote_store_not_configured');
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+  try{
+    const response=await fetch(PULSE_REMOTE_STORE_URL,{
+      method,
+      cache:'no-store',
+      headers:{
+        authorization:'Bearer '+PULSE_REMOTE_STORE_TOKEN,
+        accept:'application/json',
+        ...(body===null?{}:{'content-type':'application/json'})
+      },
+      body:body===null?undefined:JSON.stringify(body),
+      signal:controller.signal
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok){
+      const error=Object.assign(new Error(data.error||('pulse_remote_http_'+response.status)),{status:response.status,data});
+      throw error;
+    }
+    return data;
+  }finally{clearTimeout(timer)}
+}
+async function readRemoteStore(){
+  if(!useRemoteStore)return null;
+  try{
+    const row=await remotePulseRequest('GET');
+    if(row?.payload&&typeof row.payload==='object')return{store:cacheStore(row.payload,'quantic-relay'),revision:Number(row.revision||0)};
+    return{store:cacheStore(emptyStore(),'quantic-relay'),revision:Number(row?.revision||0)};
+  }catch(error){
+    console.error('[pulse] remote store read failed',String(error?.message||error));
+    return null;
+  }
+}
+async function mutateRemoteStore(fn){
+  let out;
+  writeQueue=writeQueue.catch(()=>{}).then(async()=>{
+    const snapshot=await readRemoteStore();
+    if(!snapshot)throw Object.assign(new Error('pulse_storage_unavailable'),{status:503});
+    const store=snapshot.store;
+    pruneExpiredPosts(store);
+    out=await fn(store);
+    pruneExpiredPosts(store);
+    const saved=await remotePulseRequest('PUT',{payload:store,expectedRevision:snapshot.revision});
+    cacheStore(store,'quantic-relay');
+    return saved;
+  });
+  await writeQueue;
+  return out;
+}
 function hasPulseData(store){return!!store&&(['users','posts','messages','circles'].some(key=>Object.keys(store[key]||{}).length>0))}
 function cacheStore(store,backend){if(store&&typeof store==='object'){pulseCache=store;pulseCacheReady=true;if(backend)activeStorage=backend}return store}
 async function readLocalStore(){await ensureFile();try{return JSON.parse(await readFile(FILE,'utf8'))}catch{return emptyStore()}}
@@ -135,6 +188,10 @@ async function readStore(){
       return cacheStore(typeof data==='string'?JSON.parse(data):data,'postgres');
     }catch(error){console.error('[pulse] postgres read failed',String(error?.message||error))}
   }
+  if(useRemoteStore){
+    const remote=await readRemoteStore();
+    if(remote?.store)return remote.store;
+  }
   if(useSupabase){
     const store=await readSupabaseStore();
     if(store)return store;
@@ -147,7 +204,7 @@ async function readStore(){
     }catch(error){console.error('[pulse] mysql read failed',String(error?.message||error))}
   }
   if(pulseCacheReady)return pulseCache;
-  if(usePostgres||useSupabase||useMysql)throw Object.assign(new Error('pulse_storage_unavailable'),{status:503});
+  if(usePostgres||useRemoteStore||useSupabase||useMysql)throw Object.assign(new Error('pulse_storage_unavailable'),{status:503});
   return cacheStore(await readLocalStore(),'json');
 }
 async function mutateStore(fn){
@@ -171,7 +228,12 @@ async function mutateStore(fn){
     }catch(error){console.error('[pulse] postgres write failed',String(error?.message||error))}
   }
 
-  // Supabase is the deployment-safe canonical fallback because Hostinger's local filesystem is ephemeral.
+  if(useRemoteStore){
+    try{return await mutateRemoteStore(fn)}
+    catch(error){console.error('[pulse] remote store write failed',String(error?.message||error))}
+  }
+
+  // Supabase remains a fallback when configured and reachable.
   if(useSupabase){
     let out;
     writeQueue=writeQueue.catch(()=>{}).then(async()=>{
@@ -420,6 +482,12 @@ export async function pulseInfo(){
   if(usePostgres){
     try{await pg();connected=true;activeStorage='postgres'}catch(error){lastError=String(error?.message||error)}
   }
+  if(!connected&&useRemoteStore){
+    try{
+      const remote=await remotePulseRequest('GET');
+      if(remote&&Number.isFinite(Number(remote.revision))){connected=true;activeStorage='quantic-relay'}
+    }catch(error){lastError=String(error?.message||error)}
+  }
   if(!connected&&useSupabase){
     const health=await supabase.health().catch(error=>({connected:false,last_error:String(error?.message||error)}));
     if(health.connected){connected=true;activeStorage='supabase'}else lastError=health.last_error||lastError;
@@ -434,6 +502,7 @@ export async function pulseInfo(){
     persistent:connected,
     postgresConfigured:usePostgres,
     mysqlConfigured:useMysql,
+    remoteStoreConfigured:useRemoteStore,
     supabaseConfigured:useSupabase,
     postRetentionHours:POST_TTL_MS/3600000,
     privateMessages:'persistent',
@@ -725,6 +794,7 @@ export async function handlePulse(req,res,url,corsHeaders={}){
 }
 
 if(usePostgres)pg().catch(e=>console.error('[pulse] postgres init failed',e));
+else if(useRemoteStore)remotePulseRequest('GET').catch(e=>console.error('[pulse] remote store init failed',e?.message||e));
 else if(useSupabase)supabase.health().then(h=>{if(!h.connected)console.error('[pulse] supabase init failed',h.last_error)}).catch(e=>console.error('[pulse] supabase init failed',e));
 else if(useMysql)pool().catch(e=>console.error('[pulse] mysql init failed',e));
 else ensureFile().catch(e=>console.error('[pulse] file init failed',e));
@@ -736,10 +806,26 @@ setInterval(purgeExpiredPulsePosts,5*60*1000).unref?.();
 export function installQuanticPulse(app){
   if(app.__quanticPulseInstalled)return;
   app.__quanticPulseInstalled=true;
+  const configuredOrigins=String(process.env.PULSE_CORS_ORIGINS||'https://mediumorchid-badger-314305.hostingersite.com')
+    .split(',').map(value=>value.trim()).filter(Boolean);
+  const allowedOrigins=new Set(configuredOrigins);
   app.use('/api/pulse',async(req,res,next)=>{
     try{
+      const origin=String(req.headers.origin||'');
+      const corsHeaders={};
+      if(origin&&allowedOrigins.has(origin)){
+        corsHeaders['access-control-allow-origin']=origin;
+        corsHeaders['access-control-allow-methods']='GET,POST,PATCH,OPTIONS';
+        corsHeaders['access-control-allow-headers']='Content-Type, Authorization';
+        corsHeaders['access-control-max-age']='600';
+        corsHeaders['vary']='Origin';
+      }
+      if(req.method==='OPTIONS'){
+        if(origin&&!allowedOrigins.has(origin)){res.writeHead(403,{'cache-control':'no-store'});res.end();return}
+        res.writeHead(204,corsHeaders);res.end();return;
+      }
       const url=new URL(req.originalUrl||req.url,'http://localhost');
-      const handled=await handlePulse(req,res,url,{});
+      const handled=await handlePulse(req,res,url,corsHeaders);
       if(!handled&&!res.headersSent)next();
     }catch(error){
       next(error);
