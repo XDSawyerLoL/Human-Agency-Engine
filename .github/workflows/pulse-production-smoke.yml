@@ -63,7 +63,7 @@ jobs:
           for attempt in $(seq 1 36); do
             page="$(curl -fsSL --max-time 25 "$HOSTINGER/pulse/" 2>/dev/null || true)"
             code="$(curl -sS --max-time 25 --output /tmp/hostinger-pulse-health.json --write-out '%{http_code}' "$HOSTINGER/api/pulse/health" || true)"
-            if grep -q '/pulse/app.js?v=18' <<<"$page" && [ "$code" = "200" ]; then
+            if grep -q '/pulse/app.js?v=19' <<<"$page" && [ "$code" = "200" ]; then
               if python - <<'PY'
           import json
           p=json.load(open('/tmp/hostinger-pulse-health.json',encoding='utf-8'))
