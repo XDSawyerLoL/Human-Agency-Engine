@@ -1,4 +1,4 @@
-import { b64u, fromB64u, importX25519Public } from './ratchet-core.js?v=17';
+import { b64u, fromB64u, importX25519Public } from './ratchet-core.js?v=18';
 
 const te=new TextEncoder();
 const td=new TextDecoder();
