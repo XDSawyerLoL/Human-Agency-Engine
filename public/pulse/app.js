@@ -88,7 +88,7 @@ async function reportPost(postId){
 
 async function doLogout(){
   try{await api('/api/pulse/auth/logout',{method:'POST',body:'{}'})}catch{}
-  clearSession();
+  clearSession(true);
   await loadHome();
 }
 
