@@ -172,15 +172,35 @@ export async function pullFromQuanticNetwork(pulseDeviceId){
       const data=await relayJson(base,'/api/quantic/pull?handle='+encodeURIComponent(registration.canonicalAddress)+'&deviceId='+encodeURIComponent(registration.deviceId),{
         headers:{authorization:'Bearer '+transport.authToken}
       });
-      const ids=[];
       for(const envelope of data.envelopes||[]){
-        try{packets.push({...await decryptOuter(transport.encryptionPrivateKey,envelope),_relayFrom:envelope.from});ids.push(envelope.id)}catch{}
+        try{
+          packets.push({
+            ...await decryptOuter(transport.encryptionPrivateKey,envelope),
+            _relayFrom:envelope.from,
+            _relayBase:base,
+            _relayEnvelopeId:envelope.id
+          });
+        }catch{}
       }
-      if(ids.length)await relayJson(base,'/api/quantic/ack',{
-        method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+transport.authToken},
-        body:JSON.stringify({handle:registration.canonicalAddress,deviceId:registration.deviceId,ids})
-      }).catch(()=>{});
     }catch{}
   }
   return packets;
+}
+export async function ackQuanticNetworkPackets(pulseDeviceId,packets){
+  const transport=await ensurePulseNetworkDevice(pulseDeviceId),groups=new Map();
+  for(const packet of packets||[]){
+    if(!packet?._relayBase||!packet?._relayEnvelopeId)continue;
+    const ids=groups.get(packet._relayBase)||[];
+    ids.push(packet._relayEnvelopeId);
+    groups.set(packet._relayBase,ids);
+  }
+  for(const [base,ids] of groups){
+    const registration=transport.registrations?.[base];
+    if(!registration)continue;
+    await relayJson(base,'/api/quantic/ack',{
+      method:'POST',
+      headers:{'content-type':'application/json',authorization:'Bearer '+transport.authToken},
+      body:JSON.stringify({handle:registration.canonicalAddress,deviceId:registration.deviceId,ids:[...new Set(ids)]})
+    }).catch(()=>{});
+  }
 }
