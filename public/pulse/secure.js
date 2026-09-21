@@ -1,5 +1,5 @@
 import { api, state } from './core.js?v=14';
-import { ensurePulseNetworkDevice, publicPulseNetworkRoute, sendOverQuanticNetwork, pullFromQuanticNetwork } from './network.js?v=14';
+import { ensurePulseNetworkDevice, publicPulseNetworkRoute, sendOverQuanticNetwork, pullFromQuanticNetwork, ackQuanticNetworkPackets } from './network.js?v=14';
 
 const PROTOCOL='pulse-e2ee-v1';
 const DB_NAME='quantic-pulse-secure';
@@ -350,6 +350,7 @@ export async function sendSecureMessage(handle,plaintext){
 export async function syncDecentralizedInbox(){
   const localDevice=await getSecureDevice();
   const packets=await pullFromQuanticNetwork(localDevice.deviceId).catch(()=>[]);
+  const verifiedPackets=[];
   let accepted=0;
   for(const packet of packets){
     try{
@@ -367,9 +368,11 @@ export async function syncDecentralizedInbox(){
         senderDevice:trusted
       };
       await saveLocalMessage(message);
+      verifiedPackets.push(packet);
       accepted++;
     }catch{}
   }
+  if(verifiedPackets.length)await ackQuanticNetworkPackets(localDevice.deviceId,verifiedPackets).catch(()=>{});
   return accepted;
 }
 export async function decentralizedMessagesFor(handle){
