@@ -1,4 +1,5 @@
-export const API_BASE=String(window.QUANTIC_PULSE_API_BASE||'').replace(/\/$/,'');
+const DEFAULT_DURABLE_API=location.hostname.endsWith('hostingersite.com')?'https://quantic-pulse-api.onrender.com':'';
+export const API_BASE=String(window.QUANTIC_PULSE_API_BASE||DEFAULT_DURABLE_API).replace(/\/$/,'');
 export const TOKEN_KEY='quantic_pulse_token';
 export const state={token:localStorage.getItem(TOKEN_KEY)||'',user:null,feed:'following',view:'home',replyTo:null,authMode:'login',attachment:null};
 
