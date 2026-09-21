@@ -18,6 +18,9 @@ assert.match(embedded,/mediumorchid-badger-314305\.hostingersite\.com/);
 assert.match(embedded,/QUANTIC_RELAY_IDENTITY_SECRET|sha256/i);
 assert.match(embedded,/quanticmail-network-relay\.onrender\.com/);
 assert.match(embedded,/quantic-network-relay-backup-production\.up\.railway\.app/);
+assert.match(embedded,/proxyToDurableRelay/);
+assert.match(embedded,/QUANTIC_RELAY_FALLBACK_ENDPOINT/);
+assert.match(embedded,/X-Quantic-Relay-Backend/);
 
 const pkg=JSON.parse(fs.readFileSync("package.json","utf8"));
 assert.match(pkg.scripts.start,/experimental-transform-types/);
