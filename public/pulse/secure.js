@@ -381,6 +381,22 @@ export async function decentralizedMessagesFor(handle){
     (message.senderHandle===ours&&message.recipientHandle===peer)
   );
 }
+export async function decentralizedConversationSummaries(){
+  await syncDecentralizedInbox().catch(()=>{});
+  const ours=String(state.user?.handle||'').toLowerCase();
+  const grouped=new Map();
+  for(const message of await dbGetAll(INBOX_STORE)){
+    const sender=String(message.senderHandle||'').toLowerCase();
+    const recipient=String(message.recipientHandle||'').toLowerCase();
+    const peer=sender===ours?recipient:recipient===ours?sender:'';
+    if(!peer)continue;
+    const previous=grouped.get(peer);
+    if(!previous||Date.parse(message.createdAt||0)>Date.parse(previous.createdAt||0)){
+      grouped.set(peer,{handle:peer,createdAt:message.createdAt||new Date(0).toISOString(),encrypted:true});
+    }
+  }
+  return [...grouped.values()].sort((a,b)=>Date.parse(b.createdAt)-Date.parse(a.createdAt));
+}
 
 export async function safetyNumber(handle){
   const [device,bundle,identity]=await Promise.all([ensureSecureDevice(),getSecureBundle(handle),window.QuanticID?.probe?.()]);
