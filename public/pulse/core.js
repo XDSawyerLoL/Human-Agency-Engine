@@ -1,5 +1,6 @@
-const DEFAULT_DURABLE_API=location.hostname.endsWith('hostingersite.com')?'https://quantic-pulse-api.onrender.com':'';
-export const API_BASE=String(window.QUANTIC_PULSE_API_BASE||DEFAULT_DURABLE_API).replace(/\/$/,'');
+// Default to same-origin. On Hostinger, /api/pulse/* is already proxied server-side
+// to the durable Pulse backend, which avoids browser CORS/preflight failures.
+export const API_BASE=String(window.QUANTIC_PULSE_API_BASE||'').replace(/\/$/,'');
 export const TOKEN_KEY='quantic_pulse_token';
 export const state={token:localStorage.getItem(TOKEN_KEY)||'',user:null,feed:'following',view:'home',replyTo:null,authMode:'login',attachment:null};
 
@@ -99,9 +100,10 @@ export function errorText(e){
 }
 
 export async function api(path,options={}){
-  const headers={'content-type':'application/json',...(options.headers||{})};
-  if(state.token)headers.authorization='Bearer '+state.token;
   const method=String(options.method||'GET').toUpperCase();
+  const headers={...(options.headers||{})};
+  if(options.body!==undefined&&options.body!==null&&!headers['content-type'])headers['content-type']='application/json';
+  if(state.token)headers.authorization='Bearer '+state.token;
   const attempts=method==='GET'?3:1;
   let lastCause=null;
   for(let attempt=0;attempt<attempts;attempt++){
