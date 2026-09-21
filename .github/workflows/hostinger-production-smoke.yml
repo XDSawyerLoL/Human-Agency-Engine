@@ -67,7 +67,7 @@ jobs:
               && grep -q '/assets/brand-2026/quantic-sillage-mark.svg' <<<"$pulse" \
               && grep -q '/assets/brand-2026/pulse-mark.svg' <<<"$pulse" \
               && grep -q '/pulse/app.js?v=10' <<<"$pulse" \
-              && grep -q '"schema":"quantic-pulse-health-v2"' <<<"$pulse_health" \
+              && grep -q '"schema":"quantic-pulse-health-v3"' <<<"$pulse_health" \
               && grep -q 'Quantic Sillage' <<<"$qmark" \
               && grep -q 'aria-label="Quantic Pulse"' <<<"$pulsemark" \
               && grep -q 'aria-label="Quantic Mail"' <<<"$mailmark" \
@@ -122,7 +122,8 @@ jobs:
           assert pulse_health.get('ok') is True, pulse_health
           assert pulse_health.get('storage') in {'mysql','postgres','supabase'}, pulse_health
           assert pulse_health.get('persistent') is True, pulse_health
-          assert pulse_health.get('messageRetentionHours') == 24, pulse_health
+          assert pulse_health.get('postRetentionHours') == 24, pulse_health
+          assert pulse_health.get('privateMessages') == 'persistent', pulse_health
 
           with open('/tmp/quantic-status.json', encoding='utf-8') as handle:
               payload = json.load(handle)
