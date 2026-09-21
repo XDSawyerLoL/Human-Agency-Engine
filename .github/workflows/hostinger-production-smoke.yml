@@ -124,6 +124,7 @@ jobs:
           assert pulse_health.get('persistent') is True, pulse_health
           assert pulse_health.get('postRetentionHours') == 24, pulse_health
           assert pulse_health.get('privateMessages') == 'persistent', pulse_health
+          assert pulse_health.get('writeDurability') == 'ack-after-durable-commit', pulse_health
           assert pulse_health.get('e2ee') == 'pulse-e2ee-v1', pulse_health
           assert pulse_health.get('sessions') == 'pulse-session-v2', pulse_health
           assert pulse_health.get('ratchet') == 'dh-double-ratchet-v1', pulse_health
