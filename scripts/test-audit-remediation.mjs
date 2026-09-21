@@ -34,6 +34,10 @@ async function testPulsePrivacy(){
       follows:{u_a:[],u_b:[]},likes:{},reposts:{},bookmarks:{u_a:[],u_b:[]},
       circles:{c_private:{id:'c_private',ownerId:'u_a',name:'Private',description:'',visibility:'private',createdAt:new Date().toISOString()}},
       circleMembers:{c_private:{u_a:'owner'}},notifications:{},reports:{},blocks:{u_a:[],u_b:[]},
+      secureDevices:{
+        u_a:{dev_a:{deviceId:'dev_a',encryptionPublicKey:b64url(Buffer.alloc(32,1)),signingPublicKey:b64url(Buffer.alloc(32,2)),identityKeyId:'qid_a',registeredAt:new Date().toISOString(),protocol:'pulse-e2ee-v1'}},
+        u_b:{dev_b:{deviceId:'dev_b',encryptionPublicKey:b64url(Buffer.alloc(32,3)),signingPublicKey:b64url(Buffer.alloc(32,4)),identityKeyId:'qid_b',registeredAt:new Date().toISOString(),protocol:'pulse-e2ee-v1'}}
+      },
       conversations:{'u_a:u_b':{members:['u_a','u_b'],messageIds:['m_old','m_recent'],createdAt:new Date(Date.now()-26*60*60*1000).toISOString()}},
       messages:{
         m_old:{id:'m_old',conversationKey:'u_a:u_b',senderId:'u_a',recipientId:'u_b',body:'old-persistent-message',createdAt:new Date(Date.now()-25*60*60*1000).toISOString(),expiresAt:new Date(Date.now()-60*60*1000).toISOString(),readAt:null},
@@ -97,6 +101,34 @@ async function testPulsePrivacy(){
     assert.equal(health.status,200);
     assert.equal(health.body.postRetentionHours,24,'Pulse health must publish the 24-hour public-post retention contract');
     assert.equal(health.body.privateMessages,'persistent','Pulse health must distinguish persistent private messages from ephemeral posts');
+
+    const plaintextSend=await call('POST','/api/pulse/messages',{authToken:token,body:{handle:'alpha',body:'server must never store me'}});
+    assert.equal(plaintextSend.status,400);
+    assert.equal(plaintextSend.body.error,'e2ee_required','new private messages must fail closed when not encrypted');
+
+    const ciphertext=b64url(Buffer.alloc(32,9));
+    const encryptedSend=await call('POST','/api/pulse/messages',{authToken:token,body:{
+      handle:'alpha',
+      protocol:'pulse-e2ee-v1',
+      clientMessageId:'audit-secure-message',
+      senderDeviceId:'dev_b',
+      sentAt:new Date().toISOString(),
+      envelopes:[{
+        recipientDeviceId:'dev_a',
+        ephemeralPublicKey:b64url(Buffer.alloc(32,5)),
+        salt:b64url(Buffer.alloc(32,6)),
+        iv:b64url(Buffer.alloc(12,7)),
+        ciphertext,
+        signature:b64url(Buffer.alloc(64,8))
+      }]
+    }});
+    assert.equal(encryptedSend.status,201,'opaque encrypted envelope should be accepted');
+    const persisted=JSON.parse(await (await import('node:fs/promises')).readFile(join(dir,'pulse.json'),'utf8'));
+    const secureMessage=Object.values(persisted.messages).find(message=>message.clientMessageId==='audit-secure-message');
+    assert.ok(secureMessage,'encrypted message must persist');
+    assert.equal(secureMessage.protocol,'pulse-e2ee-v1');
+    assert.equal('body' in secureMessage,false,'server must not persist private-message plaintext');
+    assert.equal(secureMessage.envelopes[0].ciphertext,ciphertext);
   }finally{
     delete process.env.DATA_DIR;
     await rm(dir,{recursive:true,force:true});
