@@ -138,15 +138,26 @@ async function trustBundle(handle,bundle){
     error.current=bundle.identityKeyId;
     throw error;
   }
-  if(!previous)await dbPut(TRUST_STORE,key,{identityKeyId:bundle.identityKeyId,firstSeenAt:new Date().toISOString()});
+  await dbPut(TRUST_STORE,key,{
+    identityKeyId:bundle.identityKeyId,
+    firstSeenAt:previous?.firstSeenAt||new Date().toISOString(),
+    updatedAt:new Date().toISOString(),
+    bundle
+  });
   return bundle;
 }
 export async function getSecureBundle(handle){
   const clean=String(handle||'').replace(/^@/,'').toLowerCase();
-  const bundle=await api('/api/pulse/secure/bundle/'+encodeURIComponent(clean));
-  if(bundle.protocol!==PROTOCOL)throw new Error('secure_protocol_mismatch');
-  if(!(bundle.devices||[]).length)throw new Error('secure_recipient_unavailable');
-  return trustBundle(clean,bundle);
+  try{
+    const bundle=await api('/api/pulse/secure/bundle/'+encodeURIComponent(clean));
+    if(bundle.protocol!==PROTOCOL)throw new Error('secure_protocol_mismatch');
+    if(!(bundle.devices||[]).length)throw new Error('secure_recipient_unavailable');
+    return trustBundle(clean,bundle);
+  }catch(error){
+    const cached=await dbGet(TRUST_STORE,clean).catch(()=>null);
+    if(cached?.bundle?.protocol===PROTOCOL&&(cached.bundle.devices||[]).length)return cached.bundle;
+    throw error;
+  }
 }
 async function ownDevices(){
   const data=await api('/api/pulse/secure/devices');
@@ -198,7 +209,7 @@ export async function encryptMessageForHandle(handle,plaintext){
   if(!targets.size)throw new Error('secure_recipient_unavailable');
   const clientMessageId=crypto.randomUUID(),sentAt=new Date().toISOString(),envelopes=[];
   for(const target of targets.values())envelopes.push(await encryptEnvelope(device,target,{clientMessageId,sentAt,plaintext:text}));
-  return{handle:String(handle||'').replace(/^@/,''),protocol:PROTOCOL,clientMessageId,senderDeviceId:device.deviceId,sentAt,envelopes};
+  return{handle:String(handle||'').replace(/^@/,''),protocol:PROTOCOL,clientMessageId,senderDeviceId:device.deviceId,sentAt,envelopes,peer};
 }
 async function verifyEnvelope(message,envelope){
   const sender=message.senderDevice;
