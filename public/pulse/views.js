@@ -166,13 +166,14 @@ export async function loadConversation(handle){
     const merged=new Map();
     for(const message of [...localMessages,...(data.messages||[])]){
       const key=String(message.clientMessageId||message.id||'')+':'+String(message.senderDeviceId||'');
-      merged.set(key,message);
+      const previous=merged.get(key);
+      merged.set(key,previous?{...previous,...message,localBody:previous.localBody||message.localBody}:{...message});
     }
     const [messages,number]=await Promise.all([
       decryptConversationMessages([...merged.values()].sort((a,b)=>Date.parse(a.createdAt||0)-Date.parse(b.createdAt||0))),
       safetyNumber(handle).catch(()=>null)
     ]);
-    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>'+esc(data.user.displayName)+'</h2><p>@'+esc(data.user.handle)+' · 🔒 chiffrement de bout en bout</p>'+(number?'<small class="pulse-security-number">Numéro de sécurité : '+esc(number)+'</small>':'')+'</div><div class="pulse-message-list">';
+    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>'+esc(data.user.displayName)+'</h2><p>@'+esc(data.user.handle)+' · 🔒 Pulse session v2 · Double Ratchet</p>'+(number?'<small class="pulse-security-number">Numéro de sécurité : '+esc(number)+'</small>':'')+'</div><div class="pulse-message-list">';
     messages.forEach(function(message){
       const body=message.secureInvalid?'⚠️ Message chiffré invalide':message.secureUnavailable?'🔒 Message chiffré pour un autre appareil':(message.plaintext||'');
       html+='<div class="pulse-message '+(message.senderId===state.user.id?'mine':'')+'">'+esc(body)+'<small>'+esc(timeAgo(message.createdAt))+(message.secure?' · 🔒':'')+'</small></div>';
