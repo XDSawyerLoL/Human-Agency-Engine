@@ -413,28 +413,46 @@ function secureDevicesFor(store,userId){
 }
 const ED25519_SPKI_PREFIX=Buffer.from('302a300506032b6570032100','hex');
 function securePreKeyMaterial(record){
-  return JSON.stringify({
-    protocol:'pulse-prekey-v1',
+  const protocol=record?.protocol==='pulse-prekey-v2'?'pulse-prekey-v2':'pulse-prekey-v1';
+  const material={
+    protocol,
     deviceId:clean(record.deviceId,80),
     preKeyId:clean(record.preKeyId,80),
     publicKey:clean(record.publicKey,160),
     createdAt:clean(record.createdAt,80),
     expiresAt:clean(record.expiresAt,80)
-  });
+  };
+  if(protocol==='pulse-prekey-v2'){
+    material.pqAlgorithm=clean(record.pqAlgorithm,40);
+    material.pqPublicKey=clean(record.pqPublicKey,2200);
+  }
+  return JSON.stringify(material);
 }
 function verifySecurePreKey(record,device){
   if(!record||!device)return false;
+  const protocol=record.protocol==='pulse-prekey-v2'?'pulse-prekey-v2':record.protocol==='pulse-prekey-v1'?'pulse-prekey-v1':'';
   const deviceId=clean(record.deviceId,80),preKeyId=clean(record.preKeyId,80),publicKey=clean(record.publicKey,160),signature=clean(record.signature,800);
-  if(deviceId!==device.deviceId||!/^[a-f0-9]{32}$/.test(preKeyId)||!validRawCurveKey(publicKey))return false;
+  if(!protocol||deviceId!==device.deviceId||!/^[a-f0-9]{32}$/.test(preKeyId)||!validRawCurveKey(publicKey))return false;
   const created=Date.parse(String(record.createdAt||'')),expires=Date.parse(String(record.expiresAt||''));
   if(!Number.isFinite(created)||!Number.isFinite(expires)||expires<=Date.now()||expires<=created||expires-created>31*24*60*60*1000)return false;
+  const normalized={
+    protocol,deviceId,preKeyId,publicKey,
+    createdAt:new Date(created).toISOString(),
+    expiresAt:new Date(expires).toISOString()
+  };
+  if(protocol==='pulse-prekey-v2'){
+    normalized.pqAlgorithm=clean(record.pqAlgorithm,40);
+    normalized.pqPublicKey=clean(record.pqPublicKey,2200);
+    if(normalized.pqAlgorithm!=='ML-KEM-768')return false;
+    try{if(Buffer.from(normalized.pqPublicKey,'base64url').length!==1184)return false}catch{return false}
+  }
   try{
     const sig=Buffer.from(signature,'base64url');
     if(sig.length!==64)return false;
     const raw=Buffer.from(device.signingPublicKey,'base64url');
     if(raw.length!==32)return false;
     const key=createPublicKey({key:Buffer.concat([ED25519_SPKI_PREFIX,raw]),format:'der',type:'spki'});
-    return verify(null,Buffer.from(securePreKeyMaterial({deviceId,preKeyId,publicKey,createdAt:new Date(created).toISOString(),expiresAt:new Date(expires).toISOString()})),key,sig);
+    return verify(null,Buffer.from(securePreKeyMaterial(normalized)),key,sig);
   }catch{return false}
 }
 function pruneSecurePreKeys(store,at=Date.now()){
@@ -454,13 +472,14 @@ function pruneSecurePreKeys(store,at=Date.now()){
 }
 function securePreKeyView(record){
   return record?{
-    protocol:'pulse-prekey-v1',
+    protocol:record.protocol==='pulse-prekey-v2'?'pulse-prekey-v2':'pulse-prekey-v1',
     deviceId:record.deviceId,
     preKeyId:record.preKeyId,
     publicKey:record.publicKey,
     createdAt:record.createdAt,
     expiresAt:record.expiresAt,
-    signature:record.signature
+    signature:record.signature,
+    ...(record.protocol==='pulse-prekey-v2'?{pqAlgorithm:record.pqAlgorithm,pqPublicKey:record.pqPublicKey}:{})
   }:null;
 }
 
@@ -470,6 +489,29 @@ function validSecureEnvelope(envelope){
   if(!validRawCurveKey(envelope.ephemeralPublicKey))return false;
   try{
     if(Buffer.from(String(envelope.salt),'base64url').length!==32)return false;
+    if(Buffer.from(String(envelope.iv),'base64url').length!==12)return false;
+    if(Buffer.from(String(envelope.signature),'base64url').length!==64)return false;
+    const cipherBytes=Buffer.from(String(envelope.ciphertext),'base64url').length;
+    return cipherBytes>=16&&cipherBytes<=4096;
+  }catch{return false}
+}
+function validSessionEnvelope(envelope){
+  if(!envelope||typeof envelope!=='object'||envelope.protocol!=='pulse-session-v2')return false;
+  const recipientDeviceId=clean(envelope.recipientDeviceId,80),header=envelope.header;
+  if(!recipientDeviceId||!header||typeof header!=='object')return false;
+  if(!clean(header.sessionId,80)||!validRawCurveKey(header.dh))return false;
+  if(!Number.isSafeInteger(header.pn)||header.pn<0||header.pn>0x7fffffff)return false;
+  if(!Number.isSafeInteger(header.n)||header.n<0||header.n>0x7fffffff)return false;
+  if(header.handshake){
+    const hs=header.handshake;
+    if(hs.protocol!=='pulse-handshake-v2'||!/^[a-f0-9]{32}$/.test(clean(hs.preKeyId,80))||!validRawCurveKey(hs.ephemeralPublicKey))return false;
+    if(!['classical-v2','hybrid-pq-v1'].includes(hs.profile))return false;
+    if(hs.profile==='hybrid-pq-v1'){
+      if(hs.pqAlgorithm!=='ML-KEM-768'||!clean(hs.pqCiphertext,2600))return false;
+      try{if(Buffer.from(String(hs.pqCiphertext),'base64url').length!==1088)return false}catch{return false}
+    }else if(clean(hs.pqCiphertext,2600)||clean(hs.pqAlgorithm,40))return false;
+  }
+  try{
     if(Buffer.from(String(envelope.iv),'base64url').length!==12)return false;
     if(Buffer.from(String(envelope.signature),'base64url').length!==64)return false;
     const cipherBytes=Buffer.from(String(envelope.ciphertext),'base64url').length;
@@ -516,7 +558,7 @@ export async function handlePulse(req,res,url,corsHeaders={}){
   try{
     if(!allowRate(req,'all',180,60000)){json(res,429,{error:'rate_limited'},corsHeaders);return true}
 
-    if(route==='/api/pulse/health'&&req.method==='GET'){const info=await pulseInfo();json(res,200,{ok:true,service:'quantic-pulse',...info,e2ee:'pulse-e2ee-v1',prekeys:'pulse-prekey-v1'},corsHeaders);return true}
+    if(route==='/api/pulse/health'&&req.method==='GET'){const info=await pulseInfo();json(res,200,{ok:true,service:'quantic-pulse',...info,e2ee:'pulse-e2ee-v1',sessions:'pulse-session-v2',ratchet:'dh-double-ratchet-v1',prekeys:'pulse-prekey-v2',postQuantum:'hybrid-ml-kem-768-when-supported'},corsHeaders);return true}
 
     if(route==='/api/pulse/secure/challenge'&&req.method==='POST'){
       const store=await readStore(),a=await auth(req,store);
@@ -569,19 +611,24 @@ export async function handlePulse(req,res,url,corsHeaders={}){
         let accepted=0;
         for(const input of records){
           const record={
+            protocol:input.protocol==='pulse-prekey-v2'?'pulse-prekey-v2':'pulse-prekey-v1',
             deviceId,
             preKeyId:clean(input.preKeyId,80),
             publicKey:clean(input.publicKey,160),
             createdAt:Number.isFinite(Date.parse(String(input.createdAt||'')))?new Date(input.createdAt).toISOString():'',
             expiresAt:Number.isFinite(Date.parse(String(input.expiresAt||'')))?new Date(input.expiresAt).toISOString():'',
-            signature:clean(input.signature,800)
+            signature:clean(input.signature,800),
+            ...(input.protocol==='pulse-prekey-v2'?{
+              pqAlgorithm:clean(input.pqAlgorithm,40),
+              pqPublicKey:clean(input.pqPublicKey,2200)
+            }:{})
           };
           if(!verifySecurePreKey(record,device))return{error:'secure_prekey_signature_invalid'};
           const usedKey=user.id+':'+deviceId+':'+record.preKeyId;
           if(store.securePreKeyUsed[usedKey])continue;
           pool[record.preKeyId]=record;accepted++;
         }
-        return{ok:true,accepted,available:Object.keys(pool).length,protocol:'pulse-prekey-v1'};
+        return{ok:true,accepted,available:Object.keys(pool).length,protocol:'pulse-prekey-v2'};
       });
       json(res,out.error?(out.error==='unauthorized'?401:400):200,out,corsHeaders);return true
     }
@@ -592,7 +639,7 @@ export async function handlePulse(req,res,url,corsHeaders={}){
       ensureSecureState(store);pruneSecurePreKeys(store);
       const devices={};
       for(const device of secureDevicesFor(store,a.user.id))devices[device.deviceId]=Object.keys(store.securePreKeys[a.user.id]?.[device.deviceId]||{}).length;
-      json(res,200,{protocol:'pulse-prekey-v1',devices},corsHeaders);return true
+      json(res,200,{protocol:'pulse-prekey-v2',devices},corsHeaders);return true
     }
 
     if(route==='/api/pulse/secure/prekeys/claim'&&req.method==='POST'){
@@ -608,7 +655,7 @@ export async function handlePulse(req,res,url,corsHeaders={}){
         if(!record)return{error:'secure_prekey_unavailable'};
         delete pool[record.preKeyId];
         store.securePreKeyUsed[targetId+':'+deviceId+':'+record.preKeyId]=Date.parse(record.expiresAt)||Date.now()+31*24*60*60*1000;
-        return{protocol:'pulse-prekey-v1',handle,device:secureDeviceView(targetDevice),preKey:securePreKeyView(record)};
+        return{protocol:'pulse-prekey-v2',handle,device:secureDeviceView(targetDevice),preKey:securePreKeyView(record)};
       });
       json(res,out.error?(out.error==='unauthorized'?401:out.error==='not_found'?404:out.error==='secure_prekey_unavailable'?404:400):200,out,corsHeaders);return true
     }
@@ -759,8 +806,10 @@ export async function handlePulse(req,res,url,corsHeaders={}){
 
     if(route==='/api/pulse/messages'&&req.method==='POST'){
       const b=await bodyJson(req),handle=clean(b.handle,24).toLowerCase().replace(/^@/,''),protocol=clean(b.protocol,40),clientMessageId=clean(b.clientMessageId,80),senderDeviceId=clean(b.senderDeviceId,80),sentAt=clean(b.sentAt,80);
-      if(protocol!=='pulse-e2ee-v1'||!clientMessageId||!senderDeviceId||!Array.isArray(b.envelopes)||!b.envelopes.length){json(res,400,{error:'e2ee_required'},corsHeaders);return true}
-      if(b.envelopes.length>24||b.envelopes.some(envelope=>!validSecureEnvelope(envelope))){json(res,400,{error:'secure_envelope_invalid'},corsHeaders);return true}
+      const supported=protocol==='pulse-e2ee-v1'||protocol==='pulse-session-v2';
+      if(!supported||!clientMessageId||!senderDeviceId||!Array.isArray(b.envelopes)||!b.envelopes.length){json(res,400,{error:'e2ee_required'},corsHeaders);return true}
+      const validEnvelope=protocol==='pulse-session-v2'?validSessionEnvelope:validSecureEnvelope;
+      if(b.envelopes.length>24||b.envelopes.some(envelope=>!validEnvelope(envelope))){json(res,400,{error:'secure_envelope_invalid'},corsHeaders);return true}
       const out=await mutateStore(store=>{
         const user=sessionUser(store,bearer(req)),targetId=store.handles[handle];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};if(targetId===user.id)return{error:'self_message'};if(blocked(store,user.id,targetId))return{error:'blocked'};
         ensureSecureState(store);
@@ -771,15 +820,37 @@ export async function handlePulse(req,res,url,corsHeaders={}){
         if(!secureDevicesFor(store,targetId).length)return{error:'secure_recipient_unavailable'};
         if(b.envelopes.some(envelope=>!allowedDevices.has(clean(envelope.recipientDeviceId,80))))return{error:'secure_envelope_recipient_invalid'};
         const key=conversationKey(user.id,targetId),conv=store.conversations[key]||(store.conversations[key]={members:[user.id,targetId],messageIds:[],createdAt:now()}),mid=id('m_'),createdAt=sentAt&&Number.isFinite(Date.parse(sentAt))?new Date(sentAt).toISOString():now();
-        const envelopes=b.envelopes.map(envelope=>({
-          recipientDeviceId:clean(envelope.recipientDeviceId,80),
-          ephemeralPublicKey:clean(envelope.ephemeralPublicKey,160),
-          salt:clean(envelope.salt,160),
-          iv:clean(envelope.iv,80),
-          ciphertext:clean(envelope.ciphertext,8000),
-          signature:clean(envelope.signature,800)
-        }));
-        const msg={id:mid,clientMessageId,conversationKey:key,senderId:user.id,recipientId:targetId,senderDeviceId,protocol:'pulse-e2ee-v1',envelopes,createdAt,readAt:null};
+        const envelopes=protocol==='pulse-session-v2'
+          ? b.envelopes.map(envelope=>({
+              protocol:'pulse-session-v2',
+              recipientDeviceId:clean(envelope.recipientDeviceId,80),
+              header:{
+                sessionId:clean(envelope.header.sessionId,80),
+                dh:clean(envelope.header.dh,160),
+                pn:Number(envelope.header.pn),
+                n:Number(envelope.header.n),
+                ...(envelope.header.handshake?{handshake:{
+                  protocol:'pulse-handshake-v2',
+                  preKeyId:clean(envelope.header.handshake.preKeyId,80),
+                  ephemeralPublicKey:clean(envelope.header.handshake.ephemeralPublicKey,160),
+                  profile:clean(envelope.header.handshake.profile,40),
+                  pqAlgorithm:clean(envelope.header.handshake.pqAlgorithm,40),
+                  pqCiphertext:clean(envelope.header.handshake.pqCiphertext,2600)
+                }}:{})
+              },
+              iv:clean(envelope.iv,80),
+              ciphertext:clean(envelope.ciphertext,8000),
+              signature:clean(envelope.signature,800)
+            }))
+          : b.envelopes.map(envelope=>({
+              recipientDeviceId:clean(envelope.recipientDeviceId,80),
+              ephemeralPublicKey:clean(envelope.ephemeralPublicKey,160),
+              salt:clean(envelope.salt,160),
+              iv:clean(envelope.iv,80),
+              ciphertext:clean(envelope.ciphertext,8000),
+              signature:clean(envelope.signature,800)
+            }));
+        const msg={id:mid,clientMessageId,conversationKey:key,senderId:user.id,recipientId:targetId,senderDeviceId,protocol,envelopes,createdAt,readAt:null};
         store.messages[mid]=msg;conv.messageIds.push(mid);conv.messageIds=conv.messageIds.slice(-1000);
         notify(store,targetId,{actorId:user.id,type:'message',objectId:mid});
         return{message:{id:mid,clientMessageId,protocol:msg.protocol,createdAt,senderId:user.id,recipientId:targetId,senderDeviceId}};
@@ -788,7 +859,7 @@ export async function handlePulse(req,res,url,corsHeaders={}){
     }
 
     m=route.match(/^\/api\/pulse\/messages\/([a-z0-9_]{3,24})$/);
-    if(m&&req.method==='GET'){const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req)),targetId=store.handles[m[1]];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};const key=conversationKey(user.id,targetId),conv=store.conversations[key],ids=conv?.messageIds||[],messages=ids.map(mid=>store.messages[mid]).filter(Boolean);messages.forEach(msg=>{if(msg.recipientId===user.id&&!msg.readAt)msg.readAt=now()});const safeMessages=messages.map(msg=>{if(msg.protocol!=='pulse-e2ee-v1')return messageView(msg);const senderDevice=store.secureDevices?.[msg.senderId]?.[msg.senderDeviceId];return{id:msg.id,clientMessageId:msg.clientMessageId,protocol:msg.protocol,senderId:msg.senderId,recipientId:msg.recipientId,senderDeviceId:msg.senderDeviceId,createdAt:msg.createdAt,readAt:msg.readAt,envelopes:msg.envelopes||[],senderDevice:secureDeviceView(senderDevice)}});return{user:publicUser(store.users[targetId],store,user.id),messages:safeMessages,messageMode:'persistent',encryption:'end-to-end'}});json(res,out.error?(out.error==='unauthorized'?401:404):200,out,corsHeaders);return true}
+    if(m&&req.method==='GET'){const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req)),targetId=store.handles[m[1]];if(!user)return{error:'unauthorized'};if(!targetId)return{error:'not_found'};const key=conversationKey(user.id,targetId),conv=store.conversations[key],ids=conv?.messageIds||[],messages=ids.map(mid=>store.messages[mid]).filter(Boolean);messages.forEach(msg=>{if(msg.recipientId===user.id&&!msg.readAt)msg.readAt=now()});const safeMessages=messages.map(msg=>{if(!['pulse-e2ee-v1','pulse-session-v2'].includes(msg.protocol))return messageView(msg);const senderDevice=store.secureDevices?.[msg.senderId]?.[msg.senderDeviceId];return{id:msg.id,clientMessageId:msg.clientMessageId,protocol:msg.protocol,senderId:msg.senderId,recipientId:msg.recipientId,senderDeviceId:msg.senderDeviceId,createdAt:msg.createdAt,readAt:msg.readAt,envelopes:msg.envelopes||[],senderDevice:secureDeviceView(senderDevice)}});return{user:publicUser(store.users[targetId],store,user.id),messages:safeMessages,messageMode:'persistent',encryption:'end-to-end'}});json(res,out.error?(out.error==='unauthorized'?401:404):200,out,corsHeaders);return true}
 
     if(route==='/api/pulse/export'&&req.method==='GET'){const store=await readStore(),a=await auth(req,store);if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}const uid=a.user.id,data={user:publicUser(a.user,store,uid),posts:Object.values(store.posts).filter(p=>p.authorId===uid),follows:store.follows[uid]||[],likes:Object.entries(store.likes).filter(([,ids])=>ids.includes(uid)).map(([pid])=>pid),bookmarks:store.bookmarks[uid]||[],circles:Object.values(store.circles).filter(c=>(store.circleMembers[c.id]||{})[uid]),notifications:store.notifications[uid]||[],messages:Object.values(store.messages).filter(msg=>msg.senderId===uid||msg.recipientId===uid).map(messageView),secureDevices:secureDevicesFor(store,uid).map(secureDeviceView),securePreKeyCounts:Object.fromEntries(secureDevicesFor(store,uid).map(device=>[device.deviceId,Object.keys(store.securePreKeys?.[uid]?.[device.deviceId]||{}).length]))};json(res,200,{exportedAt:now(),data},corsHeaders);return true}
 
