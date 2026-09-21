@@ -1,5 +1,6 @@
 import { api, state } from './core.js?v=14';
-import { ensurePulseNetworkDevice, publicPulseNetworkRoute, sendOverQuanticNetwork, pullFromQuanticNetwork, ackQuanticNetworkPackets } from './network.js?v=14';
+import { ensurePulseNetworkDevice, publicPulseNetworkRoute, sendOverQuanticNetwork, pullFromQuanticNetwork, ackQuanticNetworkPackets } from './network.js?v=15';
+import { ensureSignedPreKeys } from './ratchet.js?v=15';
 
 const PROTOCOL='pulse-e2ee-v1';
 const DB_NAME='quantic-pulse-secure';
@@ -129,6 +130,7 @@ export async function ensureSecureDevice(){
   );
   if(found){
     if(device.pulseRegistered!==true){device.pulseRegistered=true;await dbPut(DEVICE_STORE,DEVICE_KEY,device)}
+    void ensureSignedPreKeys(device).catch(()=>{});
     return device;
   }
   if(!window.QuanticID?.assert)throw new Error('identity_vault_required');
@@ -137,6 +139,7 @@ export async function ensureSecureDevice(){
   await api('/api/pulse/secure/devices',{method:'POST',body:JSON.stringify({...bundle,identityProof})});
   device.pulseRegistered=true;
   await dbPut(DEVICE_STORE,DEVICE_KEY,device);
+  void ensureSignedPreKeys(device).catch(()=>{});
   return device;
 }
 async function trustBundle(handle,bundle){
