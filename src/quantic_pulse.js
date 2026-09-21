@@ -803,6 +803,53 @@ const purgeExpiredPulsePosts=()=>mutateStore(store=>({pruned:pruneExpiredPosts(s
 setTimeout(purgeExpiredPulsePosts,1500).unref?.();
 setInterval(purgeExpiredPulsePosts,5*60*1000).unref?.();
 
+const HOSTINGER_PULSE_PROXY='https://human-agency-engine.onrender.com';
+function shouldProxyPulse(req){
+  const host=String(req.headers.host||'').toLowerCase();
+  return host.includes('hostingersite.com')&&!usePostgres&&!useRemoteStore&&!useMysql;
+}
+async function proxyPulseRequest(req,res){
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+  try{
+    const method=String(req.method||'GET').toUpperCase();
+    let body;
+    if(!['GET','HEAD'].includes(method)){
+      const chunks=[];let size=0;
+      for await(const chunk of req){
+        size+=chunk.length;
+        if(size>1024*1024)throw Object.assign(new Error('body_too_large'),{status:413});
+        chunks.push(chunk);
+      }
+      body=chunks.length?Buffer.concat(chunks):undefined;
+    }
+    const target=new URL(req.originalUrl||req.url,HOSTINGER_PULSE_PROXY);
+    const response=await fetch(target,{
+      method,
+      redirect:'error',
+      cache:'no-store',
+      signal:controller.signal,
+      headers:{
+        accept:String(req.headers.accept||'application/json'),
+        ...(req.headers.authorization?{authorization:String(req.headers.authorization)}:{}),
+        ...(req.headers['content-type']?{'content-type':String(req.headers['content-type'])}:{})
+      },
+      body
+    });
+    const payload=Buffer.from(await response.arrayBuffer());
+    const headers={
+      'content-type':response.headers.get('content-type')||'application/json; charset=utf-8',
+      'cache-control':'no-store',
+      'x-quantic-pulse-backend':'quantic-relay'
+    };
+    res.writeHead(response.status,headers);
+    res.end(payload);
+  }catch(error){
+    console.error('[pulse] durable proxy failed',String(error?.message||error));
+    if(!res.headersSent)json(res,error?.status||503,{error:'pulse_storage_unavailable'});
+    else if(!res.writableEnded)res.end();
+  }finally{clearTimeout(timer)}
+}
+
 export function installQuanticPulse(app){
   if(app.__quanticPulseInstalled)return;
   app.__quanticPulseInstalled=true;
@@ -811,6 +858,7 @@ export function installQuanticPulse(app){
   const allowedOrigins=new Set(configuredOrigins);
   app.use('/api/pulse',async(req,res,next)=>{
     try{
+      if(shouldProxyPulse(req)){await proxyPulseRequest(req,res);return}
       const origin=String(req.headers.origin||'');
       const corsHeaders={};
       if(origin&&allowedOrigins.has(origin)){
