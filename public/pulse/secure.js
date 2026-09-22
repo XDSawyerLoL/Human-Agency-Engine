@@ -1,6 +1,6 @@
-import { api, state } from './core.js?v=19';
-import { ensurePulseNetworkDevice, publicPulseNetworkRoute, sendOverQuanticNetwork, pullFromQuanticNetwork, ackQuanticNetworkPackets } from './network.js?v=19';
-import { ensureSignedPreKeys, encryptSessionMessage, decryptSessionMessage, ratchetCapability } from './ratchet.js?v=19';
+import { api, state } from './core.js?v=20';
+import { ensurePulseNetworkDevice, publicPulseNetworkRoute, sendOverQuanticNetwork, pullFromQuanticNetwork, ackQuanticNetworkPackets } from './network.js?v=20';
+import { ensureSignedPreKeys, encryptSessionMessage, decryptSessionMessage, ratchetCapability } from './ratchet.js?v=20';
 
 const PROTOCOL='pulse-e2ee-v1';
 const SESSION_PROTOCOL='pulse-session-v2';
