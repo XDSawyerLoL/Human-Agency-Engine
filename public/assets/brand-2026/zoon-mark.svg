@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="ZOON">
+  <defs>
+    <linearGradient id="zoonGold" x1="150" y1="120" x2="860" y2="850" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF176"/>
+      <stop offset=".42" stop-color="#FFD43B"/>
+      <stop offset=".78" stop-color="#FFB31F"/>
+      <stop offset="1" stop-color="#F28A00"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#zoonGold)">
+    <path d="M291 250c-58-5-99-54-90-113 9-61 65-99 124-84 55 14 83 70 61 123-18 43-51 68-95 74Z"/>
+    <path d="M733 250c58-5 99-54 90-113-9-61-65-99-124-84-55 14-83 70-61 123 18 43 51 68 95 74Z"/>
+    <path d="M347 293c-96 54-157 155-157 269 0 133 82 250 204 300 28 12 57 20 87 24-58-63-93-148-93-240 0-111 50-211 130-278-56-57-113-91-171-75Z"/>
+    <path d="M677 293c96 54 157 155 157 269 0 133-82 250-204 300-28 12-57 20-87 24 58-63 93-148 93-240 0-111-50-211-130-278 56-57 113-91 171-75Z"/>
+    <path d="M512 615c34 0 62 13 82 35l-82 89-82-89c20-22 48-35 82-35Z"/>
+  </g>
+</svg>
