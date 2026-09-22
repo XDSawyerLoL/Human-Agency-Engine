@@ -1,4 +1,4 @@
-import { TOKEN_KEY, state, dom, initials, api } from './core.js?v=19';
+import { TOKEN_KEY, state, dom, initials, api } from './core.js?v=20';
 
 const PRESENCE_RENEW_MS=5000;
 const PRESENCE_PROBE_MS=1000;
@@ -48,7 +48,7 @@ export function closeAuth(){
 export function updateAuthModal(){
   const register=state.authMode==='register';
   document.getElementById('auth-title').textContent=register?'Créer avec Quantic ID':'Entrer avec Quantic ID';
-  document.getElementById('auth-copy').textContent=register?'Choisis ton @pseudo et ton nom affiché. Identity Vault devient la clé de ce compte.':'Identity Vault confirme directement ton compte Pulse et restaure ta session.';
+  document.getElementById('auth-copy').textContent=register?'Choisis ton @pseudo et ton nom affiché. Identity Vault devient la clé de ce compte.':'Identity Vault confirme directement ton compte ZOON et restaure ta session.';
   document.getElementById('display-name-field').hidden=!register;
   const handleField=document.getElementById('handle-field');
   handleField.hidden=!register;
@@ -75,7 +75,7 @@ export function updateAccount(){
     dom.followingHelp.textContent='Les comptes que vous suivez';
   }else{
     name.textContent='Quantic ID';
-    handle.textContent='Entrer dans Pulse';
+    handle.textContent='Entrer dans ZOON';
     avatar.textContent='?';
     composerAvatar.textContent='?';
     button.textContent='Entrer';
