@@ -191,3 +191,30 @@
 .q-download-card.zoon-card .q-download-logo{
   filter:drop-shadow(0 0 10px rgba(248,201,72,.14));
 }
+
+
+/* ZOON ICON PRESENTATION */
+.qid-app-grid .q-card.zoon .q-card-icon.q-card-logo-wrap,
+.qs-product-card.zoon-card .q-product-logo,
+.q-download-card.zoon-card .q-download-logo{
+  background:#050505!important;
+  border-radius:16px!important;
+  box-shadow:
+    0 14px 30px rgba(3,8,18,.24),
+    0 0 24px rgba(248,201,72,.10)!important;
+}
+.qid-app-grid .q-card.zoon .q-card-icon.q-card-logo-wrap{
+  width:58px!important;
+  height:58px!important;
+  padding:5px!important;
+}
+.qid-app-grid .q-card.zoon .q-card-icon.q-card-logo-wrap img{
+  width:48px!important;
+  height:48px!important;
+  border-radius:12px!important;
+  box-shadow:none!important;
+}
+.qs-product-card.zoon-card .q-product-logo,
+.q-download-card.zoon-card .q-download-logo{
+  padding:4px!important;
+}
