@@ -123,7 +123,7 @@
 .q-download-product-head .q-download-logo,.q-download-top>.q-download-logo{width:38px!important;height:38px!important;border-radius:10px!important;margin:0!important}
 .q-service-headline .q-service-logo{width:34px!important;height:34px!important;border-radius:9px!important;margin:0!important}
 .q-news-brandline img,.qv8-product-brand>img{width:var(--qbrand-product-hero)!important;height:var(--qbrand-product-hero)!important;border-radius:13px!important}
-.pulse-brand img{width:40px!important;height:40px!important;border-radius:11px!important;box-shadow:0 7px 18px rgba(133,54,201,.10)!important}
+.pulse-brand img{width:40px!important;height:40px!important;border-radius:11px!important;box-shadow:0 7px 18px rgba(248,201,72,.14)!important}
 .qn-mail-product-logo{width:46px!important;height:46px!important;border-radius:13px!important}
 .qs-hero-brand img{width:54px!important;height:54px!important;object-fit:contain!important}
 .q-unified-footer-brand img{width:20px!important;height:20px!important}
@@ -149,4 +149,45 @@
   .qid-app-grid .q-card{min-height:0}
   .q-identity-band{align-items:flex-start!important}
   .q-identity-band-icon{width:42px;height:42px;flex-basis:42px}
+}
+
+
+/* ZOON ECOSYSTEM CARDS */
+.qs-product-card.zoon-card,
+.q-download-card.zoon-card,
+.qid-app-grid .q-card.zoon{
+  background:
+    radial-gradient(circle at 12% 8%,rgba(248,201,72,.10),transparent 34%),
+    linear-gradient(145deg,#071426 0%,#0b1b31 100%)!important;
+  border-color:rgba(248,201,72,.18)!important;
+  color:#f7f3e7!important;
+  box-shadow:0 18px 44px rgba(4,14,28,.16)!important;
+}
+.qs-product-card.zoon-card:hover,
+.q-download-card.zoon-card:hover,
+.qid-app-grid .q-card.zoon:hover{
+  border-color:rgba(248,201,72,.34)!important;
+  box-shadow:0 22px 54px rgba(4,14,28,.22)!important;
+}
+.qs-product-card.zoon-card .qs-card-meta,
+.qid-app-grid .q-card.zoon .q-card-meta,
+.q-download-card.zoon-card .q-kicker{color:#c8b66e!important}
+.qs-product-card.zoon-card h3,
+.qid-app-grid .q-card.zoon h3,
+.q-download-card.zoon-card h3{color:#ffd34f!important}
+.qs-product-card.zoon-card p,
+.qid-app-grid .q-card.zoon p,
+.q-download-card.zoon-card p{color:#aab8c9!important}
+.qs-product-card.zoon-card b,
+.qid-app-grid .q-card.zoon .q-card-link,
+.q-download-card.zoon-card .q-download-action:not(.primary){color:#ffd34f!important}
+.q-download-card.zoon-card .q-download-action.primary{
+  background:#f8c948!important;
+  border-color:#f8c948!important;
+  color:#071426!important;
+}
+.qs-product-card.zoon-card .q-product-logo,
+.qid-app-grid .q-card.zoon .q-card-logo-wrap img,
+.q-download-card.zoon-card .q-download-logo{
+  filter:drop-shadow(0 0 10px rgba(248,201,72,.14));
 }
