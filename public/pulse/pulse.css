@@ -189,3 +189,176 @@ button.pulse-account{width:100%;border:0;background:transparent;text-align:left;
 .pulse-brand img{width:48px;height:48px;border-radius:14px;box-shadow:0 10px 26px rgba(196,54,226,.16)}
 @media(max-width:980px){.q-sillage-global-links a span{display:none}.q-sillage-global-links a.active,.q-sillage-global-links a.identity{display:inline-flex!important}.q-sillage-global-links a.active{min-width:42px!important;justify-content:center!important;padding:0 8px!important}}
 @media(max-width:620px){.q-sillage-global-wordmark{display:none}}
+
+
+/* ZOON brand — 2026-09-22
+   Keep pulse-* technical selectors for compatibility; visible identity is ZOON. */
+:root{
+  --pulse-bg:#071426;
+  --pulse-card:#0b1b31;
+  --pulse-ink:#f8f4e8;
+  --pulse-muted:#9eb0c5;
+  --pulse-line:rgba(248,201,72,.14);
+  --pulse-cyan:#f8c948;
+  --pulse-teal:#ffb31f;
+  --pulse-navy:#071426;
+  --zoon-yellow:#f8c948;
+  --zoon-amber:#ffad1f;
+  --zoon-deep:#071426;
+  --zoon-panel:#0b1b31;
+  --zoon-panel-2:#10213b;
+}
+body.pulse-body{
+  background:
+    radial-gradient(circle at 50% -10%,rgba(248,201,72,.08),transparent 34rem),
+    linear-gradient(180deg,#071426 0%,#08172a 48%,#06111f 100%);
+  color:var(--pulse-ink);
+}
+.q-sillage-global{
+  border-bottom-color:rgba(248,201,72,.11);
+  background:rgba(5,16,31,.9);
+  box-shadow:0 10px 36px rgba(0,0,0,.2);
+}
+.q-sillage-global-wordmark{color:#f6f0df!important}
+.q-sillage-global-links a{color:#91a5bd}
+.q-sillage-global-links a:hover,.q-sillage-global-links a.active{
+  background:rgba(248,201,72,.1);
+  color:#ffd75a;
+}
+.q-sillage-global-links a.identity{background:#f8c948;color:#071426}
+.pulse-sidebar{
+  border-right-color:rgba(248,201,72,.12);
+  background:rgba(7,20,38,.88);
+}
+.pulse-brand span{color:#91a5bd}
+.pulse-brand strong{color:#ffd04e;letter-spacing:.08em}
+.pulse-brand img{
+  box-shadow:0 10px 30px rgba(248,177,31,.13);
+  filter:drop-shadow(0 0 10px rgba(248,201,72,.12));
+}
+.pulse-nav-item{color:#a8b8c9}
+.pulse-nav-item:hover,.pulse-nav-item.active{
+  background:rgba(248,201,72,.1);
+  color:#ffd252;
+}
+.pulse-primary,.pulse-publish,.pulse-gif-insert{
+  background:linear-gradient(115deg,#ffd64e,#f2a617);
+  color:#071426;
+  box-shadow:0 10px 28px rgba(242,166,23,.13);
+}
+.pulse-avatar{
+  background:linear-gradient(145deg,#132944,#0b1c32 58%,#f8c948);
+  color:#fff2be;
+}
+.pulse-account{border-top-color:rgba(248,201,72,.12);background:transparent;color:#eef2f7}
+.pulse-main{
+  background:rgba(7,20,38,.36);
+  border-right-color:rgba(248,201,72,.1);
+}
+.pulse-topbar{
+  background:rgba(7,20,38,.9);
+  border-bottom-color:rgba(248,201,72,.11);
+  backdrop-filter:blur(22px) saturate(130%);
+}
+.pulse-kicker{color:#f8c948!important}
+.pulse-topbar h1,.pulse-welcome-copy h2,.pulse-panel h2{color:#f8f4e8}
+.pulse-top-button{
+  background:#0e2139!important;
+  border-color:rgba(248,201,72,.14)!important;
+  color:#d6e0eb!important;
+}
+.pulse-welcome{
+  background:linear-gradient(135deg,rgba(248,201,72,.08),rgba(11,27,49,.8));
+  border-bottom-color:rgba(248,201,72,.12);
+}
+.pulse-welcome-mark{
+  background:#0d2038;
+  color:#f8c948;
+  box-shadow:0 12px 32px rgba(0,0,0,.24);
+  border:1px solid rgba(248,201,72,.16);
+}
+.pulse-welcome-copy p,.pulse-tab small,.pulse-guide-step span,.pulse-privacy{color:#95a9bf}
+.pulse-welcome-primary{background:#f8c948;color:#071426;border:0}
+.pulse-welcome-secondary{
+  border-color:rgba(248,201,72,.22);
+  background:#0d2038;
+  color:#ffd45b;
+}
+.pulse-tabs{
+  background:rgba(7,20,38,.94)!important;
+  border-bottom-color:rgba(248,201,72,.1)!important;
+}
+.pulse-tab{color:#8399b2!important}
+.pulse-tab.active{color:#ffd04e!important}
+.pulse-tab.active:after{background:#f8c948!important}
+.pulse-composer,.pulse-feed>*,.pulse-panel,.pulse-search,.pulse-modal-card,.pulse-gif-card{
+  background:#0b1b31!important;
+  border-color:rgba(248,201,72,.11)!important;
+  color:#edf2f7;
+}
+.pulse-composer{border-bottom-color:rgba(248,201,72,.11)!important}
+.pulse-compose-main textarea{
+  color:#f3f6fa!important;
+  background:transparent!important;
+}
+.pulse-compose-main textarea::placeholder,.pulse-search input::placeholder{color:#758ba4!important}
+.pulse-compose-tools{border-top-color:rgba(248,201,72,.1)}
+.pulse-toolset .pulse-tool-btn{
+  border-color:rgba(248,201,72,.14);
+  background:#10213b;
+  color:#f8c948;
+}
+.pulse-toolset .pulse-tool-btn:hover{
+  background:#172b47;
+  border-color:rgba(248,201,72,.28);
+}
+.pulse-search input{color:#edf2f7;background:transparent}
+.pulse-search>.pi{color:#f8c948}
+.pulse-right{background:rgba(6,17,31,.5)}
+.pulse-panel-head{border-bottom-color:rgba(248,201,72,.09)!important}
+.pulse-guide-step>b{
+  background:rgba(248,201,72,.12);
+  color:#ffd14e;
+}
+.pulse-action-key{
+  background:#0f223b;
+  border:1px solid rgba(248,201,72,.08);
+}
+.pulse-action-key .pi,.pulse-action-key strong{color:#f8c948}
+.pulse-action-key span{color:#91a6bd}
+.pulse-emoji-picker{
+  background:rgba(10,27,48,.98);
+  border-color:rgba(248,201,72,.15);
+  box-shadow:0 22px 60px rgba(0,0,0,.38);
+}
+.pulse-emoji-grid button{background:#10233d}
+.pulse-emoji-grid button:hover{background:#19314f}
+.pulse-rich-card,.pulse-media-preview,.pulse-gif-preview{
+  background:#0e2038!important;
+  border-color:rgba(248,201,72,.12)!important;
+}
+.pulse-rich-media img,.pulse-gif-preview img{background:#06111f}
+.pulse-id-status{
+  background:#0e2038!important;
+  border-color:rgba(248,201,72,.13)!important;
+}
+.pulse-id-status strong{color:#edf2f7}
+.pulse-id-status small{color:#8fa4ba}
+.pulse-id-status a{
+  background:#142844;
+  border-color:rgba(248,201,72,.15);
+  color:#ffd45a;
+}
+.pulse-mobile-nav{
+  background:rgba(6,17,31,.96)!important;
+  border-top-color:rgba(248,201,72,.12)!important;
+}
+.pulse-mobile-nav button,.pulse-mobile-nav a{color:#94a8be!important}
+.pulse-mobile-nav button.active,.pulse-mobile-nav a:hover{color:#f8c948!important}
+.pulse-link-button{color:#f8c948!important}
+.pulse-action:hover,.pulse-action.liked,.pulse-badge{color:#f8c948!important}
+.circle-chevron{background:#f8c948;color:#071426}
+@media(max-width:620px){
+  body.pulse-body{background:#071426}
+  .pulse-right{background:#071426}
+}
