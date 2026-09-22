@@ -362,3 +362,10 @@ body.pulse-body{
   body.pulse-body{background:#071426}
   .pulse-right{background:#071426}
 }
+
+.pulse-welcome-mark img{
+  width:42px;
+  height:42px;
+  display:block;
+  filter:drop-shadow(0 0 8px rgba(248,201,72,.16));
+}
