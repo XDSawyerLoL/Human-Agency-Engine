@@ -1,6 +1,6 @@
-import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=19';
-import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, ensureIdentityVault, startIdentityPresenceGuard } from './session.js?v=19';
-import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview } from './views.js?v=19';
+import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=20';
+import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, ensureIdentityVault, startIdentityPresenceGuard } from './session.js?v=20';
+import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview } from './views.js?v=20';
 import { ensureSecureDevice, sendSecureMessage } from './secure.js?v=19';
 
 function setReply(postId,handle){
@@ -61,7 +61,7 @@ async function publishPost(){
   }catch(error){
     const durabilityFailure=['pulse_storage_unavailable','pulse_remote_store_unavailable','pulse_storage_conflict','network_error'].includes(error?.message);
     alert(durabilityFailure
-      ? 'Publication non enregistrée : le stockage durable Pulse n’a pas confirmé l’écriture. Ton texte est conservé ici, tu peux réessayer.'
+      ? 'Publication non enregistrée : le stockage durable ZOON n’a pas confirmé l’écriture. Ton texte est conservé ici, tu peux réessayer.'
       : errorText(error));
     dom.publish.disabled=false;
   }
@@ -102,7 +102,7 @@ async function exportData(){
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const anchor=document.createElement('a');
     anchor.href=URL.createObjectURL(blob);
-    anchor.download='quantic-pulse-export.json';
+    anchor.download='zoon-export.json';
     anchor.click();
     setTimeout(function(){URL.revokeObjectURL(anchor.href)},1000);
   }catch(error){
@@ -130,7 +130,7 @@ async function health(){
   try{
     await api('/api/pulse/health');
     document.getElementById('api-state').textContent='En ligne';
-    document.getElementById('api-state').title='Service Pulse disponible';
+    document.getElementById('api-state').title='Service ZOON disponible';
   }catch{
     document.getElementById('api-state').textContent='Hors ligne';
   }
@@ -312,7 +312,7 @@ function bindDelegatedEvents(){
       }
       if(action.dataset.action==='share'){
         const shareUrl=location.origin+location.pathname+'?post='+encodeURIComponent(postId);
-        if(navigator.share)navigator.share({title:'Quantic Pulse',url:shareUrl}).catch(function(){});
+        if(navigator.share)navigator.share({title:'ZOON',url:shareUrl}).catch(function(){});
         else navigator.clipboard?.writeText(shareUrl);
         return;
       }
