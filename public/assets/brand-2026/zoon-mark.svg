@@ -1,17 +1,53 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="ZOON">
   <defs>
-    <linearGradient id="zoonGold" x1="150" y1="120" x2="860" y2="850" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFF176"/>
-      <stop offset=".42" stop-color="#FFD43B"/>
-      <stop offset=".78" stop-color="#FFB31F"/>
-      <stop offset="1" stop-color="#F28A00"/>
+    <linearGradient id="zoonGold" x1="190" y1="100" x2="820" y2="880" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF45F"/>
+      <stop offset=".34" stop-color="#FFD93D"/>
+      <stop offset=".68" stop-color="#FFB31F"/>
+      <stop offset="1" stop-color="#F07B00"/>
     </linearGradient>
+    <filter id="zoonGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="20" result="blur"/>
+      <feFlood flood-color="#FFB20A" flood-opacity=".55"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="#FFD83B" flood-opacity=".42"/>
+    </filter>
   </defs>
-  <g fill="url(#zoonGold)">
-    <path d="M291 250c-58-5-99-54-90-113 9-61 65-99 124-84 55 14 83 70 61 123-18 43-51 68-95 74Z"/>
-    <path d="M733 250c58-5 99-54 90-113-9-61-65-99-124-84-55 14-83 70-61 123 18 43 51 68 95 74Z"/>
-    <path d="M347 293c-96 54-157 155-157 269 0 133 82 250 204 300 28 12 57 20 87 24-58-63-93-148-93-240 0-111 50-211 130-278-56-57-113-91-171-75Z"/>
-    <path d="M677 293c96 54 157 155 157 269 0 133-82 250-204 300-28 12-57 20-87 24 58-63 93-148 93-240 0-111-50-211-130-278 56-57 113-91 171-75Z"/>
-    <path d="M512 615c34 0 62 13 82 35l-82 89-82-89c20-22 48-35 82-35Z"/>
+
+  <rect x="28" y="28" width="968" height="968" rx="220" fill="#050505"/>
+
+  <g fill="url(#zoonGold)" filter="url(#zoonGlow)">
+    <path d="M292 251c-54-2-95-45-94-99 1-60 51-108 111-106 59 2 104 52 99 111-5 55-53 96-116 94Z"/>
+    <path d="M732 251c54-2 95-45 94-99-1-60-51-108-111-106-59 2-104 52-99 111 5 55 53 96 116 94Z"/>
+
+    <path d="M402 314
+             C316 290 238 335 204 420
+             C162 524 183 644 257 730
+             C304 784 361 818 420 838
+             C376 783 350 715 352 646
+             C355 527 410 425 493 359
+             C463 338 433 322 402 314Z"/>
+
+    <path d="M622 314
+             C708 290 786 335 820 420
+             C862 524 841 644 767 730
+             C720 784 663 818 604 838
+             C648 783 674 715 672 646
+             C669 527 614 425 531 359
+             C561 338 591 322 622 314Z"/>
+
+    <path d="M512 610
+             C546 610 575 625 590 650
+             C571 679 546 710 512 742
+             C478 710 453 679 434 650
+             C449 625 478 610 512 610Z"/>
+  </g>
+
+  <g fill="none" stroke="#FFD43B" stroke-opacity=".18" stroke-width="2" filter="url(#softGlow)">
+    <path d="M292 251c-54-2-95-45-94-99 1-60 51-108 111-106 59 2 104 52 99 111-5 55-53 96-116 94Z"/>
+    <path d="M732 251c54-2 95-45 94-99-1-60-51-108-111-106-59 2-104 52-99 111 5 55 53 96 116 94Z"/>
   </g>
 </svg>
