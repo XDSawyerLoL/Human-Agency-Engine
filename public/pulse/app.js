@@ -1,7 +1,7 @@
-import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=21';
-import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, ensureIdentityVault, startIdentityPresenceGuard } from './session.js?v=21';
-import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview } from './views.js?v=21';
-import { ensureSecureDevice, sendSecureMessage } from './secure.js?v=21';
+import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=22';
+import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, ensureIdentityVault, startIdentityPresenceGuard } from './session.js?v=22';
+import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview, loadNewsRss } from './views.js?v=22';
+import { ensureSecureDevice, sendSecureMessage } from './secure.js?v=22';
 
 function setReply(postId,handle){
   state.replyTo=postId;
@@ -143,6 +143,9 @@ function bindStaticEvents(){
   });
 
   dom.publish.addEventListener('click',publishPost);
+  document.querySelector('[data-tool="news"]')?.addEventListener('click',function(){
+    loadNewsRss();
+  });
   document.querySelector('[data-tool="emoji"]')?.addEventListener('click',function(){
     const picker=document.getElementById('pulse-emoji-picker');
     picker.hidden=!picker.hidden;
@@ -201,6 +204,8 @@ function bindStaticEvents(){
   document.getElementById('cancel-context').addEventListener('click',clearReply);
   document.getElementById('compose-focus').addEventListener('click',function(){
     if(requireAuth()){
+      state.feed='following';
+      document.querySelectorAll('.pulse-tab').forEach(button=>button.classList.toggle('active',button.dataset.feed==='following'));
       setView('home','Accueil');
       dom.textarea.focus();
       window.scrollTo({top:0,behavior:'smooth'});
@@ -208,6 +213,8 @@ function bindStaticEvents(){
   });
   document.getElementById('mobile-compose').addEventListener('click',function(){
     if(requireAuth()){
+      state.feed='following';
+      document.querySelectorAll('.pulse-tab').forEach(button=>button.classList.toggle('active',button.dataset.feed==='following'));
       setView('home','Accueil');
       dom.textarea.focus();
       window.scrollTo({top:0,behavior:'smooth'});
@@ -261,14 +268,19 @@ function bindStaticEvents(){
       document.querySelectorAll('.pulse-tab').forEach(function(candidate){
         candidate.classList.toggle('active',candidate===button);
       });
-      loadHome();
+      if(state.feed==='news')loadNewsRss();
+      else loadHome();
     });
   });
 
   document.querySelectorAll('[data-view]').forEach(function(button){
     button.addEventListener('click',function(){
       const view=button.dataset.view;
-      if(view==='home')loadHome();
+      if(view==='home'){
+        state.feed='following';
+        document.querySelectorAll('.pulse-tab').forEach(tab=>tab.classList.toggle('active',tab.dataset.feed==='following'));
+        loadHome();
+      }
       else if(view==='explore')loadExplore(document.getElementById('pulse-search').value);
       else if(view==='circles')loadCircles();
       else if(view==='notifications')loadNotifications();
@@ -290,6 +302,29 @@ function bindStaticEvents(){
 
 function bindDelegatedEvents(){
   document.addEventListener('click',async function(event){
+    const newsRepost=event.target.closest('[data-news-repost]');
+    if(newsRepost){
+      if(!requireAuth())return;
+      const title=String(newsRepost.dataset.newsTitle||'Actualité').trim();
+      const url=safeHttpsUrl(newsRepost.dataset.newsUrl);
+      const image=safeHttpsUrl(newsRepost.dataset.newsImage);
+      const source=String(newsRepost.dataset.newsSource||'Quantic News').trim();
+      const body=(title+(source?'\n\nSource : '+source:'')).slice(0,420);
+      const oldLabel=newsRepost.textContent;
+      newsRepost.disabled=true;
+      newsRepost.textContent='Repost…';
+      try{
+        await api('/api/pulse/posts',{method:'POST',body:JSON.stringify({body,linkUrl:url,linkTitle:title,imageUrl:image})});
+        newsRepost.textContent='Reposté ✓';
+        newsRepost.classList.add('done');
+      }catch(error){
+        newsRepost.disabled=false;
+        newsRepost.textContent=oldLabel;
+        alert(errorText(error));
+      }
+      return;
+    }
+
     const profile=event.target.closest('[data-profile]');
     if(profile){
       loadProfile(profile.dataset.profile);

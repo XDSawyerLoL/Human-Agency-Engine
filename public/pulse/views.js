@@ -1,7 +1,7 @@
-import { state, dom, api, esc, icon, initials, timeAgo, setStatus, errorText } from './core.js?v=21';
-import { requireAuth } from './session.js?v=21';
-import { renderPost, renderPosts, notificationLabel } from './render.js?v=21';
-import { decryptConversationMessages, safetyNumber, decentralizedMessagesFor, decentralizedConversationSummaries } from './secure.js?v=21';
+import { state, dom, api, esc, icon, initials, timeAgo, setStatus, errorText } from './core.js?v=22';
+import { requireAuth } from './session.js?v=22';
+import { renderPost, renderPosts, notificationLabel } from './render.js?v=22';
+import { decryptConversationMessages, safetyNumber, decentralizedMessagesFor, decentralizedConversationSummaries } from './secure.js?v=22';
 
 export function setView(view,title){
   state.view=view;
@@ -14,7 +14,72 @@ export function setView(view,title){
   dom.welcome.hidden=view!=='home'||!!state.user;
 }
 
+const NEWS_FEEDS=[
+  'https://raw.githubusercontent.com/XDSawyerLoL/LEFILLIBRE/main/feed.json',
+  'https://xdsawyerlol.github.io/LEFILLIBRE/feed.json'
+];
+
+function safeNewsUrl(value){
+  try{const url=new URL(String(value||''));return url.protocol==='https:'?url.href:''}catch{return''}
+}
+
+function newsTime(iso){
+  const t=Date.parse(String(iso||''));if(!Number.isFinite(t))return'';
+  const mins=Math.max(0,Math.floor((Date.now()-t)/60000));
+  if(mins<60)return mins+' min';
+  const hours=Math.floor(mins/60);if(hours<24)return hours+' h';
+  return new Date(t).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
+}
+
+async function fetchNewsFeed(){
+  let lastError;
+  for(const endpoint of NEWS_FEEDS){
+    try{
+      const response=await fetch(endpoint+(endpoint.includes('?')?'&':'?')+'v='+Date.now(),{cache:'no-store'});
+      if(!response.ok)throw new Error('HTTP '+response.status);
+      const data=await response.json();
+      if(!Array.isArray(data.items))throw new Error('invalid_news_feed');
+      return data;
+    }catch(error){lastError=error}
+  }
+  throw lastError||new Error('news_feed_unavailable');
+}
+
+function renderNewsCard(item){
+  const title=String(item.title||'Actualité');
+  const source=String(item.source||'Quantic News');
+  const url=safeNewsUrl(item.url||item.articleUrl);
+  const image=safeNewsUrl(item.image);
+  const summary=String(item.summary||'').slice(0,280);
+  return '<article class="pulse-news-card">'+
+    (image?'<a class="pulse-news-media" href="'+esc(url||image)+'" target="_blank" rel="noopener noreferrer"><img src="'+esc(image)+'" alt="" loading="lazy" referrerpolicy="no-referrer"></a>':'')+
+    '<div class="pulse-news-body"><div class="pulse-news-meta"><span>RSS</span><strong>'+esc(source)+'</strong><span>'+esc(newsTime(item.publishedAt))+'</span></div>'+
+    '<h2>'+esc(title)+'</h2>'+
+    (summary?'<p>'+esc(summary)+(String(item.summary||'').length>280?'…':'')+'</p>':'')+
+    '<div class="pulse-news-actions">'+
+      (url?'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">Lire la source ↗</a>':'')+
+      '<button type="button" data-news-repost data-news-title="'+esc(title)+'" data-news-source="'+esc(source)+'" data-news-url="'+esc(url)+'" data-news-image="'+esc(image)+'">Reposter sur ZOON</button>'+
+    '</div></div></article>';
+}
+
+export async function loadNewsRss(){
+  state.feed='news';
+  setView('home','Quantic News');
+  dom.composer.hidden=true;
+  setStatus('Connexion à Quantic News','Lecture du flux RSS…');
+  try{
+    const data=await fetchNewsFeed();
+    const items=(data.items||[]).filter(item=>item&&item.title).sort((a,b)=>Date.parse(b.publishedAt||0)-Date.parse(a.publishedAt||0)).slice(0,50);
+    dom.feed.innerHTML=items.length
+      ? '<section class="pulse-news-view"><div class="pulse-news-intro"><span>QUANTIC NEWS · RSS</span><h2>Actualités à lire et à reposter</h2><p>Le flux Quantic News est intégré à ZOON. Un repost crée une publication ZOON avec le titre, la source, le lien et l’image de l’article.</p></div><div class="pulse-news-grid">'+items.map(renderNewsCard).join('')+'</div></section>'
+      : '<div class="pulse-status"><strong>Flux vide</strong>Aucune actualité disponible pour le moment.</div>';
+  }catch(error){
+    setStatus('Quantic News indisponible','Impossible de lire le flux RSS pour le moment.');
+  }
+}
+
 export async function loadHome(){
+  if(state.feed==='news')return loadNewsRss();
   setView('home','Accueil');
   setStatus('Chargement du fil','');
   try{

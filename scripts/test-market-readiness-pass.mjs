@@ -42,7 +42,7 @@ assert.ok(visionHome.includes("AbortController"),"Vision home fetch must be abor
 assert.ok(visionHome.includes("data-qv8-retry"),"Vision home must expose retry on failure");
 
 assert.ok(!products.includes("stockage MySQL Hostinger"),"Unified catalogue must not lead with infrastructure implementation");
-assert.ok(products.includes("Quantic Pulse"),"Unified catalogue must expose Pulse");
+assert.ok(products.includes("ZOON"),"Unified catalogue must expose ZOON");
 assert.ok(products.includes('id="network"'),"Unified catalogue must expose Network");
 assert.ok(home.includes("continuer à fonctionner si un chemin devient indisponible"),"Home Network card must explain the benefit");
 
