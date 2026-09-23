@@ -141,6 +141,7 @@ class HorizonAuraBridgeService:
                 "predictive_score": row["predictive_score"],
                 "predictive_score_is_probability": False,
                 "probability_interval": row["probability_interval"],
+                "probability": None,
                 "expected_onset_low": row["expected_onset_low"],
                 "expected_onset_high": row["expected_onset_high"],
                 "personal_exposure": row["personal_exposure"],
