@@ -49,6 +49,7 @@ from .routers.horizon_weather_chain import router as horizon_weather_chain_route
 from .routers.horizon_windy import router as horizon_windy_router
 from .routers.horizon_world import router as horizon_world_router
 from .routers.horizon_briefing import router as horizon_briefing_router
+from .routers.horizon_aura_bridge import router as horizon_aura_bridge_router
 from .routers.quantic_portal import router as quantic_portal_router
 from .config import settings
 
@@ -102,6 +103,7 @@ HORIZON_ROUTERS = (
     horizon_human_dynamics_router,
     horizon_world_router,
     horizon_briefing_router,
+    horizon_aura_bridge_router,
     quantic_portal_router,
 )
 
@@ -163,6 +165,8 @@ def health():
         "human_dynamics_empirically_calibrated": False,
         "counterfactual_behavior_comparison_supported": True,
         "web_cockpit_supported": True,
+        "aura_cognitive_bridge_supported": True,
+        "aura_cognitive_bridge_version": "horizon-aura-bridge-v1",
         "windows_desktop_runtime_supported": True,
         "permanent_collector_supported": True,
         "calibration_corpus_builder_supported": True,
