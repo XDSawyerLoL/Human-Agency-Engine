@@ -27,7 +27,7 @@ def test_aura_bridge_preserves_horizon_truth_boundaries():
                 "horizon.world.emerging",
                 "horizon.personal.forecast",
             }
-            assert signal["payload"]["probability"] is None or signal["aura_event"] == "horizon.personal.forecast"
+            assert signal["payload"].get("probability") is None
     finally:
         db.close()
 
