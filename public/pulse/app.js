@@ -204,6 +204,8 @@ function bindStaticEvents(){
   document.getElementById('cancel-context').addEventListener('click',clearReply);
   document.getElementById('compose-focus').addEventListener('click',function(){
     if(requireAuth()){
+      state.feed='following';
+      document.querySelectorAll('.pulse-tab').forEach(button=>button.classList.toggle('active',button.dataset.feed==='following'));
       setView('home','Accueil');
       dom.textarea.focus();
       window.scrollTo({top:0,behavior:'smooth'});
@@ -211,6 +213,8 @@ function bindStaticEvents(){
   });
   document.getElementById('mobile-compose').addEventListener('click',function(){
     if(requireAuth()){
+      state.feed='following';
+      document.querySelectorAll('.pulse-tab').forEach(button=>button.classList.toggle('active',button.dataset.feed==='following'));
       setView('home','Accueil');
       dom.textarea.focus();
       window.scrollTo({top:0,behavior:'smooth'});
@@ -272,7 +276,11 @@ function bindStaticEvents(){
   document.querySelectorAll('[data-view]').forEach(function(button){
     button.addEventListener('click',function(){
       const view=button.dataset.view;
-      if(view==='home')loadHome();
+      if(view==='home'){
+        state.feed='following';
+        document.querySelectorAll('.pulse-tab').forEach(tab=>tab.classList.toggle('active',tab.dataset.feed==='following'));
+        loadHome();
+      }
       else if(view==='explore')loadExplore(document.getElementById('pulse-search').value);
       else if(view==='circles')loadCircles();
       else if(view==='notifications')loadNotifications();
