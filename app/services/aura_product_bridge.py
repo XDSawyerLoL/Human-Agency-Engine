@@ -72,16 +72,14 @@ class AuraProductBridge:
         for product in PRODUCTS:
             try:
                 self._post(
-                    "/api/aura/everywhere/register",
+                    "/api/aura/products/register",
                     {
                         **product,
                         "state": "online",
-                        "permissions": ["observe", "propose-change", "test", "canary"],
-                        "surfaces": ["analysis", "signals", "evidence"],
-                        "metadata": {
-                            "writable_by_aura": True,
-                            "modification_policy": "branch-test-canary-promote",
-                            "bridge_version": BRIDGE_VERSION,
+                        "writable_by_aura": True,
+                        "modification_policy": "branch-test-canary-promote",
+                        "bridge_version": BRIDGE_VERSION,
+                        "runtime": {
                             "service": "human-agency-engine",
                             "personal_data_forwarded": False,
                         },
@@ -95,7 +93,7 @@ class AuraProductBridge:
             return
         try:
             self._post(
-                f"/api/aura/everywhere/{product_id}/observe",
+                f"/api/aura/products/{product_id}/observe",
                 {
                     "state": state,
                     "detail": detail,
