@@ -72,14 +72,16 @@ class AuraProductBridge:
         for product in PRODUCTS:
             try:
                 self._post(
-                    "/api/aura/products/register",
+                    "/api/aura/everywhere/register",
                     {
                         **product,
                         "state": "online",
-                        "writable_by_aura": True,
-                        "modification_policy": "branch-test-canary-promote",
-                        "bridge_version": BRIDGE_VERSION,
-                        "runtime": {
+                        "permissions": ["observe", "propose-change", "test", "canary"],
+                        "surfaces": ["analysis", "signals", "evidence"],
+                        "metadata": {
+                            "writable_by_aura": True,
+                            "modification_policy": "branch-test-canary-promote",
+                            "bridge_version": BRIDGE_VERSION,
                             "service": "human-agency-engine",
                             "personal_data_forwarded": False,
                         },
@@ -93,7 +95,7 @@ class AuraProductBridge:
             return
         try:
             self._post(
-                f"/api/aura/products/{product_id}/observe",
+                f"/api/aura/everywhere/{product_id}/observe",
                 {
                     "state": state,
                     "detail": detail,
@@ -109,7 +111,7 @@ class AuraProductBridge:
 
     def _heartbeat(self) -> None:
         self.register()
-        while not self._stop.wait(300):
+        while not self._stop.wait(120):
             for product in PRODUCTS:
                 self.observe(product["id"], "online", "Human Agency Engine actif.")
 
