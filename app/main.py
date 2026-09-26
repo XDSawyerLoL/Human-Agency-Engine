@@ -35,6 +35,7 @@ from .schemas import (
     UserUpsert,
 )
 from .security import require_api_key
+from .services.aura_product_bridge import aura_product_bridge
 from .services.cycle import AgencyCycle
 from .services.engine import OpportunityEngine
 from .services.synthesis import SynthesisService
@@ -84,6 +85,16 @@ app.add_api_route(
     methods=["POST"],
     dependencies=[Depends(require_api_key)],
 )
+
+
+@app.on_event("startup")
+def start_aura_product_bridge():
+    aura_product_bridge.start()
+
+
+@app.on_event("shutdown")
+def stop_aura_product_bridge():
+    aura_product_bridge.stop()
 
 
 @app.get("/health")
