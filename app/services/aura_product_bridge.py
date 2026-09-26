@@ -109,7 +109,7 @@ class AuraProductBridge:
 
     def _heartbeat(self) -> None:
         self.register()
-        while not self._stop.wait(300):
+        while not self._stop.wait(120):
             for product in PRODUCTS:
                 self.observe(product["id"], "online", "Human Agency Engine actif.")
 
