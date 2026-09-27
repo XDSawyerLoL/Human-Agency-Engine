@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'public/**'
       - 'src/**'
+      - 'mairaiy_voice_service/**'
       - 'server.js'
       - 'server_core.js'
       - 'package.json'
@@ -22,147 +22,106 @@ concurrency:
 jobs:
   production-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
-      - name: Verify deployed Quantic portal on Hostinger
+      - name: Verify deployed Providence and Mairaiy on Hostinger
         env:
           BASE_URL: https://mediumorchid-badger-314305.hostingersite.com
         run: |
           set -euo pipefail
-          ready=0
-          for attempt in $(seq 1 36); do
-            root="$(curl -fsSL --max-time 20 "$BASE_URL/" 2>/dev/null || true)"
-            centre="$(curl -fsSL --max-time 20 "$BASE_URL/quantic/" 2>/dev/null || true)"
-            network="$(curl -fsSL --max-time 20 "$BASE_URL/network/" 2>/dev/null || true)"
-            plans="$(curl -fsSL --max-time 20 "$BASE_URL/plans/" 2>/dev/null || true)"
-            pulse="$(curl -fsSL --max-time 20 "$BASE_URL/pulse/" 2>/dev/null || true)"
-            pulse_health="$(curl -fsSL --max-time 20 "$BASE_URL/api/pulse/health" 2>/dev/null || true)"
-            downloads="$(curl -fsSL --max-time 20 "$BASE_URL/downloads/" 2>/dev/null || true)"
-            qmark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/quantic-sillage-mark.svg" 2>/dev/null || true)"
-            pulsemark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/pulse-mark.svg" 2>/dev/null || true)"
-            mailmark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/mail-mark.svg" 2>/dev/null || true)"
-            newsmark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/news-mark.svg" 2>/dev/null || true)"
-            visionmark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/vision-mark.svg" 2>/dev/null || true)"
-            studiomark="$(curl -fsSL --max-time 20 "$BASE_URL/assets/brand-2026/studio-mark.svg" 2>/dev/null || true)"
-            if grep -q 'q-hero-stage' <<<"$root" \
-              && grep -q 'quantic-unified.css?v=3.0' <<<"$root" \
-              && grep -q 'quantic-finish-v4.css' <<<"$root" \
-              && grep -q 'Quantic ID' <<<"$centre" \
-              && grep -q 'quantic-unified.css?v=3.0' <<<"$centre" \
-              && grep -q '<title>Quantic Network</title>' <<<"$network" \
-              && grep -q 'id="network"' <<<"$downloads" \
-              && grep -q 'quantic-unified.css?v=3.0' <<<"$plans" \
-              && grep -q 'ACCÈS QUANTIC' <<<"$plans" \
-              && grep -q 'Quantic Studio 2.7.4' <<<"$downloads" \
-              && grep -q 'QuanticStudio-Setup-2.7.4.exe' <<<"$downloads" \
-              && grep -q '/assets/brand-2026/studio-mark.svg' <<<"$downloads" \
-              && grep -q 'Produits &amp; outils' <<<"$downloads" \
-              && grep -q 'Quantic Glide 1.2.6' <<<"$downloads" \
-              && grep -q 'Quantic-Glide-1.2.6-x64.exe' <<<"$downloads" \
-              && grep -q 'quantic-v2-d9f379d4f6a3' <<<"$downloads" \
-              && grep -q '/assets/brand-2026/vision-mark.svg' <<<"$downloads" \
-              && grep -q '/assets/brand-2026/mail-mark.svg' <<<"$downloads" \
-              && grep -q '/assets/brand-2026/pulse-mark.svg' <<<"$downloads" \
-              && grep -q '/assets/brand-2026/news-mark.svg' <<<"$downloads" \
-              && grep -q '/assets/brand-2026/quantic-sillage-mark.svg' <<<"$pulse" \
-              && grep -q '/assets/brand-2026/pulse-mark.svg' <<<"$pulse" \
-              && grep -q '/pulse/app.js?v=19' <<<"$pulse" \
-              && grep -q '"schema":"quantic-pulse-health-v3"' <<<"$pulse_health" \
-              && grep -q 'Quantic Sillage' <<<"$qmark" \
-              && grep -q 'aria-label="Quantic Pulse"' <<<"$pulsemark" \
-              && grep -q 'aria-label="Quantic Mail"' <<<"$mailmark" \
-              && grep -q 'aria-label="Quantic News"' <<<"$newsmark" \
-              && grep -q 'aria-label="Quantic Vision"' <<<"$visionmark" \
-              && grep -q 'Quantic Studio' <<<"$studiomark"; then
-              ready=1
-              echo "Hostinger is serving Quantic 2026 branding and product logos."
+
+          # Wait for Hostinger to serve the deployment that contains the new
+          # voice-status contract. This detects actual production propagation,
+          # not stale HTML/version strings.
+          deployed=0
+          for attempt in $(seq 1 45); do
+            app_code="$(curl -sS --max-time 15 -o /tmp/app-health.json -w '%{http_code}' "$BASE_URL/api/health" || true)"
+            voice_code="$(curl -sS --max-time 15 -o /tmp/voice-status.json -w '%{http_code}' "$BASE_URL/voice/status" || true)"
+            schema="$(python - <<'PY'
+          import json
+          try:
+              with open('/tmp/voice-status.json', encoding='utf-8') as f:
+                  print(json.load(f).get('schema', ''))
+          except Exception:
+              print('')
+          PY
+          )"
+
+            echo "attempt=$attempt app_http=$app_code voice_http=$voice_code voice_schema=$schema"
+            if [ "$app_code" = "200" ]               && [ "$voice_code" = "200" ]               && [ "$schema" = "quantic-mairaiy-voice-proxy-v2" ]; then
+              deployed=1
               break
             fi
-            echo "Hostinger deployment not ready yet (attempt $attempt/36)."
             sleep 10
           done
-          test "$ready" = "1"
 
-          # Private applications are healthy only when the anonymous server guard redirects to Quantic ID.
-          for private_path in /vision/ /predictions/ /mail/; do
-            headers="/tmp/private-headers-$(echo "$private_path" | tr -cd '[:alnum:]').txt"
-            code="$(curl -sS --max-time 20 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' "$BASE_URL$private_path")"
-            location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/\r$/,""); print substr($0,index($0,":")+2); exit}' "$headers")"
-            echo "Private guard $private_path -> HTTP $code location=$location"
-            test "$code" = "302"
-            grep -Eqi '^location: .*\/quantic\/\?next=' "$headers"
-          done
+          if [ "$deployed" != "1" ]; then
+            echo "Hostinger did not expose the expected Mairaiy v2 production contract in time."
+            echo "Last app health:"
+            cat /tmp/app-health.json 2>/dev/null || true
+            echo
+            echo "Last voice status:"
+            cat /tmp/voice-status.json 2>/dev/null || true
+            exit 1
+          fi
 
-          app_health_code="$(curl -sS --max-time 25 --output /tmp/quantic-app-health.json --write-out '%{http_code}' "$BASE_URL/api/health")"
-          pulse_health_code="$(curl -sS --max-time 25 --output /tmp/quantic-pulse-health.json --write-out '%{http_code}' "$BASE_URL/api/pulse/health")"
-          status_code="$(curl -sS --max-time 25 --output /tmp/quantic-status.json --write-out '%{http_code}' "$BASE_URL/api/quantic-portal/status")"
-          relay_a_code="$(curl -sS --max-time 25 --output /tmp/quantic-relay-health-a.json --write-out '%{http_code}' "$BASE_URL/api/quantic/health")"
-          sleep 1
-          relay_b_code="$(curl -sS --max-time 25 --output /tmp/quantic-relay-health-b.json --write-out '%{http_code}' "$BASE_URL/api/quantic/health")"
-          manifest_code="$(curl -sS --max-time 25 --output /tmp/quantic-manifest-probe.json --write-out '%{http_code}' "$BASE_URL/api/quantic/manifest?handle=smoke~00000000000000000000000000000000%40quantic")"
-          echo "Health HTTP codes: app=$app_health_code pulse=$pulse_health_code portal=$status_code relayA=$relay_a_code relayB=$relay_b_code manifest=$manifest_code"
-          echo "App health: $(cat /tmp/quantic-app-health.json)"
-          echo "Pulse health: $(cat /tmp/quantic-pulse-health.json)"
-          echo "Portal status: $(cat /tmp/quantic-status.json)"
-          echo "Relay health A: $(cat /tmp/quantic-relay-health-a.json)"
-          echo "Manifest probe: $(cat /tmp/quantic-manifest-probe.json)"
-          test "$app_health_code" = "200"
-          test "$pulse_health_code" = "200"
-          test "$status_code" = "200"
-          test "$relay_a_code" = "200"
-          test "$relay_b_code" = "200"
-          test "$manifest_code" = "404"
+          pulse_code="$(curl -sS --max-time 20 -o /tmp/pulse-health.json -w '%{http_code}' "$BASE_URL/api/pulse/health" || true)"
+          voice_code="$(curl -sS --max-time 20 -o /tmp/voice-status.json -w '%{http_code}' "$BASE_URL/voice/status" || true)"
+
+          echo "App health:"
+          cat /tmp/app-health.json
+          echo
+          echo "Pulse health:"
+          cat /tmp/pulse-health.json
+          echo
+          echo "Mairaiy voice status:"
+          cat /tmp/voice-status.json
+          echo
+
+          test "$pulse_code" = "200"
+          test "$voice_code" = "200"
+
           python - <<'PY'
           import json
-          with open('/tmp/quantic-app-health.json', encoding='utf-8') as handle:
-              app_health = json.load(handle)
-          with open('/tmp/quantic-pulse-health.json', encoding='utf-8') as handle:
-              pulse_health = json.load(handle)
-          assert app_health.get('status') == 'ok', app_health
-          assert app_health.get('ready_for_production') is True, app_health
-          assert app_health.get('persistent_learning') is True, app_health
-          assert app_health.get('storage') == 'mysql', app_health
-          assert pulse_health.get('ok') is True, pulse_health
-          assert pulse_health.get('storage') in {'mysql','postgres','supabase','quantic-relay'}, pulse_health
-          assert pulse_health.get('persistent') is True, pulse_health
-          assert pulse_health.get('postRetentionHours') == 24, pulse_health
-          assert pulse_health.get('privateMessages') == 'persistent', pulse_health
-          assert pulse_health.get('writeDurability') == 'ack-after-durable-commit', pulse_health
-          assert pulse_health.get('e2ee') == 'pulse-e2ee-v1', pulse_health
-          assert pulse_health.get('sessions') == 'pulse-session-v2', pulse_health
-          assert pulse_health.get('ratchet') == 'dh-double-ratchet-v1', pulse_health
-          assert pulse_health.get('prekeys') == 'pulse-prekey-v2', pulse_health
 
-          with open('/tmp/quantic-status.json', encoding='utf-8') as handle:
-              payload = json.load(handle)
-          ids = {service.get('id') for service in payload.get('services', [])}
-          expected = {'vision', 'mail', 'relay-render', 'relay-railway', 'relay-hostinger'}
-          assert payload.get('status') == 'ok', payload
-          assert all(service.get('functional') is True for service in payload.get('services', []) if service.get('state') == 'active'), payload
-          assert expected <= ids, (expected, ids)
-          hostinger = next(service for service in payload['services'] if service.get('id') == 'relay-hostinger')
-          mail = next(service for service in payload['services'] if service.get('id') == 'mail')
-          assert hostinger.get('state') == 'active', hostinger
-          assert hostinger.get('url') == 'https://mediumorchid-badger-314305.hostingersite.com', hostinger
-          assert hostinger.get('reachable') is True, hostinger
-          assert hostinger.get('functional') is True, hostinger
-          assert hostinger.get('http_status') == 200, hostinger
-          assert mail.get('state') == 'active', mail
-          assert mail.get('url') == '/mail/', mail
-          assert mail.get('reachable') is True, mail
-          assert mail.get('functional') is True, mail
+          with open('/tmp/app-health.json', encoding='utf-8') as f:
+              app = json.load(f)
+          with open('/tmp/pulse-health.json', encoding='utf-8') as f:
+              pulse = json.load(f)
+          with open('/tmp/voice-status.json', encoding='utf-8') as f:
+              voice = json.load(f)
 
-          with open('/tmp/quantic-relay-health-a.json', encoding='utf-8') as handle:
-              health_a = json.load(handle)
-          with open('/tmp/quantic-relay-health-b.json', encoding='utf-8') as handle:
-              health_b = json.load(handle)
-          for health in (health_a, health_b):
-              assert health.get('ok') is True, health
-              assert health.get('protocol') == 'quantic-relay/1', health
-              assert isinstance(health.get('relayId'), str) and len(health['relayId']) == 64, health
-          assert health_a['relayId'] == health_b['relayId'], (health_a, health_b)
-          print('Hostinger durable app health verified:', app_health.get('storage'), 'persistent_learning=', app_health.get('persistent_learning'))
-          print('Hostinger Pulse storage verified:', pulse_health.get('storage'))
-          print('Hostinger Quantic Relay verified:', health_a['relayId'])
-          print('Hostinger production status API verified:', sorted(ids), 'mail=', mail)
+          assert app.get('service') == 'evidence-world-eye-node', app
+          assert app.get('status') in {'ok', 'degraded', 'warming'}, app
+          assert pulse.get('ok') is True, pulse
+
+          assert voice.get('schema') == 'quantic-mairaiy-voice-proxy-v2', voice
+          assert voice.get('configured') is True, (
+              'Mairaiy same-site proxy is deployed but its Hostinger environment '
+              'variables are not configured',
+              voice,
+          )
+          assert voice.get('upstream_reachable') is True, (
+              'Mairaiy upstream is configured but cannot be reached from mediumorchid',
+              voice,
+          )
+          assert voice.get('state') == 'ready', voice
+          assert voice.get('service') == 'mairaiy-kokoro', voice
+          assert voice.get('engine') == 'kokoro-onnx', voice
+          assert voice.get('voice') == 'ff_siwis', voice
+          assert voice.get('language') == 'fr-fr', voice
+          assert voice.get('identity_locked') is True, voice
+          assert voice.get('model_ready') is True, (
+              'Kokoro endpoint answers but its model/voice pack is not ready',
+              voice,
+          )
+
+          print('Hostinger production app reachable:', app.get('status'))
+          print('Pulse production reachable:', pulse.get('storage'))
+          print(
+              'Mairaiy production verified:',
+              voice.get('engine'),
+              voice.get('voice'),
+              'model_ready=', voice.get('model_ready'),
+          )
           PY

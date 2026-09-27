@@ -37,23 +37,72 @@ export function normalizeMairaiyUpstream(value) {
   }
 }
 
-function publicStatus() {
-  return {
-    schema: 'quantic-mairaiy-voice-proxy-v1',
-    configured: Boolean(
-      normalizeMairaiyUpstream(config.mairaiyVoice.upstreamUrl)
-      && config.mairaiyVoice.proxyToken
-      && config.mairaiyVoice.upstreamApiKey
-    ),
+async function publicStatus() {
+  const upstreamBase = normalizeMairaiyUpstream(config.mairaiyVoice.upstreamUrl);
+  const configured = Boolean(
+    upstreamBase
+    && config.mairaiyVoice.proxyToken
+    && config.mairaiyVoice.upstreamApiKey
+  );
+  const base = {
+    schema: 'quantic-mairaiy-voice-proxy-v2',
+    configured,
     same_site_path: '/voice',
     provider: 'AURA Voice Fabric / Mairaiy speech backend',
+    upstream_reachable: false,
+    upstream_http_status: 0,
+    engine: '',
+    voice: '',
+    language: '',
+    service: '',
+    identity_locked: false,
+    model_ready: null,
+    state: configured ? 'probing' : 'not-configured',
   };
+
+  if (!configured) return base;
+
+  try {
+    const response = await fetch(`${upstreamBase}/health`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${config.mairaiyVoice.upstreamApiKey}`,
+      },
+      redirect: 'error',
+      signal: AbortSignal.timeout(Math.min(config.mairaiyVoice.timeoutMs, 7000)),
+    });
+
+    let health = {};
+    try {
+      health = await response.json();
+    } catch {}
+
+    return {
+      ...base,
+      upstream_reachable: response.ok,
+      upstream_http_status: response.status,
+      engine: String(health?.engine || ''),
+      voice: String(health?.voice || ''),
+      language: String(health?.language || ''),
+      service: String(health?.service || ''),
+      identity_locked: health?.identity_locked === true,
+      model_ready: typeof health?.model_ready === 'boolean' ? health.model_ready : null,
+      state: response.ok ? 'ready' : 'upstream-error',
+    };
+  } catch (error) {
+    const timedOut = error?.name === 'AbortError' || error?.name === 'TimeoutError';
+    return {
+      ...base,
+      state: timedOut ? 'timeout' : 'unreachable',
+    };
+  }
 }
 
 export function installMairaiyVoiceProxy(app) {
-  app.get('/voice/status', (_req, res) => {
+  app.get('/voice/status', async (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    res.json(publicStatus());
+    res.json(await publicStatus());
   });
 
   app.use('/voice', async (req, res) => {

@@ -43,6 +43,11 @@ def test_managed_node_proxy_exposes_only_minimal_voice_contract():
     assert "redirect: 'error'" in source
     assert "url.protocol !== 'https:'" in source
     assert "Readable.fromWeb(upstream.body).pipe(res)" in source
+    assert "quantic-mairaiy-voice-proxy-v2" in source
+    assert "upstream_reachable" in source
+    assert "identity_locked" in source
+    assert "model_ready" in source
+    assert "${upstreamBase}/health" in source
 
     server = read("server_core.js")
     assert "installMairaiyVoiceProxy(app);" in server
@@ -100,3 +105,21 @@ def test_mairaiy_container_is_lightweight_python_service():
     assert "mairaiy_voice_service/requirements.txt" in dockerfile
     assert "uvicorn" in dockerfile
     assert "torch" not in dockerfile.lower()
+
+
+def test_mairaiy_service_preloads_model_before_health():
+    service = read("mairaiy_voice_service/app.py")
+    assert '@app.on_event("startup")' in service
+    assert "await _ensure_loaded()" in service
+
+
+def test_hostinger_smoke_targets_live_voice_contract_not_ui_versions():
+    workflow = read(".github/workflows/hostinger-production-smoke.yml")
+    assert "/voice/status" in workflow
+    assert "quantic-mairaiy-voice-proxy-v2" in workflow
+    assert "upstream_reachable" in workflow
+    assert "model_ready" in workflow
+    assert "kokoro-onnx" in workflow
+    assert "ff_siwis" in workflow
+    assert "Quantic Studio 2.7.4" not in workflow
+    assert "Quantic Glide 1.2.6" not in workflow

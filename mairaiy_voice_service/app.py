@@ -146,6 +146,13 @@ async def _ensure_loaded() -> tuple[Kokoro, EspeakG2P]:
         return _kokoro, _g2p
 
 
+@app.on_event("startup")
+async def warmup_mairaiy_voice() -> None:
+    # Do not announce this service as healthy until the historical Mairaiy
+    # model and voice pack are really downloaded and loadable.
+    await _ensure_loaded()
+
+
 def _normalize_voice(value: str | dict) -> str:
     if isinstance(value, dict):
         value = str(value.get("id") or "")
