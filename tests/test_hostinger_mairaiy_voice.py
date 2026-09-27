@@ -139,7 +139,9 @@ def test_node_native_mairaiy_is_french_voice_locked_and_zero_api_cost():
     assert "1939ad2a8e416c0acfeecc08a694d14ef25f2231" in source
     assert "const VOICE = 'ff_siwis'" in source
     assert "const LANGUAGE = 'fr-fr'" in source
-    assert "@piper-plus/g2p/fr" in source\n    assert "FrenchG2P" in source\n    assert "kokoroToken" in source
+    assert "@piper-plus/g2p/fr" in source
+    assert "FrenchG2P" in source
+    assert "kokoroToken" in source
     assert "StyleTextToSpeech2Model" in source
     assert "dtype: String(process.env.MAIRAIY_KOKORO_DTYPE || 'q8')" in source
     assert "zero_api_cost: true" in source
