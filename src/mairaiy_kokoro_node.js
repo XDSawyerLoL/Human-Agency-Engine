@@ -151,7 +151,7 @@ async function loadRuntime() {
     const [model, tokenizer, voiceData] = await Promise.all([
       StyleTextToSpeech2Model.from_pretrained(MODEL_ID, {
         ...common,
-        dtype: String(process.env.MAIRAIY_KOKORO_DTYPE || 'q4'),
+        dtype: String(process.env.MAIRAIY_KOKORO_DTYPE || 'q8'),
         device: 'cpu',
       }),
       AutoTokenizer.from_pretrained(MODEL_ID, common),
@@ -272,7 +272,7 @@ export function mairaiyNodeStatus() {
     identity_locked: true,
     model_id: MODEL_ID,
     model_revision: MODEL_REVISION,
-    dtype: String(process.env.MAIRAIY_KOKORO_DTYPE || 'q4'),
+    dtype: String(process.env.MAIRAIY_KOKORO_DTYPE || 'q8'),
     model_loaded_at: modelLoadedAt,
     generated_count: generatedCount,
     last_generation_ms: lastGenerationMs,
