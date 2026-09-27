@@ -112,7 +112,7 @@ async function loadVoice() {
     const url = `https://huggingface.co/${MODEL_ID}/resolve/${MODEL_REVISION}/voices/${VOICE}.bin`;
     const response = await fetch(url, {
       headers: { 'User-Agent': 'Quantic-Mairaiy/1.0' },
-      redirect: 'error',
+      redirect: 'follow',
       signal: AbortSignal.timeout(30000),
     });
     if (!response.ok) throw new Error(`Mairaiy voice asset HTTP ${response.status}`);
