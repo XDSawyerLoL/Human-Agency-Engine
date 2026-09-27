@@ -4,6 +4,7 @@ import asyncio
 import io
 import os
 import re
+import secrets
 import urllib.request
 from pathlib import Path
 from typing import Literal
@@ -58,7 +59,7 @@ def _auth(authorization: str | None = Header(default=None)) -> None:
         raise HTTPException(503, "OMNIVOICE_API_KEY is not configured")
     header = str(authorization or "")
     token = header[7:].strip() if header.lower().startswith("bearer ") else ""
-    if token != API_KEY:
+    if not token or not secrets.compare_digest(token, API_KEY):
         raise HTTPException(401, "invalid voice token")
 
 
@@ -133,8 +134,8 @@ async def _ensure_loaded() -> tuple[Kokoro, EspeakG2P]:
             await asyncio.to_thread(_download, VOICES_URL, VOICES_PATH)
 
         def load() -> tuple[Kokoro, EspeakG2P]:
-            fallback = espeak.EspeakFallback(british=False)
-            g2p = EspeakG2P(language=LANGUAGE, fallback=fallback)
+            espeak.EspeakFallback(british=False)
+            g2p = EspeakG2P(language=LANGUAGE)
             kokoro = Kokoro(str(MODEL_PATH), str(VOICES_PATH))
             voices = set(kokoro.get_voices())
             if VOICE_NAME not in voices:
