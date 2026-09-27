@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Compile Python
-        run: python -m compileall -q app scripts migrations
+        run: python -m compileall -q app scripts migrations mairaiy_voice_service
       - name: Validate migrations
         env:
           PYTHONPATH: .
