@@ -5,7 +5,6 @@ on:
     branches: [main]
     paths:
       - 'src/**'
-      - 'mairaiy_voice_service/**'
       - 'server.js'
       - 'server_core.js'
       - 'package.json'
@@ -22,17 +21,14 @@ concurrency:
 jobs:
   production-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
-      - name: Verify deployed Providence and Mairaiy on Hostinger
+      - name: Verify deployed Providence and native Mairaiy on Hostinger
         env:
           BASE_URL: https://mediumorchid-badger-314305.hostingersite.com
         run: |
           set -euo pipefail
 
-          # Wait for Hostinger to serve the deployment that contains the new
-          # voice-status contract. This detects actual production propagation,
-          # not stale HTML/version strings.
           deployed=0
           for attempt in $(seq 1 45); do
             app_code="$(curl -sS --max-time 15 -o /tmp/app-health.json -w '%{http_code}' "$BASE_URL/api/health" || true)"
@@ -46,9 +42,8 @@ jobs:
               print('')
           PY
           )"
-
             echo "attempt=$attempt app_http=$app_code voice_http=$voice_code voice_schema=$schema"
-            if [ "$app_code" = "200" ]               && [ "$voice_code" = "200" ]               && [ "$schema" = "quantic-mairaiy-voice-proxy-v2" ]; then
+            if [ "$app_code" = "200" ]               && [ "$voice_code" = "200" ]               && [ "$schema" = "quantic-mairaiy-voice-proxy-v3" ]; then
               deployed=1
               break
             fi
@@ -56,30 +51,57 @@ jobs:
           done
 
           if [ "$deployed" != "1" ]; then
-            echo "Hostinger did not expose the expected Mairaiy v2 production contract in time."
-            echo "Last app health:"
+            echo "Hostinger did not expose Mairaiy v3 in time."
             cat /tmp/app-health.json 2>/dev/null || true
             echo
-            echo "Last voice status:"
             cat /tmp/voice-status.json 2>/dev/null || true
             exit 1
           fi
 
-          pulse_code="$(curl -sS --max-time 20 -o /tmp/pulse-health.json -w '%{http_code}' "$BASE_URL/api/pulse/health" || true)"
-          voice_code="$(curl -sS --max-time 20 -o /tmp/voice-status.json -w '%{http_code}' "$BASE_URL/voice/status" || true)"
+          python - <<'PY'
+          import json
+          with open('/tmp/voice-status.json', encoding='utf-8') as f:
+              voice = json.load(f)
+          assert voice.get('schema') == 'quantic-mairaiy-voice-proxy-v3', voice
+          assert voice.get('configured') is True, voice
+          assert voice.get('mode') == 'node-native', voice
+          assert voice.get('engine') == 'kokoro-onnx-node', voice
+          assert voice.get('voice') == 'ff_siwis', voice
+          assert voice.get('language') == 'fr-fr', voice
+          assert voice.get('identity_locked') is True, voice
+          assert voice.get('zero_api_cost') is True, voice
+          assert voice.get('public_speech_enabled') is True, voice
+          print('Mairaiy Node route deployed:', voice.get('state'))
+          PY
 
-          echo "App health:"
-          cat /tmp/app-health.json
-          echo
-          echo "Pulse health:"
-          cat /tmp/pulse-health.json
-          echo
-          echo "Mairaiy voice status:"
-          cat /tmp/voice-status.json
-          echo
+          echo "Triggering real production synthesis. First run may download the q4 Kokoro model."
+          speech_code="$(curl -sS --max-time 240             -H 'Content-Type: application/json'             -o /tmp/mairaiy.wav             -w '%{http_code}'             -X POST "$BASE_URL/voice/v1/audio/speech"             -d '{"model":"kokoro","input":"Bonjour. Je suis Mairaiy.","voice":"mairaiy","response_format":"wav","speed":1}' || true)"
 
-          test "$pulse_code" = "200"
+          echo "Mairaiy synthesis HTTP=$speech_code bytes=$(wc -c </tmp/mairaiy.wav 2>/dev/null || echo 0)"
+          if [ "$speech_code" != "200" ]; then
+            echo "Mairaiy synthesis response:"
+            cat /tmp/mairaiy.wav 2>/dev/null || true
+            exit 1
+          fi
+
+          python - <<'PY'
+          from pathlib import Path
+          audio = Path('/tmp/mairaiy.wav').read_bytes()
+          assert len(audio) > 1000, len(audio)
+          assert audio[:4] == b'RIFF', audio[:16]
+          assert audio[8:12] == b'WAVE', audio[:16]
+          print('Real Mairaiy WAV verified:', len(audio), 'bytes')
+          PY
+
+          voice_code="$(curl -sS --max-time 20 -o /tmp/voice-status-after.json -w '%{http_code}' "$BASE_URL/voice/status" || true)"
           test "$voice_code" = "200"
+
+          pulse_code="$(curl -sS --max-time 20 -o /tmp/pulse-health.json -w '%{http_code}' "$BASE_URL/api/pulse/health" || true)"
+          test "$pulse_code" = "200"
+
+          echo "Mairaiy status after synthesis:"
+          cat /tmp/voice-status-after.json
+          echo
 
           python - <<'PY'
           import json
@@ -88,40 +110,19 @@ jobs:
               app = json.load(f)
           with open('/tmp/pulse-health.json', encoding='utf-8') as f:
               pulse = json.load(f)
-          with open('/tmp/voice-status.json', encoding='utf-8') as f:
+          with open('/tmp/voice-status-after.json', encoding='utf-8') as f:
               voice = json.load(f)
 
           assert app.get('service') == 'evidence-world-eye-node', app
           assert app.get('status') in {'ok', 'degraded', 'warming'}, app
           assert pulse.get('ok') is True, pulse
-
-          assert voice.get('schema') == 'quantic-mairaiy-voice-proxy-v2', voice
-          assert voice.get('configured') is True, (
-              'Mairaiy same-site proxy is deployed but its Hostinger environment '
-              'variables are not configured',
-              voice,
-          )
-          assert voice.get('upstream_reachable') is True, (
-              'Mairaiy upstream is configured but cannot be reached from mediumorchid',
-              voice,
-          )
           assert voice.get('state') == 'ready', voice
-          assert voice.get('service') == 'mairaiy-kokoro', voice
-          assert voice.get('engine') == 'kokoro-onnx', voice
+          assert voice.get('model_ready') is True, voice
+          assert int(voice.get('generated_count') or 0) >= 1, voice
+          assert voice.get('engine') == 'kokoro-onnx-node', voice
           assert voice.get('voice') == 'ff_siwis', voice
-          assert voice.get('language') == 'fr-fr', voice
-          assert voice.get('identity_locked') is True, voice
-          assert voice.get('model_ready') is True, (
-              'Kokoro endpoint answers but its model/voice pack is not ready',
-              voice,
-          )
 
           print('Hostinger production app reachable:', app.get('status'))
           print('Pulse production reachable:', pulse.get('storage'))
-          print(
-              'Mairaiy production verified:',
-              voice.get('engine'),
-              voice.get('voice'),
-              'model_ready=', voice.get('model_ready'),
-          )
+          print('Mairaiy native production verified:', voice)
           PY
