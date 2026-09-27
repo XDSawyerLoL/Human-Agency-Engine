@@ -46,7 +46,7 @@ function publicStatus() {
       && config.mairaiyVoice.upstreamApiKey
     ),
     same_site_path: '/voice',
-    provider: 'AURA Voice Fabric / VoiceStudio',
+    provider: 'AURA Voice Fabric / Mairaiy speech backend',
   };
 }
 
