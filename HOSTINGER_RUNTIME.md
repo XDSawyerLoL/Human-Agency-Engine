@@ -76,7 +76,7 @@ The native engine lives in `src/mairaiy_kokoro_node.js` and uses:
 - pinned Kokoro ONNX model revision `1939ad2a8e416c0acfeecc08a694d14ef25f2231`;
 - q8 inference by default;
 - CPU execution through Transformers.js / ONNX Runtime Node;
-- French phonemization with `phonemizer`;
+- French phonemization with the pure-JavaScript `@piper-plus/g2p` French rules;
 - locked voice `ff_siwis`;
 - 24 kHz PCM/WAV output;
 - lazy loading and a local model cache;
