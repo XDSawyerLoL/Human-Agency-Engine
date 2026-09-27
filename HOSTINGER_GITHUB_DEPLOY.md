@@ -60,7 +60,7 @@ La production Hostinger gérée reste **100 % Node.js 22**. Mairaiy tourne déso
 - modèle : `onnx-community/Kokoro-82M-v1.0-ONNX`, révision épinglée ;
 - variante : q8 par défaut ;
 - moteur : Transformers.js / ONNX Runtime Node ;
-- phonémisation française : eSpeak-NG WASM via `phonemizer` ;
+- phonémisation française : règles G2P françaises pures JavaScript via `@piper-plus/g2p` ;
 - identité : `ff_siwis`, `fr-fr` ;
 - aucun appel TTS facturé ;
 - chargement paresseux : Providence démarre sans charger ~100 Mo de modèle ;
