@@ -21,7 +21,7 @@
     "helmet": "8.1.0",
     "mysql2": "3.24.4",
     "@huggingface/transformers": "4.3.0",
-    "phonemizer": "1.2.1"
+    "@piper-plus/g2p": "0.4.2"
   },
   "overrides": {
     "sharp": "0.35.4"
