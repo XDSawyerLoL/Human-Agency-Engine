@@ -39,15 +39,18 @@ def test_managed_node_proxy_exposes_only_minimal_voice_contract():
     assert "GET /v1/audio/voices" in source
     assert "GET /v1/models" in source
     assert "POST /v1/audio/speech" in source
+    assert "synthesizeMairaiyNode" in source
+    assert "consumeMairaiyQuota" in source
+    assert "mairaiyNodeStatus" in source
     assert "config.mairaiyVoice.upstreamApiKey" in source
     assert "redirect: 'error'" in source
     assert "url.protocol !== 'https:'" in source
     assert "Readable.fromWeb(upstream.body).pipe(res)" in source
-    assert "quantic-mairaiy-voice-proxy-v2" in source
-    assert "upstream_reachable" in source
+    assert "quantic-mairaiy-voice-proxy-v3" in source
+    assert "mode: 'node-native'" in source
+    assert "kokoro-onnx-node" not in source or "native Node Kokoro" in source
     assert "identity_locked" in source
     assert "model_ready" in source
-    assert "${upstreamBase}/health" in source
 
     server = read("server_core.js")
     assert "installMairaiyVoiceProxy(app);" in server
@@ -75,9 +78,11 @@ def test_voice_environment_contract_is_documented():
     assert "MAIRAIY_KOKORO_VOICE=ff_siwis" in vps_env
     assert "MAIRAIY_KOKORO_LANGUAGE=fr-fr" in vps_env
     assert "OMNIVOICE_API_KEY=" in vps_env
-    assert "MAIRAIY_VOICE_UPSTREAM_URL=" in node_env
-    assert "MAIRAIY_VOICE_PROXY_TOKEN=" in node_env
-    assert "MAIRAIY_VOICE_UPSTREAM_API_KEY=" in node_env
+    assert "MAIRAIY_NODE_NATIVE_ENABLED=true" in node_env
+    assert "MAIRAIY_PUBLIC_SPEECH_ENABLED=true" in node_env
+    assert "MAIRAIY_KOKORO_DTYPE=q8" in node_env
+    assert "MAIRAIY_PUBLIC_REQUESTS_PER_MINUTE=6" in node_env
+    assert "MAIRAIY_PUBLIC_REQUESTS_PER_DAY=240" in node_env
 
 
 def test_mairaiy_python_service_is_voice_locked_and_syntax_valid():
@@ -113,13 +118,38 @@ def test_mairaiy_service_preloads_model_before_health():
     assert "await _ensure_loaded()" in service
 
 
-def test_hostinger_smoke_targets_live_voice_contract_not_ui_versions():
+def test_hostinger_smoke_targets_real_native_voice_contract():
     workflow = read(".github/workflows/hostinger-production-smoke.yml")
     assert "/voice/status" in workflow
-    assert "quantic-mairaiy-voice-proxy-v2" in workflow
-    assert "upstream_reachable" in workflow
+    assert "/voice/v1/audio/speech" in workflow
+    assert "quantic-mairaiy-voice-proxy-v3" in workflow
+    assert "node-native" in workflow
     assert "model_ready" in workflow
-    assert "kokoro-onnx" in workflow
+    assert "kokoro-onnx-node" in workflow
     assert "ff_siwis" in workflow
+    assert "RIFF" in workflow
+    assert "WAVE" in workflow
     assert "Quantic Studio 2.7.4" not in workflow
     assert "Quantic Glide 1.2.6" not in workflow
+
+
+def test_node_native_mairaiy_is_french_voice_locked_and_zero_api_cost():
+    source = read("src/mairaiy_kokoro_node.js")
+    assert "onnx-community/Kokoro-82M-v1.0-ONNX" in source
+    assert "1939ad2a8e416c0acfeecc08a694d14ef25f2231" in source
+    assert "const VOICE = 'ff_siwis'" in source
+    assert "const LANGUAGE = 'fr-fr'" in source
+    assert "phonemize(text, LANGUAGE)" in source
+    assert "StyleTextToSpeech2Model" in source
+    assert "dtype: String(process.env.MAIRAIY_KOKORO_DTYPE || 'q8')" in source
+    assert "zero_api_cost: true" in source
+    assert "wavFromFloat32" in source
+    assert "daily-cap" in source
+    assert "rate-limit" in source
+
+
+def test_node_world_eye_ci_runs_real_mairaiy_synthesis():
+    workflow = read(".github/workflows/node-world-eye.yml")
+    assert "Verify native Mairaiy Kokoro synthesis" in workflow
+    assert "npm run test:mairaiy-node" in workflow
+    assert "MAIRAIY_KOKORO_DTYPE: q8" in workflow
