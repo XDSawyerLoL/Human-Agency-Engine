@@ -74,7 +74,7 @@ jobs:
           print('Mairaiy Node route deployed:', voice.get('state'))
           PY
 
-          echo "Triggering real production synthesis. First run may download the q4 Kokoro model."
+          echo "Triggering real production synthesis. First run may download the q8 Kokoro model."
           speech_code="$(curl -sS --max-time 240             -H 'Content-Type: application/json'             -o /tmp/mairaiy.wav             -w '%{http_code}'             -X POST "$BASE_URL/voice/v1/audio/speech"             -d '{"model":"kokoro","input":"Bonjour. Je suis Mairaiy.","voice":"mairaiy","response_format":"wav","speed":1}' || true)"
 
           echo "Mairaiy synthesis HTTP=$speech_code bytes=$(wc -c </tmp/mairaiy.wav 2>/dev/null || echo 0)"
