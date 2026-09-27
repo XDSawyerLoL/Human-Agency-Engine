@@ -12,7 +12,7 @@ GitHub is source control only. It must not store or execute the rolling HORIZON 
 - `snapshot`: regenerates the sanitized ÉVIDENCE public snapshot locally every 5 minutes.
 - `web`: Nginx serves the ÉVIDENCE cockpit and the local snapshot on port `8080` by default.
 - `backup`: daily PostgreSQL application dump with seven-day retention by default.
-- `mairaiy-voice` (optional profile `voice`): VoiceStudio/OmniVoice GGUF, private on the Docker network and reverse-proxied by the VPS Nginx under `/voice/`.
+- `mairaiy-voice` (optional profile `voice`): lightweight Kokoro ONNX / `ff_siwis`, private on the Docker network and reverse-proxied by the VPS Nginx under `/voice/`.
 
 The former `.github/workflows/horizon-live.yml` runtime is intentionally removed. No rolling SQLite database or HORIZON state artifact should be uploaded to GitHub again.
 
@@ -67,7 +67,18 @@ Runtime data remains in PostgreSQL volumes and is not replaced by rebuilding con
 
 ## Mairaiy / AURA Voice Fabric
 
-The public Providence deployment at `mediumorchid-badger-314305.hostingersite.com` is currently a managed **Node.js** Web App. The Python/FastAPI services in this repository belong to the separate VPS/Docker topology. Hostinger's managed Web/Cloud runtime does not provide the root/Python environment required by PyTorch/VoiceStudio; the voice engine therefore runs on the VPS and the Node Web App remains the public same-site facade.
+The public Providence deployment at `mediumorchid-badger-314305.hostingersite.com` is currently a managed **Node.js** Web App. The Python/FastAPI services in this repository belong to the separate VPS/Docker topology. Hostinger's managed Web/Cloud runtime does not provide the Python/root environment needed for local TTS, so the voice compute runs on the VPS and the Node Web App remains the single public same-site facade.
+
+### Voice identity
+
+AURA already had a stable local Mairaiy identity before the Gemini experiments:
+
+- engine: **Kokoro ONNX**
+- voice: **`ff_siwis`**
+- language: **`fr-fr`**
+- browser/system voice fallback: not required
+
+The online service in `mairaiy_voice_service/` reuses that same identity and exposes the small subset of the VoiceStudio/OpenAI speech contract needed by AURA Voice Fabric. This avoids cloning a replacement voice and avoids the much larger PyTorch/OmniVoice runtime for ordinary public speech.
 
 ### VPS side
 
@@ -76,8 +87,9 @@ Set in `.env.hostinger`:
 ```env
 MAIRAIY_VOICE_ENABLED=true
 OMNIVOICE_API_KEY=<long random secret>
-MAIRAIY_VOICE_DEVICE=cpu
-MAIRAIY_VOICE_ENGINE=omnivoice-gguf
+MAIRAIY_KOKORO_VOICE=ff_siwis
+MAIRAIY_KOKORO_LANGUAGE=fr-fr
+MAIRAIY_KOKORO_SPEED=1.0
 ```
 
 Then deploy with:
@@ -86,13 +98,13 @@ Then deploy with:
 bash scripts/hostinger_deploy.sh
 ```
 
-The deploy script enables Compose profile `voice`, refuses an obviously undersized host below the VoiceStudio RAM floor unless explicitly overridden, and checks `/voice/health` through Nginx before declaring success.
+The Compose profile `voice` builds `Dockerfile.mairaiy-voice`, keeps port 3900 private on the Docker network, persists the ONNX assets, and checks `/voice/health` through Nginx.
 
-VoiceStudio itself documents roughly 8 GB RAM as a minimum and 16 GB+ as recommended. Because HORIZON/PostgreSQL/workers share the same VPS, 16 GB total RAM is the safer target; `omnivoice-gguf` is selected to reduce memory pressure on CPU-only hosts.
+The first real synthesis downloads the same Kokoro model/voice pack that AURA's former local runtime used. Kokoro is an 82M ONNX model and is substantially lighter than the full VoiceStudio/OmniVoice stack, making CPU hosting on the Providence VPS much more realistic.
 
 ### Managed Node side
 
-Expose the voice to AURA through the existing public site without giving the browser the upstream secret:
+Keep `mediumorchid` as the only public URL. Configure the existing Node Hostinger Web App:
 
 ```env
 MAIRAIY_VOICE_UPSTREAM_URL=https://<voice-vps-tls-host>
@@ -109,18 +121,20 @@ The Node runtime exposes only:
 - `GET /voice/v1/models`
 - `POST /voice/v1/audio/speech`
 
-All proxy routes except the public static status require `Authorization: Bearer <MAIRAIY_VOICE_PROXY_TOKEN>`. The proxy replaces that token with the private VoiceStudio API key server-side.
+All proxied routes require `Authorization: Bearer <MAIRAIY_VOICE_PROXY_TOKEN>`. The Node server replaces that token with the private VPS API key. The browser never receives either secret.
 
-AURA Cloud can then use:
+### AURA Cloud side
+
+AURA Voice Fabric then points only to the public Providence URL:
 
 ```env
 AURA_VOICE_FABRIC_BASE_URL=https://mediumorchid-badger-314305.hostingersite.com/voice
 AURA_VOICE_FABRIC_API_KEY=<MAIRAIY_VOICE_PROXY_TOKEN>
-AURA_VOICE_FABRIC_MODEL=omnivoice-gguf
+AURA_VOICE_FABRIC_MODEL=kokoro
 AURA_MAIRAIY_VOICE_PROFILE_NAME=Mairaiy
 AURA_MAIRAIY_REQUIRE_PROFILE=true
 AURA_VOICE_FABRIC_ZERO_COST_CONFIRMED=true
 AURA_VOICE_FABRIC_STRICT_IDENTITY=true
 ```
 
-A voice profile named `Mairaiy` must still be created from a clean reference clip that you have the right to use. Until that profile exists, strict identity mode intentionally refuses to substitute a different voice.
+The service advertises `Mairaiy` as a profile and maps it internally to `ff_siwis`. Strict identity therefore keeps the historical AURA timbre and never substitutes the Android/browser voice.

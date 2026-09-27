@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Compile Python
-        run: python -m compileall -q app scripts migrations
+        run: python -m compileall -q app scripts migrations mairaiy_voice_service
       - name: Validate migrations
         env:
           PYTHONPATH: .
@@ -41,6 +41,8 @@ jobs:
           docker compose -f docker-compose.hostinger.yml config >/dev/null
           OMNIVOICE_API_KEY=test-voice-key-0123456789abcdef \
             docker compose -f docker-compose.hostinger.yml --profile voice config >/dev/null
+      - name: Build lightweight Mairaiy voice image
+        run: docker build -f Dockerfile.mairaiy-voice -t mairaiy-voice-ci .
       - name: Run tests
         env:
           PYTHONPATH: .

@@ -1,4 +1,5 @@
 from pathlib import Path
+import ast
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -8,17 +9,17 @@ def read(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def test_mairaiy_voice_compose_is_private_pinned_and_low_memory():
+def test_mairaiy_voice_compose_is_private_and_uses_historical_kokoro():
     compose = read("docker-compose.hostinger.yml")
     assert "mairaiy-voice:" in compose
     assert 'profiles: ["voice"]' in compose
-    assert "palashdeb/omnivoice-studio:0.5.0@sha256:2bf2d4d86591672caedada4384895c0e0ca4fdb3ec7f8efed257210b5abd4629" in compose
-    assert "OMNIVOICE_TTS_BACKEND:" in compose and "omnivoice-gguf" in compose
-    assert "OMNIVOICE_DEVICE:" in compose and "cpu" in compose
+    assert "dockerfile: Dockerfile.mairaiy-voice" in compose
+    assert "MAIRAIY_KOKORO_VOICE:" in compose and "ff_siwis" in compose
+    assert "MAIRAIY_KOKORO_LANGUAGE:" in compose and "fr-fr" in compose
     assert 'expose:' in compose and '"3900"' in compose
     assert "3900:3900" not in compose
     assert "horizon_mairaiy_voice_data" in compose
-    assert "horizon_mairaiy_hf_cache" in compose
+    assert "horizon_mairaiy_hf_cache" not in compose
 
 
 def test_nginx_voice_proxy_is_lazy_and_not_publicly_bound_to_container_port():
@@ -45,24 +46,57 @@ def test_managed_node_proxy_exposes_only_minimal_voice_contract():
 
     server = read("server_core.js")
     assert "installMairaiyVoiceProxy(app);" in server
-    assert server.index("installMairaiyVoiceProxy(app);") < server.index("app.use(requireQuanticIdentity);")
+    assert server.index("installMairaiyVoiceProxy(app);") < server.index(
+        "app.use(requireQuanticIdentity);"
+    )
 
 
 def test_voice_deploy_script_has_resource_and_secret_guards():
     script = read("scripts/hostinger_deploy.sh")
     assert "MAIRAIY_VOICE_ENABLED" in script
     assert "OMNIVOICE_API_KEY" in script
-    assert "7340032" in script
+    assert "2097152" in script
     assert "--profile voice" in script
     assert "/voice/health" in script
-    subprocess.run(["bash", "-n", str(ROOT / "scripts/hostinger_deploy.sh")], check=True)
+    subprocess.run(
+        ["bash", "-n", str(ROOT / "scripts/hostinger_deploy.sh")],
+        check=True,
+    )
 
 
 def test_voice_environment_contract_is_documented():
     vps_env = read(".env.hostinger.example")
     node_env = read(".env.node.hostinger.example")
-    assert "MAIRAIY_VOICE_ENGINE=omnivoice-gguf" in vps_env
+    assert "MAIRAIY_KOKORO_VOICE=ff_siwis" in vps_env
+    assert "MAIRAIY_KOKORO_LANGUAGE=fr-fr" in vps_env
     assert "OMNIVOICE_API_KEY=" in vps_env
     assert "MAIRAIY_VOICE_UPSTREAM_URL=" in node_env
     assert "MAIRAIY_VOICE_PROXY_TOKEN=" in node_env
     assert "MAIRAIY_VOICE_UPSTREAM_API_KEY=" in node_env
+
+
+def test_mairaiy_python_service_is_voice_locked_and_syntax_valid():
+    service = read("mairaiy_voice_service/app.py")
+    ast.parse(service)
+    assert 'VOICE_NAME = str(os.getenv("MAIRAIY_KOKORO_VOICE", "ff_siwis")' in service
+    assert '"name": "Mairaiy"' in service
+    assert '"type": "profile"' in service
+    assert '"engine": "kokoro-onnx"' in service
+    assert "identity_locked" in service
+    assert "secrets.compare_digest" in service
+    assert '@app.post("/v1/audio/speech"' in service
+    assert "response_format" in service
+    assert 'media_type="audio/wav"' in service
+
+    requirements = read("mairaiy_voice_service/requirements.txt")
+    assert "kokoro-onnx==0.6.1" in requirements
+    assert "misaki-fork==0.9.6" in requirements
+    assert "soundfile==0.13.1" in requirements
+
+
+def test_mairaiy_container_is_lightweight_python_service():
+    dockerfile = read("Dockerfile.mairaiy-voice")
+    assert "FROM python:3.12-slim" in dockerfile
+    assert "mairaiy_voice_service/requirements.txt" in dockerfile
+    assert "uvicorn" in dockerfile
+    assert "torch" not in dockerfile.lower()

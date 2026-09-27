@@ -148,21 +148,22 @@ services:
       - horizon_private
 
   mairaiy-voice:
-    image: palashdeb/omnivoice-studio:0.5.0@sha256:2bf2d4d86591672caedada4384895c0e0ca4fdb3ec7f8efed257210b5abd4629
+    build:
+      context: .
+      dockerfile: Dockerfile.mairaiy-voice
     profiles: ["voice"]
     restart: unless-stopped
     environment:
       OMNIVOICE_API_KEY: ${OMNIVOICE_API_KEY:-}
-      OMNIVOICE_DEVICE: ${MAIRAIY_VOICE_DEVICE:-cpu}
-      OMNIVOICE_TTS_BACKEND: ${MAIRAIY_VOICE_ENGINE:-omnivoice-gguf}
-      OMNIVOICE_CPU_GENERATE_TIMEOUT_S: ${MAIRAIY_VOICE_CPU_TIMEOUT_S:-600}
-      OMNIVOICE_GENERATE_TIMEOUT_S: ${MAIRAIY_VOICE_GENERATE_TIMEOUT_S:-300}
-      OMNIVOICE_PROMPT_DISK_CACHE: "1"
+      MAIRAIY_KOKORO_DIR: /models
+      MAIRAIY_KOKORO_VOICE: ${MAIRAIY_KOKORO_VOICE:-ff_siwis}
+      MAIRAIY_KOKORO_LANGUAGE: ${MAIRAIY_KOKORO_LANGUAGE:-fr-fr}
+      MAIRAIY_KOKORO_SPEED: ${MAIRAIY_KOKORO_SPEED:-1.0}
+      MAIRAIY_KOKORO_CHUNK_CHARS: ${MAIRAIY_KOKORO_CHUNK_CHARS:-430}
     expose:
       - "3900"
     volumes:
-      - horizon_mairaiy_voice_data:/app/omnivoice_data
-      - horizon_mairaiy_hf_cache:/root/.cache/huggingface
+      - horizon_mairaiy_voice_data:/models
     healthcheck:
       test:
         - CMD
@@ -172,8 +173,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
-      start_period: 60s
-    stop_grace_period: 30s
+      start_period: 30s
+    stop_grace_period: 20s
     networks:
       - horizon_private
 
@@ -225,7 +226,6 @@ volumes:
   horizon_evidence_public:
   horizon_postgres_backups:
   horizon_mairaiy_voice_data:
-  horizon_mairaiy_hf_cache:
 
 networks:
   horizon_private:
