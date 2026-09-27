@@ -4,6 +4,12 @@ const int = (name, fallback, min, max) => {
   return Math.max(min, Math.min(max, raw));
 };
 
+const bool = (name, fallback = false) => {
+  const raw = String(process.env[name] ?? '').trim().toLowerCase();
+  if (!raw) return fallback;
+  return ['1','true','yes','oui','on'].includes(raw);
+};
+
 const value = (...names) => {
   for (const name of names) {
     const v = String(process.env[name] ?? '').trim();
@@ -58,6 +64,10 @@ export const config = {
   },
   adminRefreshKey: value('EVIDENCE_ADMIN_KEY'),
   mairaiyVoice: {
+    nodeNativeEnabled: bool('MAIRAIY_NODE_NATIVE_ENABLED', true),
+    publicEnabled: bool('MAIRAIY_PUBLIC_SPEECH_ENABLED', true),
+    publicRequestsPerMinute: int('MAIRAIY_PUBLIC_REQUESTS_PER_MINUTE', 6, 1, 60),
+    publicRequestsPerDay: int('MAIRAIY_PUBLIC_REQUESTS_PER_DAY', 240, 10, 5000),
     upstreamUrl: value('MAIRAIY_VOICE_UPSTREAM_URL'),
     proxyToken: value('MAIRAIY_VOICE_PROXY_TOKEN'),
     upstreamApiKey: value('MAIRAIY_VOICE_UPSTREAM_API_KEY', 'OMNIVOICE_API_KEY'),
@@ -78,6 +88,7 @@ export const providerState = () => ({
   ProvidenceRedTeamConfigured: Boolean(config.ai.baseUrl && config.ai.redTeamModel),
   SupabaseDurableMirrorConfigured: Boolean(config.supabase.url && config.supabase.secretKey),
   PersistentLearningConfigured: Boolean(config.mysql.host && config.mysql.user && config.mysql.database),
+  MairaiyVoiceNodeNativeEnabled: Boolean(config.mairaiyVoice.nodeNativeEnabled),
   MairaiyVoiceProxyConfigured: Boolean(
     config.mairaiyVoice.upstreamUrl
     && config.mairaiyVoice.proxyToken

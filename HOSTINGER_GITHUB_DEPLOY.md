@@ -38,10 +38,13 @@ PROVIDENCE peut démarrer sans les fournisseurs optionnels. Les variables suivan
 - `MYSQL_PASSWORD`
 - `MYSQL_DATABASE`
 - `EVIDENCE_ADMIN_KEY`
-- `MAIRAIY_VOICE_UPSTREAM_URL`
-- `MAIRAIY_VOICE_PROXY_TOKEN`
-- `MAIRAIY_VOICE_UPSTREAM_API_KEY`
-- `MAIRAIY_VOICE_PROXY_TIMEOUT_MS`
+- `MAIRAIY_NODE_NATIVE_ENABLED` (default: true)
+- `MAIRAIY_PUBLIC_SPEECH_ENABLED` (default: true)
+- `MAIRAIY_PUBLIC_REQUESTS_PER_MINUTE`
+- `MAIRAIY_PUBLIC_REQUESTS_PER_DAY`
+- `MAIRAIY_KOKORO_DTYPE` (default: q8)
+- `MAIRAIY_KOKORO_CACHE_DIR`
+- legacy optional: `MAIRAIY_VOICE_UPSTREAM_URL`, `MAIRAIY_VOICE_PROXY_TOKEN`, `MAIRAIY_VOICE_UPSTREAM_API_KEY`
 
 ## Vérification avant mise en production
 
@@ -52,4 +55,27 @@ Version préparée : PROVIDENCE 1.16.20.
 
 ## Voix Mairaiy
 
-Ce runtime Node ne charge pas PyTorch lui-même. Il expose `/voice/*` comme façade authentifiée vers un VoiceStudio/OmniVoice hébergé sur le VPS. Cela conserve une seule origine publique pour AURA et les utilisateurs.
+La production Hostinger gérée reste **100 % Node.js 22**. Mairaiy tourne désormais directement dans ce même processus :
+
+- modèle : `onnx-community/Kokoro-82M-v1.0-ONNX`, révision épinglée ;
+- variante : q8 par défaut ;
+- moteur : Transformers.js / ONNX Runtime Node ;
+- phonémisation française : règles G2P françaises pures JavaScript via `@piper-plus/g2p` ;
+- identité : `ff_siwis`, `fr-fr` ;
+- aucun appel TTS facturé ;
+- chargement paresseux : Providence démarre sans charger ~100 Mo de modèle ;
+- cache local configurable ;
+- limites publiques par IP + plafond journalier pour éviter qu'un endpoint gratuit soit transformé en service TTS ouvert illimité.
+
+Routes publiques :
+
+```text
+GET  /voice/status
+GET  /voice/health
+GET  /voice/.well-known/voicestudio-speech
+GET  /voice/v1/audio/voices
+GET  /voice/v1/models
+POST /voice/v1/audio/speech
+```
+
+Le premier `POST /voice/v1/audio/speech` télécharge le modèle q8 et `ff_siwis`, puis les appels suivants réutilisent le runtime chargé. Un ancien backend VPS peut rester configuré uniquement comme repli optionnel.
