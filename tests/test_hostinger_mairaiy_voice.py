@@ -8,7 +8,7 @@ def read(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def test_mairaiy_voice_compose_is_private_pinned_and_low_memory():
+def test_mairaiy_voice_compose_is_private_and_uses_historical_kokoro():
     compose = read("docker-compose.hostinger.yml")
     assert "mairaiy-voice:" in compose
     assert 'profiles: ["voice"]' in compose
@@ -66,3 +66,21 @@ def test_voice_environment_contract_is_documented():
     assert "MAIRAIY_VOICE_UPSTREAM_URL=" in node_env
     assert "MAIRAIY_VOICE_PROXY_TOKEN=" in node_env
     assert "MAIRAIY_VOICE_UPSTREAM_API_KEY=" in node_env
+
+
+def test_mairaiy_python_service_is_voice_locked_and_syntax_valid():
+    import ast
+
+    service = read("mairaiy_voice_service/app.py")
+    ast.parse(service)
+    assert 'VOICE_NAME = str(os.getenv("MAIRAIY_KOKORO_VOICE", "ff_siwis")' in service
+    assert '"name": "Mairaiy"' in service
+    assert '"type": "profile"' in service
+    assert '"engine": "kokoro-onnx"' in service
+    assert "identity_locked" in service
+    assert "secrets.compare_digest" in service
+    assert "POST" not in service or "/v1/audio/speech" in service
+
+    requirements = read("mairaiy_voice_service/requirements.txt")
+    assert "kokoro-onnx==0.6.1" in requirements
+    assert "misaki-fork==0.9.6" in requirements
