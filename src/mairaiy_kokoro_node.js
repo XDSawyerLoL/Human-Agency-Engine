@@ -94,11 +94,28 @@ function concatenateFloat32(parts, silenceSamples = 2400) {
   return out;
 }
 
+let frenchG2P = null;
+
+function kokoroToken(token) {
+  // @piper-plus/g2p uses a handful of private-use tokens for French vowels.
+  // Kokoro's tokenizer represents nasalization with U+0303 combining tilde.
+  if (token === '\uE01E') return 'y';
+  if (token === '\uE056') return 'ɛ\u0303';
+  if (token === '\uE057') return 'ɑ\u0303';
+  if (token === '\uE058') return 'ɔ\u0303';
+  return String(token || '');
+}
+
 async function phonemizeFrench(text) {
-  const { phonemize } = await import('phonemizer');
-  const raw = await phonemize(text, LANGUAGE);
-  const value = Array.isArray(raw) ? raw.join(' ') : String(raw || '');
-  return value
+  if (!frenchG2P) {
+    const { FrenchG2P } = await import('@piper-plus/g2p/fr');
+    frenchG2P = new FrenchG2P();
+  }
+  const result = frenchG2P.phonemize(text);
+  const tokens = Array.isArray(result?.tokens) ? result.tokens : [];
+  return tokens
+    .map(kokoroToken)
+    .join('')
     .replace(/ʲ/g, 'j')
     .replace(/x/g, 'k')
     .replace(/ɬ/g, 'l')
