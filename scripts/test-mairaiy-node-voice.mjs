@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { mairaiyNodeStatus, synthesizeMairaiyNode } from '../src/mairaiy_kokoro_node.js';
 
-process.env.MAIRAIY_KOKORO_DTYPE = process.env.MAIRAIY_KOKORO_DTYPE || 'q4';
+process.env.MAIRAIY_KOKORO_DTYPE = process.env.MAIRAIY_KOKORO_DTYPE || 'q8';
 process.env.MAIRAIY_KOKORO_CACHE_DIR = process.env.MAIRAIY_KOKORO_CACHE_DIR || '/tmp/quantic-mairaiy-ci';
 
 const result = await synthesizeMairaiyNode('Bonjour. Je suis Mairaiy, la voix d’AURA.', { speed: 1 });
