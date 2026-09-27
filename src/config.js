@@ -56,7 +56,13 @@ export const config = {
     password: value('MYSQL_PASSWORD', 'DB_PASSWORD') || mysqlUrl?.password || '',
     database: value('MYSQL_DATABASE', 'DB_NAME') || mysqlUrl?.database || ''
   },
-  adminRefreshKey: value('EVIDENCE_ADMIN_KEY')
+  adminRefreshKey: value('EVIDENCE_ADMIN_KEY'),
+  mairaiyVoice: {
+    upstreamUrl: value('MAIRAIY_VOICE_UPSTREAM_URL'),
+    proxyToken: value('MAIRAIY_VOICE_PROXY_TOKEN'),
+    upstreamApiKey: value('MAIRAIY_VOICE_UPSTREAM_API_KEY', 'OMNIVOICE_API_KEY'),
+    timeoutMs: int('MAIRAIY_VOICE_PROXY_TIMEOUT_MS', 120000, 5000, 300000)
+  }
 };
 
 export const providerState = () => ({
@@ -71,5 +77,10 @@ export const providerState = () => ({
   ProvidenceAnalystConfigured: Boolean(config.ai.baseUrl && config.ai.analystModel),
   ProvidenceRedTeamConfigured: Boolean(config.ai.baseUrl && config.ai.redTeamModel),
   SupabaseDurableMirrorConfigured: Boolean(config.supabase.url && config.supabase.secretKey),
-  PersistentLearningConfigured: Boolean(config.mysql.host && config.mysql.user && config.mysql.database)
+  PersistentLearningConfigured: Boolean(config.mysql.host && config.mysql.user && config.mysql.database),
+  MairaiyVoiceProxyConfigured: Boolean(
+    config.mairaiyVoice.upstreamUrl
+    && config.mairaiyVoice.proxyToken
+    && config.mairaiyVoice.upstreamApiKey
+  )
 });

@@ -7,6 +7,7 @@ import { config, providerState } from './src/config.js';
 import { installEmbeddedQuanticRelay } from './src/quantic_embedded_relay.js';
 import { installQuanticPulse } from './src/quantic_pulse.js';
 import { installQuanticIdentity, requireQuanticIdentity } from './src/quantic_identity.js';
+import { installMairaiyVoiceProxy } from './src/mairaiy_voice_proxy.js';
 import { EvidenceStore } from './src/store.js';
 import { collectWorldSignals } from './src/sources.js';
 import { collectBreadthSignals } from './src/breadth_sources.js';
@@ -54,6 +55,7 @@ app.use(compression());
 installEmbeddedQuanticRelay(app);
 installQuanticPulse(app);
 app.use(express.json({ limit: '64kb' }));
+installMairaiyVoiceProxy(app);
 installQuanticIdentity(app);
 app.use(requireQuanticIdentity);
 app.use(express.static(path.join(__dirname, 'public'), {

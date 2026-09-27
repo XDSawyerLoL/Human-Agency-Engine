@@ -38,9 +38,18 @@ PROVIDENCE peut démarrer sans les fournisseurs optionnels. Les variables suivan
 - `MYSQL_PASSWORD`
 - `MYSQL_DATABASE`
 - `EVIDENCE_ADMIN_KEY`
+- `MAIRAIY_VOICE_UPSTREAM_URL`
+- `MAIRAIY_VOICE_PROXY_TOKEN`
+- `MAIRAIY_VOICE_UPSTREAM_API_KEY`
+- `MAIRAIY_VOICE_PROXY_TIMEOUT_MS`
 
 ## Vérification avant mise en production
 
 Le build exécute automatiquement le préflight Hostinger et les principaux tests PROVIDENCE. Un déploiement ne doit être publié que si `npm run build` réussit.
 
 Version préparée : PROVIDENCE 1.16.20.
+
+
+## Voix Mairaiy
+
+Ce runtime Node ne charge pas PyTorch lui-même. Il expose `/voice/*` comme façade authentifiée vers un VoiceStudio/OmniVoice hébergé sur le VPS. Cela conserve une seule origine publique pour AURA et les utilisateurs.
