@@ -44,7 +44,7 @@ jobs:
 
       - name: Verify native Mairaiy Kokoro synthesis
         env:
-          MAIRAIY_KOKORO_DTYPE: q4
+          MAIRAIY_KOKORO_DTYPE: q8
           MAIRAIY_KOKORO_CACHE_DIR: /tmp/quantic-mairaiy-ci
         run: timeout 300 npm run test:mairaiy-node
 
