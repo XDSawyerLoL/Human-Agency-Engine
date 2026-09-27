@@ -43,6 +43,11 @@ def test_managed_node_proxy_exposes_only_minimal_voice_contract():
     assert "redirect: 'error'" in source
     assert "url.protocol !== 'https:'" in source
     assert "Readable.fromWeb(upstream.body).pipe(res)" in source
+    assert "quantic-mairaiy-voice-proxy-v2" in source
+    assert "upstream_reachable" in source
+    assert "identity_locked" in source
+    assert "model_ready" in source
+    assert "${upstreamBase}/health" in source
 
     server = read("server_core.js")
     assert "installMairaiyVoiceProxy(app);" in server
