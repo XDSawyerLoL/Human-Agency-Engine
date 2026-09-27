@@ -67,74 +67,26 @@ Runtime data remains in PostgreSQL volumes and is not replaced by rebuilding con
 
 ## Mairaiy / AURA Voice Fabric
 
-The public Providence deployment at `mediumorchid-badger-314305.hostingersite.com` is currently a managed **Node.js** Web App. The Python/FastAPI services in this repository belong to the separate VPS/Docker topology. Hostinger's managed Web/Cloud runtime does not provide the Python/root environment needed for local TTS, so the voice compute runs on the VPS and the Node Web App remains the single public same-site facade.
+### Managed Node production — preferred path
 
-### Voice identity
+`mediumorchid-badger-314305.hostingersite.com` is deployed from this repository's `main` branch as a Hostinger managed **Node.js 22** Web App. Mairaiy now runs directly inside that Node process; no VPS voice service is required for the normal production path.
 
-AURA already had a stable local Mairaiy identity before the Gemini experiments:
+The native engine lives in `src/mairaiy_kokoro_node.js` and uses:
 
-- engine: **Kokoro ONNX**
-- voice: **`ff_siwis`**
-- language: **`fr-fr`**
-- browser/system voice fallback: not required
+- pinned Kokoro ONNX model revision `1939ad2a8e416c0acfeecc08a694d14ef25f2231`;
+- q8 inference by default;
+- CPU execution through Transformers.js / ONNX Runtime Node;
+- French phonemization with `phonemizer`;
+- locked voice `ff_siwis`;
+- 24 kHz PCM/WAV output;
+- lazy loading and a local model cache;
+- no billable speech API;
+- per-client rate limiting and a process-level daily ceiling.
 
-The online service in `mairaiy_voice_service/` reuses that same identity and exposes the small subset of the VoiceStudio/OpenAI speech contract needed by AURA Voice Fabric. This avoids cloning a replacement voice and avoids the much larger PyTorch/OmniVoice runtime for ordinary public speech.
+The same-site speech contract is exposed directly under `/voice/`. `GET /voice/status` reports `mode: node-native`. A real production smoke performs a live `POST /voice/v1/audio/speech` and validates a RIFF/WAVE response, so a green smoke proves actual synthesis rather than merely proving that the route exists.
 
-### VPS side
+### Optional VPS fallback
 
-Set in `.env.hostinger`:
+The Python `mairaiy_voice_service/`, `Dockerfile.mairaiy-voice`, and the Compose `voice` profile remain available as an optional fallback for a VPS deployment. They are no longer required by the managed Hostinger Web App. If an upstream fallback is configured, the Node route can use it only after a native synthesis failure.
 
-```env
-MAIRAIY_VOICE_ENABLED=true
-OMNIVOICE_API_KEY=<long random secret>
-MAIRAIY_KOKORO_VOICE=ff_siwis
-MAIRAIY_KOKORO_LANGUAGE=fr-fr
-MAIRAIY_KOKORO_SPEED=1.0
-```
-
-Then deploy with:
-
-```bash
-bash scripts/hostinger_deploy.sh
-```
-
-The Compose profile `voice` builds `Dockerfile.mairaiy-voice`, keeps port 3900 private on the Docker network, persists the ONNX assets, and checks `/voice/health` through Nginx.
-
-The first real synthesis downloads the same Kokoro model/voice pack that AURA's former local runtime used. Kokoro is an 82M ONNX model and is substantially lighter than the full VoiceStudio/OmniVoice stack, making CPU hosting on the Providence VPS much more realistic.
-
-### Managed Node side
-
-Keep `mediumorchid` as the only public URL. Configure the existing Node Hostinger Web App:
-
-```env
-MAIRAIY_VOICE_UPSTREAM_URL=https://<voice-vps-tls-host>
-MAIRAIY_VOICE_PROXY_TOKEN=<second long random secret>
-MAIRAIY_VOICE_UPSTREAM_API_KEY=<same OMNIVOICE_API_KEY as VPS>
-MAIRAIY_VOICE_PROXY_TIMEOUT_MS=120000
-```
-
-The Node runtime exposes only:
-
-- `GET /voice/health`
-- `GET /voice/.well-known/voicestudio-speech`
-- `GET /voice/v1/audio/voices`
-- `GET /voice/v1/models`
-- `POST /voice/v1/audio/speech`
-
-All proxied routes require `Authorization: Bearer <MAIRAIY_VOICE_PROXY_TOKEN>`. The Node server replaces that token with the private VPS API key. The browser never receives either secret.
-
-### AURA Cloud side
-
-AURA Voice Fabric then points only to the public Providence URL:
-
-```env
-AURA_VOICE_FABRIC_BASE_URL=https://mediumorchid-badger-314305.hostingersite.com/voice
-AURA_VOICE_FABRIC_API_KEY=<MAIRAIY_VOICE_PROXY_TOKEN>
-AURA_VOICE_FABRIC_MODEL=kokoro
-AURA_MAIRAIY_VOICE_PROFILE_NAME=Mairaiy
-AURA_MAIRAIY_REQUIRE_PROFILE=true
-AURA_VOICE_FABRIC_ZERO_COST_CONFIRMED=true
-AURA_VOICE_FABRIC_STRICT_IDENTITY=true
-```
-
-The service advertises `Mairaiy` as a profile and maps it internally to `ff_siwis`. Strict identity therefore keeps the historical AURA timbre and never substitutes the Android/browser voice.
+The Python fallback keeps the same identity: Kokoro ONNX, `ff_siwis`, `fr-fr`.
