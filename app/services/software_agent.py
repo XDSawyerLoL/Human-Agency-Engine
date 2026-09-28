@@ -368,6 +368,7 @@ class SoftwareAgentSandboxService:
         final_response: str | None = None
 
         if execution_status in _TERMINAL_EXECUTION_STATES:
+            first_terminal_observation = run.completed_at is None
             run.status = "completed" if execution_status == "finished" else "failed"
             run.completed_at = run.completed_at or datetime.utcnow()
             try:
@@ -381,6 +382,27 @@ class SoftwareAgentSandboxService:
                     run.final_response_hash = _sha256_text(candidate)
             except ValueError:
                 final_response = None
+            if first_terminal_observation:
+                user = self.db.query(User).filter(User.id == run.user_id).one()
+                WorldModelService(self.db).append_event(
+                    user,
+                    EventCreate(
+                        event_type="software_agent.sandbox_completed",
+                        source="aura_software_engine",
+                        subject_type="software_agent_run",
+                        subject_id=run.run_id,
+                        payload={
+                            "repository": run.repository,
+                            "provider": run.provider,
+                            "execution_status": execution_status,
+                            "goal_hash": run.goal_hash,
+                            "final_response_hash": run.final_response_hash,
+                            "external_dispatch": False,
+                        },
+                        correlation_id=f"software-agent:{run.run_id}",
+                    ),
+                    commit=False,
+                )
         elif execution_status in {"paused", "waiting_for_confirmation"}:
             run.status = execution_status
         else:
