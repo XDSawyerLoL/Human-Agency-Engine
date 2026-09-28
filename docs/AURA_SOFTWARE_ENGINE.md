@@ -65,6 +65,8 @@ SOFTWARE_AGENT_ENABLED=false
 SOFTWARE_AGENT_BASE_URL=http://127.0.0.1:3000
 SOFTWARE_AGENT_SESSION_API_KEY=
 SOFTWARE_AGENT_AGENT_PROFILE_ID=
+SOFTWARE_AGENT_AGENT_PROFILE_ID_FILE=
+SOFTWARE_AGENT_PRIVATE_NETWORK_HTTP=false
 SOFTWARE_AGENT_WORKSPACE_ROOT=/workspace/repos
 SOFTWARE_AGENT_ALLOWED_REPOSITORIES=XDSawyerLoL/Human-Agency-Engine
 SOFTWARE_AGENT_MAX_ITERATIONS=80
@@ -75,8 +77,11 @@ SOFTWARE_AGENT_REQUIRE_ATTESTATION=true
 In production, use an authenticated Agent Server with
 `conversation_runtime=docker` and keep `SOFTWARE_AGENT_REQUIRE_ATTESTATION=true`.
 A local OpenHands runtime is rejected even if the service is reachable. A
-loopback HTTP URL is accepted for the outer Docker-runtime controller on the
-same host; a non-loopback production URL must use HTTPS.
+loopback HTTP URL is accepted for the outer Docker-runtime controller. The
+Hostinger Compose deployment instead uses the private Docker DNS name
+`http://openhands:8000`; that path requires the explicit
+`SOFTWARE_AGENT_PRIVATE_NETWORK_HTTP=true` assertion. Public non-TLS endpoints
+remain rejected.
 
 The outer OpenHands Docker-runtime controller must already have each allow-listed
 repository available under:
@@ -109,3 +114,39 @@ A mission can provide explicit quality commands. If none are supplied, the agent
 is instructed to discover and run the repository's native compile/lint/test
 checks, start narrow, then expand when practical. AURA should treat a final
 response as evidence about the sandbox run, not as permission to promote it.
+
+
+## Hostinger runtime profile
+
+The production HORIZON API remains intentionally read/predict focused and does
+not mount the historical action surface. Software execution therefore runs in a
+separate `software-control` service using `app.main:app`.
+
+Start the additional stack explicitly:
+
+```bash
+docker compose -f docker-compose.hostinger.yml --profile software-agent up -d
+```
+
+The profile adds four bounded pieces:
+
+1. `software-repo-init` refreshes the public Human-Agency-Engine clone under
+   `/var/lib/aura-software/repos` and disables the origin push URL.
+2. `openhands` is the private outer controller with
+   `OH_CONVERSATION_RUNTIME=docker`; it owns no public port and uses the
+   Docker socket only to create the already-hardened per-conversation runtime.
+3. `openhands-profile-init` performs a real LLM preflight, persists the LLM and
+   Agent Profiles, materializes the profile, and writes only its stable UUID to
+   the shared control volume.
+4. `software-control` reads that UUID at request time and binds to
+   `127.0.0.1:8001`. `software-control-init` registers the
+   `aura-software-engine` adapter after readiness.
+
+The profile intentionally has **no implicit paid provider**. Set
+`SOFTWARE_AGENT_LLM_MODEL` and `SOFTWARE_AGENT_LLM_BASE_URL`. A local
+OpenAI-compatible Ollama endpoint is supported. The bootstrap refuses to finish
+if a one-token OpenHands validation call fails, so an unreachable or undersized
+model cannot silently mark the Software Engine ready.
+
+The signed sandbox attestation remains a separate final gate. A configured
+OpenHands profile does not weaken or bypass it.
