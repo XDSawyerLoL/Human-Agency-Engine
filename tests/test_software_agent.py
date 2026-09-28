@@ -297,6 +297,54 @@ def test_missing_profile_id_file_fails_closed(monkeypatch, tmp_path):
     assert capabilities.json()["configured"] is False
 
 
+def test_readiness_distinguishes_runtime_health_from_attestation_gate(monkeypatch):
+    _configure(monkeypatch)
+    profile_id = settings.software_agent_agent_profile_id
+
+    bootstrapped = client.post(
+        "/v1/execution/software-agent/bootstrap",
+        json={"confirm": "REGISTER AURA SOFTWARE ENGINE"},
+    )
+    assert bootstrapped.status_code == 200, bootstrapped.text
+
+    def fake_request(self, method, path, **kwargs):
+        if method == "GET" and path == "/server_info":
+            return {"conversation_runtime": "docker"}
+        if method == "GET" and path == "/api/agent-profiles":
+            return {
+                "profiles": [
+                    {
+                        "id": profile_id,
+                        "name": "aura-software",
+                        "agent_kind": "openhands",
+                        "llm_profile_ref": "aura-local",
+                    }
+                ]
+            }
+        raise AssertionError((method, path, kwargs))
+
+    monkeypatch.setattr(SoftwareAgentSandboxService, "_request", fake_request)
+
+    readiness = client.get("/v1/execution/software-agent/readiness")
+    assert readiness.status_code == 200, readiness.text
+    body = readiness.json()
+    assert body["adapter_registered"] is True
+    assert body["openhands_reachable"] is True
+    assert body["docker_runtime"] is True
+    assert body["profile_registered"] is True
+    assert body["sandbox_attested"] is False
+    assert body["attestation_gate_satisfied"] is True
+    assert body["ready_for_authorized_launch"] is True
+
+    monkeypatch.setattr(settings, "software_agent_require_attestation", True)
+    gated = client.get("/v1/execution/software-agent/readiness")
+    assert gated.status_code == 200, gated.text
+    gated_body = gated.json()
+    assert gated_body["sandbox_attested"] is False
+    assert gated_body["attestation_gate_satisfied"] is False
+    assert gated_body["ready_for_authorized_launch"] is False
+
+
 def test_launch_rejects_non_docker_openhands_runtime(monkeypatch):
     _configure(monkeypatch)
     preflight_id = _authorized_preflight(
