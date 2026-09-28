@@ -24,23 +24,29 @@ The public `web` service exposes the ÉVIDENCE dashboard on port `8080` by defau
 
 Numeric forecast probabilities remain disabled independently of deployment status.
 
-## GitHub -> Hostinger deployment invariant
+## GitHub validation and Hostinger deployment boundary
 
-Automatic production deployment now happens **inside the same `CI` workflow that tested the commit**:
+The current repository workflow `.github/workflows/ci.yml` is a **validation
+gate**, not a Hostinger deployment workflow. It checks the exact commit for:
 
-1. a commit lands on `main`;
-2. `test` checks out that commit and runs Python compilation, a fresh Alembic upgrade, Hostinger Compose validation and the complete pytest suite;
-3. `deploy-hostinger` has `needs: test`, so it cannot run unless that exact test job succeeds;
-4. the deploy job checks out `${{ github.sha }}` from the same workflow context;
-5. `hostinger/deploy-action@v1` deploys `docker-compose.hostinger.yml` for that same repository SHA.
+1. Python compilation;
+2. a fresh Alembic migration;
+3. default, voice and software-agent Compose configuration;
+4. the lightweight Mairaiy image build;
+5. the complete pytest suite.
 
-This avoids a separate `workflow_run` context where the checked-out revision and the action's own GitHub SHA could diverge.
+A green workflow proves that the repository revision passed those gates. It does
+not prove that Hostinger has deployed that SHA. The present repository contains
+no automatic `deploy-hostinger` job in `ci.yml`.
 
-`.github/workflows/deploy-hostinger.yml` is now **manual-only** (`workflow_dispatch`). Use it for an intentional redeploy of the selected revision, not as a second automatic deployment path.
+Deploy the tested revision through the Hostinger VPS deployment mechanism you
+actually operate (Hostinger Git/Docker deployment, an external deployment
+pipeline, or an intentional VPS-side pull/recreate). After deployment, verify
+`/health` and `/ready` on HORIZON and, when enabled, the private software
+control plane separately.
 
-Both deployment paths share the concurrency group `horizon-hostinger-production`, preventing two production deployments from racing each other.
-
-If repository variable `HOSTINGER_VM_ID` is absent, the automatic deploy job is skipped cleanly. CI still runs normally.
+Do not treat the existing production-smoke workflow for the separate Providence
+Node deployment as evidence that this Docker Compose stack was updated.
 
 ## Hostinger prerequisite
 
@@ -69,11 +75,13 @@ Open the repository on GitHub, then:
 
 A missing optional provider secret must leave that evidence path unavailable; HORIZON must never replace it with fabricated observations.
 
-### Required GitHub variable
+### Hostinger deployment credentials
 
-- `HOSTINGER_VM_ID` — numeric Hostinger VPS virtual-machine ID
+The current repository CI does not consume `HOSTINGER_API_KEY` or
+`HOSTINGER_VM_ID`. Keep them only if your external/manual deployment mechanism
+uses them; do not assume their presence enables deployment from this repository.
 
-### Useful GitHub variables
+### Useful runtime variables
 
 The workflow has safe defaults, so these are optional overrides:
 
@@ -107,13 +115,14 @@ The same names are documented in `.env.hostinger.example`.
 
 ## First deployment
 
-Once the VPS, `HOSTINGER_VM_ID` and the four required secrets exist, no manual code upload is needed.
-
-Merge a green PR into `main`. The `CI` workflow will run. On success, its `deploy-hostinger` job will submit the exact tested SHA to Hostinger. In Hostinger, the stack then starts in dependency order:
+Merge only a green revision, then deploy that exact SHA through the Hostinger
+VPS mechanism configured outside the current CI workflow. The default stack
+starts in dependency order:
 
 `PostgreSQL healthy -> API migrations/start -> /ready healthy -> collector + corpus-worker`
 
-If the deploy job is skipped, check `HOSTINGER_VM_ID` first. If it starts but fails during authentication/deployment, check the Hostinger API key and VPS ID in GitHub settings rather than pasting them into logs or chat.
+The optional Software Engine is a separate Compose profile and should be enabled
+only after its model endpoint and secrets are configured.
 
 ## Public hostname and TLS
 
