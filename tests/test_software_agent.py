@@ -164,6 +164,8 @@ def test_launch_uses_worktree_is_idempotent_and_does_not_persist_raw_goal(monkey
 
     def fake_request(self, method, path, **kwargs):
         calls.append((method, path, kwargs))
+        if method == "GET" and path == "/server_info":
+            return {"conversation_runtime": "docker"}
         assert method == "POST"
         assert path == "/api/conversations"
         return {
@@ -192,8 +194,9 @@ def test_launch_uses_worktree_is_idempotent_and_does_not_persist_raw_goal(monkey
     assert body["goal_hash"].startswith("sha256:")
     assert goal not in body.values()
 
-    assert len(calls) == 1
-    launch_payload = calls[0][2]["json"]
+    assert len(calls) == 2
+    assert calls[0][0:2] == ("GET", "/server_info")
+    launch_payload = calls[1][2]["json"]
     assert launch_payload["worktree"] is True
     assert launch_payload["workspace"] == {
         "kind": "LocalWorkspace",
@@ -208,7 +211,7 @@ def test_launch_uses_worktree_is_idempotent_and_does_not_persist_raw_goal(monkey
     repeated = client.post("/v1/execution/software-agent/runs", json=payload)
     assert repeated.status_code == 200
     assert repeated.json()["run_id"] == body["run_id"]
-    assert len(calls) == 1
+    assert len(calls) == 2
 
     collision = client.post(
         "/v1/execution/software-agent/runs",
@@ -227,6 +230,32 @@ def test_launch_uses_worktree_is_idempotent_and_does_not_persist_raw_goal(monkey
     columns = {column["name"] for column in inspect(engine).get_columns("software_agent_runs")}
     assert "goal" not in columns
     assert "goal_hash" in columns
+
+
+def test_launch_rejects_non_docker_openhands_runtime(monkeypatch):
+    _configure(monkeypatch)
+    preflight_id = _authorized_preflight(
+        "software-agent-runtime-d",
+        "software-agent-dry-run-runtime-0001",
+    )
+
+    def fake_request(self, method, path, **kwargs):
+        assert method == "GET"
+        assert path == "/server_info"
+        return {"conversation_runtime": "local"}
+
+    monkeypatch.setattr(SoftwareAgentSandboxService, "_request", fake_request)
+    response = client.post(
+        "/v1/execution/software-agent/runs",
+        json={
+            "preflight_id": preflight_id,
+            "idempotency_key": "software-agent-idempotency-runtime-0001",
+            "repository": "XDSawyerLoL/Human-Agency-Engine",
+            "goal": "Attempt a valid mission against a non-isolated OpenHands runtime.",
+        },
+    )
+    assert response.status_code == 400
+    assert "conversation_runtime=docker" in response.text
 
 
 def test_launch_rejects_repository_outside_allowlist(monkeypatch):
@@ -259,6 +288,8 @@ def test_refresh_returns_but_does_not_persist_final_response_and_interrupts(monk
     mode = {"state": "running"}
 
     def fake_request(self, method, path, **kwargs):
+        if method == "GET" and path == "/server_info":
+            return {"conversation_runtime": "docker"}
         if method == "POST" and path == "/api/conversations":
             return {"id": conversation_id, "execution_status": "running"}
         if method == "GET" and path == f"/api/conversations/{conversation_id}":
