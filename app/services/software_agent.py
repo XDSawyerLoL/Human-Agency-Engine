@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import posixpath
 import uuid
+from pathlib import Path
 from datetime import datetime
 from typing import Any
 
@@ -39,6 +40,27 @@ def _allowed_repositories() -> set[str]:
         for item in settings.software_agent_allowed_repositories.split(",")
         if item.strip()
     }
+
+
+def _resolved_agent_profile_id(*, required: bool = False) -> str:
+    candidate = settings.software_agent_agent_profile_id.strip()
+    if not candidate and settings.software_agent_agent_profile_id_file:
+        try:
+            candidate = Path(settings.software_agent_agent_profile_id_file).read_text(
+                encoding="utf-8"
+            ).strip()
+        except OSError:
+            candidate = ""
+    if candidate:
+        try:
+            uuid.UUID(candidate)
+        except ValueError as exc:
+            raise ValueError("configured AURA software-agent profile id must be a UUID") from exc
+    elif required:
+        raise ValueError(
+            "AURA software-agent profile is not ready; configure the profile id or profile-id file"
+        )
+    return candidate
 
 
 class SoftwareAgentSandboxService:
@@ -81,7 +103,7 @@ class SoftwareAgentSandboxService:
             "configured": bool(
                 settings.software_agent_enabled
                 and settings.software_agent_base_url
-                and settings.software_agent_agent_profile_id
+                and _resolved_agent_profile_id(required=False)
             ),
             "enabled": settings.software_agent_enabled,
             "adapter": {
@@ -101,6 +123,12 @@ class SoftwareAgentSandboxService:
             "goal_persisted": False,
             "final_response_persisted": False,
             "interrupt_supported": True,
+            "agent_profile_source": (
+                "file"
+                if settings.software_agent_agent_profile_id_file
+                and not settings.software_agent_agent_profile_id
+                else "environment"
+            ),
         }
 
     def get_run(self, run_id: str) -> SoftwareAgentRun:
@@ -234,12 +262,7 @@ class SoftwareAgentSandboxService:
     def launch(self, request: SoftwareAgentLaunchRequest) -> SoftwareAgentRun:
         if not settings.software_agent_enabled:
             raise ValueError("AURA software engine is disabled")
-        if not settings.software_agent_agent_profile_id:
-            raise ValueError("SOFTWARE_AGENT_AGENT_PROFILE_ID is not configured")
-        try:
-            uuid.UUID(settings.software_agent_agent_profile_id)
-        except ValueError as exc:
-            raise ValueError("SOFTWARE_AGENT_AGENT_PROFILE_ID must be a UUID") from exc
+        agent_profile_id = _resolved_agent_profile_id(required=True)
 
         repository_key = request.repository.lower()
         if repository_key not in _allowed_repositories():
@@ -288,7 +311,7 @@ class SoftwareAgentSandboxService:
         self.db.refresh(run)
 
         payload = {
-            "agent_profile_id": settings.software_agent_agent_profile_id,
+            "agent_profile_id": agent_profile_id,
             "workspace": {
                 "kind": "LocalWorkspace",
                 "working_dir": workspace_path,
