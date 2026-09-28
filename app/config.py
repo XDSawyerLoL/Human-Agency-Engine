@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     software_agent_base_url: str = ""
     software_agent_session_api_key: str = ""
     software_agent_agent_profile_id: str = ""
+    software_agent_agent_profile_id_file: str = ""
+    software_agent_private_network_http: bool = False
     software_agent_workspace_root: str = "/workspace/repos"
     software_agent_allowed_repositories: str = "XDSawyerLoL/Human-Agency-Engine"
     software_agent_max_iterations: int = 80
@@ -130,8 +132,10 @@ class Settings(BaseSettings):
             parsed_software_agent_url = urlparse(self.software_agent_base_url)
             if parsed_software_agent_url.scheme not in {"http", "https"} or not parsed_software_agent_url.netloc:
                 errors.append("SOFTWARE_AGENT_BASE_URL must be an absolute http(s) URL")
-            if not self.software_agent_agent_profile_id:
-                errors.append("SOFTWARE_AGENT_AGENT_PROFILE_ID is required when software agent is enabled")
+            if not self.software_agent_agent_profile_id and not self.software_agent_agent_profile_id_file:
+                errors.append("SOFTWARE_AGENT_AGENT_PROFILE_ID or SOFTWARE_AGENT_AGENT_PROFILE_ID_FILE is required when software agent is enabled")
+            if self.software_agent_agent_profile_id_file and not self.software_agent_agent_profile_id_file.startswith("/"):
+                errors.append("SOFTWARE_AGENT_AGENT_PROFILE_ID_FILE must be an absolute path")
             if not self.software_agent_allowed_repositories.strip():
                 errors.append("SOFTWARE_AGENT_ALLOWED_REPOSITORIES must not be empty when software agent is enabled")
             if not self.software_agent_workspace_root.startswith("/"):
@@ -145,8 +149,12 @@ class Settings(BaseSettings):
                 if (
                     parsed_software_agent_url.scheme != "https"
                     and parsed_software_agent_url.hostname not in loopback_hosts
+                    and not self.software_agent_private_network_http
                 ):
-                    errors.append("Production SOFTWARE_AGENT_BASE_URL must use HTTPS unless it is loopback")
+                    errors.append(
+                        "Production SOFTWARE_AGENT_BASE_URL must use HTTPS unless it is loopback "
+                        "or SOFTWARE_AGENT_PRIVATE_NETWORK_HTTP=true is explicitly set for a private network"
+                    )
         if self.is_production:
             if self.api_key == "change-me" or len(self.api_key) < 32:
                 errors.append("API_KEY must be a non-default secret of at least 32 characters")
