@@ -9,7 +9,7 @@ from app.db import SessionLocal, engine
 from app.main import app
 from app.models import User
 from app.software_agent_models import SoftwareAgentRun
-from app.services.software_agent import SoftwareAgentSandboxService
+from app.services.software_agent import SoftwareAgentSandboxService, _resolved_agent_profile_id
 from app.synthesis_models import CandidateIntervention
 
 
@@ -144,6 +144,7 @@ def _configure(monkeypatch):
     monkeypatch.setattr(settings, "software_agent_base_url", "http://127.0.0.1:3000")
     monkeypatch.setattr(settings, "software_agent_session_api_key", "test-session-key")
     monkeypatch.setattr(settings, "software_agent_agent_profile_id", str(uuid.uuid4()))
+    monkeypatch.setattr(settings, "software_agent_agent_profile_id_file", "")
     monkeypatch.setattr(settings, "software_agent_workspace_root", "/workspace/repos")
     monkeypatch.setattr(
         settings,
@@ -230,6 +231,118 @@ def test_launch_uses_worktree_is_idempotent_and_does_not_persist_raw_goal(monkey
     columns = {column["name"] for column in inspect(engine).get_columns("software_agent_runs")}
     assert "goal" not in columns
     assert "goal_hash" in columns
+
+
+def test_profile_id_file_is_resolved_at_launch_time(monkeypatch, tmp_path):
+    _configure(monkeypatch)
+    profile_id = str(uuid.uuid4())
+    profile_file = tmp_path / "agent-profile-id"
+    profile_file.write_text(profile_id + "\n", encoding="utf-8")
+    monkeypatch.setattr(settings, "software_agent_agent_profile_id", "")
+    monkeypatch.setattr(
+        settings,
+        "software_agent_agent_profile_id_file",
+        str(profile_file),
+    )
+
+    assert _resolved_agent_profile_id(required=True) == profile_id
+    capabilities = client.get("/v1/execution/software-agent/capabilities")
+    assert capabilities.status_code == 200
+    assert capabilities.json()["configured"] is True
+    assert capabilities.json()["agent_profile_source"] == "file"
+
+    preflight_id = _authorized_preflight(
+        "software-agent-profile-file-e",
+        "software-agent-dry-run-profile-file-0001",
+    )
+    calls = []
+
+    def fake_request(self, method, path, **kwargs):
+        calls.append((method, path, kwargs))
+        if method == "GET" and path == "/server_info":
+            return {"conversation_runtime": "docker"}
+        if method == "POST" and path == "/api/conversations":
+            return {
+                "id": "33333333-3333-4333-8333-333333333333",
+                "execution_status": "running",
+            }
+        raise AssertionError((method, path, kwargs))
+
+    monkeypatch.setattr(SoftwareAgentSandboxService, "_request", fake_request)
+    launched = client.post(
+        "/v1/execution/software-agent/runs",
+        json={
+            "preflight_id": preflight_id,
+            "idempotency_key": "software-agent-idempotency-profile-file-0001",
+            "repository": "XDSawyerLoL/Human-Agency-Engine",
+            "goal": "Verify that the runtime-created OpenHands profile UUID is consumed safely.",
+        },
+    )
+    assert launched.status_code == 200, launched.text
+    assert calls[1][2]["json"]["agent_profile_id"] == profile_id
+
+
+def test_missing_profile_id_file_fails_closed(monkeypatch, tmp_path):
+    _configure(monkeypatch)
+    monkeypatch.setattr(settings, "software_agent_agent_profile_id", "")
+    monkeypatch.setattr(
+        settings,
+        "software_agent_agent_profile_id_file",
+        str(tmp_path / "missing-agent-profile-id"),
+    )
+
+    assert _resolved_agent_profile_id(required=False) == ""
+    capabilities = client.get("/v1/execution/software-agent/capabilities")
+    assert capabilities.status_code == 200
+    assert capabilities.json()["configured"] is False
+
+
+def test_readiness_distinguishes_runtime_health_from_attestation_gate(monkeypatch):
+    _configure(monkeypatch)
+    profile_id = settings.software_agent_agent_profile_id
+
+    bootstrapped = client.post(
+        "/v1/execution/software-agent/bootstrap",
+        json={"confirm": "REGISTER AURA SOFTWARE ENGINE"},
+    )
+    assert bootstrapped.status_code == 200, bootstrapped.text
+
+    def fake_request(self, method, path, **kwargs):
+        if method == "GET" and path == "/server_info":
+            return {"conversation_runtime": "docker"}
+        if method == "GET" and path == "/api/agent-profiles":
+            return {
+                "profiles": [
+                    {
+                        "id": profile_id,
+                        "name": "aura-software",
+                        "agent_kind": "openhands",
+                        "llm_profile_ref": "aura-local",
+                    }
+                ]
+            }
+        raise AssertionError((method, path, kwargs))
+
+    monkeypatch.setattr(SoftwareAgentSandboxService, "_request", fake_request)
+
+    readiness = client.get("/v1/execution/software-agent/readiness")
+    assert readiness.status_code == 200, readiness.text
+    body = readiness.json()
+    assert body["adapter_registered"] is True
+    assert body["openhands_reachable"] is True
+    assert body["docker_runtime"] is True
+    assert body["profile_registered"] is True
+    assert body["sandbox_attested"] is False
+    assert body["attestation_gate_satisfied"] is True
+    assert body["ready_for_authorized_launch"] is True
+
+    monkeypatch.setattr(settings, "software_agent_require_attestation", True)
+    gated = client.get("/v1/execution/software-agent/readiness")
+    assert gated.status_code == 200, gated.text
+    gated_body = gated.json()
+    assert gated_body["sandbox_attested"] is False
+    assert gated_body["attestation_gate_satisfied"] is False
+    assert gated_body["ready_for_authorized_launch"] is False
 
 
 def test_launch_rejects_non_docker_openhands_runtime(monkeypatch):

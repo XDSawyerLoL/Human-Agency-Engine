@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import posixpath
 import uuid
+from pathlib import Path
 from datetime import datetime
 from typing import Any
 
@@ -39,6 +40,27 @@ def _allowed_repositories() -> set[str]:
         for item in settings.software_agent_allowed_repositories.split(",")
         if item.strip()
     }
+
+
+def _resolved_agent_profile_id(*, required: bool = False) -> str:
+    candidate = settings.software_agent_agent_profile_id.strip()
+    if not candidate and settings.software_agent_agent_profile_id_file:
+        try:
+            candidate = Path(settings.software_agent_agent_profile_id_file).read_text(
+                encoding="utf-8"
+            ).strip()
+        except OSError:
+            candidate = ""
+    if candidate:
+        try:
+            uuid.UUID(candidate)
+        except ValueError as exc:
+            raise ValueError("configured AURA software-agent profile id must be a UUID") from exc
+    elif required:
+        raise ValueError(
+            "AURA software-agent profile is not ready; configure the profile id or profile-id file"
+        )
+    return candidate
 
 
 class SoftwareAgentSandboxService:
@@ -81,7 +103,7 @@ class SoftwareAgentSandboxService:
             "configured": bool(
                 settings.software_agent_enabled
                 and settings.software_agent_base_url
-                and settings.software_agent_agent_profile_id
+                and _resolved_agent_profile_id(required=False)
             ),
             "enabled": settings.software_agent_enabled,
             "adapter": {
@@ -101,6 +123,80 @@ class SoftwareAgentSandboxService:
             "goal_persisted": False,
             "final_response_persisted": False,
             "interrupt_supported": True,
+            "agent_profile_source": (
+                "file"
+                if settings.software_agent_agent_profile_id_file
+                and not settings.software_agent_agent_profile_id
+                else "environment"
+            ),
+        }
+
+    def readiness(self) -> dict[str, Any]:
+        profile_id = _resolved_agent_profile_id(required=False)
+        manifest = (
+            self.db.query(ExecutionAdapterManifest)
+            .filter(
+                ExecutionAdapterManifest.adapter_id == SOFTWARE_AGENT_ADAPTER_ID,
+                ExecutionAdapterManifest.version == SOFTWARE_AGENT_ADAPTER_VERSION,
+            )
+            .one_or_none()
+        )
+        sandbox_attested = False
+        if manifest is not None:
+            sandbox_attested = (
+                SandboxAttestationService(self.db).effective_for_manifest(manifest)
+                is not None
+            )
+
+        openhands_reachable = False
+        docker_runtime = False
+        profile_registered = False
+        runtime_error: str | None = None
+        if settings.software_agent_enabled and settings.software_agent_base_url:
+            try:
+                info = self._request("GET", "/server_info")
+                openhands_reachable = True
+                docker_runtime = info.get("conversation_runtime") == "docker"
+                if docker_runtime and profile_id:
+                    profiles = self._request("GET", "/api/agent-profiles")
+                    items = profiles.get("profiles")
+                    if isinstance(items, list):
+                        profile_registered = any(
+                            isinstance(item, dict)
+                            and str(item.get("id") or "") == profile_id
+                            for item in items
+                        )
+            except ValueError as exc:
+                runtime_error = str(exc)[:300]
+
+        attestation_gate_satisfied = (
+            sandbox_attested or not settings.software_agent_require_attestation
+        )
+        ready_for_authorized_launch = all(
+            (
+                settings.software_agent_enabled,
+                bool(profile_id),
+                manifest is not None,
+                openhands_reachable,
+                docker_runtime,
+                profile_registered,
+                attestation_gate_satisfied,
+            )
+        )
+        return {
+            "engine": "aura-software-engine-v1",
+            "enabled": settings.software_agent_enabled,
+            "profile_id_present": bool(profile_id),
+            "adapter_registered": manifest is not None,
+            "openhands_reachable": openhands_reachable,
+            "docker_runtime": docker_runtime,
+            "profile_registered": profile_registered,
+            "attestation_required": settings.software_agent_require_attestation,
+            "sandbox_attested": sandbox_attested,
+            "attestation_gate_satisfied": attestation_gate_satisfied,
+            "ready_for_authorized_launch": ready_for_authorized_launch,
+            "runtime_error": runtime_error,
+            "external_dispatch": False,
         }
 
     def get_run(self, run_id: str) -> SoftwareAgentRun:
@@ -234,12 +330,7 @@ class SoftwareAgentSandboxService:
     def launch(self, request: SoftwareAgentLaunchRequest) -> SoftwareAgentRun:
         if not settings.software_agent_enabled:
             raise ValueError("AURA software engine is disabled")
-        if not settings.software_agent_agent_profile_id:
-            raise ValueError("SOFTWARE_AGENT_AGENT_PROFILE_ID is not configured")
-        try:
-            uuid.UUID(settings.software_agent_agent_profile_id)
-        except ValueError as exc:
-            raise ValueError("SOFTWARE_AGENT_AGENT_PROFILE_ID must be a UUID") from exc
+        agent_profile_id = _resolved_agent_profile_id(required=True)
 
         repository_key = request.repository.lower()
         if repository_key not in _allowed_repositories():
@@ -288,7 +379,7 @@ class SoftwareAgentSandboxService:
         self.db.refresh(run)
 
         payload = {
-            "agent_profile_id": settings.software_agent_agent_profile_id,
+            "agent_profile_id": agent_profile_id,
             "workspace": {
                 "kind": "LocalWorkspace",
                 "working_dir": workspace_path,

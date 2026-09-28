@@ -44,6 +44,11 @@ def capabilities():
     return SoftwareAgentSandboxService.capabilities()
 
 
+@router.get("/readiness")
+def readiness(db: Session = Depends(get_db)):
+    return SoftwareAgentSandboxService(db).readiness()
+
+
 @router.post("/bootstrap")
 def bootstrap(payload: SoftwareAgentBootstrapRequest, db: Session = Depends(get_db)):
     try:
