@@ -93,11 +93,9 @@ Production is a four-service Docker Compose stack:
 
 The database is private to the Docker network. The API binds to VPS loopback by default and should be exposed through a TLS reverse proxy.
 
-Automatic deployment is CI-gated in `.github/workflows/ci.yml`:
+An optional `software-agent` Compose profile adds AURA's private software-engineering control plane and an OpenHands Docker runtime without widening the public HORIZON API surface. It is disabled in the default stack and requires an explicitly configured model endpoint plus signed runner attestation before software missions can execute.
 
-`push main -> compile -> migrations -> Compose validation -> full pytest -> deploy same github.sha to Hostinger`
-
-The separate `Redeploy HORIZON to Hostinger` workflow is manual-only.
+The repository CI validates compilation, migrations, Hostinger Compose configuration and the full pytest suite. The current `.github/workflows/ci.yml` does **not** contain a Hostinger deployment job, so a green merge must not be interpreted as proof that the VPS has already deployed that revision.
 
 Full setup, required GitHub secrets/variables and reverse-proxy guidance:
 
@@ -118,7 +116,7 @@ The required GitHub Actions variable is:
 
 Optional provider credentials and collector/corpus-worker overrides are documented in `.env.hostinger.example` and `docs/HOSTINGER_HORIZON.md`.
 
-If `HOSTINGER_VM_ID` is absent, tests still run and the production deploy job is skipped cleanly.
+Hostinger deployment credentials remain relevant only to whatever external/manual Hostinger deployment path is configured; the current repository CI does not consume them.
 
 ## Local development
 
