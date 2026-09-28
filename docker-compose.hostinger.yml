@@ -192,20 +192,20 @@ services:
     command: |
       apk add --no-cache git ca-certificates >/dev/null
       owner_dir=/var/lib/aura-software/repos/XDSawyerLoL
-      repo_dir=$owner_dir/Human-Agency-Engine
-      mkdir -p "$owner_dir"
-      if [ ! -d "$repo_dir/.git" ]; then
-        rm -rf "$repo_dir"
-        git clone --filter=blob:none --branch "$SOFTWARE_AGENT_REPOSITORY_REF" "$SOFTWARE_AGENT_REPOSITORY_URL" "$repo_dir"
+      repo_dir=$$owner_dir/Human-Agency-Engine
+      mkdir -p "$$owner_dir"
+      if [ ! -d "$$repo_dir/.git" ]; then
+        rm -rf "$$repo_dir"
+        git clone --filter=blob:none --branch "$$SOFTWARE_AGENT_REPOSITORY_REF" "$$SOFTWARE_AGENT_REPOSITORY_URL" "$$repo_dir"
       else
-        git -C "$repo_dir" remote set-url origin "$SOFTWARE_AGENT_REPOSITORY_URL"
-        git -C "$repo_dir" fetch --prune origin "$SOFTWARE_AGENT_REPOSITORY_REF"
-        git -C "$repo_dir" checkout -f "$SOFTWARE_AGENT_REPOSITORY_REF"
-        git -C "$repo_dir" reset --hard "origin/$SOFTWARE_AGENT_REPOSITORY_REF"
-        git -C "$repo_dir" clean -ffd
+        git -C "$$repo_dir" remote set-url origin "$$SOFTWARE_AGENT_REPOSITORY_URL"
+        git -C "$$repo_dir" fetch --prune origin "$$SOFTWARE_AGENT_REPOSITORY_REF"
+        git -C "$$repo_dir" checkout -f "$$SOFTWARE_AGENT_REPOSITORY_REF"
+        git -C "$$repo_dir" reset --hard "origin/$$SOFTWARE_AGENT_REPOSITORY_REF"
+        git -C "$$repo_dir" clean -ffd
       fi
-      git -C "$repo_dir" remote set-url --push origin disabled://push-prohibited
-      git -C "$repo_dir" status --short --branch
+      git -C "$$repo_dir" remote set-url --push origin disabled://push-prohibited
+      git -C "$$repo_dir" status --short --branch
     networks:
       - horizon_private
 
@@ -217,8 +217,8 @@ services:
     environment:
       OH_CONVERSATION_RUNTIME: docker
       OH_CONVERSATION_IMAGE: ${OPENHANDS_CONVERSATION_IMAGE:-ghcr.io/openhands/agent-server:3311ba9-python-amd64}
-      OH_SESSION_API_KEYS_0: ${SOFTWARE_AGENT_SESSION_API_KEY:?SOFTWARE_AGENT_SESSION_API_KEY is required}
-      OH_SECRET_KEY: ${OPENHANDS_SECRET_KEY:?OPENHANDS_SECRET_KEY is required}
+      OH_SESSION_API_KEYS_0: ${SOFTWARE_AGENT_SESSION_API_KEY:-}
+      OH_SECRET_KEY: ${OPENHANDS_SECRET_KEY:-}
       OH_CONVERSATIONS_PATH: /var/lib/aura-software/openhands/conversations
       OH_PERSISTENCE_DIR: /var/lib/aura-software/openhands/persistence
       OH_ENABLE_VSCODE: "0"
@@ -264,11 +264,11 @@ services:
         condition: service_completed_successfully
     environment:
       OPENHANDS_BASE_URL: http://openhands:8000
-      OPENHANDS_SESSION_API_KEY: ${SOFTWARE_AGENT_SESSION_API_KEY:?SOFTWARE_AGENT_SESSION_API_KEY is required}
+      OPENHANDS_SESSION_API_KEY: ${SOFTWARE_AGENT_SESSION_API_KEY:-}
       SOFTWARE_AGENT_LLM_PROFILE_NAME: ${SOFTWARE_AGENT_LLM_PROFILE_NAME:-aura-local}
       SOFTWARE_AGENT_PROFILE_NAME: ${SOFTWARE_AGENT_PROFILE_NAME:-aura-software}
-      SOFTWARE_AGENT_LLM_MODEL: ${SOFTWARE_AGENT_LLM_MODEL:?SOFTWARE_AGENT_LLM_MODEL is required}
-      SOFTWARE_AGENT_LLM_BASE_URL: ${SOFTWARE_AGENT_LLM_BASE_URL:?SOFTWARE_AGENT_LLM_BASE_URL is required}
+      SOFTWARE_AGENT_LLM_MODEL: ${SOFTWARE_AGENT_LLM_MODEL:-}
+      SOFTWARE_AGENT_LLM_BASE_URL: ${SOFTWARE_AGENT_LLM_BASE_URL:-}
       SOFTWARE_AGENT_LLM_API_KEY: ${SOFTWARE_AGENT_LLM_API_KEY:-local-llm}
       SOFTWARE_AGENT_PROFILE_ID_FILE: /software-control/agent-profile-id
     command: ["python", "scripts/bootstrap_openhands_profile.py"]
@@ -296,7 +296,7 @@ services:
       SOFTWARE_AGENT_ENABLED: "true"
       SOFTWARE_AGENT_BASE_URL: http://openhands:8000
       SOFTWARE_AGENT_PRIVATE_NETWORK_HTTP: "true"
-      SOFTWARE_AGENT_SESSION_API_KEY: ${SOFTWARE_AGENT_SESSION_API_KEY:?SOFTWARE_AGENT_SESSION_API_KEY is required}
+      SOFTWARE_AGENT_SESSION_API_KEY: ${SOFTWARE_AGENT_SESSION_API_KEY:-}
       SOFTWARE_AGENT_AGENT_PROFILE_ID_FILE: /software-control/agent-profile-id
       SOFTWARE_AGENT_WORKSPACE_ROOT: /var/lib/aura-software/repos
       SOFTWARE_AGENT_ALLOWED_REPOSITORIES: ${SOFTWARE_AGENT_ALLOWED_REPOSITORIES:-XDSawyerLoL/Human-Agency-Engine}
