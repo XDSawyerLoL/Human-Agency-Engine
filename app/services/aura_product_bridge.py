@@ -33,6 +33,24 @@ PRODUCTS = (
     },
 )
 
+if os.getenv("SOFTWARE_AGENT_ENABLED", "").strip().lower() in {"1", "true", "yes", "on"}:
+    PRODUCTS += (
+        {
+            "id": "aura-software-engine",
+            "name": "AURA Software Engine",
+            "objective": "Ingénierie logicielle sandboxée, testable, interruptible et sans promotion directe.",
+            "repository": "XDSawyerLoL/Human-Agency-Engine",
+            "criticality": 0.90,
+            "capabilities": [
+                "software-engineering",
+                "git-worktree",
+                "test-loop",
+                "rollback",
+                "openhands-agent-server",
+            ],
+        },
+    )
+
 
 class AuraProductBridge:
     """Operational-only bridge from Human Agency Engine to AURA.
