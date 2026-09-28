@@ -131,6 +131,74 @@ class SoftwareAgentSandboxService:
             ),
         }
 
+    def readiness(self) -> dict[str, Any]:
+        profile_id = _resolved_agent_profile_id(required=False)
+        manifest = (
+            self.db.query(ExecutionAdapterManifest)
+            .filter(
+                ExecutionAdapterManifest.adapter_id == SOFTWARE_AGENT_ADAPTER_ID,
+                ExecutionAdapterManifest.version == SOFTWARE_AGENT_ADAPTER_VERSION,
+            )
+            .one_or_none()
+        )
+        sandbox_attested = False
+        if manifest is not None:
+            sandbox_attested = (
+                SandboxAttestationService(self.db).effective_for_manifest(manifest)
+                is not None
+            )
+
+        openhands_reachable = False
+        docker_runtime = False
+        profile_registered = False
+        runtime_error: str | None = None
+        if settings.software_agent_enabled and settings.software_agent_base_url:
+            try:
+                info = self._request("GET", "/server_info")
+                openhands_reachable = True
+                docker_runtime = info.get("conversation_runtime") == "docker"
+                if docker_runtime and profile_id:
+                    profiles = self._request("GET", "/api/agent-profiles")
+                    items = profiles.get("profiles")
+                    if isinstance(items, list):
+                        profile_registered = any(
+                            isinstance(item, dict)
+                            and str(item.get("id") or "") == profile_id
+                            for item in items
+                        )
+            except ValueError as exc:
+                runtime_error = str(exc)[:300]
+
+        attestation_gate_satisfied = (
+            sandbox_attested or not settings.software_agent_require_attestation
+        )
+        ready_for_authorized_launch = all(
+            (
+                settings.software_agent_enabled,
+                bool(profile_id),
+                manifest is not None,
+                openhands_reachable,
+                docker_runtime,
+                profile_registered,
+                attestation_gate_satisfied,
+            )
+        )
+        return {
+            "engine": "aura-software-engine-v1",
+            "enabled": settings.software_agent_enabled,
+            "profile_id_present": bool(profile_id),
+            "adapter_registered": manifest is not None,
+            "openhands_reachable": openhands_reachable,
+            "docker_runtime": docker_runtime,
+            "profile_registered": profile_registered,
+            "attestation_required": settings.software_agent_require_attestation,
+            "sandbox_attested": sandbox_attested,
+            "attestation_gate_satisfied": attestation_gate_satisfied,
+            "ready_for_authorized_launch": ready_for_authorized_launch,
+            "runtime_error": runtime_error,
+            "external_dispatch": False,
+        }
+
     def get_run(self, run_id: str) -> SoftwareAgentRun:
         run = (
             self.db.query(SoftwareAgentRun)
