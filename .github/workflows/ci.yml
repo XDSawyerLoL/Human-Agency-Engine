@@ -41,6 +41,11 @@ jobs:
           docker compose -f docker-compose.hostinger.yml config >/dev/null
           OMNIVOICE_API_KEY=test-voice-key-0123456789abcdef \
             docker compose -f docker-compose.hostinger.yml --profile voice config >/dev/null
+          SOFTWARE_AGENT_SESSION_API_KEY=test-software-session-key-0123456789abcdef \
+          OPENHANDS_SECRET_KEY=test-openhands-secret-0123456789abcdef \
+          SOFTWARE_AGENT_LLM_MODEL=openai/qwen3:8b \
+          SOFTWARE_AGENT_LLM_BASE_URL=http://host.docker.internal:11434/v1 \
+            docker compose -f docker-compose.hostinger.yml --profile software-agent config >/dev/null
       - name: Build lightweight Mairaiy voice image
         run: docker build -f Dockerfile.mairaiy-voice -t mairaiy-voice-ci .
       - name: Run tests
