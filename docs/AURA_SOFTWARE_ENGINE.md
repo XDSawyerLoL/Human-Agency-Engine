@@ -98,6 +98,7 @@ at a local/free model endpoint when appropriate.
 All routes inherit the existing Human Agency Engine API-key protection.
 
 - `GET /v1/execution/software-agent/capabilities`
+- `GET /v1/execution/software-agent/readiness`
 - `POST /v1/execution/software-agent/bootstrap`
 - `POST /v1/execution/software-agent/runs`
 - `GET /v1/execution/software-agent/runs/{run_id}`
