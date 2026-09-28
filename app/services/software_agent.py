@@ -93,6 +93,7 @@ class SoftwareAgentSandboxService:
             "allowed_repositories": sorted(_allowed_repositories()),
             "workspace_root": settings.software_agent_workspace_root,
             "worktree_required": True,
+            "container_runtime_required": "docker",
             "external_dispatch": False,
             "promotion_policy": "branch-test-canary-promote",
             "requires_authorized_preflight": True,
@@ -223,6 +224,13 @@ class SoftwareAgentSandboxService:
             raise ValueError("OpenHands Agent Server returned an unexpected payload")
         return payload
 
+    def _require_docker_runtime(self) -> None:
+        info = self._request("GET", "/server_info")
+        if info.get("conversation_runtime") != "docker":
+            raise ValueError(
+                "AURA software engine requires OpenHands conversation_runtime=docker"
+            )
+
     def launch(self, request: SoftwareAgentLaunchRequest) -> SoftwareAgentRun:
         if not settings.software_agent_enabled:
             raise ValueError("AURA software engine is disabled")
@@ -257,6 +265,7 @@ class SoftwareAgentSandboxService:
         if max_iterations > settings.software_agent_max_iterations:
             raise ValueError("requested max_iterations exceeds the configured software-agent ceiling")
 
+        self._require_docker_runtime()
         workspace_path = self._workspace_path(request.repository)
         run = SoftwareAgentRun(
             run_id=uuid.uuid4().hex,
