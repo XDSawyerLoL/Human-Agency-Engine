@@ -67,7 +67,30 @@ def bootstrap() -> dict[str, Any]:
             )
         if capabilities.get("container_runtime_required") != "docker":
             raise RuntimeError("software-control lost the Docker-runtime invariant")
-        return {"manifest": manifest, "capabilities": capabilities}
+
+        readiness = _request(
+            client,
+            "GET",
+            "/v1/execution/software-agent/readiness",
+        )
+        required_runtime_checks = (
+            "adapter_registered",
+            "openhands_reachable",
+            "docker_runtime",
+            "profile_registered",
+        )
+        missing = [
+            check for check in required_runtime_checks if readiness.get(check) is not True
+        ]
+        if missing:
+            raise RuntimeError(
+                "software-control runtime checks failed: " + ", ".join(missing)
+            )
+        return {
+            "manifest": manifest,
+            "capabilities": capabilities,
+            "readiness": readiness,
+        }
 
 
 if __name__ == "__main__":
@@ -76,4 +99,8 @@ if __name__ == "__main__":
         "AURA Software Engine control plane ready:",
         result["manifest"].get("adapter_id"),
         result["manifest"].get("version"),
+        "attested=",
+        result["readiness"].get("sandbox_attested"),
+        "ready_for_authorized_launch=",
+        result["readiness"].get("ready_for_authorized_launch"),
     )
