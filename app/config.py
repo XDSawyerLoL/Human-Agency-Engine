@@ -1,4 +1,5 @@
 from typing import Any
+from urllib.parse import urlparse
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -23,6 +24,17 @@ class Settings(BaseSettings):
     copernicus_api_key: str = ""
     forecast_api_key: str = ""
     point_api_key: str = ""
+
+    # Optional AURA software-engine bridge to an isolated OpenHands Agent Server.
+    software_agent_enabled: bool = False
+    software_agent_base_url: str = ""
+    software_agent_session_api_key: str = ""
+    software_agent_agent_profile_id: str = ""
+    software_agent_workspace_root: str = "/workspace/repos"
+    software_agent_allowed_repositories: str = "XDSawyerLoL/Human-Agency-Engine"
+    software_agent_max_iterations: int = 80
+    software_agent_timeout_seconds: float = 20.0
+    software_agent_require_attestation: bool = True
 
     horizon_collector_enabled: bool = True
     horizon_collector_tick_seconds: int = 30
@@ -110,6 +122,31 @@ class Settings(BaseSettings):
             errors.append("HORIZON_CORPUS_WORKER_MAX_RUNS_PER_CYCLE must be between 1 and 5")
         if not 1 <= self.horizon_corpus_worker_slices_per_run <= 3:
             errors.append("HORIZON_CORPUS_WORKER_SLICES_PER_RUN must be between 1 and 3")
+        if not 1 <= self.software_agent_max_iterations <= 200:
+            errors.append("SOFTWARE_AGENT_MAX_ITERATIONS must be between 1 and 200")
+        if not 1 <= self.software_agent_timeout_seconds <= 120:
+            errors.append("SOFTWARE_AGENT_TIMEOUT_SECONDS must be between 1 and 120")
+        if self.software_agent_enabled:
+            parsed_software_agent_url = urlparse(self.software_agent_base_url)
+            if parsed_software_agent_url.scheme not in {"http", "https"} or not parsed_software_agent_url.netloc:
+                errors.append("SOFTWARE_AGENT_BASE_URL must be an absolute http(s) URL")
+            if not self.software_agent_agent_profile_id:
+                errors.append("SOFTWARE_AGENT_AGENT_PROFILE_ID is required when software agent is enabled")
+            if not self.software_agent_allowed_repositories.strip():
+                errors.append("SOFTWARE_AGENT_ALLOWED_REPOSITORIES must not be empty when software agent is enabled")
+            if not self.software_agent_workspace_root.startswith("/"):
+                errors.append("SOFTWARE_AGENT_WORKSPACE_ROOT must be an absolute POSIX path")
+            if self.is_production:
+                if not self.software_agent_require_attestation:
+                    errors.append("Production software agent requires SOFTWARE_AGENT_REQUIRE_ATTESTATION=true")
+                if not self.software_agent_session_api_key:
+                    errors.append("Production software agent requires SOFTWARE_AGENT_SESSION_API_KEY")
+                loopback_hosts = {"127.0.0.1", "localhost", "::1"}
+                if (
+                    parsed_software_agent_url.scheme != "https"
+                    and parsed_software_agent_url.hostname not in loopback_hosts
+                ):
+                    errors.append("Production SOFTWARE_AGENT_BASE_URL must use HTTPS unless it is loopback")
         if self.is_production:
             if self.api_key == "change-me" or len(self.api_key) < 32:
                 errors.append("API_KEY must be a non-default secret of at least 32 characters")
