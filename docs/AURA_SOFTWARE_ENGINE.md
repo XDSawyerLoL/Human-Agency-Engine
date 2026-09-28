@@ -1,9 +1,10 @@
 # AURA Software Engine v1
 
 AURA Software Engine is a guarded software-engineering capability backed by an
-OpenHands Agent Server. It exists to let AURA inspect, modify and test code in an
-isolated git worktree without giving the reasoning layer direct production write
-access.
+OpenHands Agent Server configured with `conversation_runtime=docker`. It exists
+to let AURA inspect, modify and test code in a containerized runtime plus a
+dedicated git worktree, without giving the reasoning layer direct production
+write access.
 
 ## Boundary
 
@@ -71,12 +72,14 @@ SOFTWARE_AGENT_TIMEOUT_SECONDS=20
 SOFTWARE_AGENT_REQUIRE_ATTESTATION=true
 ```
 
-In production, use an authenticated Agent Server and keep
-`SOFTWARE_AGENT_REQUIRE_ATTESTATION=true`. A loopback HTTP URL is accepted for
-a sidecar on the same host; a non-loopback production URL must use HTTPS.
+In production, use an authenticated Agent Server with
+`conversation_runtime=docker` and keep `SOFTWARE_AGENT_REQUIRE_ATTESTATION=true`.
+A local OpenHands runtime is rejected even if the service is reachable. A
+loopback HTTP URL is accepted for the outer Docker-runtime controller on the
+same host; a non-loopback production URL must use HTTPS.
 
-The OpenHands Agent Server must already have each allow-listed repository
-available under:
+The outer OpenHands Docker-runtime controller must already have each allow-listed
+repository available under:
 
 `<SOFTWARE_AGENT_WORKSPACE_ROOT>/<owner>/<repository>`
 
