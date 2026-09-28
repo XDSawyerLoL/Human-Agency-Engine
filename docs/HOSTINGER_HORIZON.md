@@ -187,3 +187,47 @@ After the reverse proxy/TLS entry points at the HORIZON API service:
 - `https://<horizon-domain>/docs` exposes FastAPI documentation.
 
 The cockpit asks for the HORIZON API key and keeps it in browser `sessionStorage` only. It sends the key as `X-API-Key` to the same-origin API. This is an operator interface, not yet an end-user account/authentication system.
+
+
+## Optional private AURA Software Engine profile
+
+The default HORIZON deployment remains prediction/read focused and does **not**
+expose execution routes. AURA Software Engine is deployed as an explicit,
+separate Compose profile:
+
+```bash
+docker compose -f docker-compose.hostinger.yml --profile software-agent up -d
+```
+
+This profile adds a loopback-only `software-control` service plus a private
+OpenHands outer controller configured with `conversation_runtime=docker`.
+The public HORIZON API remains `app.horizon_api:app`; the private control
+plane runs `app.main:app` on `127.0.0.1:8001`.
+
+The software profile requires:
+
+- `SOFTWARE_AGENT_SESSION_API_KEY`
+- `OPENHANDS_SECRET_KEY`
+- `SOFTWARE_AGENT_LLM_MODEL`
+- `SOFTWARE_AGENT_LLM_BASE_URL`
+
+A paid LLM provider is not required. An OpenAI-compatible local endpoint such as
+Ollama can be supplied through `SOFTWARE_AGENT_LLM_BASE_URL`. The bootstrap
+performs a real minimal completion before creating the AURA agent profile. If
+the model endpoint is unavailable or incompatible, the profile initialization
+fails and `software-control` never reaches its configured state.
+
+The repository workspace is a public clone refreshed by
+`software-repo-init`. Its push URL is replaced with
+`disabled://push-prohibited`, and no GitHub write credential is mounted into
+the software-agent stack.
+
+The OpenHands outer controller mounts the Docker socket because the upstream
+Docker runtime creates one constrained container per conversation. Treat this
+controller as a privileged infrastructure boundary: do not expose its port,
+do not mount unrelated host directories, and keep its authenticated API on the
+private Docker network.
+
+Even after the stack is healthy, production software execution remains blocked
+until the existing signed sandbox-attestation gate has attested the deployed
+runner. Runtime readiness is not a substitute for attestation.
