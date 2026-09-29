@@ -13,6 +13,7 @@ from .connectors.google import (
 from .db import Base, engine, get_db
 from .models import ConnectorAccount, Intent, Opportunity, Outcome, Signal, User
 from .routers.agency import router as agency_router
+from .routers import personal_agent as _personal_agent  # noqa: F401
 from .routers.delegation import router as delegation_router
 from .routers.future import router as future_router
 from .routers.privacy import router as privacy_router
@@ -38,6 +39,7 @@ from .security import require_api_key
 from .services.aura_product_bridge import aura_product_bridge
 from .services.cycle import AgencyCycle
 from .services.engine import OpportunityEngine
+from .services.personal_agent import personal_agent_runtime
 from .services.synthesis import SynthesisService
 from .services.world_model import WorldModelService
 from .world_schemas import EventCreate
@@ -88,12 +90,14 @@ app.add_api_route(
 
 
 @app.on_event("startup")
-def start_aura_product_bridge():
+def start_runtime_services():
     aura_product_bridge.start()
+    personal_agent_runtime.start()
 
 
 @app.on_event("shutdown")
-def stop_aura_product_bridge():
+def stop_runtime_services():
+    personal_agent_runtime.stop()
     aura_product_bridge.stop()
 
 

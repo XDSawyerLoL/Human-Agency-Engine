@@ -16,6 +16,7 @@ from app import execution_models  # noqa: F401
 from app import adapter_models  # noqa: F401
 from app import sandbox_models  # noqa: F401
 from app import software_agent_models  # noqa: F401
+from app import personal_agent_models  # noqa: F401
 from app import readiness_models  # noqa: F401
 from app import market_models  # noqa: F401
 from app import collective_models  # noqa: F401
