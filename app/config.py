@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     software_agent_timeout_seconds: float = 20.0
     software_agent_require_attestation: bool = True
 
+    # Persistent AURA personal-agent scheduler. Disabled by default until the
+    # production operator explicitly opts in.
+    personal_agent_enabled: bool = False
+    personal_agent_tick_seconds: int = 30
+    personal_agent_max_missions_per_tick: int = 5
+
     horizon_collector_enabled: bool = True
     horizon_collector_tick_seconds: int = 30
     horizon_collector_lease_seconds: int = 900
@@ -124,6 +130,10 @@ class Settings(BaseSettings):
             errors.append("HORIZON_CORPUS_WORKER_MAX_RUNS_PER_CYCLE must be between 1 and 5")
         if not 1 <= self.horizon_corpus_worker_slices_per_run <= 3:
             errors.append("HORIZON_CORPUS_WORKER_SLICES_PER_RUN must be between 1 and 3")
+        if self.personal_agent_tick_seconds < 5:
+            errors.append("PERSONAL_AGENT_TICK_SECONDS must be at least 5")
+        if not 1 <= self.personal_agent_max_missions_per_tick <= 50:
+            errors.append("PERSONAL_AGENT_MAX_MISSIONS_PER_TICK must be between 1 and 50")
         if not 1 <= self.software_agent_max_iterations <= 200:
             errors.append("SOFTWARE_AGENT_MAX_ITERATIONS must be between 1 and 200")
         if not 1 <= self.software_agent_timeout_seconds <= 120:
