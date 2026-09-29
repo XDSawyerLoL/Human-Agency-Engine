@@ -4,7 +4,6 @@ from . import execution as _execution  # noqa: F401,E402
 from . import adapters as _adapters  # noqa: F401,E402
 from . import sandbox as _sandbox  # noqa: F401,E402
 from . import software_agent as _software_agent  # noqa: F401,E402
-from . import personal_agent as _personal_agent  # noqa: F401,E402
 from . import readiness as _readiness  # noqa: F401,E402
 from . import market as _market  # noqa: F401,E402
 from . import collective as _collective  # noqa: F401,E402
