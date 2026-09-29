@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import threading
 import time
 import uuid
@@ -18,6 +20,7 @@ from ..personal_agent_schemas import PersonalAgentMissionCreate
 from ..software_agent_schemas import SoftwareAgentLaunchRequest
 from .acquisition import InformationAcquisitionService
 from .engine import OpportunityEngine
+from .crypto import TokenCipher
 from .software_agent import SoftwareAgentSandboxService
 from .synthesis import SynthesisService
 
@@ -85,15 +88,25 @@ class PersonalAgentService:
             next_run_at = now if payload.start_immediately else now + timedelta(
                 seconds=payload.interval_seconds or 60
             )
+        goal = payload.goal.strip()
+        task_payload = dict(payload.task_payload)
+        if payload.task_type == "software_patch":
+            embedded_goal = str(task_payload.pop("goal", "") or "").strip()
+            if embedded_goal and embedded_goal != goal:
+                raise ValueError("software_patch task_payload goal must match the mission goal")
+        cipher = TokenCipher()
         mission = PersonalAgentMission(
             mission_id=uuid.uuid4().hex,
             user_id=user.id,
             title=payload.title.strip(),
-            goal=payload.goal.strip(),
+            goal_hash="sha256:" + hashlib.sha256(goal.encode("utf-8")).hexdigest(),
+            encrypted_goal=cipher.encrypt(goal),
             task_type=payload.task_type,
             autonomy_level=payload.autonomy_level,
             required_capabilities=payload.required_capabilities,
-            task_payload=payload.task_payload,
+            encrypted_task_payload=cipher.encrypt(
+                json.dumps(task_payload, ensure_ascii=False, sort_keys=True)
+            ),
             trigger_type=payload.trigger_type,
             interval_seconds=payload.interval_seconds,
             status="active",
@@ -178,6 +191,18 @@ class PersonalAgentService:
             .all()
         )
 
+    @staticmethod
+    def _decrypt_goal(mission: PersonalAgentMission) -> str:
+        return TokenCipher().decrypt(mission.encrypted_goal)
+
+    @staticmethod
+    def _decrypt_task_payload(mission: PersonalAgentMission) -> dict[str, Any]:
+        raw = TokenCipher().decrypt(mission.encrypted_task_payload)
+        payload = json.loads(raw)
+        if not isinstance(payload, dict):
+            raise ValueError("personal-agent task payload is not an object")
+        return payload
+
     def _capability_available(self, user: User, capability: str) -> bool:
         state = self.capabilities(user)["capabilities"].get(capability)
         return bool(state and state.get("available"))
@@ -247,7 +272,11 @@ class PersonalAgentService:
         if mission.autonomy_level != "execute_reversible":
             raise ValueError("software_patch mission is not authorized for reversible execution")
         try:
-            request = SoftwareAgentLaunchRequest(**mission.task_payload)
+            payload = self._decrypt_task_payload(mission)
+            request = SoftwareAgentLaunchRequest(
+                **payload,
+                goal=self._decrypt_goal(mission),
+            )
         except Exception as exc:
             raise ValueError("software_patch task_payload is invalid") from exc
 
