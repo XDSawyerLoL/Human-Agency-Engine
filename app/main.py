@@ -13,6 +13,7 @@ from .connectors.google import (
 from .db import Base, engine, get_db
 from .models import ConnectorAccount, Intent, Opportunity, Outcome, Signal, User
 from .routers.agency import router as agency_router
+from .routers import personal_agent as _personal_agent  # noqa: F401
 from .routers.delegation import router as delegation_router
 from .routers.future import router as future_router
 from .routers.privacy import router as privacy_router
