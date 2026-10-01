@@ -4,9 +4,9 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from ..config import settings
 from ..models import Intent, User
 from ..personal_agent_models import PersonalAgentMission
-from .personal_agent import personal_agent_runtime
 
 
 class AuraActivityService:
@@ -61,7 +61,13 @@ class AuraActivityService:
             "source": "persisted_aura_state",
             "mode": mode,
             "focus": focus,
-            "runtime": personal_agent_runtime.status(),
+            "runtime": {
+                "runtime": "aura-personal-agent-v1",
+                "enabled": settings.personal_agent_enabled,
+                "tick_seconds": settings.personal_agent_tick_seconds,
+                "max_missions_per_tick": settings.personal_agent_max_missions_per_tick,
+                "live_thread_status": "not_exposed_on_read_surface",
+            },
             "missions": [
                 {
                     "mission_id": item.mission_id,
