@@ -1,0 +1,408 @@
+{
+  "benchmark": "AURA-Eval",
+  "version": "1.0.0",
+  "holdout_policy": "Concrete missions, answers and fixtures must remain outside the agent-visible repository.",
+  "slot_count": 50,
+  "slots": [
+    {
+      "slot_id": "AE-001",
+      "family": "dialogue_continuity",
+      "objective": "Recover and use prior mission state without inventing missing facts.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-002",
+      "family": "dialogue_continuity",
+      "objective": "Recover and use prior mission state without inventing missing facts.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-003",
+      "family": "dialogue_continuity",
+      "objective": "Recover and use prior mission state without inventing missing facts.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-004",
+      "family": "dialogue_continuity",
+      "objective": "Recover and use prior mission state without inventing missing facts.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-005",
+      "family": "dialogue_continuity",
+      "objective": "Recover and use prior mission state without inventing missing facts.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-006",
+      "family": "reasoning",
+      "objective": "Solve a novel multi-step reasoning task with a verifiable final result.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-007",
+      "family": "reasoning",
+      "objective": "Solve a novel multi-step reasoning task with a verifiable final result.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-008",
+      "family": "reasoning",
+      "objective": "Solve a novel multi-step reasoning task with a verifiable final result.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-009",
+      "family": "reasoning",
+      "objective": "Solve a novel multi-step reasoning task with a verifiable final result.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-010",
+      "family": "reasoning",
+      "objective": "Solve a novel multi-step reasoning task with a verifiable final result.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-011",
+      "family": "evidence_research",
+      "objective": "Collect independent evidence, distinguish facts from hypotheses and cite provenance.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-012",
+      "family": "evidence_research",
+      "objective": "Collect independent evidence, distinguish facts from hypotheses and cite provenance.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-013",
+      "family": "evidence_research",
+      "objective": "Collect independent evidence, distinguish facts from hypotheses and cite provenance.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-014",
+      "family": "evidence_research",
+      "objective": "Collect independent evidence, distinguish facts from hypotheses and cite provenance.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-015",
+      "family": "evidence_research",
+      "objective": "Collect independent evidence, distinguish facts from hypotheses and cite provenance.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-016",
+      "family": "software_engineering",
+      "objective": "Inspect unfamiliar code, implement a bounded change and pass explicit checks.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-017",
+      "family": "software_engineering",
+      "objective": "Inspect unfamiliar code, implement a bounded change and pass explicit checks.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-018",
+      "family": "software_engineering",
+      "objective": "Inspect unfamiliar code, implement a bounded change and pass explicit checks.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-019",
+      "family": "software_engineering",
+      "objective": "Inspect unfamiliar code, implement a bounded change and pass explicit checks.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-020",
+      "family": "software_engineering",
+      "objective": "Inspect unfamiliar code, implement a bounded change and pass explicit checks.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-021",
+      "family": "long_memory",
+      "objective": "Use earlier state after intervening tasks while preserving chronology and constraints.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-022",
+      "family": "long_memory",
+      "objective": "Use earlier state after intervening tasks while preserving chronology and constraints.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-023",
+      "family": "long_memory",
+      "objective": "Use earlier state after intervening tasks while preserving chronology and constraints.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-024",
+      "family": "long_memory",
+      "objective": "Use earlier state after intervening tasks while preserving chronology and constraints.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-025",
+      "family": "long_memory",
+      "objective": "Use earlier state after intervening tasks while preserving chronology and constraints.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-026",
+      "family": "adaptation",
+      "objective": "Continue a mission after a mid-run rule or environment change.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-027",
+      "family": "adaptation",
+      "objective": "Continue a mission after a mid-run rule or environment change.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-028",
+      "family": "adaptation",
+      "objective": "Continue a mission after a mid-run rule or environment change.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-029",
+      "family": "adaptation",
+      "objective": "Continue a mission after a mid-run rule or environment change.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-030",
+      "family": "adaptation",
+      "objective": "Continue a mission after a mid-run rule or environment change.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-031",
+      "family": "tool_failure",
+      "objective": "Recover when a required tool becomes unavailable or returns an error.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-032",
+      "family": "tool_failure",
+      "objective": "Recover when a required tool becomes unavailable or returns an error.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-033",
+      "family": "tool_failure",
+      "objective": "Recover when a required tool becomes unavailable or returns an error.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-034",
+      "family": "tool_failure",
+      "objective": "Recover when a required tool becomes unavailable or returns an error.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-035",
+      "family": "tool_failure",
+      "objective": "Recover when a required tool becomes unavailable or returns an error.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-036",
+      "family": "contradiction",
+      "objective": "Reconcile contradictory evidence without silently choosing the convenient claim.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-037",
+      "family": "contradiction",
+      "objective": "Reconcile contradictory evidence without silently choosing the convenient claim.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-038",
+      "family": "contradiction",
+      "objective": "Reconcile contradictory evidence without silently choosing the convenient claim.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-039",
+      "family": "contradiction",
+      "objective": "Reconcile contradictory evidence without silently choosing the convenient claim.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-040",
+      "family": "contradiction",
+      "objective": "Reconcile contradictory evidence without silently choosing the convenient claim.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-041",
+      "family": "autonomous_pursuit",
+      "objective": "Advance a bounded mission across multiple steps with minimal human prompting.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-042",
+      "family": "autonomous_pursuit",
+      "objective": "Advance a bounded mission across multiple steps with minimal human prompting.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-043",
+      "family": "autonomous_pursuit",
+      "objective": "Advance a bounded mission across multiple steps with minimal human prompting.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-044",
+      "family": "autonomous_pursuit",
+      "objective": "Advance a bounded mission across multiple steps with minimal human prompting.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-045",
+      "family": "autonomous_pursuit",
+      "objective": "Advance a bounded mission across multiple steps with minimal human prompting.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-046",
+      "family": "cross_domain_transfer",
+      "objective": "Apply a learned strategy to a structurally similar task in a different domain.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-047",
+      "family": "cross_domain_transfer",
+      "objective": "Apply a learned strategy to a structurally similar task in a different domain.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-048",
+      "family": "cross_domain_transfer",
+      "objective": "Apply a learned strategy to a structurally similar task in a different domain.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-049",
+      "family": "cross_domain_transfer",
+      "objective": "Apply a learned strategy to a structurally similar task in a different domain.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    },
+    {
+      "slot_id": "AE-050",
+      "family": "cross_domain_transfer",
+      "objective": "Apply a learned strategy to a structurally similar task in a different domain.",
+      "instance": "external_holdout_required",
+      "evaluator": "external_holdout_required",
+      "blind": true
+    }
+  ]
+}
