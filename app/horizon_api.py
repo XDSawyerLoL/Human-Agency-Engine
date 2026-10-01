@@ -51,6 +51,7 @@ from .routers.horizon_world import router as horizon_world_router
 from .routers.horizon_briefing import router as horizon_briefing_router
 from .routers.horizon_aura_bridge import router as horizon_aura_bridge_router
 from .routers.aura_capabilities import router as aura_capabilities_router
+from .routers.aura_activity import router as aura_activity_router
 from .routers.quantic_portal import router as quantic_portal_router
 from .config import settings
 
@@ -106,6 +107,7 @@ HORIZON_ROUTERS = (
     horizon_briefing_router,
     horizon_aura_bridge_router,
     aura_capabilities_router,
+    aura_activity_router,
     quantic_portal_router,
 )
 
