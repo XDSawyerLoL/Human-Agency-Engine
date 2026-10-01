@@ -55,3 +55,25 @@ Concrete holdout files must not be committed to this repository.
 The 50 slots are split across ten families: dialogue continuity, reasoning, evidence research, software engineering, long-memory use, adaptation, tool failure recovery, contradiction handling, autonomous mission pursuit and cross-domain transfer.
 
 AURA-Eval v1 is a verification framework. It does not by itself establish AGI.
+
+## CLI
+
+Validate an external holdout corpus:
+
+```bash
+python scripts/aura_eval.py validate-holdout /secure/path/aura-eval-holdout.jsonl
+```
+
+Score one run:
+
+```bash
+python scripts/aura_eval.py score /secure/path/aura-results.jsonl
+```
+
+Compare an optimized AURA run with its baseline:
+
+```bash
+python scripts/aura_eval.py compare /secure/path/baseline.jsonl /secure/path/candidate.jsonl
+```
+
+The comparison only emits a local energy-reduction percentage when both result sets contain measured `local_joules` for every evaluated mission.
