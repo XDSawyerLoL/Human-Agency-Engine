@@ -129,3 +129,19 @@ button{cursor:pointer}
   .section-heading{align-items:center}
   .primary-button{padding:9px 11px}
 }
+
+.aura-link{
+  display:inline-flex;
+  align-items:center;
+  min-height:38px;
+  padding:0 12px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;
+  color:inherit;
+  text-decoration:none;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.04em;
+  background:rgba(255,255,255,.04);
+}
+.aura-link:hover{background:rgba(255,255,255,.08)}
