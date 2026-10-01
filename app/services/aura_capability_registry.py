@@ -145,9 +145,10 @@ def build_aura_capability_registry() -> dict[str, Any]:
             evidence=[
                 "Persistent context exists",
                 "Persistent missions exist",
+                "GET /v1/aura/users/{external_id}/activity exposes a protected persisted current-work snapshot",
             ],
             limitations=[
-                "AURA may fail to answer 'what are you working on?' from its true mission/intention state.",
+                "The dialogue surface must still be wired to consume the activity snapshot on current-work questions.",
                 "This capability requires behavioral verification, not only code inspection.",
             ],
         ),
