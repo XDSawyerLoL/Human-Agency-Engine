@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AURA — Capacités réelles</title>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
+    *{box-sizing:border-box}
+    body{margin:0;background:#090b10;color:#f5f7fb;min-height:100vh}
+    main{width:min(1180px,calc(100% - 32px));margin:0 auto;padding:48px 0 72px}
+    .eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#8d98aa}
+    h1{font-size:clamp(34px,6vw,72px);line-height:.95;margin:12px 0 18px;letter-spacing:-.045em}
+    .intro{max-width:760px;color:#abb4c4;font-size:17px;line-height:1.6}
+    .summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:32px 0}
+    .metric,.card{border:1px solid #222a36;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));border-radius:18px}
+    .metric{padding:18px}.metric strong{display:block;font-size:26px}.metric span{color:#8d98aa;font-size:12px;text-transform:uppercase;letter-spacing:.1em}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 22px}
+    button{border:1px solid #293241;background:#10141c;color:#dce3ed;border-radius:999px;padding:9px 13px;cursor:pointer}
+    button.active{background:#e7edf6;color:#0b0d12}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .card{padding:20px}
+    .top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+    h2{font-size:18px;margin:0 0 8px}.cat{font-size:11px;text-transform:uppercase;letter-spacing:.11em;color:#717d91}
+    .state{font-size:11px;font-weight:800;letter-spacing:.08em;border:1px solid currentColor;border-radius:999px;padding:6px 8px;white-space:nowrap}
+    .ACTIVE{color:#8de3ad}.DEGRADED{color:#ffd178}.DISABLED{color:#aeb9c9}.MISSING{color:#ff9b9b}
+    p{color:#aeb7c7;line-height:1.55}
+    details{border-top:1px solid #202733;padding-top:12px;margin-top:14px;color:#929daf}
+    summary{cursor:pointer;color:#c9d2df}
+    li{margin:7px 0;line-height:1.45}
+    a{color:#dce7ff}
+    .foot{margin-top:28px;color:#737f92;font-size:13px}
+    @media(max-width:760px){main{width:min(100% - 22px,1180px);padding-top:28px}.summary{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">AURA / truth surface</div>
+  <h1>Ce qu’AURA sait réellement faire.</h1>
+  <p class="intro">Cette page ne déduit pas une capacité de la simple présence de code. Elle distingue ce qui est actif, partiel, désactivé ou absent. C’est la base avant toute comparaison avec GPT ou toute affirmation d’autonomie générale.</p>
+  <section class="summary" id="summary"></section>
+  <div class="toolbar" id="filters"></div>
+  <section class="grid" id="grid"><p>Chargement du registre…</p></section>
+  <p class="foot" id="meta"></p>
+</main>
+<script>
+const states=["ALL","ACTIVE","DEGRADED","DISABLED","MISSING"];
+let registry=null, selected="ALL";
+function metric(label,value){return '<div class="metric"><strong>'+value+'</strong><span>'+label+'</span></div>'}
+function render(){
+  if(!registry)return;
+  const s=registry.summary;
+  document.getElementById("summary").innerHTML=
+    metric("capacités",s.total)+metric("actives",s.active)+metric("dégradées",s.degraded)+metric("désactivées",s.disabled)+metric("absentes",s.missing);
+  document.getElementById("filters").innerHTML=states.map(x=>'<button class="'+(selected===x?'active':'')+'" data-state="'+x+'">'+x+'</button>').join("");
+  document.querySelectorAll("button[data-state]").forEach(b=>b.onclick=()=>{selected=b.dataset.state;render()});
+  const items=registry.capabilities.filter(x=>selected==="ALL"||x.state===selected);
+  document.getElementById("grid").innerHTML=items.map(x=>{
+    const evidence=x.evidence.map(v=>'<li>'+v+'</li>').join("");
+    const limits=x.limitations.length?'<details><summary>Limites connues</summary><ul>'+x.limitations.map(v=>'<li>'+v+'</li>').join("")+'</ul></details>':'';
+    const action=x.public_action?'<p><a href="'+x.public_action+'">Ouvrir la surface associée →</a></p>':'';
+    return '<article class="card"><div class="top"><div><div class="cat">'+x.category+'</div><h2>'+x.label+'</h2></div><span class="state '+x.state+'">'+x.state+'</span></div><p>'+x.summary+'</p>'+action+'<details><summary>Preuves techniques</summary><ul>'+evidence+'</ul></details>'+limits+'</article>';
+  }).join("");
+  document.getElementById("meta").textContent=registry.registry+" · "+registry.truth_policy+" · "+new Date(registry.generated_at).toLocaleString();
+}
+fetch("/v1/aura/capabilities").then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(x=>{registry=x;render()}).catch(err=>{
+  document.getElementById("grid").innerHTML="<p>Registre indisponible : "+String(err)+"</p>";
+});
+</script>
+</body>
+</html>
