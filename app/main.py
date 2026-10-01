@@ -13,6 +13,7 @@ from .connectors.google import (
 from .db import Base, engine, get_db
 from .models import ConnectorAccount, Intent, Opportunity, Outcome, Signal, User
 from .routers.agency import router as agency_router
+from .routers.aura_capabilities import router as aura_capabilities_router
 from .routers import personal_agent as _personal_agent  # noqa: F401
 from .routers.delegation import router as delegation_router
 from .routers.future import router as future_router
@@ -54,6 +55,7 @@ app.include_router(synthesis_router)
 app.include_router(delegation_router)
 app.include_router(world_router)
 app.include_router(privacy_router)
+app.include_router(aura_capabilities_router, prefix="/v1")
 
 # Settlement permits are deliberately registered directly on the application.
 # This boundary has mixed public/private authorization semantics and must not
