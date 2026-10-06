@@ -11,8 +11,27 @@ AURA_URL = os.getenv(
     "AURA_CLOUD_URL",
     "https://antiquewhite-dolphin-780448.hostingersite.com",
 ).rstrip("/")
-AURA_TOKEN = os.getenv("AURA_CLOUD_TOKEN", "").strip()
-BRIDGE_VERSION = "aura-universal-bridge-v1"
+LEGACY_ALLOWED = os.getenv("AURA_ALLOW_LEGACY_PRODUCT_ADMIN_TOKEN", "").strip().lower() in {"1", "true", "yes", "oui", "on"}
+LEGACY_TOKEN = os.getenv("AURA_CLOUD_TOKEN", "").strip() if LEGACY_ALLOWED else ""
+PRODUCT_TOKENS = {
+    "providence": (
+        os.getenv("AURA_PROVIDENCE_TOKEN", "").strip()
+        or os.getenv("AURA_PRODUCT_TOKEN_PROVIDENCE", "").strip()
+    ),
+    "horizon": (
+        os.getenv("AURA_HORIZON_TOKEN", "").strip()
+        or os.getenv("AURA_PRODUCT_TOKEN_HORIZON", "").strip()
+    ),
+    "aura-software-engine": (
+        os.getenv("AURA_SOFTWARE_ENGINE_TOKEN", "").strip()
+        or os.getenv("AURA_PRODUCT_TOKEN_AURA_SOFTWARE_ENGINE", "").strip()
+    ),
+}
+BRIDGE_VERSION = "aura-universal-bridge-v2-scoped"
+
+
+def token_for(product_id: str) -> str:
+    return PRODUCT_TOKENS.get(product_id, "") or LEGACY_TOKEN
 
 PRODUCTS = (
     {
@@ -65,10 +84,11 @@ class AuraProductBridge:
 
     @property
     def enabled(self) -> bool:
-        return bool(AURA_TOKEN)
+        return any(token_for(product["id"]) for product in PRODUCTS)
 
-    def _post(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
-        if not AURA_TOKEN:
+    def _post(self, product_id: str, path: str, payload: dict[str, Any]) -> dict[str, Any]:
+        token = token_for(product_id)
+        if not token:
             return {}
         req = urllib.request.Request(
             AURA_URL + path,
@@ -76,7 +96,7 @@ class AuraProductBridge:
             headers={
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": f"Bearer {AURA_TOKEN}",
+                "Authorization": f"Bearer {token}",
                 "User-Agent": "Human-Agency-Engine/AURA-Bridge-1",
             },
             method="POST",
@@ -90,6 +110,7 @@ class AuraProductBridge:
         for product in PRODUCTS:
             try:
                 self._post(
+                    product["id"],
                     "/api/aura/products/register",
                     {
                         **product,
@@ -107,10 +128,11 @@ class AuraProductBridge:
                 continue
 
     def observe(self, product_id: str, state: str, detail: str = "", metadata: dict[str, Any] | None = None) -> None:
-        if not self.enabled:
+        if not token_for(product_id):
             return
         try:
             self._post(
+                product_id,
                 f"/api/aura/products/{product_id}/observe",
                 {
                     "state": state,
