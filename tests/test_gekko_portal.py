@@ -63,7 +63,7 @@ def test_gekko_portal_matches_approved_showcase_composition():
     assert portal.count('class="gekko-browser-card"') == 4
     assert "A MORE PRIVATE WAY TO EXPLORE THE WORLD" in portal
     assert "PRIVATE BY DESIGN" in portal
-    assert "FAST & LIGHT" in portal
+    assert "FAST &amp; LIGHT" in portal
     assert "A CLEANER WEB" in portal
     assert "LIGHTER" in portal and "SAFER" in portal and "FURTHER" in portal
 
