@@ -43,3 +43,31 @@ def test_gekko_portal_script_is_safe_and_reduced_motion_ready():
     assert "prefers-reduced-motion" in css
     assert "search.brave.com" in js
     assert "window.open" in js
+
+
+def test_gekko_portal_matches_approved_showcase_composition():
+    portal = read("public/gekko/index.html")
+    css = read("public/gekko/gekko.css")
+
+    for marker in (
+        'class="gekko-showcase"',
+        'class="gekko-brand-column"',
+        'class="gekko-feature-strip"',
+        'class="gekko-browser-shell"',
+        'class="gekko-scene"',
+        'class="gekko-icon-variations"',
+        'class="gekko-browser-cards"',
+    ):
+        assert marker in portal
+
+    assert portal.count('class="gekko-browser-card"') == 4
+    assert "A MORE PRIVATE WAY TO EXPLORE THE WORLD" in portal
+    assert "PRIVATE BY DESIGN" in portal
+    assert "FAST & LIGHT" in portal
+    assert "A CLEANER WEB" in portal
+    assert "LIGHTER" in portal and "SAFER" in portal and "FURTHER" in portal
+
+    assert "radial-gradient" in css
+    assert "drop-shadow" in css
+    assert "backdrop-filter" in css
+    assert "clip-path" in css

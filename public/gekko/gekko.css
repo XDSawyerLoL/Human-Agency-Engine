@@ -1,19 +1,295 @@
-:root{--g-bg:#020b12;--g-panel:rgba(6,26,37,.72);--g-line:rgba(115,247,238,.16);--g-text:#efffff;--g-muted:#93b8bd;--g-cyan:#55eff0;--g-mint:#5bf0c6}
-body.gekko-page{background:radial-gradient(circle at 70% 20%,rgba(41,215,203,.12),transparent 30%),linear-gradient(145deg,#020b12,#062433 55%,#04131c);color:var(--g-text);min-height:100vh}
-.gekko-main{padding:52px 0 110px}
-.gekko-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(420px,1.15fr);gap:48px;align-items:center;min-height:68vh}
-.gekko-copy .gekko-kicker{letter-spacing:.28em;font-size:.72rem;color:var(--g-mint);font-weight:700}
-.gekko-lockup{display:flex;align-items:center;gap:18px;margin:18px 0 10px}.gekko-lockup img{width:96px;height:96px;filter:drop-shadow(0 0 26px rgba(91,240,198,.18))}.gekko-lockup h1{font-size:clamp(64px,8vw,112px);font-weight:250;letter-spacing:.12em;margin:0;line-height:.9}.gekko-lockup p{margin:10px 0 0;letter-spacing:.36em;color:#aaf7ea;font-size:.8rem}
-.gekko-lead{max-width:620px;color:var(--g-muted);font-size:1.08rem;line-height:1.7}.gekko-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}.gekko-action{padding:12px 18px;border-radius:999px;border:1px solid var(--g-line);text-decoration:none;color:var(--g-text);background:rgba(255,255,255,.035)}.gekko-action.primary{background:linear-gradient(135deg,rgba(85,239,240,.18),rgba(91,240,198,.12));border-color:rgba(104,246,232,.34)}
-.gekko-browser{border:1px solid var(--g-line);border-radius:28px;overflow:hidden;background:rgba(2,12,19,.74);box-shadow:0 35px 90px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(22px)}
-.gekko-tabs{height:46px;display:flex;align-items:center;gap:9px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.18)}.gekko-tabs i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.3)}.gekko-tab{margin-left:8px;padding:7px 14px;border-radius:11px;background:rgba(91,240,198,.08);font-size:.78rem}.gekko-tabs span:last-child{margin-left:auto;color:var(--g-muted);font-size:.72rem}
-.gekko-screen{position:relative;min-height:470px;padding:62px 34px 96px;background:radial-gradient(circle at 50% 40%,rgba(65,229,213,.11),transparent 26%),linear-gradient(150deg,#03101a,#073243)}
-.gekko-screen-brand{text-align:center}.gekko-screen-brand img{width:118px;height:118px}.gekko-screen-brand strong{display:block;font-size:2rem;font-weight:300;letter-spacing:.2em}.gekko-screen-brand span{display:block;margin-top:5px;color:#9ef3e5;font-size:.64rem;letter-spacing:.38em}
-.gekko-shortcuts{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:40px}.gekko-shortcut{min-height:86px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);color:var(--g-text);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;text-decoration:none;font-size:.78rem}.gekko-shortcut:hover{background:rgba(91,240,198,.08);border-color:rgba(91,240,198,.22)}.gekko-shortcut b{font-size:1rem}
-.gekko-bottom-dock{position:absolute;left:14px;right:14px;bottom:14px;display:flex;gap:8px;align-items:center;padding:8px;border-radius:19px;border:1px solid rgba(120,247,237,.18);background:rgba(3,17,25,.90);box-shadow:0 12px 34px rgba(0,0,0,.3);backdrop-filter:blur(20px)}
-.gekko-omnibox{flex:1;display:flex;align-items:center;gap:9px;height:44px;border:1px solid rgba(255,255,255,.11);border-radius:15px;padding:0 10px;background:rgba(255,255,255,.055)}.gekko-omnibox img{width:27px;height:27px}.gekko-omnibox input{width:100%;border:0;outline:0;background:transparent;color:var(--g-text);font:inherit}.gekko-go{width:42px;height:42px;border:1px solid rgba(91,240,198,.22);border-radius:14px;background:rgba(91,240,198,.10);color:white;cursor:pointer}
-.gekko-trust{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:70px}.gekko-trust article{padding:24px;border:1px solid rgba(255,255,255,.08);border-radius:20px;background:rgba(255,255,255,.025)}.gekko-trust span{font-size:.68rem;letter-spacing:.2em;color:var(--g-mint)}.gekko-trust h2{margin:10px 0 7px;font-size:1.15rem}.gekko-trust p{margin:0;color:var(--g-muted);line-height:1.55}
-.gekko-status{display:flex;gap:8px;align-items:center;margin-top:18px;color:#aee8df;font-size:.8rem}.gekko-status i{width:8px;height:8px;border-radius:50%;background:#6ef0b6;box-shadow:0 0 10px rgba(110,240,182,.6)}
-@media(max-width:980px){.gekko-hero{grid-template-columns:1fr}.gekko-browser{max-width:760px}.gekko-shortcuts{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:640px){.gekko-main{padding-top:28px}.gekko-lockup h1{font-size:52px}.gekko-lockup img{width:72px;height:72px}.gekko-browser{border-radius:20px}.gekko-screen{min-height:520px;padding:38px 18px 110px}.gekko-shortcuts{grid-template-columns:repeat(2,1fr)}.gekko-trust{grid-template-columns:1fr}.gekko-bottom-dock{left:8px;right:8px;bottom:8px}.gekko-screen-brand strong{font-size:1.5rem}}
-@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+:root{
+  --g-bg:#02080f;
+  --g-deep:#03131d;
+  --g-cyan:#6ff7ff;
+  --g-aqua:#27dce2;
+  --g-mint:#58f0c0;
+  --g-green:#9cff8f;
+  --g-text:#f4feff;
+  --g-muted:#9dbcc4;
+  --g-line:rgba(111,247,255,.28);
+  --g-glass:rgba(5,31,43,.62);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Segoe UI Variable Text","Segoe UI",Inter,Arial,sans-serif;background:#02080f;color:var(--g-text)}
+body.gekko-page{overflow-x:hidden;background:
+  radial-gradient(circle at 72% 18%,rgba(36,174,190,.14),transparent 24%),
+  linear-gradient(180deg,#020b12 0%,#04131c 48%,#07141b 100%)}
+a{color:inherit}
+button,input{font:inherit}
+.gekko-sillage-chip{
+  position:fixed;z-index:50;top:18px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:9px;padding:8px 13px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.11);background:rgba(3,14,22,.54);
+  backdrop-filter:blur(16px);text-decoration:none;color:rgba(235,255,255,.82);
+  font-size:12px;letter-spacing:.06em;box-shadow:0 8px 28px rgba(0,0,0,.22)
+}
+.gekko-sillage-chip img{width:20px;height:20px}
+
+.gekko-showcase{
+  position:relative;min-height:100vh;display:grid;
+  grid-template-columns:minmax(250px,24vw) minmax(0,1fr);
+  gap:32px;padding:56px 44px 34px;overflow:hidden;isolation:isolate;
+}
+.gekko-cosmos{position:absolute;inset:0;z-index:-4;overflow:hidden;background:
+  radial-gradient(circle at 20% 11%,rgba(34,215,223,.16),transparent 20%),
+  radial-gradient(circle at 68% 36%,rgba(14,125,170,.17),transparent 35%),
+  linear-gradient(180deg,#020a11,#071822 58%,#09151a)}
+.gekko-cosmos:before{
+  content:"";position:absolute;inset:0;opacity:.42;
+  background-image:
+    radial-gradient(circle at 18% 22%,#fff 0 1px,transparent 1.5px),
+    radial-gradient(circle at 41% 16%,#8fefff 0 1px,transparent 1.5px),
+    radial-gradient(circle at 58% 31%,#fff 0 1px,transparent 1.5px),
+    radial-gradient(circle at 74% 27%,#72e8ff 0 1px,transparent 1.5px),
+    radial-gradient(circle at 83% 12%,#fff 0 1px,transparent 1.5px),
+    radial-gradient(circle at 91% 39%,#a7faff 0 1px,transparent 1.5px)
+}
+.gekko-planet{
+  position:absolute;right:-9vw;top:-21vw;width:44vw;height:44vw;border-radius:50%;
+  background:
+    radial-gradient(circle at 37% 38%,rgba(100,223,238,.46),transparent 17%),
+    radial-gradient(circle at 58% 62%,rgba(1,27,42,.85),transparent 27%),
+    repeating-radial-gradient(circle at 48% 50%,rgba(127,238,255,.12) 0 4px,rgba(5,63,83,.03) 5px 11px),
+    radial-gradient(circle at 45% 42%,#0f7a9a 0,#06415a 43%,#041923 70%);
+  box-shadow:-26px 12px 70px rgba(70,224,244,.23),inset 0 0 70px rgba(134,245,255,.12);
+  border:1px solid rgba(130,247,255,.18);opacity:.84
+}
+.gekko-aurora{
+  position:absolute;left:31%;right:7%;top:24%;height:31%;filter:blur(18px);opacity:.38;
+  background:
+    radial-gradient(ellipse at 35% 40%,rgba(21,170,218,.44),transparent 39%),
+    radial-gradient(ellipse at 76% 52%,rgba(86,255,185,.32),transparent 28%);
+  transform:skewY(-7deg)
+}
+.gekko-mountain{position:absolute;left:0;right:0;bottom:0;display:block}
+.gekko-mountain.m1{height:35%;background:linear-gradient(180deg,rgba(13,48,59,.2),#061219 88%);clip-path:polygon(0 73%,8% 48%,15% 64%,24% 33%,34% 67%,44% 40%,54% 72%,62% 52%,70% 69%,80% 38%,89% 62%,100% 43%,100% 100%,0 100%)}
+.gekko-mountain.m2{height:22%;background:linear-gradient(180deg,#0c1e24,#020608);clip-path:polygon(0 66%,9% 42%,17% 73%,29% 52%,37% 80%,48% 38%,57% 74%,69% 44%,77% 68%,87% 37%,100% 59%,100% 100%,0 100%);opacity:.93}
+.gekko-reflection{
+  position:absolute;right:11%;bottom:-2%;width:29%;height:33%;
+  background:linear-gradient(180deg,rgba(121,246,255,.18),rgba(255,190,104,.1) 38%,transparent 80%);
+  clip-path:polygon(41% 0,61% 0,100% 100%,0 100%);filter:blur(12px);opacity:.55
+}
+
+.gekko-brand-column{
+  position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;
+  padding:10px 0 0;min-width:0
+}
+.gekko-primary-brand{text-align:center;width:100%}
+.gekko-logo-orbit{
+  width:min(210px,18vw);aspect-ratio:1;margin:0 auto 8px;border-radius:50%;
+  filter:drop-shadow(0 0 24px rgba(62,245,212,.35)) drop-shadow(0 14px 30px rgba(0,0,0,.4))
+}
+.gekko-logo-orbit img{width:100%;height:100%;display:block;transform:scale(1.06)}
+.gekko-primary-brand h1{
+  margin:4px 0 0;font-size:clamp(46px,4.9vw,82px);font-weight:240;letter-spacing:.18em;line-height:.92;
+  text-shadow:0 0 22px rgba(104,247,255,.16)
+}
+.gekko-primary-brand p{margin:15px 0 0;font-size:11px;letter-spacing:.48em;color:#c9faff}
+.gekko-app-icon-block{margin-top:34px;text-align:center}
+.gekko-app-icon{
+  width:150px;aspect-ratio:1;border-radius:31px;padding:10px;background:
+  linear-gradient(145deg,rgba(175,251,255,.18),rgba(5,21,29,.52)),
+  rgba(3,16,24,.68);border:1px solid rgba(159,249,255,.36);
+  box-shadow:0 18px 35px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.16)
+}
+.gekko-app-icon img{width:100%;height:100%;filter:drop-shadow(0 0 20px rgba(65,244,213,.22))}
+.gekko-app-icon-block>span,.gekko-icon-variations:after{
+  display:block;margin-top:12px;font-size:9px;letter-spacing:.4em;color:rgba(240,255,255,.76)
+}
+.gekko-icon-variations{margin-top:20px;display:grid;grid-template-columns:repeat(3,52px);gap:10px;justify-content:center;position:relative;padding-bottom:24px}
+.gekko-icon-variations>div{width:52px;height:52px;border-radius:11px;border:1px solid rgba(157,250,255,.23);background:rgba(2,14,22,.54);padding:3px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.gekko-icon-variations>div:nth-child(2){background:linear-gradient(145deg,#aefbff,#49dfe1)}
+.gekko-icon-variations>div:nth-child(3){background:linear-gradient(145deg,#efffff,#cceff2)}
+.gekko-icon-variations img{width:100%;height:100%}
+.gekko-icon-variations:after{content:"ICON VARIATIONS";position:absolute;left:50%;bottom:0;transform:translateX(-50%);white-space:nowrap}
+.gekko-brand-card{
+  margin-top:auto;align-self:stretch;min-height:150px;padding:28px 22px;border-radius:22px;
+  border:1px solid rgba(152,247,255,.24);background:
+  linear-gradient(145deg,rgba(2,17,25,.88),rgba(11,39,48,.6)),
+  radial-gradient(circle at 80% 20%,rgba(63,231,215,.15),transparent 26%);
+  backdrop-filter:blur(16px);box-shadow:0 20px 48px rgba(0,0,0,.25)
+}
+.gekko-brand-card strong{display:block;font-size:18px;letter-spacing:.28em;font-weight:400;margin-bottom:18px}
+.gekko-brand-card span{display:block;font-size:9px;letter-spacing:.38em;margin:6px 0;color:#d3f5f4}
+.gekko-brand-card i{display:block;width:22px;height:2px;background:#79f4f1;margin-top:15px;box-shadow:0 0 12px rgba(121,244,241,.55)}
+
+.gekko-poster-main{min-width:0;display:flex;flex-direction:column;justify-content:center}
+.gekko-poster-top{
+  display:grid;grid-template-columns:minmax(245px,.95fr) minmax(520px,1.65fr);
+  gap:24px;align-items:stretch;margin-bottom:18px
+}
+.gekko-manifesto{
+  min-height:148px;display:grid;grid-template-columns:1px 1fr;gap:30px;align-items:center;padding:12px 8px 12px 6px
+}
+.gekko-manifesto>span{display:block;width:1px;height:100%;background:linear-gradient(180deg,transparent,rgba(173,247,255,.32),transparent)}
+.gekko-manifesto p{margin:0;max-width:240px;font-size:13px;letter-spacing:.32em;line-height:2.05;color:rgba(245,255,255,.88)}
+.gekko-feature-strip{display:grid;grid-template-columns:repeat(3,1fr);border-left:1px solid rgba(166,248,255,.16)}
+.gekko-feature-strip article{text-align:center;padding:16px 18px;border-right:1px solid rgba(166,248,255,.09)}
+.gekko-feature-icon{
+  width:50px;height:50px;margin:0 auto 11px;border-radius:50%;display:grid;place-items:center;
+  border:1px solid rgba(111,247,255,.7);color:#8ef9ff;font-size:26px;font-weight:300;
+  box-shadow:0 0 21px rgba(67,233,238,.16),inset 0 0 16px rgba(45,210,217,.05)
+}
+.gekko-feature-strip strong{display:block;font-size:11px;line-height:1.4;letter-spacing:.13em}
+.gekko-feature-strip p{margin:8px 0 0;font-size:11px;line-height:1.5;color:rgba(204,235,239,.7);letter-spacing:.05em}
+
+.gekko-browser-shell{
+  position:relative;width:100%;min-height:640px;border-radius:28px;overflow:hidden;
+  background:rgba(2,13,20,.82);border:1px solid rgba(123,244,255,.7);
+  box-shadow:
+    0 0 0 2px rgba(44,209,222,.08),
+    0 0 34px rgba(49,227,235,.22),
+    0 28px 74px rgba(0,0,0,.43),
+    inset 0 1px 0 rgba(255,255,255,.18);
+  transform:perspective(1800px) rotateY(-.6deg) rotateX(.2deg);
+  transform-origin:center center
+}
+.gekko-browser-topbar{
+  height:52px;display:flex;align-items:center;padding:7px 12px;gap:8px;
+  background:linear-gradient(180deg,rgba(5,23,31,.98),rgba(3,13,19,.98));
+  border-bottom:1px solid rgba(112,238,247,.15)
+}
+.gekko-window-dots{display:flex;gap:7px}
+.gekko-window-dots i{width:10px;height:10px;border-radius:50%}
+.gekko-window-dots i:nth-child(1){background:#ff6b5d}.gekko-window-dots i:nth-child(2){background:#d5f34d}.gekko-window-dots i:nth-child(3){background:#5be4d3}
+.gekko-tab-pill{
+  height:34px;min-width:180px;border-radius:12px;display:flex;align-items:center;gap:8px;padding:0 10px;
+  background:linear-gradient(135deg,rgba(89,238,226,.14),rgba(255,255,255,.035));
+  border:1px solid rgba(130,245,255,.16);font-size:12px
+}
+.gekko-tab-pill img{width:22px;height:22px}.gekko-tab-pill span{flex:1}.gekko-tab-pill b{font-weight:400;opacity:.7}
+.gekko-tab-plus{width:34px;height:34px;border:0;background:transparent;color:#eaffff;font-size:22px}
+.gekko-window-actions{margin-left:auto;display:flex;gap:24px;padding-right:8px;color:#e7fbff}
+
+.gekko-scene{
+  position:relative;min-height:588px;overflow:hidden;
+  background:
+    radial-gradient(circle at 80% 56%,rgba(255,198,99,.24),transparent 14%),
+    linear-gradient(180deg,#031827 0%,#06405a 54%,#0a3b4c 68%,#07191e 100%)
+}
+.gekko-scene-sky{
+  position:absolute;inset:0;opacity:.95;
+  background:
+    radial-gradient(circle at 18% 13%,rgba(111,218,255,.75) 0 1px,transparent 2px),
+    radial-gradient(circle at 27% 22%,rgba(255,255,255,.6) 0 1px,transparent 2px),
+    radial-gradient(circle at 48% 11%,rgba(112,213,255,.6) 0 1px,transparent 2px),
+    radial-gradient(circle at 63% 19%,rgba(255,255,255,.7) 0 1px,transparent 2px),
+    radial-gradient(circle at 74% 12%,rgba(114,238,224,.65) 0 1px,transparent 2px),
+    radial-gradient(circle at 85% 27%,rgba(255,255,255,.75) 0 1px,transparent 2px),
+    radial-gradient(ellipse at 48% 28%,rgba(30,158,216,.45),transparent 35%),
+    radial-gradient(ellipse at 82% 36%,rgba(83,255,181,.31),transparent 25%)
+}
+.gekko-scene-mountains{position:absolute;left:0;right:0;bottom:0}
+.gekko-scene-mountains.back{
+  height:58%;background:linear-gradient(180deg,#153b4a 0%,#0b2834 56%,#07161c 100%);
+  clip-path:polygon(0 72%,8% 50%,15% 60%,23% 37%,31% 68%,40% 51%,48% 66%,57% 35%,64% 56%,73% 43%,82% 63%,89% 40%,100% 52%,100% 100%,0 100%);
+  opacity:.94;filter:drop-shadow(0 -7px 14px rgba(0,0,0,.24))
+}
+.gekko-scene-mountains.front{
+  height:35%;background:linear-gradient(180deg,#0a232b,#02090c);
+  clip-path:polygon(0 70%,8% 48%,18% 78%,27% 51%,36% 72%,46% 45%,53% 79%,63% 50%,72% 71%,81% 43%,91% 66%,100% 54%,100% 100%,0 100%);
+  opacity:.98
+}
+.gekko-scene-tools{
+  position:absolute;right:28px;top:18px;display:flex;gap:22px;color:#dffcff;font-size:19px;z-index:4
+}
+.gekko-scene-brand{
+  position:absolute;z-index:4;left:50%;top:18%;transform:translateX(-50%);text-align:center
+}
+.gekko-scene-brand img{width:118px;height:118px;filter:drop-shadow(0 0 24px rgba(72,241,217,.5))}
+.gekko-scene-brand strong{display:block;margin-top:2px;font-size:42px;font-weight:260;letter-spacing:.18em;text-shadow:0 0 18px rgba(121,247,255,.16)}
+.gekko-scene-brand span{display:block;margin-top:7px;font-size:10px;letter-spacing:.42em;color:#82f7ee}
+
+.gekko-browser-cards{
+  position:absolute;z-index:5;left:13%;right:13%;bottom:130px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px
+}
+.gekko-browser-card{
+  min-height:132px;padding:18px 14px;border-radius:18px;text-align:center;
+  border:1px solid rgba(141,246,255,.38);
+  background:linear-gradient(155deg,rgba(13,59,75,.72),rgba(5,29,39,.55));
+  box-shadow:0 12px 26px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.11);
+  backdrop-filter:blur(16px)
+}
+.gekko-browser-card b{display:block;color:#77f7ff;font-size:26px;font-weight:300}
+.gekko-browser-card strong{display:block;margin:8px 0 6px;font-size:12px}
+.gekko-browser-card p{margin:0;color:rgba(217,241,243,.7);font-size:10px;line-height:1.45}
+
+.gekko-bottom-dock{
+  position:absolute;z-index:7;left:10px;right:10px;bottom:9px;min-height:72px;
+  display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:20px;
+  border:1px solid rgba(125,245,255,.56);
+  background:linear-gradient(180deg,rgba(4,27,37,.88),rgba(2,17,25,.94));
+  box-shadow:0 0 25px rgba(60,225,235,.17),inset 0 1px 0 rgba(255,255,255,.11);
+  backdrop-filter:blur(22px)
+}
+.gekko-dock-brand{display:flex;align-items:center;gap:7px;padding-right:12px;border-right:1px solid rgba(255,255,255,.12)}
+.gekko-dock-brand img{width:34px;height:34px}.gekko-dock-brand strong{font-size:13px;letter-spacing:.12em;font-weight:500;color:#86f9f3}
+.gekko-dock-nav{display:flex;gap:4px;align-items:center}
+.gekko-dock-nav a,.gekko-dock-nav button{
+  min-width:44px;height:42px;padding:0 7px;border:0;border-radius:10px;background:transparent;color:#eaffff;
+  text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer
+}
+.gekko-dock-nav a:hover,.gekko-dock-nav button:hover{background:rgba(86,236,225,.08)}
+.gekko-dock-nav small{font-size:9px}
+.gekko-omnibox{
+  flex:1;min-width:180px;height:48px;border-radius:18px;border:1px solid rgba(126,245,255,.42);
+  background:rgba(4,31,42,.72);display:flex;align-items:center;gap:10px;padding:0 8px 0 13px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07)
+}
+.gekko-omnibox>span{font-size:24px;color:#d9fdff;transform:rotate(-14deg)}
+.gekko-omnibox input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#f2ffff;font-size:13px}
+.gekko-omnibox input::placeholder{color:rgba(212,239,242,.54)}
+.gekko-go{
+  width:38px;height:38px;border-radius:50%;border:1px solid rgba(129,249,255,.42);
+  background:linear-gradient(145deg,rgba(92,238,229,.22),rgba(26,117,139,.34));color:#fff;font-size:19px;cursor:pointer
+}
+.gekko-dock-actions{display:flex;align-items:center;gap:18px;font-size:19px;color:#e1fdff;padding-left:4px}
+
+.gekko-portal-actions{
+  margin-top:16px;display:flex;justify-content:center;flex-wrap:wrap;gap:9px
+}
+.gekko-portal-actions a{
+  padding:9px 13px;border-radius:999px;text-decoration:none;color:rgba(232,255,255,.8);
+  background:rgba(4,20,28,.46);border:1px solid rgba(126,245,255,.12);backdrop-filter:blur(10px);font-size:11px
+}
+.gekko-portal-actions a.primary{border-color:rgba(86,240,216,.34);background:rgba(70,224,206,.09);color:#dffffa}
+
+@media(max-width:1180px){
+  .gekko-showcase{grid-template-columns:220px 1fr;padding:64px 22px 28px;gap:22px}
+  .gekko-poster-top{grid-template-columns:1fr}.gekko-manifesto{display:none}
+  .gekko-browser-shell{min-height:610px}
+  .gekko-browser-cards{left:6%;right:6%}
+  .gekko-dock-nav small{display:none}
+}
+@media(max-width:900px){
+  .gekko-showcase{display:block;padding:72px 16px 24px}
+  .gekko-brand-column{display:grid;grid-template-columns:1fr 120px;align-items:center;gap:14px;margin-bottom:20px}
+  .gekko-primary-brand{text-align:left;display:grid;grid-template-columns:94px 1fr;align-items:center}
+  .gekko-logo-orbit{width:90px;margin:0}.gekko-primary-brand h1{font-size:50px}.gekko-primary-brand p{grid-column:2;margin:8px 0 0}
+  .gekko-app-icon-block,.gekko-icon-variations,.gekko-brand-card{display:none}
+  .gekko-feature-strip article{padding:12px 6px}
+  .gekko-feature-strip p{display:none}
+  .gekko-browser-cards{grid-template-columns:repeat(2,1fr);bottom:122px}
+  .gekko-browser-card{min-height:90px}.gekko-browser-card p{display:none}
+  .gekko-dock-brand,.gekko-dock-nav,.gekko-dock-actions{display:none}
+  .gekko-scene-brand{top:13%}
+}
+@media(max-width:620px){
+  .gekko-sillage-chip{top:10px}.gekko-showcase{padding:56px 8px 16px}
+  .gekko-brand-column{grid-template-columns:1fr}.gekko-primary-brand{grid-template-columns:68px 1fr}
+  .gekko-logo-orbit{width:64px}.gekko-primary-brand h1{font-size:38px}.gekko-primary-brand p{font-size:8px}
+  .gekko-feature-strip{grid-template-columns:repeat(3,1fr)}.gekko-feature-icon{width:38px;height:38px;font-size:20px}
+  .gekko-feature-strip strong{font-size:8px}
+  .gekko-browser-shell{min-height:545px;border-radius:20px;transform:none}
+  .gekko-tab-pill{min-width:130px}.gekko-window-actions{gap:11px}
+  .gekko-scene{min-height:492px}.gekko-scene-tools{right:14px;gap:12px;font-size:15px}
+  .gekko-scene-brand img{width:88px;height:88px}.gekko-scene-brand strong{font-size:30px}
+  .gekko-browser-cards{left:12px;right:12px;gap:8px;bottom:96px}
+  .gekko-browser-card{padding:10px 6px;min-height:72px;border-radius:13px}.gekko-browser-card b{font-size:18px}.gekko-browser-card strong{font-size:9px;margin:4px 0}
+  .gekko-bottom-dock{left:6px;right:6px;bottom:6px;min-height:64px;padding:7px}.gekko-omnibox{height:44px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
