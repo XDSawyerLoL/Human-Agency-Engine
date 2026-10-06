@@ -42,7 +42,8 @@ def test_operational_surfaces_exist():
     assert '/downloads/#network' in network
     assert 'location.replace(\'/downloads/#network\')' in network
     assert 'url=/downloads/' in products
-    assert "Quantic Glide" in downloads
+    assert "GEKKO Browser" in downloads
+    assert 'href="/gekko/"' in downloads
     assert "Quantic OS" in downloads
     assert "Quantic Studio 2.7.4" in downloads
     assert "QuanticStudio-Setup-2.7.4.exe" in downloads
