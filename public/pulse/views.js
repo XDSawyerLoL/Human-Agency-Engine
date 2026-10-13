@@ -228,67 +228,83 @@ export async function loadProfile(handle){
   }
 }
 
+async function socialInboxConversations(){
+  let central={conversations:[]};
+  try{central=await api('/api/pulse/conversations')}catch{}
+  const local=await decentralizedConversationSummaries().catch(()=>[]);
+  const conversations=new Map();
+  for(const item of central.conversations||[])if(item.user?.handle)conversations.set(item.user.handle,item);
+  for(const item of local){
+    if(!item.handle||conversations.has(item.handle))continue;
+    conversations.set(item.handle,{user:{handle:item.handle,displayName:item.handle},lastMessage:{body:'',createdAt:item.createdAt,encrypted:true}});
+  }
+  return [...conversations.values()].sort((a,b)=>Date.parse(b.lastMessage?.createdAt||0)-Date.parse(a.lastMessage?.createdAt||0));
+}
+function socialInboxSidebar(list,activeHandle=''){
+  return '<aside class="social-inbox-sidebar" aria-label="Conversations privées">'+
+    '<header class="social-inbox-head"><div><span class="social-small-label">SOCIAL · PRIVÉ</span><h2>Discussions</h2></div><button type="button" class="social-compose-chat" data-new-chat aria-label="Nouvelle conversation">✎</button></header>'+
+    '<div class="social-inbox-search"><input id="social-chat-search" type="search" placeholder="Rechercher une discussion" aria-label="Rechercher une discussion" autocomplete="off"></div>'+
+    '<form id="social-new-chat" class="social-chat-start" hidden><label for="social-recipient">Écrire à</label><div><input id="social-recipient" name="handle" placeholder="@pseudo" maxlength="24" required><button type="submit">Ouvrir →</button></div></form>'+
+    '<div class="social-inbox-list" id="social-inbox-list">'+
+    (list.length?list.map(item=>{
+      const u=item.user||{},preview=item.lastMessage?.encrypted?'Message chiffré':(item.lastMessage?.body||'Ouvrir la conversation');
+      return '<button type="button" class="social-chat-contact '+(u.handle===activeHandle?'active':'')+'" data-conversation="'+esc(u.handle||'')+'" data-chat-label="'+esc((u.displayName||u.handle||'').toLowerCase())+'" aria-current="'+(u.handle===activeHandle?'true':'false')+'">'+avatarHtml(u)+
+        '<span class="social-chat-summary"><strong>'+esc(u.displayName||u.handle||'')+'</strong><small>'+esc(preview)+'</small></span><span class="social-chat-chevron">›</span></button>';
+    }).join(''):'<div class="social-inbox-empty">Aucune discussion. Utilisez le crayon pour contacter un membre.</div>')+
+    '</div><div class="social-inbox-foot">🔒 Messages privés chiffrés de bout en bout · Quantic Secure</div></aside>';
+}
+function socialMessengerShell(list,content,activeHandle=''){
+  return '<section class="social-messenger '+(activeHandle?'has-active-chat':'')+'" aria-label="Messagerie SOCIAL">'+socialInboxSidebar(list,activeHandle)+
+   '<section class="social-chat-room" aria-label="Fenêtre de conversation">'+content+'</section></section>';
+}
 export async function loadMessages(){
   if(!requireAuth())return;
-  setView('messages','Messages');
-  setStatus('Chargement','');
+  state.currentChat=null;
+  setView('messages','Discussions');
+  setStatus('Chargement des conversations','');
   try{
-    let central={conversations:[]};
-    try{central=await api('/api/pulse/conversations')}catch{}
-    const local=await decentralizedConversationSummaries().catch(()=>[]);
-    const conversations=new Map();
-    for(const conversation of central.conversations||[])if(conversation.user)conversations.set(conversation.user.handle,conversation);
-    for(const summary of local){
-      if(!conversations.has(summary.handle)){
-        conversations.set(summary.handle,{
-          user:{handle:summary.handle,displayName:summary.handle},
-          lastMessage:{body:'',createdAt:summary.createdAt,encrypted:true}
-        });
-      }
-    }
-    const list=[...conversations.values()].sort((a,b)=>Date.parse(b.lastMessage?.createdAt||0)-Date.parse(a.lastMessage?.createdAt||0));
-    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>Messages privés</h2><p>🔒 SOCIAL Secure · chiffrement de bout en bout · transport multi-relais Quantic Network.</p></div><form class="pulse-inline-form two" id="new-message"><input name="handle" placeholder="@identifiant" required><input name="body" maxlength="2000" placeholder="Message sécurisé" required><button class="pulse-mini-button primary">Envoyer</button></form><div class="pulse-card-list">';
-    if(!list.length)html+='<div class="pulse-card"><p>Aucune conversation.</p></div>';
-    list.forEach(function(conversation){
-      if(!conversation.user)return;
-      const preview=conversation.lastMessage?.encrypted?'🔒 Message chiffré':(conversation.lastMessage?.body||'Nouvelle conversation');
-      html+='<button class="pulse-card pulse-user-card" data-conversation="'+esc(conversation.user.handle)+'">'+avatarHtml(conversation.user)+'<div><strong>'+esc(conversation.user.displayName||conversation.user.handle)+'</strong><small>'+esc(preview)+'</small></div><span class="circle-chevron">'+icon('pi-chevron')+'</span></button>';
-    });
-    dom.feed.innerHTML=html+'</div></section>';
-  }catch(error){
-    setStatus('Messages indisponibles',errorText(error));
-  }
+    const list=await socialInboxConversations();
+    const empty='<div class="social-chat-welcome"><span class="social-chat-emblem">✉</span><h2>Vos conversations, au même endroit.</h2><p>Retrouvez vos échanges privés. Les messages sont chiffrés sur vos appareils, indépendamment du fil public.</p><button type="button" data-new-chat class="pulse-mini-button primary">Nouvelle discussion</button></div>';
+    dom.feed.innerHTML=socialMessengerShell(list,empty);
+  }catch(error){setStatus('Discussions indisponibles',errorText(error))}
 }
-
 export async function loadConversation(handle){
   if(!requireAuth())return;
-  setView('messages','@'+handle);
-  setStatus('Chargement','');
+  state.currentChat=handle;
+  setView('messages','Discussions');
+  setStatus('Ouverture de la conversation','');
   try{
-    let data;
-    try{data=await api('/api/pulse/messages/'+encodeURIComponent(handle))}
-    catch{data={user:{handle,displayName:handle},messages:[]}}
-    const localMessages=await decentralizedMessagesFor(handle).catch(()=>[]);
+    const [list,data,localMessages,number]=await Promise.all([
+      socialInboxConversations(),
+      api('/api/pulse/messages/'+encodeURIComponent(handle)).catch(()=>({user:{handle,displayName:handle},messages:[]})),
+      decentralizedMessagesFor(handle).catch(()=>[]),
+      safetyNumber(handle).catch(()=>null)
+    ]);
+    const user=data.user||{handle,displayName:handle};
     const merged=new Map();
     for(const message of [...localMessages,...(data.messages||[])]){
       const key=String(message.clientMessageId||message.id||'')+':'+String(message.senderDeviceId||'');
       const previous=merged.get(key);
       merged.set(key,previous?{...previous,...message,localBody:previous.localBody||message.localBody}:{...message});
     }
-    const [messages,number]=await Promise.all([
-      decryptConversationMessages([...merged.values()].sort((a,b)=>Date.parse(a.createdAt||0)-Date.parse(b.createdAt||0))),
-      safetyNumber(handle).catch(()=>null)
-    ]);
-    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>'+esc(data.user.displayName)+'</h2><p>@'+esc(data.user.handle)+' · 🔒 SOCIAL Secure · session v2 · Double Ratchet</p>'+(number?'<small class="pulse-security-number">Numéro de sécurité : '+esc(number)+'</small>':'')+'</div><div class="pulse-message-list">';
-    messages.forEach(function(message){
-      const body=message.secureInvalid?'⚠️ Message chiffré invalide':message.secureUnavailable?'🔒 Message chiffré pour un autre appareil':(message.plaintext||'');
-      html+='<div class="pulse-message '+(message.senderId===state.user.id?'mine':'')+'">'+esc(body)+'<small>'+esc(timeAgo(message.createdAt))+(message.secure?' · 🔒':'')+'</small></div>';
-    });
-    html+='</div><form class="pulse-message-form" id="conversation-form" data-handle="'+esc(handle)+'"><input name="body" maxlength="2000" placeholder="Message chiffré de bout en bout…" required autocomplete="off"><button class="pulse-mini-button primary">Envoyer sécurisé</button></form></section>';
-    dom.feed.innerHTML=html;
-  }catch(error){
-    setStatus('Conversation indisponible',errorText(error));
-  }
+    const messages=await decryptConversationMessages([...merged.values()].sort((a,b)=>Date.parse(a.createdAt||0)-Date.parse(b.createdAt||0)));
+    let content='<header class="social-chat-header"><button type="button" data-chat-back class="social-chat-back" aria-label="Retour aux discussions">←</button>'+avatarHtml(user)+
+      '<div class="social-chat-peer"><strong>'+esc(user.displayName||user.handle)+'</strong><span>@'+esc(user.handle)+' · Conversation privée</span></div>'+
+      '<button class="social-chat-profile" type="button" data-profile="'+esc(handle)+'">Voir le profil</button></header>'+
+      (number?'<div class="social-chat-security">🔒 Numéro de sécurité : '+esc(number)+'</div>':'<div class="social-chat-security">🔒 Chiffrement de bout en bout · Quantic Secure</div>')+
+      '<div class="social-chat-messages" id="social-chat-messages" role="log" aria-live="polite">'+
+      (messages.length?messages.map(message=>{
+        const body=message.secureInvalid?'Message chiffré invalide':message.secureUnavailable?'Message chiffré indisponible sur cet appareil':(message.plaintext||'');
+        const mine=message.senderId===state.user.id;
+        return '<div class="social-chat-bubble '+(mine?'mine':'theirs')+'"><div>'+esc(body)+'</div><small>'+esc(timeAgo(message.createdAt))+(message.secure?' · 🔒':'')+'</small></div>';
+      }).join(''):'<div class="social-chat-empty">Début de votre conversation avec @'+esc(handle)+'.</div>')+'</div>'+
+      '<form class="social-chat-send" id="conversation-form" data-handle="'+esc(handle)+'"><label for="social-chat-body" class="social-visually-hidden">Message privé</label>'+
+      '<input name="body" id="social-chat-body" maxlength="2000" autocomplete="off" placeholder="Écrire un message privé…" required>'+
+      '<button type="submit" aria-label="Envoyer le message">➤</button></form>';
+    dom.feed.innerHTML=socialMessengerShell(list,content,handle);
+    const log=document.getElementById('social-chat-messages');if(log)log.scrollTop=log.scrollHeight;
+    document.getElementById('social-chat-body')?.focus();
+  }catch(error){setStatus('Conversation indisponible',errorText(error))}
 }
 
 export async function loadCirclePreview(){
