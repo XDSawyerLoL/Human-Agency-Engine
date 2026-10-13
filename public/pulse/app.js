@@ -1,4 +1,4 @@
-import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=25';
+import { TOKEN_KEY, state, dom, api, errorText, safeAvatarUrl } from './core.js?v=25';
 import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, retryIdentityConnection, ensureIdentityVault, startIdentityPresenceGuard } from './session.js?v=25';
 import { setView, loadHome, loadExplore, loadVisual, loadCircles, loadCircle, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview, loadNewsRss } from './views.js?v=25';
 import { ensureSecureDevice, sendSecureMessage } from './secure.js?v=25';
@@ -34,10 +34,10 @@ function updateMediaPreview(){
   const box=document.getElementById('pulse-media-preview');
   if(!box)return;
   const media=state.attachment||{};
-  const image=safeHttpsUrl(media.mediaUrl||media.imageUrl);
+  const image=safeAvatarUrl(media.mediaUrl||media.imageUrl);
   const link=safeHttpsUrl(media.linkUrl);
   if(!image&&!link){box.hidden=true;box.innerHTML='';return}
-  const label=media.mediaType==='gif'?'GIF':(media.linkTitle||'Aperçu');
+  const label=media.mediaType==='gif'?'GIF':media.mediaType==='image'?'Photo du post':(media.linkTitle||'Aperçu');
   box.hidden=false;
   box.innerHTML=(image?'<img src="'+image.replace(/"/g,'&quot;')+'" alt="" referrerpolicy="no-referrer">':'')+
     '<div><strong>'+String(label).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</strong>'+
@@ -47,13 +47,15 @@ function updateMediaPreview(){
 
 async function publishPost(){
   if(!requireAuth())return;
-  const body=dom.textarea.value.trim();
-  if(!body)return;
+  const caption=dom.textarea.value.trim();
+  const body=caption||(state.attachment?.mediaType==='image'?'Photo':'');
+  const max=Number(state.user?.maxPostLength||420);
+  if(!body||Array.from(body).length>max){alert('Limite de '+max+' caractères pour votre compte.');return}
   dom.publish.disabled=true;
   try{
     await api('/api/pulse/posts',{method:'POST',body:JSON.stringify({body,replyToId:state.replyTo,...(state.attachment||{})})});
     dom.textarea.value='';
-    dom.count.textContent='0 / 420';
+    dom.count.textContent='0 / '+(state.user?.maxPostLength||420);
     clearReply();
     state.attachment=null;
     updateMediaPreview();
@@ -190,8 +192,10 @@ async function health(){
 
 function bindStaticEvents(){
   dom.textarea.addEventListener('input',function(){
-    dom.count.textContent=dom.textarea.value.length+' / 420';
-    dom.publish.disabled=!dom.textarea.value.trim();
+    const max=Number(state.user?.maxPostLength||420);
+    const count=Array.from(dom.textarea.value).length;
+    dom.count.textContent=count+' / '+max;
+    dom.publish.disabled=(!dom.textarea.value.trim()&&!state.attachment?.mediaUrl)||count>max;
   });
 
   dom.publish.addEventListener('click',publishPost);
@@ -231,6 +235,37 @@ function bindStaticEvents(){
     gifInsert.disabled=!url;
     gifPreview.innerHTML=url?'<img src="'+url.replace(/"/g,'&quot;')+'" alt="Aperçu GIF" referrerpolicy="no-referrer">':'<span>Aperçu du GIF</span>';
   };
+  const photoInput=document.getElementById('social-photo-input');
+  document.querySelector('[data-tool="photo"]')?.addEventListener('click',()=>{if(requireAuth())photoInput?.click()});
+  photoInput?.addEventListener('change',async()=>{
+    const file=photoInput.files?.[0];photoInput.value='';
+    if(!file)return;
+    if(!/^image\/(?:jpeg|png|webp)$/.test(file.type)||file.size>8_000_000){alert('Photo JPEG, PNG ou WebP de 8 Mo maximum.');return}
+    const objectUrl=URL.createObjectURL(file);
+    try{
+      const image=await new Promise((resolve,reject)=>{
+        const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('image_invalid'));img.src=objectUrl;
+      });
+      if(image.naturalWidth>10000||image.naturalHeight>10000)throw new Error('image_too_large');
+      let data='';
+      for(const edge of [480,420,360,300]){
+        const ratio=Math.min(1,edge/Math.max(image.naturalWidth,image.naturalHeight));
+        const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(image.naturalWidth*ratio));canvas.height=Math.max(1,Math.round(image.naturalHeight*ratio));
+        const ctx=canvas.getContext('2d');if(!ctx)throw new Error('image_canvas_unavailable');
+        ctx.drawImage(image,0,0,canvas.width,canvas.height);
+        for(const quality of [.78,.63,.49,.35]){
+          data=canvas.toDataURL('image/webp',quality);
+          if(data.startsWith('data:image/webp;')&&data.length<59000)break;
+        }
+        if(data.startsWith('data:image/webp;')&&data.length<59000)break;
+      }
+      if(!data.startsWith('data:image/webp;')||data.length>=59000)throw new Error('image_too_large');
+      state.attachment={mediaUrl:data,mediaType:'image'};
+      updateMediaPreview();
+      dom.publish.disabled=!dom.textarea.value.trim()&&!state.attachment.mediaUrl;
+    }catch(error){alert('Impossible de préparer la photo : '+errorText(error))}
+    finally{URL.revokeObjectURL(objectUrl)}
+  });
   document.querySelector('[data-tool="gif"]')?.addEventListener('click',function(){
     document.getElementById('pulse-emoji-picker').hidden=true;
     gifModal.hidden=false;
