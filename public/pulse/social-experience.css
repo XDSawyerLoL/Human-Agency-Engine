@@ -130,3 +130,10 @@
  .pulse-body .social-mobile-navigation{padding-bottom:env(safe-area-inset-bottom,0px);height:calc(65px + env(safe-area-inset-bottom,0px))}
  .pulse-body .social-mobile-navigation button{padding:5px 3px}
 }
+
+.pulse-body .social-profile-tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid rgba(147,176,246,.24);background:#101b3b}
+.pulse-body .social-profile-tabs button{padding:16px 12px;border:0;border-bottom:3px solid transparent;background:transparent;color:#b0bfdc;cursor:pointer;font-weight:750;font-size:13px}
+.pulse-body .social-profile-tabs button.active{border-color:#6adeff;color:#effaff;background:rgba(98,124,215,.10)}
+.pulse-body .social-profile-tabs small{color:#8fb3da;padding-left:5px}
+.pulse-body .social-profile-media{padding:15px}
+.pulse-body #social-profile-posts[hidden],.pulse-body #social-profile-media[hidden]{display:none!important}
