@@ -23,9 +23,9 @@ const relayTarget=join(root,"vendor","quanticmail-relay");
 const stage=join(root,"public",".mail-stage");
 
 const REPO="https://github.com/XDSawyerLoL/QuanticMail.git";
-const DIST_COMMIT="5891f79e3f7c0e70678eb8a50d925a32d61c4420";
-const SOURCE_COMMIT="46794c67ec5729cb368b390f0690c2cf220f7016";
-const RELAY_SOURCE_COMMIT="3b5ae4ff4fc084801f56b5bed2713f0a424ca15c";
+const DIST_COMMIT="6721988f546458d0c307f39a1334039e39f8d3a3";
+const SOURCE_COMMIT="9aa0d89b3e008eee909b850bc5a1775b75ddcbfe";
+const RELAY_SOURCE_COMMIT="9aa0d89b3e008eee909b850bc5a1775b75ddcbfe";
 const BOOTSTRAP_SENTINEL="https://quantic-hostinger-relay.invalid";
 const RAILWAY_RELAY="https://quantic-network-relay-backup-production.up.railway.app";
 const LEGACY_PORTAL_ORIGIN="https://mediumorchid-badger-314305.hostingersite.com";
@@ -206,45 +206,25 @@ function injectSharedSiteNav(directory){
   return updated;
 }
 
-/* The historical QuanticMail 1.1.0 static export contains a bundled Buffer
- * implementation which throws "Unknown encoding: base64url" when generating
- * device pairing QR invites. Apply a narrowly-scoped, audited rewrite until
- * the distribution is rebuilt from the fixed QuanticMail source.
+/* Never ship an untested QR bundle: the latest QuanticMail static export
+ * uses portable canonical Base64URL implemented with standard base64.
+ * Legacy compiled Buffer encodings must be absent from the deployed chunk.
  */
-function patchDevicePairingBundle(directory){
-  const chunk="_next/static/chunks/app/devices/page-088a8b8f4a087ea5.js";
-  const input=join(directory,chunk);
-  if(!existsSync(input))throw new Error("Bundle QR QuanticMail attendu absent: "+chunk);
-  let source=readFileSync(input,"utf8");
-  const oldEncode='h.from(e).toString("base64url")';
-  const oldDecode='h.from(e,"base64url")';
-  if(source.split(oldEncode).length!==2||source.split(oldDecode).length!==2){
-    throw new Error("L'API QR compilée a changé : la correction doit être réévaluée avant publication.");
+function verifyDevicePairingBundle(directory){
+  const chunksDir=join(directory,"_next","static","chunks","app","devices");
+  const chunks=readdirSync(chunksDir).filter(name=>/^page-[A-Za-z0-9_-]+\.js$/.test(name));
+  if(chunks.length!==1)throw new Error("Distribution QR ambiguë: "+chunks.join(","));
+  const name=chunks[0];
+  const source=readFileSync(join(chunksDir,name),"utf8");
+  if(/\.toString\(["']base64url["']\)/.test(source)||/\.from\([^\n)]*,["']base64url["']\)/.test(source)){
+    throw new Error("Encodage QR incompatible dans la distribution: "+name);
   }
-  source=source.replace(oldEncode,'h.from(e).toString("base64").replace(/\\+/g,"-").replace(/\\//g,"_").replace(/=+$/g,"")')
-               .replace(oldDecode,'h.from(e.replace(/-/g,"+").replace(/_/g,"/"),"base64")');
-  if(source.includes(oldEncode)||source.includes(oldDecode))throw new Error("Encodage QR incompatible après correction.");
-  const replacementName="page-088a8b8f4a087ea5-qrfix20261013.js";
-  const oldName="page-088a8b8f4a087ea5.js";
-  const output=join(dirname(input),replacementName);
-  writeFileSync(output,source,"utf8");
-  rmSync(input);
-  let references=0;
-  const visit=current=>{
-    for(const entry of readdirSync(current)){
-      if(entry===".git")continue;
-      const p=join(current,entry),st=statSync(p);
-      if(st.isDirectory()){visit(p);continue}
-      if(!st.isFile()||!/\.(?:html|js|json|txt)$/.test(entry))continue;
-      const content=readFileSync(p,"utf8");
-      if(!content.includes(oldName))continue;
-      references+=content.split(oldName).length-1;
-      writeFileSync(p,content.split(oldName).join(replacementName),"utf8");
-    }
-  };
-  visit(directory);
-  if(references<1)throw new Error("Aucune référence au module QR corrigé, publication annulée.");
-  return {chunk:replacementName,references,encoding:"canonical-base64url-compatible"};
+  if(!source.includes('toString("base64").replace(')||!source.includes('h.from(e.replace(')){
+    throw new Error("Codec QR portable attendu absent du bundle: "+name);
+  }
+  const html=readFileSync(join(directory,"devices","index.html"),"utf8");
+  if(!html.includes(name))throw new Error("Page de liaison QR ne référence pas le bundle: "+name);
+  return {chunk:name,encoding:"canonical-base64url-compatible",verified:true};
 }
 
 function patchSentinel(directory,replacement){
@@ -298,7 +278,7 @@ try{
     throw new Error("La sentinelle de bootstrap QuanticMail est absente du bundle précompilé.");
   }
 
-  const devicePairingPatch=patchDevicePairingBundle(work);
+  const devicePairingPatch=verifyDevicePairingBundle(work);
 
   const identityGatePages=injectIdentityGate(work);
   if(identityGatePages<3){
