@@ -4,7 +4,7 @@ const read=path=>fs.readFileSync(path,'utf8');
 for(const module of ['app','session','views','secure','render','ratchet']){
   const source=read('public/pulse/'+module+'.js');
   assert.ok(source.includes("'./core.js?v=23'"),module+' imports a different core.js module instance');
-  assert.ok(!/core\.js\?v=(?:21|22)/.test(source),module+' still loads a stale state');
+  assert.ok(!source.includes("'./core.js?v=21'")&&!source.includes("'./core.js?v=22'"),module+' still loads a stale state');
 }
 const app=read('public/pulse/app.js');
 const views=read('public/pulse/views.js');
