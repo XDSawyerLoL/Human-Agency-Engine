@@ -8,13 +8,13 @@ const links=[
   {label:"L’entreprise",href:'/entreprise/'}
 ];
 const families=[
- {title:'Identité & sécurité',items:[['Quantic ID','/quantic/'],['Quantic Network','/downloads/#network']]},
- {title:'Navigation & système',items:[['GEKKO','/gekko/'],['Quantic OS','/downloads/#quantic-os']]},
- {title:'Communication & création',items:[['Quantic Mail','/mail/'],['ZOON','/pulse/'],['Quantic Studio','/downloads/#quantic-studio']]},
- {title:'Analyse & information',items:[['Quantic Vision','/vision/'],['Quantic News','/news/']]}
+ {title:'Identité & sécurité',items:[['Quantic ID','/quantic/','identity-vault-mark.svg'],['Quantic Network','/downloads/#network','quantic-sillage-mark.svg']]},
+ {title:'Navigation & système',items:[['GEKKO','/gekko/','gekko-mark.svg?v=20261013.2'],['Quantic OS','/downloads/#quantic-os','os-mark.svg']]},
+ {title:'Communication & création',items:[['Quantic Mail','/mail/','mail-mark.svg'],['ZOON','/pulse/','zoon-mark.svg'],['Quantic Studio','/downloads/#quantic-studio','studio-mark.svg']]},
+ {title:'Analyse & information',items:[['Quantic Vision','/vision/','vision-mark.svg'],['Quantic News','/news/','news-mark.svg']]}
 ];
 function active(href){const p=location.pathname.replace(/\/+$/,'')+'/';return p===href||href==='/ecosystem/'&&p==='/downloads/'}
-function productsMarkup(){return families.map(f=>'<section class="qs-nav-family"><h3>'+f.title+'</h3>'+f.items.map(([label,href])=>'<a href="'+href+'">'+label+'</a>').join('')+'</section>').join('')}
+function productsMarkup(){return families.map(f=>'<section class="qs-nav-family"><h3>'+f.title+'</h3>'+f.items.map(([label,href,icon])=>'<a href="'+href+'"><img loading="lazy" src="/assets/brand-2026/'+icon+'" alt="" aria-hidden="true">'+label+'</a>').join('')+'</section>').join('')}
 function link(obj){return '<a href="'+obj.href+'"'+(active(obj.href)?' aria-current="page"':'')+'>'+obj.label+'</a>'}
 function init(){
  if(document.querySelector('.qs-site-header'))return;
