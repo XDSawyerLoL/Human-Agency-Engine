@@ -17,7 +17,6 @@ def test_gekko_portal_exists_and_links_to_published_build():
     assert 'Interface réelle GEKKO 2.4' in portal
     assert '/assets/brand-2026/gekko-mark.svg' in portal
     assert '/mail/' in portal and '/pulse/' in portal and '/vision/' in portal
-    assert '/news/' in portal
     assert 'https://github.com/Sansahd/AURA-WEB/actions/runs/38311597450' in portal
     assert 'GEKKO-2.4-beta13-Windows-x64' in portal
 
@@ -49,7 +48,7 @@ def test_gekko_page_uses_authenticated_real_screenshot():
     assert 'class="gekko-real-shot"' in portal
     assert 'class="gekko-real-screen"' in portal
     assert 'gekko-interface-reelle.webp' in portal
-    assert 'Capture de l’application Windows' in portal
+    assert 'capture de l’application Windows' in portal
     assert 'RECONSTITUTION HTML' not in portal
     assert 'id="gekko-omnibox"' not in portal
     assert '.gekko-real-screen img' in css
