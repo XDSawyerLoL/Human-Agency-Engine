@@ -323,9 +323,19 @@ async function mutateStore(fn){
 }
 function mapSet(map,key){if(!map[key])map[key]=[];return map[key]}
 function blocked(store,a,b){return!!((store.blocks[a]||[]).includes(b)||(store.blocks[b]||[]).includes(a))}
+// Subscription entitlements are granted only by the operator from verified Quantic ID keys.
+// Browser input, profile PATCH and localStorage never activate a paid plan.
+const SOCIAL_POST_LIMITS=Object.freeze({free:420,plus:2000,pro:10000});
+function socialMembership(user){
+  const key=String(user?.identityKeyId||'');
+  let row=null;
+  try{const records=JSON.parse(process.env.SOCIAL_MEMBERSHIPS_JSON||'{}');row=key&&records&&typeof records==='object'?records[key]:null}catch{}
+  const tier=row?.active===true&&['plus','pro'].includes(row?.tier)&&(!row.expiresAt||Date.parse(row.expiresAt)>Date.now())?row.tier:'free';
+  return{tier,maxPostLength:SOCIAL_POST_LIMITS[tier],subscriberBadge:tier==='plus'?'Plus':tier==='pro'?'Pro':null};
+}
 function publicUser(user,store,viewerId=''){
   const followers=Object.values(store.follows||{}).filter(arr=>arr.includes(user.id)).length;
-  return{id:user.id,handle:user.handle,displayName:user.displayName,bio:user.bio||'',avatar:user.avatar||'',verified:!!user.verified,createdAt:user.createdAt,followers,following:(store.follows[user.id]||[]).length,isFollowing:viewerId?(store.follows[viewerId]||[]).includes(user.id):false}
+  return{id:user.id,handle:user.handle,displayName:user.displayName,bio:user.bio||'',avatar:user.avatar||'',verified:!!user.verified,...socialMembership(user),createdAt:user.createdAt,followers,following:(store.follows[user.id]||[]).length,isFollowing:viewerId?(store.follows[viewerId]||[]).includes(user.id):false}
 }
 function visibleTo(store,post,viewerId=''){if(!postAlive(post))return false;if(post.circleId)return!!viewerId&&!!(store.circleMembers[post.circleId]||{})[viewerId];return!viewerId||!blocked(store,viewerId,post.authorId)}
 function postView(post,store,viewerId=''){
@@ -797,10 +807,10 @@ export async function handlePulse(req,res,url,corsHeaders={}){
 
     if(route==='/api/pulse/posts'&&req.method==='POST'){
       if(!allowRate(req,'post',24,60000)){json(res,429,{error:'rate_limited'},corsHeaders);return true}
-      const b=await bodyJson(req),text=clean(b.body,420);if(!text){json(res,400,{error:'empty_post'},corsHeaders);return true}
+      const b=await bodyJson(req),text=String(b.body??'').replace(/\u0000/g,'').trim();if(!text){json(res,400,{error:'empty_post'},corsHeaders);return true}if(Array.from(text).length>SOCIAL_POST_LIMITS.pro){json(res,413,{error:'post_too_long',maxPostLength:SOCIAL_POST_LIMITS.pro},corsHeaders);return true}
       const linkUrl=safeHttpsUrl(b.linkUrl),linkTitle=clean(b.linkTitle,240),imageUrl=safeHttpsUrl(b.imageUrl),mediaUrl=safeHttpsUrl(b.mediaUrl),mediaType=clean(b.mediaType,20)==='gif'?'gif':'';
-      const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req));if(!user)return{error:'unauthorized'};const replyToId=clean(b.replyToId,80)||null,quotePostId=clean(b.quotePostId,80)||null,circleId=clean(b.circleId,80)||null;const replyTarget=replyToId?store.posts[replyToId]:null,quoteTarget=quotePostId?store.posts[quotePostId]:null;if(replyToId&&(!replyTarget||!visibleTo(store,replyTarget,user.id)))return{error:'reply_target_not_found'};if(quotePostId&&(!quoteTarget||!visibleTo(store,quoteTarget,user.id)))return{error:'quote_target_not_found'};if(circleId&&!(store.circleMembers[circleId]||{})[user.id])return{error:'circle_forbidden'};if(replyTarget?.circleId&&circleId!==replyTarget.circleId)return{error:'reply_target_private'};if(quoteTarget?.circleId&&circleId!==quoteTarget.circleId)return{error:'quote_target_private'};const pid=id('p_'),createdAt=now(),post={id:pid,authorId:user.id,body:text,createdAt,expiresAt:new Date(Date.parse(createdAt)+POST_TTL_MS).toISOString(),replyToId,quotePostId,circleId,linkUrl,linkTitle,imageUrl,mediaUrl,mediaType,deletedAt:null};store.posts[pid]=post;if(replyToId)notify(store,store.posts[replyToId].authorId,{actorId:user.id,type:'reply',objectId:pid});if(quotePostId)notify(store,store.posts[quotePostId].authorId,{actorId:user.id,type:'quote',objectId:pid});return{post:postView(post,store,user.id)}});
-      json(res,out.error?(out.error==='unauthorized'?401:/_target_(?:not_found|private)$/.test(out.error)?404:400):201,out,corsHeaders);return true
+      const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req));if(!user)return{error:'unauthorized'};const entitlement=socialMembership(user);if(Array.from(text).length>entitlement.maxPostLength)return{error:'post_too_long',maxPostLength:entitlement.maxPostLength};const replyToId=clean(b.replyToId,80)||null,quotePostId=clean(b.quotePostId,80)||null,circleId=clean(b.circleId,80)||null;const replyTarget=replyToId?store.posts[replyToId]:null,quoteTarget=quotePostId?store.posts[quotePostId]:null;if(replyToId&&(!replyTarget||!visibleTo(store,replyTarget,user.id)))return{error:'reply_target_not_found'};if(quotePostId&&(!quoteTarget||!visibleTo(store,quoteTarget,user.id)))return{error:'quote_target_not_found'};if(circleId&&!(store.circleMembers[circleId]||{})[user.id])return{error:'circle_forbidden'};if(replyTarget?.circleId&&circleId!==replyTarget.circleId)return{error:'reply_target_private'};if(quoteTarget?.circleId&&circleId!==quoteTarget.circleId)return{error:'quote_target_private'};const pid=id('p_'),createdAt=now(),post={id:pid,authorId:user.id,body:text,createdAt,expiresAt:new Date(Date.parse(createdAt)+POST_TTL_MS).toISOString(),replyToId,quotePostId,circleId,linkUrl,linkTitle,imageUrl,mediaUrl,mediaType,deletedAt:null};store.posts[pid]=post;if(replyToId)notify(store,store.posts[replyToId].authorId,{actorId:user.id,type:'reply',objectId:pid});if(quotePostId)notify(store,store.posts[quotePostId].authorId,{actorId:user.id,type:'quote',objectId:pid});return{post:postView(post,store,user.id)}});
+      json(res,out.error?(out.error==='unauthorized'?401:out.error==='post_too_long'?413:/_target_(?:not_found|private)$/.test(out.error)?404:400):201,out,corsHeaders);return true
     }
 
     let m=route.match(/^\/api\/pulse\/posts\/([^/]+)$/);
