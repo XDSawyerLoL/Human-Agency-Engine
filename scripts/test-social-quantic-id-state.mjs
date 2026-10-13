@@ -3,16 +3,16 @@ import fs from 'node:fs';
 const read=path=>fs.readFileSync(path,'utf8');
 for(const module of ['app','session','views','secure','render','ratchet']){
   const source=read('public/pulse/'+module+'.js');
-  assert.ok(source.includes("'./core.js?v=23'"),module+' imports a different core.js module instance');
+  assert.ok(source.includes("'./core.js?v=25'"),module+' imports a different core.js module instance');
   assert.ok(!source.includes("'./core.js?v=21'")&&!source.includes("'./core.js?v=22'"),module+' still loads a stale state');
 }
 const app=read('public/pulse/app.js');
 const views=read('public/pulse/views.js');
 const session=read('public/pulse/session.js');
 const html=read('public/pulse/index.html');
-assert.ok(app.includes("'./session.js?v=23'"));
-assert.ok(views.includes("'./session.js?v=23'"));
-assert.ok(html.includes('/pulse/app.js?v=23'));
+assert.ok(app.includes("'./session.js?v=25'"));
+assert.ok(views.includes("'./session.js?v=25'"));
+assert.ok(html.includes('/pulse/app.js?v=25'));
 assert.ok(html.includes('Bienvenue sur SOCIAL'));
 assert.ok(!html.includes('Bienvenue sur ZOON'));
 assert.ok(session.includes('retryIdentityConnection'));

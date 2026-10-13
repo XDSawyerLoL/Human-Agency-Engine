@@ -57,3 +57,16 @@ body.pulse-body{
  .pulse-body .pulse-own-post-delete{padding:7px 10px!important}
 }
 @media(prefers-reduced-motion:reduce){.pulse-body *{transition-duration:0s!important}}
+
+/* Media-driven tab: visual discovery, not a second identity system. */
+.pulse-visual-view{padding:24px 22px!important}
+.pulse-visual-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin-top:22px}
+.pulse-visual-tile{position:relative;min-width:0;border:1px solid rgba(150,186,246,.20);border-radius:15px;overflow:hidden;background:#122347;color:#f4f8ff;padding:0;text-align:left;cursor:pointer;aspect-ratio:4/5}
+.pulse-visual-tile img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .24s ease}
+.pulse-visual-tile:hover img{transform:scale(1.045)}
+.pulse-visual-tile>div{position:absolute;inset:auto 0 0;padding:25px 12px 13px;background:linear-gradient(transparent,rgba(2,8,24,.93));display:grid;gap:5px}
+.pulse-visual-tile strong{color:#f4f8ff;font-size:12px}
+.pulse-visual-tile span{color:#d0def6;font-size:11px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pulse-visual-tile:focus-visible{outline:3px solid #66dfff;outline-offset:2px}
+@media(max-width:730px){.pulse-visual-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pulse-visual-view{padding:15px 10px!important}}
+@media(max-width:390px){.pulse-visual-grid{gap:7px}.pulse-visual-tile{border-radius:11px}}
