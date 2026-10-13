@@ -360,6 +360,15 @@ function bindStaticEvents(){
 
 function bindDelegatedEvents(){
   document.addEventListener('click',async function(event){
+    const shortcut=event.target.closest('.pulse-right [data-view],#circle-preview [data-view]');
+    if(shortcut){
+      const view=shortcut.dataset.view;
+      if(view==='messages')void loadMessages();
+      else if(view==='circles')void loadCircles();
+      else if(view==='visual')void loadVisual();
+      else if(view==='explore')void loadExplore(document.getElementById('pulse-search').value);
+      return;
+    }
     const newsRepost=event.target.closest('[data-news-repost]');
     if(newsRepost){
       if(!requireAuth())return;
@@ -486,6 +495,14 @@ function bindDelegatedEvents(){
     if(event.target.closest('[data-logout]')){doLogout();return}
   });
 
+  document.addEventListener('input',function(event){
+    if(event.target.id==='social-chat-search'){
+      const query=event.target.value.trim().toLowerCase();
+      document.querySelectorAll('#social-inbox-list [data-chat-label]').forEach(item=>{
+        item.hidden=!item.dataset.chatLabel.includes(query);
+      });
+    }
+  });
   document.addEventListener('submit',async function(event){
     if(event.target.id==='social-new-chat'){
       event.preventDefault();
