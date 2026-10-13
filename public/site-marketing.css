@@ -103,3 +103,14 @@ body.sm-page{margin:0;color:#17382f;background:#f7faf8;font-family:Inter,system-
 @media(max-width:1050px){.sm-hero-layout{grid-template-columns:1fr;gap:30px}.sm-visual{min-height:auto}.sm-grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}.sm-split{gap:26px}}
 @media(max-width:760px){.sm-shell{width:min(100% - 32px,560px)}.sm-hero{padding:65px 0}.sm-hero h1{font-size:clamp(40px,10vw,56px)}.sm-section{padding:65px 0}.sm-section-head{display:block}.sm-section-head p{margin-top:16px}.sm-grid-3,.sm-grid-4,.sm-product-categories,.sm-split{grid-template-columns:1fr}.sm-grid-3{gap:12px}.sm-card{padding:25px}.sm-cta-layout{align-items:stretch;flex-direction:column}.sm-cta{padding:61px 0}.sm-cta .sm-btn{align-self:flex-start}.sm-footer a{margin:0 18px 0 0}.sm-contact-box{padding:25px}.sm-fallback-header nav{flex-wrap:wrap;gap:12px}.sm-fallback-header a:first-child{width:100%}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.sm-btn{transition:none}}
+
+
+/* Homepage brand ribbon and responsive CTA accents. */
+.sm-products-ribbon{display:flex;align-items:center;justify-content:space-between;gap:28px;overflow:auto;padding:20px 0;color:#4b7a61;scrollbar-width:none}
+.sm-products-ribbon span{white-space:nowrap;font-size:12px;font-weight:850;letter-spacing:.045em}
+.q-signal-ribbon{background:#e5eee8;border-block:1px solid #d8e6dc}
+.sm-page .q-hero-aurora{position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 80% 15%,#e5f3e7,transparent 52%)}
+.sm-page .sm-hero.q-hero-stage{min-height:0}
+.sm-page .sm-hero.q-hero-stage .sm-visual{will-change:transform}
+.sm-page .sm-table td{color:#526e60}
+@media(max-width:760px){.sm-products-ribbon{gap:24px}}
