@@ -3,12 +3,14 @@ import assert from "node:assert/strict";
 
 const sync=fs.readFileSync("scripts/sync-quantic-mail.mjs","utf8");
 assert.match(sync,/XDSawyerLoL\/QuanticMail/);
-assert.match(sync,/5891f79e3f7c0e70678eb8a50d925a32d61c4420/);
-assert.match(sync,/46794c67ec5729cb368b390f0690c2cf220f7016/);
+assert.match(sync,/6721988f546458d0c307f39a1334039e39f8d3a3/);
+assert.match(sync,/9aa0d89b3e008eee909b850bc5a1775b75ddcbfe/);
 assert.match(sync,/quantic-hostinger-relay\.invalid/);
 assert.match(sync,/QUANTICMAIL_COMMIT/);
 assert.match(sync,/QUANTIC_HOSTINGER_RELAY_URL/);
 assert.match(sync,/patchSentinel/);
+assert.match(sync,/verifyDevicePairingBundle/);
+assert.match(sync,/canonical-base64url-compatible/);
 assert.match(sync,/injectPortalNav/);
 assert.match(sync,/injectIdentityGate/);
 assert.match(sync,/makePortalUrlsPortable/);
