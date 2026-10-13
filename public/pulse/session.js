@@ -1,4 +1,4 @@
-import { TOKEN_KEY, state, dom, initials, setAvatar, api } from './core.js?v=25';
+import { TOKEN_KEY, state, dom, initials, setAvatar, api } from './core.js?v=20261014.1';
 
 const PRESENCE_RENEW_MS=5000;
 const PRESENCE_PROBE_MS=1000;
