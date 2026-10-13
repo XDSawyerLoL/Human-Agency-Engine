@@ -136,18 +136,38 @@ export async function loadCircles(){
   setView('circles','Communautés');
   setStatus('Chargement des communautés','');
   try{
-    const data=await api('/api/pulse/circles');
-    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>Communautés</h2><p>Rejoignez des espaces autour d’un sujet, d’un projet ou d’un intérêt commun.</p></div>';
-    if(state.user)html+='<form class="pulse-inline-form two" id="circle-create"><input name="name" minlength="3" maxlength="60" placeholder="Nom du cercle" required><input name="description" maxlength="240" placeholder="Description"><button class="pulse-mini-button primary">Créer</button></form>';
-    html+='<div class="pulse-card-list">';
-    if(!data.circles.length)html+='<div class="pulse-card"><p>Aucune communauté publique pour le moment.</p></div>';
-    data.circles.forEach(function(circle){
-      html+='<div class="pulse-card"><div class="pulse-card-row"><div><h3>'+esc(circle.name)+'</h3><div class="pulse-card-meta">'+circle.memberCount+' membres · '+esc(circle.visibility)+'</div></div><button class="pulse-mini-button '+(circle.joined?'':'primary')+'" data-circle-join="'+esc(circle.id)+'">'+(circle.joined?'Quitter':'Rejoindre')+'</button></div><p>'+esc(circle.description||'')+'</p></div>';
-    });
-    dom.feed.innerHTML=html+'</div></section>';
-  }catch(error){
-    setStatus('Communautés indisponibles',errorText(error));
-  }
+    const {circles=[]}=await api('/api/pulse/circles');
+    const mine=circles.filter(circle=>circle.joined);
+    const discover=circles.filter(circle=>!circle.joined);
+    const renderCircle=circle=>'<article class="social-community-card">'+
+      '<button class="social-community-cover" data-circle-open="'+esc(circle.id)+'" aria-label="Ouvrir '+esc(circle.name)+'"><span>'+esc(circle.name.slice(0,2).toUpperCase())+'</span></button>'+
+      '<div class="social-community-details"><h3><button data-circle-open="'+esc(circle.id)+'">'+esc(circle.name)+'</button></h3>'+
+      '<p>'+esc(circle.description||'Échangez avec les membres autour de ce sujet.')+'</p>'+
+      '<small>'+Number(circle.memberCount||0)+' membre(s) · '+(circle.visibility==='private'?'Espace privé':'Espace public')+'</small>'+
+      '<div class="social-community-actions"><button class="pulse-mini-button primary" data-circle-open="'+esc(circle.id)+'">Voir les publications →</button>'+
+      (circle.ownerId===state.user?.id?'<span class="social-community-owner">Administrateur</span>':'<button class="pulse-mini-button" data-circle-join="'+esc(circle.id)+'">'+(circle.joined?'Quitter':'Rejoindre')+'</button>')+'</div></div></article>';
+    let html='<section class="pulse-view social-community-hub"><header class="social-community-hero"><span class="social-small-label">SOCIAL · LES COMMUNAUTÉS</span><h2>Des espaces où l’on échange vraiment.</h2><p>Rejoignez des groupes, partagez des publications dans leur fil et retrouvez les discussions du même sujet au même endroit.</p></header>';
+    if(state.user)html+='<details class="social-create-community"><summary>+ Créer une communauté</summary><form class="social-community-form" id="circle-create"><label>Nom de la communauté<input name="name" minlength="3" maxlength="60" required placeholder="Ex. Cinéma & séries"></label><label>Description<input name="description" maxlength="240" placeholder="De quoi parle-t-on ?"></label><button class="pulse-mini-button primary" type="submit">Créer cet espace</button></form></details>';
+    if(mine.length)html+='<div class="social-community-section"><h3>Mes communautés <span>'+mine.length+'</span></h3><div class="social-community-grid">'+mine.map(renderCircle).join('')+'</div></div>';
+    html+='<div class="social-community-section"><h3>À découvrir <span>'+discover.length+'</span></h3><div class="social-community-grid">'+(discover.length?discover.map(renderCircle).join(''):'<div class="social-empty-community">Aucune nouvelle communauté à découvrir. Vous pouvez créer la première.</div>')+'</div></div></section>';
+    dom.feed.innerHTML=html;
+  }catch(error){setStatus('Communautés indisponibles',errorText(error))}
+}
+
+export async function loadCircle(circleId){
+  setView('circles','Communauté');
+  setStatus('Chargement du groupe','');
+  try{
+    const {circle,posts=[]}=await api('/api/pulse/circles/'+encodeURIComponent(circleId)+'/posts');
+    const canPublish=Boolean(state.user&&circle.joined);
+    const maxLength=state.user?.maxPostLength||420;
+    dom.feed.innerHTML='<section class="pulse-view social-circle-timeline">'+
+      '<button class="social-back-link" data-circle-back>← Toutes les communautés</button>'+
+      '<header class="social-circle-header"><div class="social-circle-cover">'+esc(circle.name.slice(0,2).toUpperCase())+'</div><div><span class="social-small-label">COMMUNAUTÉ · '+(circle.visibility==='private'?'PRIVÉE':'PUBLIQUE')+'</span><h2>'+esc(circle.name)+'</h2><p>'+esc(circle.description||'Un espace pour échanger avec la communauté.')+'</p><small>'+Number(circle.memberCount||0)+' membres</small></div></header>'+
+      (canPublish?'<form id="circle-publish" data-circle-id="'+esc(circle.id)+'" class="social-community-publish"><label for="social-circle-text">Publier dans '+esc(circle.name)+'</label><textarea id="social-circle-text" name="body" maxlength="'+maxLength+'" required placeholder="Une idée, une question, une discussion…"></textarea><div><span>'+maxLength+' caractères maximum</span><button class="pulse-mini-button primary" type="submit">Publier dans la communauté</button></div></form>':'<div class="social-join-callout">Rejoignez cette communauté pour y publier. <button class="pulse-mini-button primary" data-circle-join="'+esc(circle.id)+'">Rejoindre</button></div>')+
+      '<div class="social-community-section"><h3>Fil de la communauté <span>'+posts.length+'</span></h3></div>'+
+      (posts.length?posts.map(renderPost).join(''):'<div class="social-empty-community">Aucune publication pour le moment. Ouvrez la conversation.</div>')+'</section>';
+  }catch(error){setStatus('Communauté indisponible',errorText(error))}
 }
 
 export async function loadNotifications(){
