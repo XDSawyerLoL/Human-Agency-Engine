@@ -127,7 +127,7 @@ export async function loadVisual(){
       const raw=post.mediaUrl||post.imageUrl;
       let url='';try{const value=new URL(raw,location.origin);if(value.protocol==='https:'||value.origin===location.origin&&value.protocol==='http:')url=value.href}catch{}
       if(!url)return '';
-      return '<article class="pulse-visual-tile" data-visual-post="'+esc(post.id)+'"><img src="'+esc(url)+'" loading="lazy" alt="'+esc(post.body||'Publication illustrée')+'" referrerpolicy="no-referrer"><div><strong>@'+esc(post.author?.handle||'social')+'</strong><span>'+esc((post.body||'').slice(0,95))+'</span></div></article>';
+      return '<button type="button" class="pulse-visual-tile" data-visual-post="'+esc(post.id)+'" aria-label="Ouvrir la publication illustrée de @'+esc(post.author?.handle||'social')+'"><img src="'+esc(url)+'" loading="lazy" alt="'+esc(post.body||'Publication illustrée')+'" referrerpolicy="no-referrer"><div><strong>@'+esc(post.author?.handle||'social')+'</strong><span>'+esc((post.body||'').slice(0,95))+'</span></div></button>';
     }).join('')+'</div></section>';
   }catch(error){setStatus('Galerie indisponible',errorText(error))}
 }
