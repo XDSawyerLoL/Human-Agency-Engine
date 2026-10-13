@@ -48,6 +48,17 @@ function sha(v){return createHash('sha256').update(String(v)).digest('hex')}
 function now(){return new Date().toISOString()}
 function clean(v,max=500){return String(v||'').replace(/\u0000/g,'').trim().slice(0,max)}
 function safeHttpsUrl(v,max=1600){const value=clean(v,max);if(!value)return'';try{const u=new URL(value);return u.protocol==='https:'?u.href:''}catch{return''}}
+function safeProfileAvatar(value){
+  const raw=String(value||'').trim();
+  if(!raw)return '';
+  // Only raster photos or HTTPS image URLs; never accept SVG, scripts or local network fetches.
+  if(raw.startsWith('data:')){
+    if(raw.length>61000||!/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(raw))return null;
+    return raw;
+  }
+  if(raw.length>500)return null;
+  try{const u=new URL(raw);return u.protocol==='https:'?u.href:null}catch{return null}
+}
 function json(res,status,body,extra={}){res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store',...extra});res.end(JSON.stringify(body))}
 async function bodyJson(req,limit=65536){let size=0,chunks=[];for await(const chunk of req){size+=chunk.length;if(size>limit)throw Object.assign(new Error('body_too_large'),{status:413});chunks.push(chunk)}if(!chunks.length)return{};try{return JSON.parse(Buffer.concat(chunks).toString('utf8'))}catch{throw Object.assign(new Error('invalid_json'),{status:400})}}
 function bearer(req){return String(req.headers.authorization||'').match(/^Bearer\s+(.+)$/i)?.[1]||''}
@@ -772,7 +783,7 @@ export async function handlePulse(req,res,url,corsHeaders={}){
     if(route==='/api/pulse/me'&&req.method==='GET'){const store=await readStore(),a=await auth(req,store);if(!a){json(res,401,{error:'unauthorized'},corsHeaders);return true}json(res,200,{user:publicUser(a.user,store,a.user.id)},corsHeaders);return true}
 
     if(route==='/api/pulse/me'&&req.method==='PATCH'){
-      const b=await bodyJson(req),out=await mutateStore(store=>{const user=sessionUser(store,bearer(req));if(!user)return{error:'unauthorized'};const displayName=clean(b.displayName??user.displayName,50),bio=clean(b.bio??user.bio,240),avatar=clean(b.avatar??user.avatar,500);if(displayName.length<2)return{error:'invalid_display_name'};user.displayName=displayName;user.bio=bio;user.avatar=avatar;user.updatedAt=now();return{user:publicUser(user,store,user.id)}});
+      const b=await bodyJson(req),out=await mutateStore(store=>{const user=sessionUser(store,bearer(req));if(!user)return{error:'unauthorized'};const displayName=clean(b.displayName??user.displayName,50),bio=clean(b.bio??user.bio,240),avatar=safeProfileAvatar(b.avatar??user.avatar);if(displayName.length<2)return{error:'invalid_display_name'};if(avatar===null)return{error:'invalid_avatar'};user.displayName=displayName;user.bio=bio;user.avatar=avatar;user.updatedAt=now();return{user:publicUser(user,store,user.id)}});
       json(res,out.error?(out.error==='unauthorized'?401:400):200,out,corsHeaders);return true
     }
 
