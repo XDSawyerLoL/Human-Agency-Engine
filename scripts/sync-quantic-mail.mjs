@@ -67,7 +67,7 @@ function syncRelaySource(){
 }
 
 function injectIdentityGate(directory){
-  const scripts='<script src="/quantic-id-runtime.js"></script><script src="/quantic-mail-id-gate.js"></script>';
+  const scripts='<script src="/quantic-id-runtime.js?v=20261013.3"></script><script src="/quantic-mail-id-gate.js?v=20261013.3"></script>';
   let injected=0;
   function visit(current){
     for(const entry of readdirSync(current)){
