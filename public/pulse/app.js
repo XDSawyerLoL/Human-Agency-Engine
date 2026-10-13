@@ -1,7 +1,7 @@
-import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=23';
-import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, retryIdentityConnection, ensureIdentityVault, startIdentityPresenceGuard } from './session.js?v=23';
-import { setView, loadHome, loadExplore, loadVisual, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview, loadNewsRss } from './views.js?v=23';
-import { ensureSecureDevice, sendSecureMessage } from './secure.js?v=22';
+import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=25';
+import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, retryIdentityConnection, ensureIdentityVault, startIdentityPresenceGuard } from './session.js?v=25';
+import { setView, loadHome, loadExplore, loadVisual, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview, loadNewsRss } from './views.js?v=25';
+import { ensureSecureDevice, sendSecureMessage } from './secure.js?v=25';
 
 function setReply(postId,handle){
   state.replyTo=postId;
@@ -394,7 +394,7 @@ function bindDelegatedEvents(){
       void (async()=>{
         try{
           const result=await api('/api/pulse/posts/'+encodeURIComponent(visual.dataset.visualPost));
-          const {renderPost}=await import('./render.js?v=23');
+          const {renderPost}=await import('./render.js?v=25');
           setView('visual','Publication');
           dom.feed.innerHTML=renderPost(result.post);
         }catch(error){alert(errorText(error))}

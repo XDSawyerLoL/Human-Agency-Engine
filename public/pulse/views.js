@@ -1,7 +1,7 @@
-import { state, dom, api, esc, icon, initials, avatarHtml, timeAgo, setStatus, errorText } from './core.js?v=23';
-import { requireAuth } from './session.js?v=23';
-import { renderPost, renderPosts, notificationLabel } from './render.js?v=22';
-import { decryptConversationMessages, safetyNumber, decentralizedMessagesFor, decentralizedConversationSummaries } from './secure.js?v=22';
+import { state, dom, api, esc, icon, initials, avatarHtml, timeAgo, setStatus, errorText } from './core.js?v=25';
+import { requireAuth } from './session.js?v=25';
+import { renderPost, renderPosts, notificationLabel } from './render.js?v=25';
+import { decryptConversationMessages, safetyNumber, decentralizedMessagesFor, decentralizedConversationSummaries } from './secure.js?v=25';
 
 export function setView(view,title){
   state.view=view;
