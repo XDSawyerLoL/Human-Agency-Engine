@@ -19,7 +19,7 @@ for(const marker of ['social-messenger','social-chat-room','social-chat-bubble',
 for(const route of ["'/api/pulse/circles/'+encodeURIComponent(circleId)+'/posts'","'/api/pulse/posts'"]){
   assert.ok(views.includes(route)||app.includes(route),'community post interface '+route);
 }
-assert.ok(server.includes("route.match(/^\\/api\\/pulse\\/circles\\/([^/]+)\\/posts$/)"),'community API route');
+assert.ok(server.includes('posts=Object.values(store.posts).filter(p=>p.circleId===circle.id'),'community API route');
 assert.ok(server.includes("circle.visibility!=='public'&&!joined"),'private community authorization');
 assert.ok(server.includes('SOCIAL_POST_LIMITS=Object.freeze({free:420,plus:2000,pro:10000})'),'tier length mapping');
 assert.ok(server.includes('SOCIAL_MEMBERSHIPS_JSON'),'operator-controlled membership');
