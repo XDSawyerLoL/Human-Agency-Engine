@@ -1,6 +1,6 @@
-import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=22';
-import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, ensureIdentityVault, startIdentityPresenceGuard } from './session.js?v=22';
-import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview, loadNewsRss } from './views.js?v=22';
+import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=23';
+import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, retryIdentityConnection, ensureIdentityVault, startIdentityPresenceGuard } from './session.js?v=23';
+import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview, loadNewsRss } from './views.js?v=23';
 import { ensureSecureDevice, sendSecureMessage } from './secure.js?v=22';
 
 function setReply(postId,handle){
@@ -61,7 +61,7 @@ async function publishPost(){
   }catch(error){
     const durabilityFailure=['pulse_storage_unavailable','pulse_remote_store_unavailable','pulse_storage_conflict','network_error'].includes(error?.message);
     alert(durabilityFailure
-      ? 'Publication non enregistrée : le stockage durable ZOON n’a pas confirmé l’écriture. Ton texte est conservé ici, tu peux réessayer.'
+      ? 'Publication non enregistrée : le stockage durable SOCIAL n’a pas confirmé l’écriture. Ton texte est conservé ici, tu peux réessayer.'
       : errorText(error));
     dom.publish.disabled=false;
   }
@@ -130,7 +130,7 @@ async function health(){
   try{
     await api('/api/pulse/health');
     document.getElementById('api-state').textContent='En ligne';
-    document.getElementById('api-state').title='Service ZOON disponible';
+    document.getElementById('api-state').title='Service SOCIAL disponible';
   }catch{
     document.getElementById('api-state').textContent='Hors ligne';
   }
@@ -224,7 +224,12 @@ function bindStaticEvents(){
     state.user?loadProfile(state.user.handle):openAuth('login');
   });
   document.getElementById('welcome-register').addEventListener('click',function(){openAuth('register')});
-  document.getElementById('welcome-login').addEventListener('click',function(){openAuth('login')});
+  document.getElementById('welcome-login').addEventListener('click',async function(){
+  if(state.identityStatus==='error'){
+    if(await retryIdentityConnection()){await Promise.all([loadHome(),loadCirclePreview()]);return}
+  }
+  openAuth('login');
+});
   document.getElementById('account-button').addEventListener('click',function(){
     state.user?loadProfile(state.user.handle):openAuth('login');
   });
@@ -347,7 +352,7 @@ function bindDelegatedEvents(){
       }
       if(action.dataset.action==='share'){
         const shareUrl=location.origin+location.pathname+'?post='+encodeURIComponent(postId);
-        if(navigator.share)navigator.share({title:'ZOON',url:shareUrl}).catch(function(){});
+        if(navigator.share)navigator.share({title:'SOCIAL',url:shareUrl}).catch(function(){});
         else navigator.clipboard?.writeText(shareUrl);
         return;
       }
@@ -469,6 +474,13 @@ async function init(){
   if(state.user)await ensureSecureDevice().catch(()=>{});
   startIdentityPresenceGuard();
   await Promise.all([loadHome(),loadCirclePreview()]);
+  const reconnect=async()=>{
+    if(document.visibilityState==='hidden'||state.user||state.identityStatus==='checking')return;
+    if(await retryIdentityConnection())await Promise.all([loadHome(),loadCirclePreview()]);
+  };
+  setInterval(reconnect,60000);
+  window.addEventListener('pageshow',reconnect);
+  document.addEventListener('visibilitychange',reconnect);
 }
 
 init();
