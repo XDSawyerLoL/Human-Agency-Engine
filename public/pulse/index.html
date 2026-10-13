@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/pulse/pulse.css?v=24">
   <link rel="stylesheet" href="/pulse/social-premium.css?v=2">
   <link rel="stylesheet" href="/pulse/social-experience.css?v=1">
+  <link rel="stylesheet" href="/pulse/social-spark.css?v=20261014.1">
   <link rel="icon" type="image/svg+xml" href="/assets/brand-2026/zoon-mark.svg?v=20260922.5">
 <link rel="stylesheet" href="/site-nav.css?v=20261013.3">
 </head>
@@ -80,7 +81,7 @@
 
     <main class="pulse-main">
       <header class="pulse-topbar">
-        <div><span class="pulse-kicker">SOCIAL · by Quantic Sillage</span><h1 id="view-title">Accueil</h1></div>
+        <div><span class="pulse-kicker">SOCIAL · l’espace de vos conversations</span><h1 id="view-title">Accueil</h1><p class="social-header-subtitle">Des nouvelles, des idées et des visages à retrouver.</p></div>
         <div class="pulse-top-actions">
           <a class="pulse-top-button pulse-mail-access" href="/mail/"><svg class="pi" aria-hidden="true"><use href="#pi-mail"></use></svg><span>QuanticMail</span></a>
           <button class="pulse-top-button" id="auth-button">Compte SOCIAL</button>
@@ -103,8 +104,8 @@
       <section class="social-moments" id="social-moments" aria-label="Moments récents de la journée" hidden></section>
 
       <section class="pulse-tabs" id="feed-tabs" aria-label="Choisir le fil à afficher">
-        <button class="pulse-tab active" data-feed="following"><strong id="feed-following-label">Abonnements</strong><small id="feed-following-help">Les comptes que tu suis</small></button>
-        <button class="pulse-tab" data-feed="discover"><strong>Pour vous</strong><small>Publications recommandées et tendances</small></button>
+        <button class="pulse-tab active" data-feed="following"><strong id="feed-following-label">Mon fil</strong><small id="feed-following-help">Les personnes que vous suivez</small></button>
+        <button class="pulse-tab" data-feed="discover"><strong>Découvrir</strong><small>Ce qui se partage maintenant</small></button>
         <button class="pulse-tab pulse-tab-news" data-feed="news"><strong>Quantic News</strong><small>Flux RSS · repost direct</small></button>
       </section>
 
@@ -112,7 +113,7 @@
         <div class="pulse-avatar" id="composer-avatar">?</div>
         <div class="pulse-compose-main">
           <div class="pulse-context" id="pulse-context" hidden></div>
-          <textarea id="pulse-text" maxlength="420" placeholder="Qu'est-ce qui mérite de circuler ?"></textarea>
+          <textarea id="pulse-text" maxlength="420" placeholder="Une nouvelle, une photo, une idée à partager…"></textarea>
           <div class="pulse-media-preview" id="pulse-media-preview" hidden></div>
           <div class="pulse-compose-tools">
             <div class="pulse-toolset">
@@ -140,14 +141,14 @@
     <aside class="pulse-right">
       <div class="pulse-search"><svg class="pi " aria-hidden="true"><use href="#pi-search"></use></svg><input id="pulse-search" type="search" placeholder="Rechercher des personnes ou des sujets"></div>
       <section class="pulse-panel pulse-shortcuts">
-        <div class="pulse-panel-head"><h2>Vos espaces</h2><span id="api-state">Connexion…</span></div>
+        <div class="pulse-panel-head"><h2>Votre univers</h2><span id="api-state">Connexion…</span></div>
         <button type="button" class="social-shortcut" data-view="messages"><span>✉</span><span><strong>Discussions privées</strong><small>Messagerie chiffrée, conversations suivies</small></span></button>
         <button type="button" class="social-shortcut" data-view="visual"><span>▧</span><span><strong>Galerie &amp; moments</strong><small>Images et publications de 24 heures</small></span></button>
         <button type="button" class="social-shortcut" data-view="circles"><span>◎</span><span><strong>Communautés</strong><small>Groupes, membres et discussions</small></span></button>
         <a class="social-shortcut-cta" href="/pulse/offres/">Découvrir SOCIAL Plus et Pro →</a>
       </section>
       <section class="pulse-panel">
-        <div class="pulse-panel-head"><h2>Communautés à découvrir</h2><button class="pulse-link-button" data-view="circles">Voir tout</button></div>
+        <div class="pulse-panel-head"><h2>À découvrir ensemble</h2><button class="pulse-link-button" data-view="circles">Voir tout</button></div>
         <div id="circle-preview"><div class="pulse-panel-loading">Chargement…</div></div>
       </section>
       <p class="pulse-privacy">Pas de publicité comportementale · pseudonymat autorisé · personnalisation désactivable.</p>
