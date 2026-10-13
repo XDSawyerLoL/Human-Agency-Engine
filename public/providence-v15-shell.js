@@ -117,7 +117,7 @@ if(!document.querySelector('link[href*="/site-nav.css"]')){
 }
 if(!document.querySelector('script[src*="/site-nav.js"]')){
  const navigationScript=document.createElement('script');
- navigationScript.src='/site-nav.js?v=20261013.3';
+ navigationScript.src='/site-nav.js?v=20261013.4';
  document.body.appendChild(navigationScript);
 }
 })();
