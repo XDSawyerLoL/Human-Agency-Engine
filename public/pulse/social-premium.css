@@ -1,0 +1,59 @@
+/* SOCIAL v24 — Quantic design system: clear contrast, composer, media, profiles */
+:root{color-scheme:dark}
+body.pulse-body{
+ color:#eef5ff!important;
+ background:radial-gradient(circle at 80% -10%,rgba(103,76,224,.21),transparent 45%),linear-gradient(180deg,#080f29,#101737)!important;
+ --pulse-bg:#08122d;--pulse-card:#101d3c;--pulse-ink:#edf5ff;--pulse-muted:#aebede;--pulse-line:rgba(140,171,248,.20);
+}
+.pulse-body :is(textarea,input,select,[contenteditable="true"]){
+ color:#f4f8ff!important;
+ -webkit-text-fill-color:#f4f8ff!important;
+ caret-color:#69ddff!important;
+ background-color:#142241!important;
+ border-color:rgba(135,172,246,.29)!important;
+ color-scheme:dark;
+}
+.pulse-body :is(textarea,input,select)::placeholder{color:#a5b6d6!important;-webkit-text-fill-color:#a5b6d6!important;opacity:1!important}
+.pulse-body :is(textarea,input,select,[contenteditable="true"]):focus-visible{
+ outline:2px solid #74cfff!important;outline-offset:2px;
+ box-shadow:0 0 0 4px rgba(63,159,255,.14)!important
+}
+.pulse-body input:-webkit-autofill{box-shadow:0 0 0 1000px #1b2b4e inset!important;-webkit-text-fill-color:#f4f8ff!important}
+.pulse-body :is(.pulse-composer,.pulse-post,.pulse-panel,.pulse-card,.pulse-profile-hero,.pulse-view,.pulse-search,.pulse-inline-form,.pulse-tab,.trend,.circle,.pulse-auth-card,.pulse-modal-card){
+ background:#101c3a!important;color:#edf5ff!important;border-color:rgba(146,178,247,.21)!important
+}
+.pulse-body .pulse-composer textarea{background:transparent!important;min-height:94px!important;font-size:16px;line-height:1.6;padding:13px 4px}
+.pulse-body .pulse-composer{border-bottom:1px solid rgba(142,173,248,.21)!important}
+.pulse-body .pulse-compose-tools{border-top-color:rgba(136,170,239,.18)!important}
+.pulse-body .pulse-composer button{color:#a9deff}
+.pulse-body .pulse-publish{background:linear-gradient(115deg,#368efa,#8467f6)!important;color:#fff!important}
+.pulse-body .pulse-post p{color:#e2eafc!important;overflow-wrap:anywhere}
+.pulse-body .pulse-post:hover{background:#152242!important}
+.pulse-body .pulse-post-head button{color:#f4f8ff}
+.pulse-body .pulse-post-head span,.pulse-body .pulse-post small{color:#aebfe4}
+.pulse-body .pulse-action{color:#c0ceeb!important}
+.pulse-body .pulse-action:hover{background:rgba(106,147,248,.17)!important;color:#89deff!important}
+.pulse-body .pulse-card,.pulse-body .pulse-profile-hero{box-shadow:0 10px 26px rgba(0,0,0,.11)}
+.pulse-body .pulse-panel-head h2,.pulse-body .pulse-view-head h2,.pulse-body .pulse-profile-hero h2,.pulse-body .pulse-status strong{color:#f2f7ff}
+.pulse-body :is(.pulse-guide-step,.pulse-guide-step span,.pulse-privacy,.pulse-view-head p,.pulse-profile-hero p,.pulse-profile-stats,.pulse-info,.pulse-empty){color:#b4c4e4!important}
+.pulse-body .pulse-emoji-picker,.pulse-body .pulse-gif-card{background:#152347!important;color:#eff6ff;border:1px solid rgba(135,168,247,.24)}
+.pulse-body .pulse-search{padding:0 13px!important}
+.pulse-body .pulse-search input{background:transparent!important;border:0!important;box-shadow:none!important}
+.pulse-body .pulse-avatar{display:grid;place-items:center;overflow:hidden;flex-shrink:0;background:linear-gradient(140deg,#394c9c,#6253bd)!important;color:#fff!important}
+.pulse-body .pulse-avatar img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.pulse-body .pulse-own-post-delete{margin-left:auto;padding:5px 10px!important;border:1px solid rgba(156,178,241,.20);border-radius:12px;background:rgba(99,124,198,.08);color:#c4d4f5!important;cursor:pointer;font:650 12px/1.2 system-ui}
+.pulse-body .pulse-own-post-delete span{font-size:12px;color:inherit}
+.pulse-body .pulse-own-post-delete:hover{background:rgba(245,98,123,.16);border-color:rgba(244,138,153,.42);color:#ffb2bf!important}
+.pulse-body .pulse-post[hidden]{display:none!important}
+.pulse-body .pulse-tab.active{background:rgba(73,110,239,.11)!important}
+.pulse-body .pulse-mini-button{border-color:rgba(135,170,246,.31)!important;color:#dce9ff!important;background:rgba(65,100,200,.18)!important}
+.pulse-body .pulse-mini-button.primary{background:linear-gradient(110deg,#387eea,#705fe1)!important;color:#fff!important}
+.pulse-body .pulse-welcome .pulse-welcome-actions button{color:#fff}
+.pulse-body :is(a,button):focus-visible{outline:2px solid #85dfff;outline-offset:3px}
+@media(max-width:750px){
+ .pulse-body .pulse-composer{padding:15px!important}
+ .pulse-body .pulse-post{padding:16px!important}
+ .pulse-body .pulse-own-post-delete span{display:none}
+ .pulse-body .pulse-own-post-delete{padding:7px 10px!important}
+}
+@media(prefers-reduced-motion:reduce){.pulse-body *{transition-duration:0s!important}}
