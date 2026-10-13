@@ -1,0 +1,49 @@
+name: SOCIAL Live Visual Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'public/pulse/**'
+      - '.github/workflows/social-live-ui-smoke.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: social-live-visual-smoke
+  cancel-in-progress: true
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Verify that Hostinger serves the new SOCIAL visual system
+        env:
+          BASE: https://mediumorchid-badger-314305.hostingersite.com
+        shell: bash
+        run: |
+          set -euo pipefail
+          ready=0
+          for attempt in $(seq 1 9); do
+            home=$(curl --location --silent --show-error --max-time 10 --output /tmp/social.html --write-out '%{http_code}' "$BASE/pulse/" || true)
+            css=$(curl --location --silent --show-error --max-time 10 --output /tmp/social.css --write-out '%{http_code}' "$BASE/pulse/social-spark.css?v=20261014.1" || true)
+            views=$(curl --location --silent --show-error --max-time 10 --output /tmp/social-views.js --write-out '%{http_code}' "$BASE/pulse/views.js?v=20261014.1" || true)
+            echo "attempt=$attempt page=$home css=$css views=$views"
+            if [ "$home" = 200 ] && [ "$css" = 200 ] && [ "$views" = 200 ] \
+              && grep -Fq 'social-spark.css?v=20261014.1' /tmp/social.html \
+              && grep -Fq 'app.js?v=20261014.1' /tmp/social.html \
+              && grep -Fq '.social-moment-preview' /tmp/social.css \
+              && grep -Fq 'class="social-moment-preview"' /tmp/social-views.js; then
+              ready=1
+              break
+            fi
+            sleep 6
+          done
+          if [ "$ready" != 1 ]; then
+            echo "Hostinger does not yet serve the complete SOCIAL visual update."
+            exit 1
+          fi
+          echo "SOCIAL visual update verified live on Hostinger."
