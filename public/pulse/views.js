@@ -100,7 +100,7 @@ export async function loadHome(){
       if(stories.length){
         moments.innerHTML='<div class="social-moments-head"><strong>Moments du jour</strong><button type="button" data-view="visual">Tout voir →</button></div><div class="social-moments-list">'+stories.map(post=>
           '<button type="button" class="social-moment" data-visual-post="'+esc(post.id)+'" aria-label="Voir la publication de '+esc(post.author?.displayName||post.author?.handle||'SOCIAL')+'">'+
-          '<span class="social-moment-ring">'+avatarHtml(post.author||{})+'</span><small>'+esc((post.author?.displayName||post.author?.handle||'Membre').slice(0,16))+'</small></button>'
+          '<span class="social-moment-preview"><img src="'+esc(safeAvatarUrl(post.mediaUrl||post.imageUrl))+'" loading="lazy" decoding="async" alt=""><span class="social-moment-avatar">'+avatarHtml(post.author||{})+'</span></span><small>'+esc((post.author?.displayName||post.author?.handle||'Membre').slice(0,16))+'</small></button>'
         ).join('')+'</div>';
         moments.hidden=false;
       }else{moments.hidden=true;moments.innerHTML=''}
