@@ -9,7 +9,7 @@ const links=[
 ];
 const families=[
  {title:'Identité & sécurité',items:[['Quantic ID','/quantic/','identity-vault-mark.svg'],['Quantic Network','/downloads/#network','quantic-sillage-mark.svg']]},
- {title:'Navigation & système',items:[['GEKKO','/gekko/','gekko-mark.svg?v=20261013.2'],['Quantic OS','/downloads/#quantic-os','os-mark.svg']]},
+ {title:'Navigation & système',items:[['GEKKO','/gekko/','gekko-mark.svg?v=20261013.4'],['Quantic OS','/downloads/#quantic-os','os-mark.svg']]},
  {title:'Communication & création',items:[['Quantic Mail','/mail/','mail-mark.svg'],['SOCIAL','/pulse/','zoon-mark.svg'],['Quantic Studio','/downloads/#quantic-studio','studio-mark.svg']]},
  {title:'Analyse & information',items:[['Quantic Vision','/vision/','vision-mark.svg'],['Quantic News','/news/','news-mark.svg']]}
 ];
