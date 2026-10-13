@@ -125,6 +125,43 @@ async function exportData(){
   }
 }
 
+async function uploadOwnAvatar(){
+  if(!requireAuth())return;
+  const picker=document.createElement('input');
+  picker.type='file';picker.accept='image/png,image/jpeg,image/webp';
+  picker.setAttribute('aria-label','Sélectionner une photo de profil');
+  picker.addEventListener('change',async()=>{
+    const file=picker.files?.[0];
+    if(!file)return;
+    if(!/^image\/(?:png|jpeg|webp)$/.test(file.type)||file.size>5_000_000){
+      alert('Utilise une image PNG, JPEG ou WebP de moins de 5 Mo.');return;
+    }
+    const objectURL=URL.createObjectURL(file);
+    try{
+      const img=await new Promise((resolve,reject)=>{
+        const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('image_invalid'));image.src=objectURL;
+      });
+      const canvas=document.createElement('canvas');
+      canvas.width=256;canvas.height=256;
+      const ctx=canvas.getContext('2d');
+      if(!ctx)throw new Error('image_canvas_unavailable');
+      const side=Math.min(img.naturalWidth,img.naturalHeight);
+      ctx.drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,256,256);
+      let avatar='';
+      for(const quality of [.76,.62,.48,.36]){
+        avatar=canvas.toDataURL('image/webp',quality);
+        if(avatar.startsWith('data:image/webp;')&&avatar.length<=60000)break;
+      }
+      if(!avatar.startsWith('data:image/webp;')||avatar.length>60000)throw new Error('image_too_large');
+      const data=await api('/api/pulse/me',{method:'PATCH',body:JSON.stringify({avatar})});
+      state.user=data.user;updateAccount();
+      await loadProfile(state.user.handle);
+    }catch(error){alert('Photo non enregistrée : '+errorText(error))}
+    finally{URL.revokeObjectURL(objectURL);picker.remove()}
+  },{once:true});
+  picker.click();
+}
+
 async function editProfile(){
   if(!state.user)return;
   const displayName=prompt('Nom affiché',state.user.displayName);
@@ -425,6 +462,7 @@ function bindDelegatedEvents(){
 
     if(event.target.closest('[data-export]')){exportData();return}
     if(event.target.closest('[data-profile-edit]')){editProfile();return}
+    if(event.target.closest('[data-profile-avatar]')){void uploadOwnAvatar();return}
     if(event.target.closest('[data-logout]')){doLogout();return}
   });
 
