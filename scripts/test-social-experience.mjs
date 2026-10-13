@@ -8,6 +8,7 @@ const server=read('src/quantic_pulse.js');
 const session=read('public/pulse/session.js');
 const render=read('public/pulse/render.js');
 const styles=read('public/pulse/social-experience.css');
+const spark=read('public/pulse/social-spark.css');
 const offers=read('public/pulse/offres/index.html');
 for(const label of ['Discussions privées','Galerie','Communautés','social-moments','social-photo-input','social-experience.css']){
   assert.ok(html.includes(label),'social layout '+label);
@@ -36,4 +37,10 @@ for(const marker of ['420 caractères','2 000 caractères','10 000 caractères',
   assert.ok(offers.includes(marker),'premium benefits '+marker);
 }
 assert.ok(html.includes('data-view="visual"')&&html.includes('data-view="messages"')&&html.includes('data-view="circles"'),'mobile navigation');
+
+assert.ok(html.includes('/pulse/social-spark.css?v=20261014.1'),'luminous SOCIAL stylesheet loaded');
+assert.ok(spark.includes('.social-moment-preview'),'photo-based moments styled');
+assert.ok(views.includes('class="social-moment-preview"'),'real photo cards in daily moments');
+assert.ok(spark.includes('grid-template-columns:minmax(192px,225px)'),'larger central feed');
+assert.ok(spark.includes('linear-gradient(105deg,#3989fb,#926ef2)'),'published action still visible');
 console.log(JSON.stringify({ok:true,contract:'social-experience-messaging-visual-communities-tiers'}));
