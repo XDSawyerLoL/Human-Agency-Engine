@@ -11,8 +11,12 @@ const sessions=new Map();
 const INTERNAL_HEADER='x-quantic-internal';
 const INTERNAL_TOKEN=randomBytes(32).toString('hex');
 
+// QuanticMail's static HTML/JS must be delivered so its browser-side Vault
+// verification can execute. Private mail content stays encrypted locally and
+// relay/API routes retain their independent authentication. Blocking /mail here
+// redirected users before the QuanticMail gate could even be initialized.
 const privatePagePrefixes=[
-  '/vision','/mail','/predictions','/analyst','/alerts','/sports','/cameras',
+  '/vision','/predictions','/analyst','/alerts','/sports','/cameras',
   '/track-record','/sources','/backtest','/settings','/causal','/crypto',
   '/horizons','/intelligence','/matches','/modules'
 ];
