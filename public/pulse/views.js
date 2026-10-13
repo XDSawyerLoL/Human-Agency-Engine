@@ -1,4 +1,4 @@
-import { state, dom, api, esc, icon, initials, timeAgo, setStatus, errorText } from './core.js?v=23';
+import { state, dom, api, esc, icon, initials, avatarHtml, timeAgo, setStatus, errorText } from './core.js?v=23';
 import { requireAuth } from './session.js?v=23';
 import { renderPost, renderPosts, notificationLabel } from './render.js?v=22';
 import { decryptConversationMessages, safetyNumber, decentralizedMessagesFor, decentralizedConversationSummaries } from './secure.js?v=22';
@@ -102,7 +102,7 @@ export async function loadExplore(query=''){
     const data=await api('/api/pulse/search?q='+encodeURIComponent(query.trim()));
     let html='<section class="pulse-view"><div class="pulse-view-head"><h2>Résultats</h2><p>'+esc(query)+'</p></div><div class="pulse-card-list">';
     data.users.forEach(function(user){
-      html+='<div class="pulse-card pulse-user-card"><div class="pulse-avatar">'+esc(initials(user))+'</div><div><strong>'+esc(user.displayName)+'</strong><small>@'+esc(user.handle)+' · '+user.followers+' abonnés</small></div><button class="pulse-mini-button" data-profile="'+esc(user.handle)+'">Voir</button></div>';
+      html+='<div class="pulse-card pulse-user-card">'+avatarHtml(user)+'<div><strong>'+esc(user.displayName)+'</strong><small>@'+esc(user.handle)+' · '+user.followers+' abonnés</small></div><button class="pulse-mini-button" data-profile="'+esc(user.handle)+'">Voir</button></div>';
     });
     html+='</div></section>';
     if(data.posts?.length)html+=data.posts.map(renderPost).join('');
@@ -181,7 +181,7 @@ export async function loadProfile(handle){
       actions='<button class="pulse-mini-button primary" data-follow="'+esc(user.handle)+'">'+(user.isFollowing?'Se désabonner':'Suivre')+'</button><button class="pulse-mini-button" data-message-user="'+esc(user.handle)+'">Message</button><button class="pulse-mini-button danger" data-block="'+esc(user.handle)+'">Bloquer</button>';
     }
 
-    dom.feed.innerHTML='<section class="pulse-profile-hero"><div class="pulse-avatar">'+esc(initials(user))+'</div><h2>'+esc(user.displayName)+'</h2><div class="handle">@'+esc(user.handle)+'</div><p>'+esc(user.bio||'Aucune bio pour le moment.')+'</p><div class="pulse-profile-stats"><span><strong>'+user.followers+'</strong> abonnés</span><span><strong>'+user.following+'</strong> abonnements</span></div><div class="pulse-profile-actions">'+actions+'</div></section>'+((data.posts||[]).map(renderPost).join('')||'<div class="pulse-status"><strong>Aucune publication</strong></div>');
+    dom.feed.innerHTML='<section class="pulse-profile-hero">'+avatarHtml(user)+'<h2>'+esc(user.displayName)+'</h2><div class="handle">@'+esc(user.handle)+'</div><p>'+esc(user.bio||'Aucune bio pour le moment.')+'</p><div class="pulse-profile-stats"><span><strong>'+user.followers+'</strong> abonnés</span><span><strong>'+user.following+'</strong> abonnements</span></div><div class="pulse-profile-actions">'+actions+'</div></section>'+((data.posts||[]).map(renderPost).join('')||'<div class="pulse-status"><strong>Aucune publication</strong></div>');
   }catch(error){
     setStatus('Profil indisponible',errorText(error));
   }
@@ -211,7 +211,7 @@ export async function loadMessages(){
     list.forEach(function(conversation){
       if(!conversation.user)return;
       const preview=conversation.lastMessage?.encrypted?'🔒 Message chiffré':(conversation.lastMessage?.body||'Nouvelle conversation');
-      html+='<button class="pulse-card pulse-user-card" data-conversation="'+esc(conversation.user.handle)+'"><div class="pulse-avatar">'+esc(initials(conversation.user))+'</div><div><strong>'+esc(conversation.user.displayName||conversation.user.handle)+'</strong><small>'+esc(preview)+'</small></div><span class="circle-chevron">'+icon('pi-chevron')+'</span></button>';
+      html+='<button class="pulse-card pulse-user-card" data-conversation="'+esc(conversation.user.handle)+'">'+avatarHtml(conversation.user)+'<div><strong>'+esc(conversation.user.displayName||conversation.user.handle)+'</strong><small>'+esc(preview)+'</small></div><span class="circle-chevron">'+icon('pi-chevron')+'</span></button>';
     });
     dom.feed.innerHTML=html+'</div></section>';
   }catch(error){
