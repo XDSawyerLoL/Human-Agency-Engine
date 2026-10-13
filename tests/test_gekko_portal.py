@@ -29,12 +29,13 @@ def test_gekko_portal_exists_and_is_integrated():
     assert "Quantic Glide 1.2.6" not in downloads
 
 
-def test_gekko_mark_keeps_earth_and_gecko():
+def test_gekko_mark_uses_current_fused_earth_and_gecko_artwork():
     mark = read("public/assets/brand-2026/gekko-mark.svg")
-    assert 'id="earth"' in mark
-    assert 'id="gecko"' in mark
-    assert 'class="continent"' in mark
-    assert 'class="toe"' in mark
+    # Current logo is an SVG wrapper containing the approved fused raster artwork.
+    assert 'viewBox="0 0 256 256"' in mark
+    assert 'lézard fusionné au globe terrestre' in mark
+    assert '<image' in mark
+    assert 'data:image/png;base64,' in mark
 
 
 def test_gekko_portal_script_is_safe_and_reduced_motion_ready():
