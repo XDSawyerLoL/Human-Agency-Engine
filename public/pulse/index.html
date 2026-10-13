@@ -154,9 +154,14 @@
     </aside>
   </div>
 
-  <nav class="pulse-mobile-nav" aria-label="Navigation mobile">
-    <button class="active" data-view="home" aria-label="Accueil"><svg class="pi " aria-hidden="true"><use href="#pi-home"></use></svg></button><button data-view="explore" aria-label="Explorer"><svg class="pi " aria-hidden="true"><use href="#pi-search"></use></svg></button><button id="mobile-compose" aria-label="Publier"><svg class="pi " aria-hidden="true"><use href="#pi-plus"></use></svg></button><button data-view="messages" aria-label="Messages"><svg class="pi " aria-hidden="true"><use href="#pi-message"></use></svg></button><a href="/mail/" aria-label="Ouvrir QuanticMail"><svg class="pi" aria-hidden="true"><use href="#pi-mail"></use></svg></a><button data-view="profile" aria-label="Profil"><svg class="pi " aria-hidden="true"><use href="#pi-user"></use></svg></button>
+  <nav class="pulse-mobile-nav social-mobile-navigation" aria-label="Navigation mobile SOCIAL">
+    <button class="active" data-view="home" aria-label="Accueil"><svg class="pi" aria-hidden="true"><use href="#pi-home"></use></svg><small>Fil</small></button>
+    <button data-view="visual" aria-label="Galerie"><svg class="pi" aria-hidden="true"><use href="#pi-image"></use></svg><small>Images</small></button>
+    <button data-view="messages" aria-label="Discussions"><svg class="pi" aria-hidden="true"><use href="#pi-message"></use></svg><small>MP</small></button>
+    <button data-view="circles" aria-label="Communautés"><svg class="pi" aria-hidden="true"><use href="#pi-circles"></use></svg><small>Groupes</small></button>
+    <button data-view="profile" aria-label="Profil"><svg class="pi" aria-hidden="true"><use href="#pi-user"></use></svg><small>Profil</small></button>
   </nav>
+  <button id="mobile-compose" class="social-mobile-publish" type="button" aria-label="Créer une publication">+</button>
 
   <div class="pulse-gif-modal" id="pulse-gif-modal" hidden>
     <div class="pulse-gif-card" role="dialog" aria-modal="true" aria-labelledby="pulse-gif-title">
