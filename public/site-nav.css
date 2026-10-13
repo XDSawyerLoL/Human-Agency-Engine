@@ -60,3 +60,5 @@ html.qs-site-nav-enabled body{scroll-padding-top:100px}
 }
 @media(max-width:560px){.qs-site-id{display:none}.qs-site-contact{display:none}.qs-site-brand img{width:35px;height:35px}.qs-site-head-inner{height:63px}.qs-site-mobile-panel:not([hidden]){max-height:calc(100dvh - 63px)}}
 @media(prefers-reduced-motion:reduce){.qs-site-header *{transition:none!important}}
+
+html.qs-site-nav-enabled body .sm-fallback-header{display:none!important}
