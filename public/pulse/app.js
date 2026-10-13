@@ -77,6 +77,21 @@ async function toggleAction(postId,action){
   }
 }
 
+async function deleteOwnPost(postId,postElement){
+  if(!requireAuth())return;
+  if(!window.confirm('Supprimer définitivement cette publication ?'))return;
+  const previousHidden=postElement?.hidden||false;
+  if(postElement)postElement.hidden=true;
+  try{
+    await api('/api/pulse/posts/'+encodeURIComponent(postId),{method:'DELETE'});
+    postElement?.remove();
+    if(state.view==='home')await loadHome();
+  }catch(error){
+    if(postElement)postElement.hidden=previousHidden;
+    alert('Impossible de supprimer cette publication : '+errorText(error));
+  }
+}
+
 async function reportPost(postId){
   if(!requireAuth())return;
   const reason=prompt('Pourquoi signales-tu cette publication ?');
@@ -102,7 +117,7 @@ async function exportData(){
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const anchor=document.createElement('a');
     anchor.href=URL.createObjectURL(blob);
-    anchor.download='zoon-export.json';
+    anchor.download='social-export.json';
     anchor.click();
     setTimeout(function(){URL.revokeObjectURL(anchor.href)},1000);
   }catch(error){
@@ -340,6 +355,10 @@ function bindDelegatedEvents(){
     const action=event.target.closest('[data-action]');
     if(post&&action){
       const postId=post.dataset.id;
+      if(action.dataset.action==='delete'){
+        void deleteOwnPost(postId,post);
+        return;
+      }
       if(['like','repost','bookmark'].includes(action.dataset.action)){
         toggleAction(postId,action.dataset.action);
         return;
