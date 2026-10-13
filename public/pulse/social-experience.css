@@ -102,3 +102,20 @@
 .pulse-body .social-subscriber-badge.pro{border-color:rgba(142,220,252,.48);background:rgba(53,137,199,.23);color:#a0e5ff!important}
 @media(max-width:1040px){.pulse-body .pulse-shell:has(.social-messenger){grid-template-columns:minmax(0,1fr)}.pulse-body .social-messenger{height:calc(100dvh - 180px)}}
 @media(max-width:720px){.pulse-body .social-messenger{display:block;height:calc(100dvh - 160px);min-height:480px;position:relative}.pulse-body .social-inbox-sidebar{height:100%}.pulse-body .social-chat-room{height:100%;display:none}.pulse-body .social-messenger.has-active-chat .social-inbox-sidebar{display:none}.pulse-body .social-messenger.has-active-chat .social-chat-room{display:flex}.pulse-body .social-chat-back{display:inline-block}.pulse-body .social-chat-profile{display:none}.pulse-body .social-community-grid{grid-template-columns:1fr}.pulse-body .social-community-hero{padding:25px 18px}.pulse-body .social-community-section{padding:22px 13px 6px}.pulse-body .social-create-community{margin:16px 13px 0}.pulse-body .social-circle-header{padding:17px}.pulse-body .social-circle-cover{width:55px;height:55px;font-size:20px}.pulse-body .social-circle-header h2{font-size:22px}.pulse-body .social-community-publish{padding:15px}}
+
+/* Moment strip: real media-based 24-hour posts in the X-style feed. */
+.pulse-body .social-moments{background:linear-gradient(135deg,#132043,#101b3b);padding:16px 18px;border-bottom:1px solid rgba(143,176,244,.20)}
+.pulse-body .social-moments[hidden]{display:none!important}
+.pulse-body .social-moments-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}
+.pulse-body .social-moments-head strong{color:#eff7ff;font-size:13px}
+.pulse-body .social-moments-head button{border:0;background:transparent;color:#96dfff;font-size:12px;cursor:pointer}
+.pulse-body .social-moments-list{display:flex;gap:16px;overflow-x:auto;padding:4px 1px 8px;scrollbar-width:thin}
+.pulse-body .social-moment{display:grid;justify-items:center;gap:7px;flex:0 0 70px;max-width:70px;padding:0;background:transparent;color:#d5e5ff;border:0;cursor:pointer}
+.pulse-body .social-moment-ring{display:grid;place-items:center;width:62px;height:62px;padding:3px;border-radius:50%;background:linear-gradient(140deg,#68dcff,#956dff)}
+.pulse-body .social-moment-ring .pulse-avatar{width:100%;height:100%;border:3px solid #142248;border-radius:50%}
+.pulse-body .social-moment small{display:block;max-width:70px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;font-size:10px}
+.pulse-body .social-moment:hover .social-moment-ring{transform:translateY(-2px);filter:brightness(1.1)}
+.pulse-body .social-photo-btn{width:auto!important;display:inline-flex;gap:7px;align-items:center;padding:0 10px!important;border-radius:11px!important}
+.pulse-body .social-photo-btn span{font-size:11px}
+.pulse-body #pulse-media-preview img{object-fit:cover;max-height:190px}
+.pulse-body .social-chat-contact[hidden]{display:none!important}
