@@ -14,10 +14,15 @@ if(deniedPage.status!==302)throw new Error('expected /vision/ 302 without Quanti
 const location=deniedPage.headers.get('location')||'';
 if(!location.startsWith('/quantic/?next='))throw new Error('Vision did not redirect to Quantic ID');
 
-const deniedMail=await fetch(base+'/mail/',{redirect:'manual'});
-if(deniedMail.status!==302)throw new Error('expected /mail/ 302 without Quantic ID, got '+deniedMail.status);
-const mailLocation=deniedMail.headers.get('location')||'';
-if(!mailLocation.startsWith('/quantic/?next='))throw new Error('Mail did not redirect to Quantic ID');
+// Mail's static entry must load before its own browser-side Quantic ID gate
+// can check Identity Vault. No mailbox contents are exposed by this HTML route.
+const publicMailShell=await fetch(base+'/mail/',{redirect:'manual'});
+if(publicMailShell.status!==200)throw new Error('expected /mail/ static shell 200, got '+publicMailShell.status);
+const publicMailHtml=await publicMailShell.text();
+if(!publicMailHtml.includes('quantic-mail-id-gate.js'))throw new Error('Mail client-side Vault gate missing');
+if(!publicMailHtml.includes('Retrouvez votre boîte Mail'))throw new Error('Mail recovery UI not served');
+const publicMailDevices=await fetch(base+'/mail/devices/',{redirect:'manual'});
+if(publicMailDevices.status!==200)throw new Error('Mail device QR route unavailable: '+publicMailDevices.status);
 
 const challengeResponse=await fetch(base+'/api/id/challenge',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
 if(!challengeResponse.ok)throw new Error('challenge failed');
