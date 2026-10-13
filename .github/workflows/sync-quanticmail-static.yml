@@ -17,102 +17,47 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - name: Checkout portal
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Fetch latest QuanticMail static export
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf /tmp/quanticmail-dist
-          git clone --depth 1 --branch hostinger-dist https://github.com/XDSawyerLoL/QuanticMail.git /tmp/quanticmail-dist
-          test -f /tmp/quanticmail-dist/index.html
-          test -f /tmp/quanticmail-dist/network/index.html
-          test -f /tmp/quanticmail-dist/vault/index.html
-          test -f /tmp/quanticmail-dist/QUANTICMAIL_COMMIT
-
-      - name: Install QuanticMail under public/mail
-        shell: bash
+      - name: Sync QuanticMail with compatible QR device pairing
         env:
-          HOSTINGER_ORIGIN: https://mediumorchid-badger-314305.hostingersite.com
+          QUANTIC_HOSTINGER_RELAY_URL: https://mediumorchid-badger-314305.hostingersite.com
         run: |
           set -euo pipefail
-          rm -rf public/mail
-          mkdir -p public/mail
-          cp -a /tmp/quanticmail-dist/. public/mail/
-          rm -rf public/mail/.git
+          node scripts/sync-quantic-mail.mjs
+          node scripts/test-quantic-mail-qr-compat.mjs
+          node scripts/test-quantic-mail-hostinger-sync.mjs
 
-          python - <<'PY'
-          from pathlib import Path
-          import os
-
-          root = Path("public/mail")
-          sentinel = "https://quantic-hostinger-relay.invalid"
-          relay = os.environ["HOSTINGER_ORIGIN"]
-          nav = '<script src="/quantic-mail-portal-nav.js" defer></script>'
-
-          replacements = 0
-          html_pages = 0
-          for path in root.rglob("*"):
-              if not path.is_file():
-                  continue
-              try:
-                  text = path.read_text(encoding="utf-8")
-              except UnicodeDecodeError:
-                  continue
-
-              if sentinel in text:
-                  replacements += text.count(sentinel)
-                  text = text.replace(sentinel, relay)
-
-              if path.suffix.lower() == ".html":
-                  html_pages += 1
-                  if "quantic-mail-portal-nav.js" not in text and "</body>" in text:
-                      text = text.replace("</body>", nav + "</body>")
-
-              path.write_text(text, encoding="utf-8")
-
-          if replacements < 1:
-              raise SystemExit("Bootstrap sentinel missing from QuanticMail export")
-          if html_pages < 3:
-              raise SystemExit(f"Unexpected QuanticMail export: only {html_pages} HTML pages")
-
-          print(f"Patched {replacements} relay references across {html_pages} HTML pages")
-          PY
-
-      - name: Verify real QuanticMail replaced fallback
-        shell: bash
+      - name: Verify Quantic ID gate and patched pairing bundle
         run: |
           set -euo pipefail
-          grep -Eq 'qn-onboarding|qn-app' public/mail/index.html
-          grep -q 'quantic-mail-portal-nav.js' public/mail/index.html
+          test -f public/mail/devices/index.html
+          test -f public/mail/_next/static/chunks/app/devices/page-088a8b8f4a087ea5-qrfix20261013.js
+          grep -q 'qrfix20261013.js' public/mail/devices/index.html
+          grep -q 'quantic-mail-id-gate.js' public/mail/devices/index.html
+          grep -q 'site-nav.js' public/mail/index.html
           test -f public/mail/QUANTICMAIL_COMMIT
-          ! grep -q 'Aucune iframe Render' public/mail/index.html
-          ! grep -qi '<iframe' public/mail/index.html
-          ! grep -q 'quanticmail.onrender.com' public/mail/index.html
-          echo "QuanticMail source: $(cat public/mail/QUANTICMAIL_COMMIT)"
+          ! grep -q 'h.from(e).toString("base64url")' public/mail/_next/static/chunks/app/devices/page-088a8b8f4a087ea5-qrfix20261013.js
+          ! grep -q 'h.from(e,"base64url")' public/mail/_next/static/chunks/app/devices/page-088a8b8f4a087ea5-qrfix20261013.js
+          echo "Mail QR bundle rebuilt with compatible Base64URL and updated cache filename."
 
-      - name: Commit synchronized mail application
+      - name: Commit synchronized native Mail to site repository
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- public/mail; then
-            echo "QuanticMail bundle already synchronized."
+          if git diff --quiet -- public/mail && [ -z "$(git ls-files --others --exclude-standard public/mail)" ]; then
+            echo "QuanticMail files already synchronized."
             exit 0
           fi
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A public/mail
-          git commit -m "deploy(mail): sync real QuanticMail into Hostinger portal"
+          git commit -m "fix(mail): deploy repaired QR device pairing bundle and Quantic ID gate"
           git fetch origin main
           git rebase origin/main
           git push origin HEAD:main
-
-
-
-# source-sync: 7ada69845830b3253795abf24f8554877ae4b6d5
