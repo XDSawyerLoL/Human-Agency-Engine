@@ -73,7 +73,7 @@ function verifyIdentityProof(proof,{action,handle}){
   identityChallenges.delete(challenge);
   if(entry.action!==action||entry.handle!==handle)return{error:'identity_challenge_mismatch'};
   if(parsed.audience!==IDENTITY_AUDIENCE||parsed.keyId!==keyId)return{error:'identity_proof_invalid'};
-  if(identityKeyId(publicKey)!==keyId)return{error:'identity_proof_invalid'};
+  try{if(identityKeyId(publicKey)!==keyId)return{error:'identity_proof_invalid'}}catch{return{error:'identity_proof_invalid'}}
   try{
     const key=createPublicKey({key:decodeBase64Url(publicKey),type:'spki',format:'der'});
     let ok=false;

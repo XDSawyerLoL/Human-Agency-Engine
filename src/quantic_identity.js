@@ -74,7 +74,7 @@ export function verifyIdentityProof(proof,expectedChallenge){
   let parsed;
   try{parsed=JSON.parse(payload)}catch{return{error:'identity_proof_invalid'}}
   if(parsed.challenge!==expectedChallenge||parsed.audience!==AUDIENCE||parsed.keyId!==proofKeyId)return{error:'identity_proof_invalid'};
-  if(keyId(publicKey)!==proofKeyId)return{error:'identity_proof_invalid'};
+  try{if(keyId(publicKey)!==proofKeyId)return{error:'identity_proof_invalid'}}catch{return{error:'identity_proof_invalid'}}
   try{
     const key=createPublicKey({key:decodeBase64Url(publicKey),type:'spki',format:'der'});
     let ok=false;
