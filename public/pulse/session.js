@@ -3,6 +3,8 @@ import { TOKEN_KEY, state, dom, initials, api } from './core.js?v=21';
 const PRESENCE_RENEW_MS=5000;
 const PRESENCE_PROBE_MS=1000;
 const USER_CACHE_KEY='quantic_pulse_user_cache_v1';
+let failedBridgeProbes=0;
+let lastReconnectAttempt=0;
 let presenceGuardTimer=null;
 let presenceBusy=false;
 let lastPresenceRenewal=0;
@@ -48,7 +50,7 @@ export function closeAuth(){
 export function updateAuthModal(){
   const register=state.authMode==='register';
   document.getElementById('auth-title').textContent=register?'Créer avec Quantic ID':'Entrer avec Quantic ID';
-  document.getElementById('auth-copy').textContent=register?'Choisis ton @pseudo et ton nom affiché. Identity Vault devient la clé de ce compte.':'Identity Vault confirme directement ton compte ZOON et restaure ta session.';
+  document.getElementById('auth-copy').textContent=register?'Choisis ton @pseudo et ton nom affiché. Identity Vault devient la clé de ce compte.':'Identity Vault confirme directement ton compte SOCIAL et restaure ta session.';
   document.getElementById('display-name-field').hidden=!register;
   const handleField=document.getElementById('handle-field');
   handleField.hidden=!register;
@@ -65,6 +67,7 @@ export function updateAccount(){
   const button=document.getElementById('auth-button');
 
   if(user){
+    state.identityStatus='connected';
     name.textContent=user.displayName;
     handle.textContent='@'+user.handle;
     avatar.textContent=initials(user);
@@ -75,15 +78,30 @@ export function updateAccount(){
     dom.followingHelp.textContent='Les comptes que vous suivez';
   }else{
     name.textContent='Quantic ID';
-    handle.textContent='Entrer dans ZOON';
+    handle.textContent=state.identityStatus==='checking'?'Connexion en cours':state.identityStatus==='error'?'Session à rétablir':'Entrer dans SOCIAL';
     avatar.textContent='?';
     composerAvatar.textContent='?';
-    button.textContent='Entrer';
+    button.textContent=state.identityStatus==='checking'?'Connexion…':state.identityStatus==='error'?'Reconnecter':'Entrer';
     dom.textarea.placeholder='Écrivez une publication…';
     dom.followingLabel.textContent='Récent';
     dom.followingHelp.textContent='Les publications les plus récentes';
   }
 
+  const welcome=dom.welcome;
+  if(welcome){
+    const kicker=welcome.querySelector('.pulse-welcome-copy .pulse-kicker');
+    const heading=welcome.querySelector('.pulse-welcome-copy h2');
+    const description=welcome.querySelector('.pulse-welcome-copy p');
+    const register=document.getElementById('welcome-register');
+    const login=document.getElementById('welcome-login');
+    const active=state.identityStatus==='checking'||state.identityStatus==='error';
+    welcome.dataset.identityState=active?state.identityStatus:'guest';
+    if(kicker)kicker.textContent=active?'Quantic ID détecté':'Bienvenue sur SOCIAL';
+    if(heading)heading.textContent=active?(state.identityStatus==='checking'?'Connexion à SOCIAL en cours…':'Votre identité est active.'):'Suivez. Publiez. Échangez.';
+    if(description)description.textContent=active?(state.identityStatus==='checking'?'Vérification de votre session SOCIAL en cours.':'La session SOCIAL n’a pas pu être établie. Votre Quantic ID reste actif ; reconnectez SOCIAL avant de publier.'):'Lisez sans compte. Pour participer, utilisez Quantic ID. Les publications publiques disparaissent après 24 heures.';
+    if(register)register.hidden=active;
+    if(login)login.textContent=active?'Réessayer la connexion':'Entrer avec Quantic ID';
+  }
   if(state.view==='home'){
     dom.composer.hidden=!user;
     dom.welcome.hidden=!!user;
@@ -113,19 +131,23 @@ async function cacheLocalUserFromVault(){
   }catch{}
 }
 function restoreCachedUser(identity){
+  // Cache display only. A remembered profile never grants publishing rights.
   try{
     const cached=JSON.parse(localStorage.getItem(USER_CACHE_KEY)||'null');
-    if(!cached?.user||!identity?.ok||!identity.keyId||cached.identityKeyId!==identity.keyId)return false;
-    state.user=cached.user;
-    updateAccount();
-    return true;
-  }catch{return false}
+    if(cached?.user&&identity?.ok&&identity.keyId&&cached.identityKeyId===identity.keyId){
+      state.identityLabel=cached.user.displayName||identity.label||'Quantic ID';
+    }
+  }catch{}
+  return false;
 }
+
 export function applySession(data){
   state.token=data.token;
   state.user=data.user;
   localStorage.setItem(TOKEN_KEY,data.token);
   lastPresenceRenewal=Date.now();
+  state.identityStatus='connected';
+  state.identityMessage='';
   updateAccount();
   void cacheLocalUserFromVault();
 }
@@ -148,10 +170,7 @@ async function revokePulseSession(){
 
 export async function renewIdentityPresence({quiet=false}={}){
   if(!state.token)return false;
-  if(!window.QuanticID?.probe||!window.QuanticID?.assert){
-    await revokePulseSession();
-    return false;
-  }
+  if(!window.QuanticID?.probe||!window.QuanticID?.assert)return false;
   try{
     const identity=await window.QuanticID.probe({timeoutMs:1000});
     if(!identity?.ok){
@@ -177,9 +196,14 @@ async function presenceGuardTick(){
   try{
     const identity=window.QuanticID?.probe?await window.QuanticID.probe({timeoutMs:900}):null;
     if(!identity?.ok){
-      await revokePulseSession();
+      if((identity?.installed&&identity?.reason==='identity_inactive')||++failedBridgeProbes>=6){
+        await revokePulseSession();
+        state.identityStatus='inactive';
+        updateAccount();
+      }
       return;
     }
+    failedBridgeProbes=0;
     if(Date.now()-lastPresenceRenewal>=PRESENCE_RENEW_MS){
       await renewIdentityPresence({quiet:true});
     }
@@ -212,6 +236,7 @@ async function restoreFromIdentity(){
     applySession(data);
     return true;
   }catch(error){
+    state.identityMessage=String(error?.message||'service_unavailable');
     if(error?.message!=='identity_not_registered'){
       console.warn('Pulse identity session restore failed');
     }
@@ -220,7 +245,12 @@ async function restoreFromIdentity(){
 }
 
 export async function restoreSession(){
-  const identity=window.QuanticID?.probe?await window.QuanticID.probe({timeoutMs:1200}).catch(()=>null):null;
+  if(state.identityStatus==='checking')return false;
+  const identity=window.QuanticID?.probe?await window.QuanticID.probe({timeoutMs:1600}).catch(()=>null):null;
+  state.identityStatus=identity?.ok?'checking':'inactive';
+  state.identityLabel=identity?.label||'';
+  state.identityMessage='';
+  updateAccount();
   if(state.token){
     const presenceOk=await renewIdentityPresence({quiet:true});
     if(presenceOk){
@@ -241,7 +271,14 @@ export async function restoreSession(){
 
   const restored=await restoreFromIdentity();
   if(restored)return true;
-  if(restoreCachedUser(identity))return true;
+  restoreCachedUser(identity);
+  state.identityStatus=identity?.ok?'error':'inactive';
   updateAccount();
   return false;
+}
+export async function retryIdentityConnection(){
+  if(state.user||state.identityStatus==='checking')return false;
+  if(Date.now()-lastReconnectAttempt<2500)return false;
+  lastReconnectAttempt=Date.now();
+  return restoreSession();
 }
