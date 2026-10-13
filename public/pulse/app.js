@@ -1,6 +1,6 @@
 import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=25';
 import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, retryIdentityConnection, ensureIdentityVault, startIdentityPresenceGuard } from './session.js?v=25';
-import { setView, loadHome, loadExplore, loadVisual, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview, loadNewsRss } from './views.js?v=25';
+import { setView, loadHome, loadExplore, loadVisual, loadCircles, loadCircle, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview, loadNewsRss } from './views.js?v=25';
 import { ensureSecureDevice, sendSecureMessage } from './secure.js?v=25';
 
 function setReply(postId,handle){
@@ -431,12 +431,19 @@ function bindDelegatedEvents(){
       }
     }
 
+    const openCircle=event.target.closest('[data-circle-open]');
+    if(openCircle){void loadCircle(openCircle.dataset.circleOpen);return}
+    if(event.target.closest('[data-circle-back]')){void loadCircles();return}
+    if(event.target.closest('[data-chat-back]')){void loadMessages();return}
+    const openChat=event.target.closest('[data-new-chat]');
+    if(openChat){const form=document.getElementById('social-new-chat');if(form){form.hidden=!form.hidden;form.querySelector('input')?.focus()}return}
     const join=event.target.closest('[data-circle-join]');
     if(join){
       if(!requireAuth())return;
       try{
         await api('/api/pulse/circles/'+encodeURIComponent(join.dataset.circleJoin)+'/join',{method:'POST',body:'{}'});
-        await loadCircles();
+        if(state.activeCircleId===join.dataset.circleJoin)await loadCircle(join.dataset.circleJoin);
+        else await loadCircles();
         await loadCirclePreview();
       }catch(error){alert(errorText(error))}
       return;
@@ -480,6 +487,27 @@ function bindDelegatedEvents(){
   });
 
   document.addEventListener('submit',async function(event){
+    if(event.target.id==='social-new-chat'){
+      event.preventDefault();
+      const handle=String(new FormData(event.target).get('handle')||'').trim().replace(/^@/,'');
+      if(!/^[a-z0-9_]{3,24}$/i.test(handle)){alert('Identifiant SOCIAL invalide.');return}
+      void loadConversation(handle.toLowerCase());
+      return;
+    }
+    if(event.target.id==='circle-publish'){
+      event.preventDefault();
+      if(!requireAuth())return;
+      const form=event.target,body=String(new FormData(form).get('body')||'').trim(),circleId=form.dataset.circleId;
+      const max=Number(state.user?.maxPostLength||420);
+      if(!body||Array.from(body).length>max){alert('Votre publication doit contenir entre 1 et '+max+' caractères.');return}
+      const button=form.querySelector('button[type=submit]');
+      if(button)button.disabled=true;
+      try{
+        await api('/api/pulse/posts',{method:'POST',body:JSON.stringify({body,circleId})});
+        await loadCircle(circleId);
+      }catch(error){alert(errorText(error));if(button)button.disabled=false}
+      return;
+    }
     if(event.target.id==='circle-create'){
       event.preventDefault();
       if(!requireAuth())return;
