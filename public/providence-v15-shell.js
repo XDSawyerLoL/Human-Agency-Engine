@@ -60,7 +60,7 @@ global.innerHTML=`
     <nav class="q-global-links" aria-label="Navigation Quantic">
       ${appLink('vision','/vision/','Vision','vision-mark.svg')}
       ${appLink('mail','/mail/','Mail','mail-mark.svg')}
-      ${appLink('pulse','/pulse/','Pulse','pulse-mark.svg')}
+      ${appLink('pulse','/pulse/','SOCIAL','pulse-mark.svg')}
       ${appLink('news','/news/','News','news-mark.svg')}
       <a href="/downloads/"><span>Produits &amp; outils</span></a>
       <a href="/quantic/" class="q-global-centre"><span class="q-global-status" aria-hidden="true"></span><span>Quantic ID</span></a>
