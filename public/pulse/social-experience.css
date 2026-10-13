@@ -119,3 +119,14 @@
 .pulse-body .social-photo-btn span{font-size:11px}
 .pulse-body #pulse-media-preview img{object-fit:cover;max-height:190px}
 .pulse-body .social-chat-contact[hidden]{display:none!important}
+
+.pulse-body .social-subscriber-badge[hidden]{display:none!important}
+.pulse-body .social-mobile-publish{display:none}
+.pulse-body .social-mobile-navigation button{display:grid;place-items:center;gap:3px;min-width:0}
+.pulse-body .social-mobile-navigation button small{display:block;font-size:9px;line-height:1;color:#9db6df}
+.pulse-body .social-mobile-navigation button.active small{color:#91dfff}
+@media(max-width:800px){
+ .pulse-body .social-mobile-publish{display:grid;place-items:center;position:fixed;z-index:61;right:17px;bottom:90px;width:52px;height:52px;border-radius:18px;background:linear-gradient(130deg,#3686ee,#8371f5);box-shadow:0 13px 30px rgba(30,44,118,.5);border:1px solid rgba(193,218,255,.33);font-size:31px;color:#fff;font-weight:350}
+ .pulse-body .social-mobile-navigation{padding-bottom:env(safe-area-inset-bottom,0px);height:calc(65px + env(safe-area-inset-bottom,0px))}
+ .pulse-body .social-mobile-navigation button{padding:5px 3px}
+}
