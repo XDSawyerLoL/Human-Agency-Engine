@@ -62,3 +62,5 @@ html.qs-site-nav-enabled body{scroll-padding-top:100px}
 @media(prefers-reduced-motion:reduce){.qs-site-header *{transition:none!important}}
 
 html.qs-site-nav-enabled body .sm-fallback-header{display:none!important}
+
+html.qs-site-nav-enabled body .q-sillage-global{display:none!important}
