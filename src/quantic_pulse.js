@@ -838,6 +838,16 @@ export async function handlePulse(req,res,url,corsHeaders={}){
 
     if(route==='/api/pulse/circles'&&req.method==='POST'){const b=await bodyJson(req),out=await mutateStore(store=>{const user=sessionUser(store,bearer(req));if(!user)return{error:'unauthorized'};const name=clean(b.name,60),description=clean(b.description,240),visibility=b.visibility==='private'?'private':'public';if(name.length<3)return{error:'invalid_name'};const cid=id('c_'),circle={id:cid,ownerId:user.id,name,description,visibility,createdAt:now()};store.circles[cid]=circle;store.circleMembers[cid]={[user.id]:'owner'};return{circle:{...circle,memberCount:1,joined:true}}});json(res,out.error?(out.error==='unauthorized'?401:400):201,out,corsHeaders);return true}
 
+    m=route.match(/^\/api\/pulse\/circles\/([^/]+)\/posts$/);
+    if(m&&req.method==='GET'){
+      const store=await readStore(),a=await auth(req,store),viewer=a?.user.id||'',circle=store.circles[m[1]];
+      if(!circle){json(res,404,{error:'not_found'},corsHeaders);return true}
+      const joined=!!(store.circleMembers[circle.id]||{})[viewer];
+      if(circle.visibility!=='public'&&!joined){json(res,403,{error:'circle_forbidden'},corsHeaders);return true}
+      const posts=Object.values(store.posts).filter(p=>p.circleId===circle.id&&visibleTo(store,p,viewer)).sort((x,y)=>Date.parse(y.createdAt)-Date.parse(x.createdAt)).slice(0,60).map(p=>postView(p,store,viewer)).filter(Boolean);
+      json(res,200,{circle:{...circle,joined,memberCount:Object.keys(store.circleMembers[circle.id]||{}).length},posts},corsHeaders);return true;
+    }
+
     m=route.match(/^\/api\/pulse\/circles\/([^/]+)\/join$/);
     if(m&&req.method==='POST'){const out=await mutateStore(store=>{const user=sessionUser(store,bearer(req)),circle=store.circles[m[1]];if(!user)return{error:'unauthorized'};if(!circle)return{error:'not_found'};if(circle.visibility==='private')return{error:'invite_required'};const members=store.circleMembers[circle.id]||(store.circleMembers[circle.id]={}),active=!members[user.id];if(active)members[user.id]='member';else if(user.id!==circle.ownerId)delete members[user.id];return{ok:true,active,memberCount:Object.keys(members).length}});json(res,out.error?(out.error==='unauthorized'?401:out.error==='not_found'?404:403):200,out,corsHeaders);return true}
 
