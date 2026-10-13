@@ -133,6 +133,7 @@ export async function loadVisual(){
 }
 
 export async function loadCircles(){
+  state.activeCircleId=null;
   setView('circles','Communautés');
   setStatus('Chargement des communautés','');
   try{
@@ -155,6 +156,7 @@ export async function loadCircles(){
 }
 
 export async function loadCircle(circleId){
+  state.activeCircleId=circleId;
   setView('circles','Communauté');
   setStatus('Chargement du groupe','');
   try{
