@@ -1,3 +1,4 @@
+import {encodeBase64Url,decodeBase64Url} from './quantic_base64url.js';
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomBytes, createHash, createPublicKey, verify } from 'node:crypto';
@@ -52,10 +53,10 @@ async function bodyJson(req,limit=65536){let size=0,chunks=[];for await(const ch
 function bearer(req){return String(req.headers.authorization||'').match(/^Bearer\s+(.+)$/i)?.[1]||''}
 function allowRate(req,bucket,max,windowMs){const ip=String(req.headers['x-forwarded-for']||req.socket?.remoteAddress||'unknown').split(',')[0].trim(),key=ip+':'+bucket,t=Date.now(),cur=rate.get(key);if(!cur||t-cur.start>windowMs){rate.set(key,{start:t,count:1});return true}cur.count++;return cur.count<=max}
 function cleanupIdentityChallenges(){const t=Date.now();for(const[key,value]of identityChallenges)if(value.expiresAt<=t)identityChallenges.delete(key)}
-function identityKeyId(publicKeyB64url){return'qid_'+createHash('sha256').update(Buffer.from(publicKeyB64url,'base64url')).digest('hex').slice(0,32)}
+function identityKeyId(publicKeyB64url){return'qid_'+createHash('sha256').update(decodeBase64Url(publicKeyB64url)).digest('hex').slice(0,32)}
 function issueIdentityChallenge(action,handle){
   cleanupIdentityChallenges();
-  const challenge=randomBytes(32).toString('base64url'),expiresAt=Date.now()+IDENTITY_CHALLENGE_MS;
+  const challenge=encodeBase64Url(randomBytes(32)),expiresAt=Date.now()+IDENTITY_CHALLENGE_MS;
   identityChallenges.set(challenge,{action,handle,expiresAt});
   return{challenge,audience:IDENTITY_AUDIENCE,expiresAt:new Date(expiresAt).toISOString()};
 }
@@ -74,14 +75,14 @@ function verifyIdentityProof(proof,{action,handle}){
   if(parsed.audience!==IDENTITY_AUDIENCE||parsed.keyId!==keyId)return{error:'identity_proof_invalid'};
   if(identityKeyId(publicKey)!==keyId)return{error:'identity_proof_invalid'};
   try{
-    const key=createPublicKey({key:Buffer.from(publicKey,'base64url'),type:'spki',format:'der'});
+    const key=createPublicKey({key:decodeBase64Url(publicKey),type:'spki',format:'der'});
     let ok=false;
     if(algorithm==='ed25519'){
       if(key.asymmetricKeyType!=='ed25519')return{error:'identity_proof_invalid'};
-      ok=verify(null,Buffer.from(payload),key,Buffer.from(signature,'base64url'));
+      ok=verify(null,Buffer.from(payload),key,decodeBase64Url(signature));
     }else if(algorithm==='ecdsa-p256-sha256'){
       if(key.asymmetricKeyType!=='ec'||key.asymmetricKeyDetails?.namedCurve!=='prime256v1')return{error:'identity_proof_invalid'};
-      ok=verify('sha256',Buffer.from(payload),{key,dsaEncoding:'ieee-p1363'},Buffer.from(signature,'base64url'));
+      ok=verify('sha256',Buffer.from(payload),{key,dsaEncoding:'ieee-p1363'},decodeBase64Url(signature));
     }else{
       return{error:'identity_algorithm_unsupported'};
     }
@@ -343,7 +344,7 @@ async function auth(req,store=null){
   return user?{user,token,store,presenceUntil:s.presenceUntil}:null;
 }
 function createSession(store,userId){
-  const token=randomBytes(32).toString('base64url'),t=Date.now();
+  const token=encodeBase64Url(randomBytes(32)),t=Date.now();
   store.sessions[sha(token)]={userId,createdAt:t,expiresAt:t+SESSION_MS,presenceUntil:t+PRESENCE_LEASE_MS};
   return token;
 }
@@ -414,7 +415,7 @@ function secureBundleHash(bundle){return sha(secureBundleMaterial(bundle))}
 function validRawCurveKey(value){
   const raw=clean(value,160);
   if(!/^[A-Za-z0-9_-]{40,60}$/.test(raw))return false;
-  try{return Buffer.from(raw,'base64url').length===32}catch{return false}
+  try{return decodeBase64Url(raw).length===32}catch{return false}
 }
 function secureDeviceView(device){
   if(!device)return null;
@@ -465,12 +466,12 @@ function verifySecurePreKey(record,device){
     normalized.pqAlgorithm=clean(record.pqAlgorithm,40);
     normalized.pqPublicKey=clean(record.pqPublicKey,2200);
     if(normalized.pqAlgorithm!=='ML-KEM-768')return false;
-    try{if(Buffer.from(normalized.pqPublicKey,'base64url').length!==1184)return false}catch{return false}
+    try{if(decodeBase64Url(normalized.pqPublicKey).length!==1184)return false}catch{return false}
   }
   try{
-    const sig=Buffer.from(signature,'base64url');
+    const sig=decodeBase64Url(signature);
     if(sig.length!==64)return false;
-    const raw=Buffer.from(device.signingPublicKey,'base64url');
+    const raw=decodeBase64Url(device.signingPublicKey);
     if(raw.length!==32)return false;
     const key=createPublicKey({key:Buffer.concat([ED25519_SPKI_PREFIX,raw]),format:'der',type:'spki'});
     return verify(null,Buffer.from(securePreKeyMaterial(normalized)),key,sig);
@@ -509,10 +510,10 @@ function validSecureEnvelope(envelope){
   if(!clean(envelope.recipientDeviceId,80)||!clean(envelope.ephemeralPublicKey,160)||!clean(envelope.salt,160)||!clean(envelope.iv,80)||!clean(envelope.ciphertext,8000)||!clean(envelope.signature,800))return false;
   if(!validRawCurveKey(envelope.ephemeralPublicKey))return false;
   try{
-    if(Buffer.from(String(envelope.salt),'base64url').length!==32)return false;
-    if(Buffer.from(String(envelope.iv),'base64url').length!==12)return false;
-    if(Buffer.from(String(envelope.signature),'base64url').length!==64)return false;
-    const cipherBytes=Buffer.from(String(envelope.ciphertext),'base64url').length;
+    if(decodeBase64Url(String(envelope.salt)).length!==32)return false;
+    if(decodeBase64Url(String(envelope.iv)).length!==12)return false;
+    if(decodeBase64Url(String(envelope.signature)).length!==64)return false;
+    const cipherBytes=decodeBase64Url(String(envelope.ciphertext)).length;
     return cipherBytes>=16&&cipherBytes<=4096;
   }catch{return false}
 }
@@ -529,13 +530,13 @@ function validSessionEnvelope(envelope){
     if(!['classical-v2','hybrid-pq-v1'].includes(hs.profile))return false;
     if(hs.profile==='hybrid-pq-v1'){
       if(hs.pqAlgorithm!=='ML-KEM-768'||!clean(hs.pqCiphertext,2600))return false;
-      try{if(Buffer.from(String(hs.pqCiphertext),'base64url').length!==1088)return false}catch{return false}
+      try{if(decodeBase64Url(String(hs.pqCiphertext)).length!==1088)return false}catch{return false}
     }else if(clean(hs.pqCiphertext,2600)||clean(hs.pqAlgorithm,40))return false;
   }
   try{
-    if(Buffer.from(String(envelope.iv),'base64url').length!==12)return false;
-    if(Buffer.from(String(envelope.signature),'base64url').length!==64)return false;
-    const cipherBytes=Buffer.from(String(envelope.ciphertext),'base64url').length;
+    if(decodeBase64Url(String(envelope.iv)).length!==12)return false;
+    if(decodeBase64Url(String(envelope.signature)).length!==64)return false;
+    const cipherBytes=decodeBase64Url(String(envelope.ciphertext)).length;
     return cipherBytes>=16&&cipherBytes<=4096;
   }catch{return false}
 }

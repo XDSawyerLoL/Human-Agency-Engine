@@ -1,3 +1,4 @@
+import {encodeBase64Url,decodeBase64Url} from './quantic_base64url.js';
 import {createHash,createPublicKey,randomBytes,verify} from 'node:crypto';
 
 const COOKIE='quantic_id_session';
@@ -19,7 +20,7 @@ const privatePagePrefixes=[
 function now(){return Date.now()}
 function clean(v,max=4096){return String(v??'').trim().slice(0,max)}
 function hash(v){return createHash('sha256').update(String(v)).digest('hex')}
-function keyId(publicKey){return 'qid_'+createHash('sha256').update(Buffer.from(publicKey,'base64url')).digest('hex').slice(0,32)}
+function keyId(publicKey){return 'qid_'+createHash('sha256').update(decodeBase64Url(publicKey)).digest('hex').slice(0,32)}
 function parseCookies(req){
   const out={};
   for(const part of String(req.headers.cookie||'').split(';')){
@@ -75,14 +76,14 @@ export function verifyIdentityProof(proof,expectedChallenge){
   if(parsed.challenge!==expectedChallenge||parsed.audience!==AUDIENCE||parsed.keyId!==proofKeyId)return{error:'identity_proof_invalid'};
   if(keyId(publicKey)!==proofKeyId)return{error:'identity_proof_invalid'};
   try{
-    const key=createPublicKey({key:Buffer.from(publicKey,'base64url'),type:'spki',format:'der'});
+    const key=createPublicKey({key:decodeBase64Url(publicKey),type:'spki',format:'der'});
     let ok=false;
     if(algorithm==='ed25519'){
       if(key.asymmetricKeyType!=='ed25519')return{error:'identity_proof_invalid'};
-      ok=verify(null,Buffer.from(payload),key,Buffer.from(signature,'base64url'));
+      ok=verify(null,Buffer.from(payload),key,decodeBase64Url(signature));
     }else if(algorithm==='ecdsa-p256-sha256'){
       if(key.asymmetricKeyType!=='ec'||key.asymmetricKeyDetails?.namedCurve!=='prime256v1')return{error:'identity_proof_invalid'};
-      ok=verify('sha256',Buffer.from(payload),{key,dsaEncoding:'ieee-p1363'},Buffer.from(signature,'base64url'));
+      ok=verify('sha256',Buffer.from(payload),{key,dsaEncoding:'ieee-p1363'},decodeBase64Url(signature));
     }else{
       return{error:'identity_algorithm_unsupported'};
     }
@@ -92,7 +93,7 @@ export function verifyIdentityProof(proof,expectedChallenge){
 }
 function issueChallenge(meta={}){
   cleanup();
-  const challenge=randomBytes(32).toString('base64url');
+  const challenge=encodeBase64Url(randomBytes(32));
   challenges.set(challenge,{expiresAt:now()+CHALLENGE_TTL,...meta});
   return{challenge,audience:AUDIENCE,expiresAt:new Date(now()+CHALLENGE_TTL).toISOString()};
 }
@@ -107,7 +108,7 @@ function establishSession(req,res,proof){
   challenges.delete(challenge);
   const verified=verifyIdentityProof(proof,challenge);
   if(verified.error)return verified;
-  const token=randomBytes(32).toString('base64url');
+  const token=encodeBase64Url(randomBytes(32));
   const session={keyId:verified.keyId,publicKey:verified.publicKey,algorithm:verified.algorithm||"ed25519",createdAt:now(),expiresAt:now()+SESSION_TTL,presenceUntil:now()+PRESENCE_LEASE_MS};
   sessions.set(hash(token),session);
   setSessionCookie(req,res,token);
