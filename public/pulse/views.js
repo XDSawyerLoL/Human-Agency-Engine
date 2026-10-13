@@ -1,11 +1,11 @@
-import { state, dom, api, esc, icon, initials, timeAgo, setStatus, errorText } from './core.js?v=22';
-import { requireAuth } from './session.js?v=22';
+import { state, dom, api, esc, icon, initials, timeAgo, setStatus, errorText } from './core.js?v=23';
+import { requireAuth } from './session.js?v=23';
 import { renderPost, renderPosts, notificationLabel } from './render.js?v=22';
 import { decryptConversationMessages, safetyNumber, decentralizedMessagesFor, decentralizedConversationSummaries } from './secure.js?v=22';
 
 export function setView(view,title){
   state.view=view;
-  dom.viewTitle.textContent=title||'ZOON';
+  dom.viewTitle.textContent=title||'SOCIAL';
   document.querySelectorAll('[data-view]').forEach(function(button){
     button.classList.toggle('active',button.dataset.view===view);
   });
@@ -58,7 +58,7 @@ function renderNewsCard(item){
     (summary?'<p>'+esc(summary)+(String(item.summary||'').length>280?'…':'')+'</p>':'')+
     '<div class="pulse-news-actions">'+
       (url?'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">Lire la source ↗</a>':'')+
-      '<button type="button" data-news-repost data-news-title="'+esc(title)+'" data-news-source="'+esc(source)+'" data-news-url="'+esc(url)+'" data-news-image="'+esc(image)+'">Reposter sur ZOON</button>'+
+      '<button type="button" data-news-repost data-news-title="'+esc(title)+'" data-news-source="'+esc(source)+'" data-news-url="'+esc(url)+'" data-news-image="'+esc(image)+'">Reposter sur SOCIAL</button>'+
     '</div></div></article>';
 }
 
@@ -71,7 +71,7 @@ export async function loadNewsRss(){
     const data=await fetchNewsFeed();
     const items=(data.items||[]).filter(item=>item&&item.title).sort((a,b)=>Date.parse(b.publishedAt||0)-Date.parse(a.publishedAt||0)).slice(0,50);
     dom.feed.innerHTML=items.length
-      ? '<section class="pulse-news-view"><div class="pulse-news-intro"><span>QUANTIC NEWS · RSS</span><h2>Actualités à lire et à reposter</h2><p>Le flux Quantic News est intégré à ZOON. Un repost crée une publication ZOON avec le titre, la source, le lien et l’image de l’article.</p></div><div class="pulse-news-grid">'+items.map(renderNewsCard).join('')+'</div></section>'
+      ? '<section class="pulse-news-view"><div class="pulse-news-intro"><span>QUANTIC NEWS · RSS</span><h2>Actualités à lire et à reposter</h2><p>Le flux Quantic News est intégré à SOCIAL. Un repost crée une publication SOCIAL avec le titre, la source, le lien et l’image de l’article.</p></div><div class="pulse-news-grid">'+items.map(renderNewsCard).join('')+'</div></section>'
       : '<div class="pulse-status"><strong>Flux vide</strong>Aucune actualité disponible pour le moment.</div>';
   }catch(error){
     setStatus('Quantic News indisponible','Impossible de lire le flux RSS pour le moment.');
@@ -86,14 +86,14 @@ export async function loadHome(){
     const data=await api('/api/pulse/feed?mode='+state.feed+'&limit=40');
     renderPosts(data.posts,state.user&&state.feed==='following'?'Suis des comptes ou publie le premier message de ton fil.':'Aucune publication publique.');
   }catch(error){
-    setStatus('ZOON indisponible',errorText(error));
+    setStatus('SOCIAL indisponible',errorText(error));
   }
 }
 
 export async function loadExplore(query=''){
   setView('explore','Explorer');
   if(query.trim().length<2){
-    dom.feed.innerHTML='<section class="pulse-view"><div class="pulse-view-head"><h2>Explorer ZOON</h2><p>Recherche des personnes, des sujets et des publications.</p></div></section>';
+    dom.feed.innerHTML='<section class="pulse-view"><div class="pulse-view-head"><h2>Explorer SOCIAL</h2><p>Recherche des personnes, des sujets et des publications.</p></div></section>';
     return;
   }
 
@@ -206,7 +206,7 @@ export async function loadMessages(){
       }
     }
     const list=[...conversations.values()].sort((a,b)=>Date.parse(b.lastMessage?.createdAt||0)-Date.parse(a.lastMessage?.createdAt||0));
-    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>Messages privés</h2><p>🔒 ZOON Secure · chiffrement de bout en bout · transport multi-relais Quantic Network.</p></div><form class="pulse-inline-form two" id="new-message"><input name="handle" placeholder="@identifiant" required><input name="body" maxlength="2000" placeholder="Message sécurisé" required><button class="pulse-mini-button primary">Envoyer</button></form><div class="pulse-card-list">';
+    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>Messages privés</h2><p>🔒 SOCIAL Secure · chiffrement de bout en bout · transport multi-relais Quantic Network.</p></div><form class="pulse-inline-form two" id="new-message"><input name="handle" placeholder="@identifiant" required><input name="body" maxlength="2000" placeholder="Message sécurisé" required><button class="pulse-mini-button primary">Envoyer</button></form><div class="pulse-card-list">';
     if(!list.length)html+='<div class="pulse-card"><p>Aucune conversation.</p></div>';
     list.forEach(function(conversation){
       if(!conversation.user)return;
@@ -238,7 +238,7 @@ export async function loadConversation(handle){
       decryptConversationMessages([...merged.values()].sort((a,b)=>Date.parse(a.createdAt||0)-Date.parse(b.createdAt||0))),
       safetyNumber(handle).catch(()=>null)
     ]);
-    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>'+esc(data.user.displayName)+'</h2><p>@'+esc(data.user.handle)+' · 🔒 ZOON Secure · session v2 · Double Ratchet</p>'+(number?'<small class="pulse-security-number">Numéro de sécurité : '+esc(number)+'</small>':'')+'</div><div class="pulse-message-list">';
+    let html='<section class="pulse-view"><div class="pulse-view-head"><h2>'+esc(data.user.displayName)+'</h2><p>@'+esc(data.user.handle)+' · 🔒 SOCIAL Secure · session v2 · Double Ratchet</p>'+(number?'<small class="pulse-security-number">Numéro de sécurité : '+esc(number)+'</small>':'')+'</div><div class="pulse-message-list">';
     messages.forEach(function(message){
       const body=message.secureInvalid?'⚠️ Message chiffré invalide':message.secureUnavailable?'🔒 Message chiffré pour un autre appareil':(message.plaintext||'');
       html+='<div class="pulse-message '+(message.senderId===state.user.id?'mine':'')+'">'+esc(body)+'<small>'+esc(timeAgo(message.createdAt))+(message.secure?' · 🔒':'')+'</small></div>';
