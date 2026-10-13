@@ -35,6 +35,31 @@ export function initials(user){
   return value.toUpperCase()||'?';
 }
 
+export function safeAvatarUrl(value){
+  if(typeof value!=='string'||!value||value.length>105000)return '';
+  if(/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/i.test(value))return value;
+  try{
+    const url=new URL(value,location.origin);
+    if(url.protocol!=='https:'&&!(url.protocol==='http:'&&url.origin===location.origin))return '';
+    return url.href;
+  }catch{return ''}
+}
+export function avatarHtml(user,extraClass=''){
+  const src=safeAvatarUrl(user?.avatar||user?.avatarUrl||user?.photoUrl);
+  return '<div class="pulse-avatar '+esc(extraClass)+'">'+(src?'<img src="'+esc(src)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':esc(initials(user)))+'</div>';
+}
+export function setAvatar(element,user){
+  if(!element)return;
+  const src=safeAvatarUrl(user?.avatar||user?.avatarUrl||user?.photoUrl);
+  element.textContent='';
+  if(src){
+    const image=document.createElement('img');
+    image.src=src;image.alt='';image.loading='lazy';image.referrerPolicy='no-referrer';
+    image.onerror=()=>{element.textContent=initials(user)};
+    element.appendChild(image);
+  }else element.textContent=initials(user);
+}
+
 export function timeAgo(iso){
   const t=Date.parse(iso),d=Math.max(0,Date.now()-t),m=Math.floor(d/60000);
   if(m<1)return'maintenant';
