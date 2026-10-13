@@ -118,3 +118,7 @@ html.qs-site-nav-enabled body .q-sillage-global{display:none!important}
 
 /* GEKKO already has the Quantic corporate header above its native browser presentation. */
 html.qs-site-nav-enabled body .gekko-sillage-chip{display:none!important}
+
+/* Shared Quantic app layout and responsive product menu. */
+@media(max-width:1024px){.qs-site-mobile-panel:not([hidden]){box-shadow:0 24px 55px rgba(4,10,38,.45)}}
+.qs-site-products-grid .qs-nav-family a img{object-fit:contain}
