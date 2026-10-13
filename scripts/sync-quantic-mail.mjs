@@ -184,6 +184,28 @@ function injectPortalNav(directory){
   return injected;
 }
 
+function injectSharedSiteNav(directory){
+  const stylesheet='<link rel="stylesheet" href="/site-nav.css?v=20261013.1">';
+  const script='<script src="/site-nav.js?v=20261013.1" defer></script>';
+  let updated=0;
+  function visit(current){
+    for(const entry of readdirSync(current)){
+      if(entry===".git")continue;
+      const filePath=join(current,entry);
+      const info=statSync(filePath);
+      if(info.isDirectory()){visit(filePath);continue;}
+      if(!info.isFile()||!filePath.endsWith(".html"))continue;
+      let source=readFileSync(filePath,"utf8");
+      const before=source;
+      if(!source.includes("/site-nav.css?v=20261013.1")&&source.includes("</head>"))source=source.replace("</head>",stylesheet+"</head>");
+      if(!source.includes("/site-nav.js?v=20261013.1")&&source.includes("</body>"))source=source.replace("</body>",script+"</body>");
+      if(source!==before){writeFileSync(filePath,source,"utf8");updated+=1;}
+    }
+  }
+  visit(directory);
+  return updated;
+}
+
 function patchSentinel(directory,replacement){
   let replacements=0;
   const sentinel=Buffer.from(BOOTSTRAP_SENTINEL,"utf8");
@@ -255,6 +277,11 @@ try{
     throw new Error(`Navigation Quantic non injectée dans assez de pages Mail: ${portalNavPages}.`);
   }
 
+  const sharedSiteNavPages=injectSharedSiteNav(work);
+  if(sharedSiteNavPages<3){
+    throw new Error(`Navigation globale non injectée dans assez de pages Mail: ${sharedSiteNavPages}.`);
+  }
+
   const resiliencePages=injectMailResilience(work);
   if(resiliencePages<3){
     throw new Error(`Résilience de chargement non injectée dans assez de pages Mail: ${resiliencePages}.`);
@@ -280,6 +307,7 @@ try{
     identityGatePages,
     mailThemePages,
     portalNavPages,
+    sharedSiteNavPages,
     portablePortalPages,
     resiliencePages,
     relaySourceCommit:RELAY_SOURCE_COMMIT,
