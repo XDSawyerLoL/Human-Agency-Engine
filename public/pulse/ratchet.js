@@ -1,4 +1,4 @@
-import { api } from './core.js?v=21';
+import { api } from './core.js?v=23';
 import {
   b64u,fromB64u,preKeyTranscript,verifyPreKeyRecord,
   deriveInitiatorSession,deriveRecipientSession,
