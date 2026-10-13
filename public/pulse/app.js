@@ -475,6 +475,18 @@ function bindDelegatedEvents(){
       }
     }
 
+    const profileTab=event.target.closest('[data-profile-tab]');
+    if(profileTab){
+      const media=profileTab.dataset.profileTab==='media';
+      const posts=document.getElementById('social-profile-posts');
+      const gallery=document.getElementById('social-profile-media');
+      if(posts)posts.hidden=media;
+      if(gallery)gallery.hidden=!media;
+      document.querySelectorAll('[data-profile-tab]').forEach(button=>{
+        const active=button===profileTab;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));
+      });
+      return;
+    }
     const openCircle=event.target.closest('[data-circle-open]');
     if(openCircle){void loadCircle(openCircle.dataset.circleOpen);return}
     if(event.target.closest('[data-circle-back]')){void loadCircles();return}
