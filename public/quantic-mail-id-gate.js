@@ -6,6 +6,8 @@ const GATE_ID='quantic-mail-id-gate';
 let backgroundObserver=null;
 let shielded=[];
 let previousBodyOverflow='';
+let checkInFlight=false;
+let retryTimer=null;
 
 function ensureStyle(){
   if(document.getElementById(STYLE_ID))return;
@@ -25,8 +27,8 @@ function ensureStyle(){
       place-items:center!important;
       overflow:auto!important;
       overscroll-behavior:contain;
-      background:#f3f7f9!important;
-      color:#0f202b!important;
+      background:#090f29!important;
+      color:#eff6ff!important;
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif!important;
       box-sizing:border-box!important;
       isolation:isolate;
@@ -37,22 +39,22 @@ function ensureStyle(){
       max-width:560px!important;
       margin:auto!important;
       padding:36px!important;
-      border:1px solid #e1e7ea!important;
+      border:1px solid #344472!important;
       border-radius:26px!important;
-      background:#fff!important;
+      #16254a!important;
       box-shadow:0 32px 90px rgba(15,32,43,.12)!important;
-      color:#0f202b!important;
+      color:#eff6ff!important;
     }
-    #${GATE_ID} .qid-kicker{margin:0 0 10px!important;color:#39869a!important;font-size:11px!important;font-weight:700!important;letter-spacing:.18em!important;text-transform:uppercase!important}
-    #${GATE_ID} h1{margin:0!important;color:#0f202b!important;font-size:clamp(42px,8vw,62px)!important;line-height:.95!important;letter-spacing:-.055em!important;font-weight:560!important}
-    #${GATE_ID} p{margin:18px 0 0!important;color:#6c7b84!important;line-height:1.7!important}
-    #${GATE_ID} .qid-status{margin-top:24px!important;padding:15px 16px!important;border:1px solid #e1e7ea!important;border-radius:16px!important;background:#f7f9fa!important}
-    #${GATE_ID} .qid-status strong{display:block!important;color:#0f202b!important;font-size:14px!important}
-    #${GATE_ID} .qid-status span{display:block!important;margin-top:5px!important;color:#7d8d95!important;font-size:12px!important;line-height:1.5!important}
+    #${GATE_ID} .qid-kicker{margin:0 0 10px!important;color:#74d9ff!important;font-size:11px!important;font-weight:700!important;letter-spacing:.18em!important;text-transform:uppercase!important}
+    #${GATE_ID} h1{margin:0!important;color:#eff6ff!important;font-size:clamp(42px,8vw,62px)!important;line-height:.95!important;letter-spacing:-.055em!important;font-weight:560!important}
+    #${GATE_ID} p{margin:18px 0 0!important;color:#c6d4f2!important;line-height:1.7!important}
+    #${GATE_ID} .qid-status{margin-top:24px!important;padding:15px 16px!important;border:1px solid #344472!important;border-radius:16px!important;background:#142146!important}
+    #${GATE_ID} .qid-status strong{display:block!important;color:#eff6ff!important;font-size:14px!important}
+    #${GATE_ID} .qid-status span{display:block!important;margin-top:5px!important;color:#b3c5e9!important;font-size:12px!important;line-height:1.5!important}
     #${GATE_ID} .qid-actions{display:flex!important;gap:9px!important;flex-wrap:wrap!important;margin-top:22px!important}
-    #${GATE_ID} button,#${GATE_ID} a{min-height:44px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0 16px!important;border-radius:999px!important;border:1px solid #dce5e9!important;background:#fff!important;color:#244452!important;text-decoration:none!important;font:650 13px/1 system-ui!important;cursor:pointer!important}
-    #${GATE_ID} button{background:#0d1e29!important;border-color:#0d1e29!important;color:#fff!important}
-    #${GATE_ID} .qid-note{font-size:11px!important;color:#92a0a7!important}
+    #${GATE_ID} button,#${GATE_ID} a{min-height:44px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0 16px!important;border-radius:999px!important;border:1px solid #4a5e94!important;#16254a!important;color:#f2f7ff!important;text-decoration:none!important;font:650 13px/1 system-ui!important;cursor:pointer!important}
+    #${GATE_ID} button{background:#3b73e0!important;border-color:#3b73e0!important;color:#fff!important}
+    #${GATE_ID} .qid-note{font-size:11px!important;color:#8ba4d6!important}
     @media(max-width:620px){
       #${GATE_ID}{padding:14px!important;place-items:center!important}
       #${GATE_ID} .qid-card{width:100%!important;padding:24px!important;border-radius:20px!important}
@@ -137,6 +139,7 @@ function setStatus(title,detail){
 }
 
 function unlock(){
+  if(retryTimer){clearInterval(retryTimer);retryTimer=null;}
   restoreBackground();
   document.documentElement.classList.remove('qid-mail-locked');
   document.documentElement.dataset.quanticId='active';
@@ -144,6 +147,9 @@ function unlock(){
 }
 
 async function check(){
+  if(checkInFlight||!document.documentElement.classList.contains('qid-mail-locked'))return;
+  checkInFlight=true;
+  try{
   ensureStyle();
   if(!document.body){
     document.addEventListener('DOMContentLoaded',check,{once:true});
@@ -156,7 +162,7 @@ async function check(){
     return;
   }
   setStatus('Vérification de Quantic ID…','Recherche de Quantic Identity Vault sur cet ordinateur.');
-  const result=await window.QuanticID.probe();
+  const result=await window.QuanticID.probe({timeoutMs:2200});
   if(result.ok){
     unlock();
     return;
@@ -166,8 +172,14 @@ async function check(){
     return;
   }
   setStatus('Quantic Identity Vault non détecté','Installez Identity Vault sur ce PC ou lancez la version portable depuis votre clé USB, puis activez Quantic ID.');
+  }catch{
+    setStatus('Vérification temporairement indisponible','Identity Vault n’a pas pu être contacté. Le portail réessaiera automatiquement.');
+  }finally{checkInFlight=false;}
 }
 
 ensureStyle();
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',check,{once:true}):check();
+retryTimer=setInterval(()=>{if(document.visibilityState!=='hidden')void check();},5000);
+window.addEventListener('pageshow',()=>void check());
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')void check();});
 })();
