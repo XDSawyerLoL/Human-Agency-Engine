@@ -23,7 +23,6 @@ const navSources=[
   ["public/index.html","q-links"],
   ["public/downloads/index.html","q-links"],
   ["public/quantic/index.html","q-links"],
-  ["public/mail/index.html","qn-global-links"],
   ["public/pulse/index.html","q-sillage-global-links"],
   ["public/news/index.html","q-links"],
   ["public/providence-v15-shell.js","q-global-links"],
@@ -38,6 +37,14 @@ function navFragment(path,className){
   const window=s.slice(start,start+2400);
   return window;
 }
+
+// QuanticMail now uses a security-gated static Next export. Its legacy SSR
+// navigation is replaced at runtime by the shared corporate navigation.
+const mail=read("public/mail/index.html");
+assert.ok(mail.includes("quantic-mail-portal-nav.js"),"Mail runtime navigation injection absent");
+assert.ok(mail.includes("site-nav.js"),"Mail shared product navigation absent");
+const mailNav=read("public/quantic-mail-portal-nav.js");
+for(const [href] of canonical)assert.ok(mailNav.includes(href),"Mail runtime menu missing "+href);
 
 for(const [path,className] of navSources){
   const nav=navFragment(path,className);
