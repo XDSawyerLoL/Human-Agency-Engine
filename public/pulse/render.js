@@ -1,10 +1,11 @@
-import { dom, esc, icon, initials, timeAgo, setStatus } from './core.js?v=23';
+import { dom, esc, icon, avatarHtml, state, timeAgo, setStatus } from './core.js?v=23';
 
 export function renderPost(post){
   const user=post.author||{};
   const liked=post.viewer?.liked;
   const reposted=post.viewer?.reposted;
   const bookmarked=post.viewer?.bookmarked;
+  const isOwner=Boolean(state.user?.id&&post.author?.id===state.user.id);
   let quote='';
   let media='';
   const imageUrl=post.mediaUrl||post.imageUrl||'';
@@ -22,9 +23,9 @@ export function renderPost(post){
   }
 
   return '<article class="pulse-post" data-id="'+esc(post.id)+'">'+
-    '<div class="pulse-avatar">'+esc(initials(user))+'</div>'+
+    avatarHtml(user)+
     '<div class="pulse-post-main">'+
-      '<div class="pulse-post-head"><button data-profile="'+esc(user.handle)+'">'+esc(user.displayName||user.handle)+'</button>'+(user.verified?'<span class="pulse-badge" title="Compte vérifié">'+icon('pi-verified')+'</span>':'')+'<span>@'+esc(user.handle)+' · '+esc(timeAgo(post.createdAt))+'</span></div>'+
+      '<div class="pulse-post-head"><button data-profile="'+esc(user.handle)+'">'+esc(user.displayName||user.handle)+'</button>'+(user.verified?'<span class="pulse-badge" title="Compte vérifié">'+icon('pi-verified')+'</span>':'')+'<span>@'+esc(user.handle)+' · '+esc(timeAgo(post.createdAt))+'</span>'+(isOwner?'<button class="pulse-own-post-delete" type="button" data-action="delete" aria-label="Supprimer ma publication" title="Supprimer ma publication">⋯ <span>Supprimer</span></button>':'')+'</div>'+
       '<p>'+esc(post.body)+'</p>'+media+quote+
       '<div class="pulse-actions">'+
         '<button class="pulse-action" data-action="reply" aria-label="Répondre" title="Répondre">'+icon('pi-reply')+'<span class="pulse-action-name">Répondre</span><span class="pulse-action-count">'+Number(post.counts?.replies||0)+'</span></button>'+
