@@ -1,0 +1,33 @@
+/* SOCIAL plans — Quantic Sillage dark glass design */
+body.sm-page.social-offers{background:#070e26!important;color:#eff5ff!important}
+.social-offers .so-hero{padding:92px 0 70px;background:radial-gradient(ellipse at 80% 0%,rgba(119,80,239,.24),transparent 52%),linear-gradient(130deg,#080f2a,#111d48)!important}
+.social-offers .so-hero h1{margin:18px 0 19px;max-width:840px;color:#fff;font-size:clamp(43px,6.3vw,79px);line-height:1.05;letter-spacing:-.066em}
+.social-offers .so-hero h1 span{background:linear-gradient(105deg,#6edfff,#ae9aff);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.social-offers .so-hero p{max-width:735px;color:#becbec;line-height:1.72;font-size:17px}
+.social-offers .so-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:27px}
+.social-offers .so-actions a{padding:14px 20px;border-radius:12px;background:rgba(110,139,255,.14);border:1px solid rgba(142,182,250,.27);color:#deecff;font-weight:750;font-size:13px}
+.social-offers .so-actions a:first-child{background:linear-gradient(110deg,#368eff,#7e62e8);color:white}
+.social-offers .so-section{padding:73px 0 88px;background:linear-gradient(170deg,#0c1536,#0a1029)}
+.social-offers .so-section h2{font-size:clamp(28px,3.5vw,44px);color:#f3f6ff;letter-spacing:-.05em;margin:0 0 16px}
+.social-offers .so-subtitle{color:#b8c7e5;max-width:790px;line-height:1.6;margin:0 0 35px}
+.social-offers .so-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
+.social-offers .so-card{position:relative;min-width:0;padding:32px 28px;border-radius:24px;border:1px solid rgba(140,172,246,.27);background:linear-gradient(145deg,#142147,#0d1738);box-shadow:0 20px 53px rgba(0,0,0,.12)}
+.social-offers .so-card.featured{border-color:rgba(123,200,255,.59);background:radial-gradient(ellipse at 100% 0%,rgba(88,92,235,.30),transparent 62%),linear-gradient(140deg,#182859,#0e1a42);box-shadow:0 24px 67px rgba(31,74,180,.18)}
+.social-offers .so-eyebrow{color:#9ab0e8;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:800}
+.social-offers .so-card h3{font-size:30px;letter-spacing:-.045em;margin:14px 0 15px}
+.social-offers .so-card .so-description{color:#b6c5e5;font-size:13px;min-height:61px;line-height:1.6}
+.social-offers .so-price{display:flex;align-items:baseline;gap:7px;margin:21px 0 3px}
+.social-offers .so-price strong{font-size:47px;font-weight:850;letter-spacing:-.06em;color:#fff}
+.social-offers .so-price small{color:#adbde0;font-size:12px}
+.social-offers .so-card .so-status{color:#83defe;font-size:11px;font-weight:740;margin:9px 0 24px}
+.social-offers .so-cta{display:flex;align-items:center;justify-content:center;text-align:center;padding:15px 17px;border-radius:12px;background:rgba(109,143,234,.18);border:1px solid rgba(155,183,245,.24);color:#eaf4ff;font-weight:800;font-size:13px;text-decoration:none}
+.social-offers .featured .so-cta{background:linear-gradient(105deg,#46a8fc,#9183ff);color:#121c40}
+.social-offers .so-features{list-style:none;padding:21px 0 0;margin:23px 0 0;border-top:1px solid rgba(138,169,233,.20);display:grid;gap:13px}
+.social-offers .so-features li{position:relative;padding-left:22px;color:#d3def5;font-size:13px;line-height:1.57}
+.social-offers .so-features li:before{content:"✓";position:absolute;left:0;color:#84dbff;font-weight:900}
+.social-offers .so-info{padding:45px 0 68px;background:#0c1533}
+.social-offers .so-info h2{color:#f3f5ff;font-size:29px;letter-spacing:-.04em}
+.social-offers .so-info p{color:#b1c0e1;line-height:1.7;max-width:850px}
+.social-offers .so-note{border-left:2px solid #6ea9ff;padding:14px 20px;background:rgba(99,137,229,.09);border-radius:0 11px 11px 0}
+@media(max-width:950px){.social-offers .so-grid{grid-template-columns:1fr;max-width:620px}.social-offers .so-card .so-description{min-height:0}}
+@media(max-width:680px){.social-offers .so-hero{padding:65px 0}.social-offers .so-section{padding:54px 0}}
