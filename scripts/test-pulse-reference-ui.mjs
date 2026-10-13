@@ -12,7 +12,7 @@ for(const marker of [
   'class="pulse-right"',
   'id="pulse-welcome"',
   'id="auth-modal"',
-  'class="pulse-mobile-nav"',
+  'class="pulse-mobile-nav social-mobile-navigation"',
   'id="compose-focus"',
   'id="circle-preview"'
 ]) assert.ok(html.includes(marker),marker);
