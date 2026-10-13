@@ -87,6 +87,18 @@ export function updateAccount(){
     dom.followingHelp.textContent='Les publications les plus récentes';
   }
 
+  const max=Number(user?.maxPostLength||420);
+  // Native maxlength counts UTF-16 units; the backend counts visible Unicode characters.
+  dom.textarea.maxLength=max*2;
+  const count=Array.from(dom.textarea.value||'').length;
+  dom.count.textContent=count+' / '+max;
+  dom.publish.disabled=(!dom.textarea.value.trim()&&!state.attachment?.mediaUrl)||count>max;
+  const accountBadge=document.getElementById('social-account-tier');
+  if(accountBadge){
+    accountBadge.hidden=!user?.subscriberBadge;
+    accountBadge.textContent=user?.subscriberBadge?'✦ SOCIAL '+user.subscriberBadge:'';
+    accountBadge.className='social-subscriber-badge '+(user?.tier==='pro'?'pro':'');
+  }
   const welcome=dom.welcome;
   if(welcome){
     const kicker=welcome.querySelector('.pulse-welcome-copy .pulse-kicker');
