@@ -395,7 +395,7 @@ function bindStaticEvents(){
 
 function bindDelegatedEvents(){
   document.addEventListener('click',async function(event){
-    const shortcut=event.target.closest('.pulse-right [data-view],#circle-preview [data-view]');
+    const shortcut=event.target.closest('.pulse-right [data-view],#circle-preview [data-view],#social-moments [data-view]');
     if(shortcut){
       const view=shortcut.dataset.view;
       if(view==='messages')void loadMessages();
@@ -607,8 +607,8 @@ function applyIncomingShare(){
   updateMediaPreview();
   if(draft){
     dom.textarea.value=draft;
-    dom.count.textContent=dom.textarea.value.length+' / 420';
-    dom.publish.disabled=!dom.textarea.value.trim();
+    dom.count.textContent=Array.from(dom.textarea.value).length+' / '+(state.user?.maxPostLength||420);
+    dom.publish.disabled=!dom.textarea.value.trim()&&!state.attachment?.mediaUrl;
     setView('home','Accueil');
     setTimeout(()=>dom.textarea.focus(),0);
   }
