@@ -37,14 +37,13 @@ jobs:
         run: |
           set -euo pipefail
           test -f public/mail/devices/index.html
-          test -f public/mail/_next/static/chunks/app/devices/page-088a8b8f4a087ea5-qrfix20261013.js
-          grep -q 'qrfix20261013.js' public/mail/devices/index.html
           grep -q 'quantic-mail-id-gate.js' public/mail/devices/index.html
           grep -q 'site-nav.js' public/mail/index.html
           test -f public/mail/QUANTICMAIL_COMMIT
-          ! grep -q 'h.from(e).toString("base64url")' public/mail/_next/static/chunks/app/devices/page-088a8b8f4a087ea5-qrfix20261013.js
-          ! grep -q 'h.from(e,"base64url")' public/mail/_next/static/chunks/app/devices/page-088a8b8f4a087ea5-qrfix20261013.js
-          echo "Mail QR bundle rebuilt with compatible Base64URL and updated cache filename."
+          grep -q '9aa0d89b3e008eee909b850bc5a1775b75ddcbfe' public/mail/QUANTICMAIL_COMMIT
+          grep -q 'Retrouvez votre boîte Mail' public/mail/index.html
+          node scripts/test-quantic-mail-qr-compat.mjs
+          echo "Native QuanticMail 1.3 secure pairing distribution verified."
 
       - name: Commit synchronized native Mail to site repository
         shell: bash
