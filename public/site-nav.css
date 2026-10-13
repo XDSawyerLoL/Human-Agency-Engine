@@ -64,3 +64,46 @@ html.qs-site-nav-enabled body{scroll-padding-top:100px}
 html.qs-site-nav-enabled body .sm-fallback-header{display:none!important}
 
 html.qs-site-nav-enabled body .q-sillage-global{display:none!important}
+
+/* QUANTIC NAV V2 — navy glass, electric cyan and violet */
+.qs-site-header{
+  background:rgba(8,12,32,.92)!important;
+  color:#e8f2ff!important;
+  border-bottom:1px solid rgba(104,151,246,.22)!important;
+  box-shadow:0 14px 44px rgba(3,7,25,.22)!important;
+}
+.qs-site-brand,.qs-site-brand span,.qs-site-brand strong{color:#f4f6ff!important}
+.qs-site-brand strong{background:linear-gradient(100deg,#fff,#89e8ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.qs-site-desktop>a,.qs-site-products summary{color:#c7d6fb!important}
+.qs-site-desktop>a:hover,.qs-site-desktop>a[aria-current],.qs-site-products summary:hover,.qs-site-products[open]>summary{
+  background:rgba(87,117,255,.16)!important;color:#fff!important
+}
+.qs-chevron{color:#83caff}
+.qs-site-id{color:#bfcaf1!important}
+.qs-site-id:hover{color:#82eaff!important}
+.qs-site-contact{background:linear-gradient(110deg,#377cff,#7561f6)!important;border:1px solid rgba(179,197,255,.28);box-shadow:0 10px 27px rgba(73,104,246,.21)}
+.qs-site-contact:hover{background:linear-gradient(110deg,#529aff,#8b74ff)!important}
+.qs-site-products-panel{
+ background:linear-gradient(155deg,#111b40,#0b1432 72%)!important;
+ color:#f5f7ff!important;border-color:rgba(130,173,255,.30)!important;
+ box-shadow:0 30px 78px rgba(0,4,20,.52)!important
+}
+.qs-site-products-header{border-bottom-color:rgba(126,159,237,.19)}
+.qs-site-products-header strong{color:#f4f7ff}
+.qs-site-products-header a,.qs-site-products-foot a{color:#6cdeff!important}
+.qs-site-products-grid .qs-nav-family h3{color:#91a6ed}
+.qs-site-products-grid .qs-nav-family a{color:#d7e3ff!important}
+.qs-site-products-grid .qs-nav-family a:hover{color:#8cf1ff!important}
+.qs-site-products-foot{border-top-color:rgba(127,159,255,.18)}
+.qs-site-menu-toggle{background:rgba(79,114,221,.18);border:1px solid rgba(137,173,255,.40)}
+.qs-site-menu-toggle span{background:#e1f3ff}
+.qs-site-header :focus-visible{outline:3px solid #78dfff!important;outline-offset:4px}
+@media(max-width:1024px){
+ .qs-site-mobile-panel:not([hidden]){background:#0c1432!important;border-top:1px solid rgba(120,168,255,.20)!important}
+ .qs-site-mobile-panel>a,.qs-site-mobile-panel>details>summary{color:#dce7ff!important;border-bottom-color:rgba(119,159,234,.15)!important}
+ .qs-site-mobile-products{background:#131f45!important}
+ .qs-site-mobile-products>a{color:#80dfff!important}
+ .qs-site-mobile-products .qs-nav-family h3{color:#91a6ec}
+ .qs-site-mobile-products .qs-nav-family a{color:#d8e5ff!important}
+ .qs-site-mobile-contact{background:linear-gradient(95deg,#377cff,#7963fb)!important;color:#fff!important;border:0!important}
+}
