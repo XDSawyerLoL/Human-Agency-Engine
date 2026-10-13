@@ -46,3 +46,10 @@ test('purge programmée verrouillée par un secret serveur',()=>{
   assert.match(app('api/internal/retention.js'), /interval '12 months'/);
   assert.ok(!read('index.html').includes('DATABASE_URL'));
 });
+
+test('tableau réseau privé et export CSV avec protection anti-formule',()=>{
+ assert.match(read('admin.html'),/partnerRows/);
+ assert.match(read('admin.js'),/\/api\/admin\/partners/);
+ assert.match(app('api/admin/partners.js'),/verifyAdmin/);
+ assert.match(read('admin.js'),/replaceAll/);
+});

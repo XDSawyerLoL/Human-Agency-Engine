@@ -42,3 +42,5 @@ Ne jamais écrire les identifiants de la base, les clés administrateur ou les d
 - Des comptes sociaux et des partenaires réels requièrent des autorisations et acceptations propres à chaque acteur ; aucun compte fictif ni prospect inventé n'est créé.
 
 Installer la clé `CRON_SECRET` uniquement comme variable Vercel chiffrée. Vérifier l'accès public au site, la persistence d'une demande consentie sur un environnement de test, l'envoi du formulaire, le bon fonctionnement du scheduler et les règles légales avant utilisation en production à large échelle.
+
+- Huit organisations ciblées et sourcées sont suivies dans `partner_targets` ; `api/admin/partners.js` ne divulgue leur liste qu’au tableau administrateur. Aucun partenariat n’est déclaré conclu.
