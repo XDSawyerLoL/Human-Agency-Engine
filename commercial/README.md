@@ -31,3 +31,14 @@ La clé ne doit JAMAIS être envoyée au navigateur autrement que par saisie man
 ## Confidentialité
 
 Ne jamais écrire les identifiants de la base, les clés administrateur ou les données des prospects dans un dépôt public ni une métrique. La page `/privacy.html` explicite les traitements et leurs limites.
+
+## Réseau d'acquisition organique — octobre 2026
+
+- `/ressources.html` : quatre guides de veille documentés avec des références institutionnelles et un lien de démonstration tracé via UTM ; référencement naturel non garanti.
+- `/partenaires.html` : page de collaboration B2B et liens d'apporteurs traçables. Il ne s'agit **pas** de partenariats contractualisés ni d'un système de commissions activées.
+- `/feed.xml` et `/sitemap.xml` : syndication publique et aide à l'indexation ; l'indexation et la diffusion restent à la discrétion des moteurs.
+- `utm_content` : identifiant de recommandation relié à chaque demande dans la base Neon et consultable dans l'administration, jamais une attribution de vente non vérifiée.
+- `api/internal/retention.js` : suppression quotidienne des demandes de plus de 12 mois, sécurisée par une variable serveur `CRON_SECRET` et une tâche Vercel Cron.
+- Des comptes sociaux et des partenaires réels requièrent des autorisations et acceptations propres à chaque acteur ; aucun compte fictif ni prospect inventé n'est créé.
+
+Installer la clé `CRON_SECRET` uniquement comme variable Vercel chiffrée. Vérifier l'accès public au site, la persistence d'une demande consentie sur un environnement de test, l'envoi du formulaire, le bon fonctionnement du scheduler et les règles légales avant utilisation en production à large échelle.

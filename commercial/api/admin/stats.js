@@ -6,7 +6,7 @@ export default async function handler(req,res){
     const sql=db();
     const [totals,sources]=await Promise.all([
       sql`SELECT count(*)::int AS total,count(*) FILTER (WHERE created_at>=now()-interval '7 days')::int AS last_7_days,count(*) FILTER(WHERE interest='demo')::int AS demos FROM leads`,
-      sql`SELECT COALESCE(NULLIF(utm_source,''),'direct') AS source,count(*)::int AS total FROM leads GROUP BY 1 ORDER BY total DESC LIMIT 12`
+      sql`SELECT COALESCE(NULLIF(utm_source,''),'direct') AS source, COALESCE(NULLIF(utm_content,''),'none') AS detail, count(*)::int AS total FROM leads GROUP BY 1,2 ORDER BY total DESC LIMIT 30`
     ]);
     return respond(res,200,{...totals[0],sources,revenue_status:'non_connecté',social_status:'non_connecté',conversions_status:'non_mesuré'});
   }catch(e){console.error('Stats error',e?.message);return respond(res,503,{error:'Statistiques momentanément indisponibles'});}

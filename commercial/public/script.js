@@ -7,7 +7,7 @@
     event.preventDefault();const status=document.querySelector('#formStatus'),button=document.querySelector('#sendBtn');
     status.className='form-status';status.textContent='Enregistrement de votre demande...';button.disabled=true;
     const fields=Object.fromEntries(new FormData(form).entries());
-    const body={...fields,accepted_privacy:form.elements.accepted_privacy.checked,consent_marketing:form.elements.consent_marketing.checked,utm_source:params.get('utm_source')||'',utm_medium:params.get('utm_medium')||'',utm_campaign:params.get('utm_campaign')||'',source:'horizon-b2b'};
+    const body={...fields,accepted_privacy:form.elements.accepted_privacy.checked,consent_marketing:form.elements.consent_marketing.checked,utm_source:params.get('utm_source')||'',utm_medium:params.get('utm_medium')||'',utm_campaign:params.get('utm_campaign')||'',utm_content:params.get('utm_content')||'',source:form.dataset.source||'horizon-b2b'};
     try{
       const res=await fetch('/api/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
       const data=await res.json();if(!res.ok||!data.ok)throw Error(data.error||'Envoi non confirmé');
