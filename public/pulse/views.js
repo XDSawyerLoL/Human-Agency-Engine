@@ -240,7 +240,18 @@ export async function loadProfile(handle){
       actions='<button class="pulse-mini-button primary" data-follow="'+esc(user.handle)+'">'+(user.isFollowing?'Se désabonner':'Suivre')+'</button><button class="pulse-mini-button" data-message-user="'+esc(user.handle)+'">Message</button><button class="pulse-mini-button danger" data-block="'+esc(user.handle)+'">Bloquer</button>';
     }
 
-    dom.feed.innerHTML='<section class="pulse-profile-hero">'+avatarHtml(user)+'<h2>'+esc(user.displayName)+'</h2><div class="handle">@'+esc(user.handle)+'</div>'+(user.subscriberBadge?'<span class="social-subscriber-badge '+(user.tier==='pro'?'pro':'')+'">✦ SOCIAL '+esc(user.subscriberBadge)+'</span>':'')+(user.verified?'<span class="pulse-badge" title="Identité vérifiée">'+icon('pi-verified')+' Compte vérifié</span>':'')+'<p>'+esc(user.bio||'Aucune bio pour le moment.')+'</p><div class="pulse-profile-stats"><span><strong>'+user.followers+'</strong> abonnés</span><span><strong>'+user.following+'</strong> abonnements</span></div><div class="pulse-profile-actions">'+actions+'</div></section>'+((data.posts||[]).map(renderPost).join('')||'<div class="pulse-status"><strong>Aucune publication</strong></div>');
+    const posts=data.posts||[];
+    const mediaPosts=posts.filter(post=>safeAvatarUrl(post.mediaUrl||post.imageUrl));
+    const profileHeader='<section class="pulse-profile-hero">'+avatarHtml(user)+'<h2>'+esc(user.displayName)+'</h2><div class="handle">@'+esc(user.handle)+'</div>'+
+      (user.subscriberBadge?'<span class="social-subscriber-badge '+(user.tier==='pro'?'pro':'')+'">✦ SOCIAL '+esc(user.subscriberBadge)+'</span>':'')+
+      (user.verified?'<span class="pulse-badge" title="Identité vérifiée">'+icon('pi-verified')+' Compte vérifié</span>':'')+
+      '<p>'+esc(user.bio||'Aucune bio pour le moment.')+'</p><div class="pulse-profile-stats"><span><strong>'+user.followers+'</strong> abonnés</span><span><strong>'+user.following+'</strong> abonnements</span></div><div class="pulse-profile-actions">'+actions+'</div></section>';
+    const tabs='<div class="social-profile-tabs" role="tablist" aria-label="Contenus du profil"><button class="active" data-profile-tab="posts" role="tab" aria-selected="true">Publications <small>'+posts.length+'</small></button><button data-profile-tab="media" role="tab" aria-selected="false">Photos <small>'+mediaPosts.length+'</small></button></div>';
+    const media='<div id="social-profile-media" class="pulse-visual-grid social-profile-media" hidden>'+(mediaPosts.length?mediaPosts.map(post=>{
+      const image=safeAvatarUrl(post.mediaUrl||post.imageUrl);
+      return '<button type="button" class="pulse-visual-tile" data-visual-post="'+esc(post.id)+'" aria-label="Voir la publication de @'+esc(user.handle)+'"><img loading="lazy" src="'+esc(image)+'" alt="'+esc(post.body||'Image du profil')+'"></button>';
+    }).join(''):'<div class="social-empty-community">Aucune photo publiée.</div>')+'</div>';
+    dom.feed.innerHTML=profileHeader+tabs+'<div id="social-profile-posts">'+(posts.map(renderPost).join('')||'<div class="pulse-status"><strong>Aucune publication</strong></div>')+'</div>'+media;
   }catch(error){
     setStatus('Profil indisponible',errorText(error));
   }
