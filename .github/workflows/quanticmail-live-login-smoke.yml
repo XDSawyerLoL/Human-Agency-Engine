@@ -1,0 +1,53 @@
+name: QuanticMail Live Login Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'public/mail/**'
+      - 'public/quantic-mail-id-gate.js'
+      - 'public/quantic-id-runtime.js'
+      - '.github/workflows/quanticmail-live-login-smoke.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quanticmail-live-login-smoke
+  cancel-in-progress: true
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Verify real Hostinger Mail login recovery page and QR runtime
+        shell: bash
+        env:
+          URL: https://mediumorchid-badger-314305.hostingersite.com
+        run: |
+          set -euo pipefail
+          ready=0
+          for i in $(seq 1 18); do
+            h=$(curl --location --silent --show-error --max-time 13 -o /tmp/quanticmail-home.html -w '%{http_code}' "$URL/mail/" || true)
+            d=$(curl --location --silent --show-error --max-time 13 -o /tmp/quanticmail-devices.html -w '%{http_code}' "$URL/mail/devices/" || true)
+            a=$(curl --location --silent --show-error --max-time 13 -o /tmp/quanticmail-chunk.js -w '%{http_code}' "$URL/mail/_next/static/chunks/app/devices/page-120fe15f7e0eacfa.js" || true)
+            echo "attempt=$i mail=$h devices=$d qr_bundle=$a"
+            if [ "$h" = "200" ] && [ "$d" = "200" ] && [ "$a" = "200" ] \
+              && grep -q 'Retrouvez votre boîte Mail' /tmp/quanticmail-home.html \
+              && grep -q 'quantic-mail-id-gate.js' /tmp/quanticmail-home.html \
+              && grep -q 'page-120fe15f7e0eacfa.js' /tmp/quanticmail-devices.html \
+              && grep -q 'btoa(Array.from(' /tmp/quanticmail-chunk.js \
+              && ! grep -q 'toString("base64url")' /tmp/quanticmail-chunk.js; then
+              ready=1
+              break
+            fi
+            sleep 8
+          done
+          if [ "$ready" != "1" ]; then
+            echo "Hostinger has not served the updated Mail client. Inspect the runtime deployment before claiming that login was fixed."
+            exit 1
+          fi
+          echo "QuanticMail live static routes and portable QR crypto verified."
+          echo "Full authenticated mailbox access requires a user device and cannot be inferred from this check."
