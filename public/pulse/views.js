@@ -1,4 +1,4 @@
-import { state, dom, api, esc, icon, initials, avatarHtml, timeAgo, setStatus, errorText } from './core.js?v=25';
+import { state, dom, api, esc, icon, initials, avatarHtml, safeAvatarUrl, timeAgo, setStatus, errorText } from './core.js?v=25';
 import { requireAuth } from './session.js?v=25';
 import { renderPost, renderPosts, notificationLabel } from './render.js?v=25';
 import { decryptConversationMessages, safetyNumber, decentralizedMessagesFor, decentralizedConversationSummaries } from './secure.js?v=25';
@@ -10,6 +10,7 @@ export function setView(view,title){
     button.classList.toggle('active',button.dataset.view===view);
   });
   dom.feedTabs.hidden=view!=='home';
+  const moments=document.getElementById('social-moments');if(moments&&view!=='home')moments.hidden=true;
   dom.composer.hidden=view!=='home'||!state.user;
   dom.welcome.hidden=view!=='home'||!!state.user;
 }
@@ -83,11 +84,28 @@ export async function loadHome(){
   setView('home','Accueil');
   setStatus('Chargement du fil','');
   try{
-    const data=await api('/api/pulse/feed?mode='+state.feed+'&limit=40');
-    renderPosts(data.posts,state.user&&state.feed==='following'?'Suis des comptes ou publie le premier message de ton fil.':'Aucune publication publique.');
-  }catch(error){
-    setStatus('SOCIAL indisponible',errorText(error));
-  }
+    const [feed,visual]=await Promise.all([
+      api('/api/pulse/feed?mode='+state.feed+'&limit=40'),
+      api('/api/pulse/feed?mode=discover&limit=50').catch(()=>({posts:[]}))
+    ]);
+    renderPosts(feed.posts,state.user&&state.feed==='following'?'Suivez des comptes ou publiez dans votre fil.':'Aucune publication publique.');
+    const moments=document.getElementById('social-moments');
+    if(moments){
+      const seen=new Set();
+      const stories=(visual.posts||[]).filter(post=>{
+        const key=post.author?.id||post.author?.handle;
+        if(!key||seen.has(key)||!safeAvatarUrl(post.mediaUrl||post.imageUrl))return false;
+        seen.add(key);return true;
+      }).slice(0,9);
+      if(stories.length){
+        moments.innerHTML='<div class="social-moments-head"><strong>Moments du jour</strong><button type="button" data-view="visual">Tout voir →</button></div><div class="social-moments-list">'+stories.map(post=>
+          '<button type="button" class="social-moment" data-visual-post="'+esc(post.id)+'" aria-label="Voir la publication de '+esc(post.author?.displayName||post.author?.handle||'SOCIAL')+'">'+
+          '<span class="social-moment-ring">'+avatarHtml(post.author||{})+'</span><small>'+esc((post.author?.displayName||post.author?.handle||'Membre').slice(0,16))+'</small></button>'
+        ).join('')+'</div>';
+        moments.hidden=false;
+      }else{moments.hidden=true;moments.innerHTML=''}
+    }
+  }catch(error){setStatus('SOCIAL indisponible',errorText(error))}
 }
 
 export async function loadExplore(query=''){
@@ -125,7 +143,7 @@ export async function loadVisual(){
     }
     dom.feed.innerHTML='<section class="pulse-view pulse-visual-view"><div class="pulse-view-head"><h2>Galerie SOCIAL</h2><p>Les images partagées publiquement au cours des dernières 24 heures.</p></div><div class="pulse-visual-grid">'+posts.map(post=>{
       const raw=post.mediaUrl||post.imageUrl;
-      let url='';try{const value=new URL(raw,location.origin);if(value.protocol==='https:'||value.origin===location.origin&&value.protocol==='http:')url=value.href}catch{}
+      const url=safeAvatarUrl(raw);
       if(!url)return '';
       return '<button type="button" class="pulse-visual-tile" data-visual-post="'+esc(post.id)+'" aria-label="Ouvrir la publication illustrée de @'+esc(post.author?.handle||'social')+'"><img src="'+esc(url)+'" loading="lazy" alt="'+esc(post.body||'Publication illustrée')+'" referrerpolicy="no-referrer"><div><strong>@'+esc(post.author?.handle||'social')+'</strong><span>'+esc((post.body||'').slice(0,95))+'</span></div></button>';
     }).join('')+'</div></section>';
