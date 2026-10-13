@@ -112,7 +112,7 @@ if(page==='home'&&document.body?.dataset?.visionNative!=='true'&&!document.query
 if(!document.querySelector('link[href*="/site-nav.css"]')){
  const navigationCss=document.createElement('link');
  navigationCss.rel='stylesheet';
- navigationCss.href='/site-nav.css?v=20261013.1';
+ navigationCss.href='/site-nav.css?v=20261013.2';
  document.head.appendChild(navigationCss);
 }
 if(!document.querySelector('script[src*="/site-nav.js"]')){
