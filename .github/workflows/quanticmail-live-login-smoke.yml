@@ -8,6 +8,7 @@ on:
       - 'public/mail/**'
       - 'public/quantic-mail-id-gate.js'
       - 'public/quantic-id-runtime.js'
+      - 'src/quantic_identity.js'
       - '.github/workflows/quanticmail-live-login-smoke.yml'
 
 permissions:
