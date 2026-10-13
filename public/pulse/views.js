@@ -113,6 +113,25 @@ export async function loadExplore(query=''){
   }
 }
 
+export async function loadVisual(){
+  setView('visual','Galerie');
+  setStatus('Chargement des images','Découvrir les publications illustrées de SOCIAL.');
+  try{
+    const data=await api('/api/pulse/feed?mode=discover&limit=50');
+    const posts=(data.posts||[]).filter(post=>post.mediaUrl||post.imageUrl);
+    if(!posts.length){
+      setStatus('La galerie prend forme','Aucune publication illustrée récente. Ajoutez un GIF ou une image depuis les fonctions disponibles dans SOCIAL.');
+      return;
+    }
+    dom.feed.innerHTML='<section class="pulse-view pulse-visual-view"><div class="pulse-view-head"><h2>Galerie SOCIAL</h2><p>Les images partagées publiquement au cours des dernières 24 heures.</p></div><div class="pulse-visual-grid">'+posts.map(post=>{
+      const raw=post.mediaUrl||post.imageUrl;
+      let url='';try{const value=new URL(raw,location.origin);if(value.protocol==='https:'||value.origin===location.origin&&value.protocol==='http:')url=value.href}catch{}
+      if(!url)return '';
+      return '<article class="pulse-visual-tile" data-visual-post="'+esc(post.id)+'"><img src="'+esc(url)+'" loading="lazy" alt="'+esc(post.body||'Publication illustrée')+'" referrerpolicy="no-referrer"><div><strong>@'+esc(post.author?.handle||'social')+'</strong><span>'+esc((post.body||'').slice(0,95))+'</span></div></article>';
+    }).join('')+'</div></section>';
+  }catch(error){setStatus('Galerie indisponible',errorText(error))}
+}
+
 export async function loadCircles(){
   setView('circles','Communautés');
   setStatus('Chargement des communautés','');
