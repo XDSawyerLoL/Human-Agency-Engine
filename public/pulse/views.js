@@ -240,7 +240,7 @@ export async function loadProfile(handle){
       actions='<button class="pulse-mini-button primary" data-follow="'+esc(user.handle)+'">'+(user.isFollowing?'Se désabonner':'Suivre')+'</button><button class="pulse-mini-button" data-message-user="'+esc(user.handle)+'">Message</button><button class="pulse-mini-button danger" data-block="'+esc(user.handle)+'">Bloquer</button>';
     }
 
-    dom.feed.innerHTML='<section class="pulse-profile-hero">'+avatarHtml(user)+'<h2>'+esc(user.displayName)+'</h2><div class="handle">@'+esc(user.handle)+'</div><p>'+esc(user.bio||'Aucune bio pour le moment.')+'</p><div class="pulse-profile-stats"><span><strong>'+user.followers+'</strong> abonnés</span><span><strong>'+user.following+'</strong> abonnements</span></div><div class="pulse-profile-actions">'+actions+'</div></section>'+((data.posts||[]).map(renderPost).join('')||'<div class="pulse-status"><strong>Aucune publication</strong></div>');
+    dom.feed.innerHTML='<section class="pulse-profile-hero">'+avatarHtml(user)+'<h2>'+esc(user.displayName)+'</h2><div class="handle">@'+esc(user.handle)+'</div>'+(user.subscriberBadge?'<span class="social-subscriber-badge '+(user.tier==='pro'?'pro':'')+'">✦ SOCIAL '+esc(user.subscriberBadge)+'</span>':'')+(user.verified?'<span class="pulse-badge" title="Identité vérifiée">'+icon('pi-verified')+' Compte vérifié</span>':'')+'<p>'+esc(user.bio||'Aucune bio pour le moment.')+'</p><div class="pulse-profile-stats"><span><strong>'+user.followers+'</strong> abonnés</span><span><strong>'+user.following+'</strong> abonnements</span></div><div class="pulse-profile-actions">'+actions+'</div></section>'+((data.posts||[]).map(renderPost).join('')||'<div class="pulse-status"><strong>Aucune publication</strong></div>');
   }catch(error){
     setStatus('Profil indisponible',errorText(error));
   }
@@ -330,7 +330,7 @@ export async function loadCirclePreview(){
     const data=await api('/api/pulse/circles');
     const target=document.getElementById('circle-preview');
     target.innerHTML=data.circles.slice(0,3).map(function(circle){
-      return '<button class="circle" data-view="circles"><span class="circle-mark">'+esc(circle.name.slice(0,2).toUpperCase())+'</span><span><strong>'+esc(circle.name)+'</strong><small>'+circle.memberCount+' membres</small></span><span class="circle-chevron">'+icon('pi-chevron')+'</span></button>';
+      return '<button class="circle" data-circle-open="'+esc(circle.id)+'"><span class="circle-mark">'+esc(circle.name.slice(0,2).toUpperCase())+'</span><span><strong>'+esc(circle.name)+'</strong><small>'+circle.memberCount+' membres</small></span><span class="circle-chevron">'+icon('pi-chevron')+'</span></button>';
     }).join('')||'<div class="pulse-panel-loading">Aucune communauté publique.</div>';
   }catch{
     document.getElementById('circle-preview').innerHTML='<div class="pulse-panel-loading">Indisponible</div>';
