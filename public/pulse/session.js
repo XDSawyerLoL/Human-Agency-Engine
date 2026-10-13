@@ -1,4 +1,4 @@
-import { TOKEN_KEY, state, dom, initials, api } from './core.js?v=23';
+import { TOKEN_KEY, state, dom, initials, setAvatar, api } from './core.js?v=23';
 
 const PRESENCE_RENEW_MS=5000;
 const PRESENCE_PROBE_MS=1000;
@@ -70,8 +70,8 @@ export function updateAccount(){
     state.identityStatus='connected';
     name.textContent=user.displayName;
     handle.textContent='@'+user.handle;
-    avatar.textContent=initials(user);
-    composerAvatar.textContent=initials(user);
+    setAvatar(avatar,user);
+    setAvatar(composerAvatar,user);
     button.textContent='@'+user.handle;
     dom.textarea.placeholder='Écrivez une publication…';
     dom.followingLabel.textContent='Abonnements';
