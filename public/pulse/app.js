@@ -1,6 +1,6 @@
 import { TOKEN_KEY, state, dom, api, errorText } from './core.js?v=23';
 import { openAuth, closeAuth, updateAuthModal, updateAccount, requireAuth, applySession, clearSession, restoreSession, retryIdentityConnection, ensureIdentityVault, startIdentityPresenceGuard } from './session.js?v=23';
-import { setView, loadHome, loadExplore, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview, loadNewsRss } from './views.js?v=23';
+import { setView, loadHome, loadExplore, loadVisual, loadCircles, loadNotifications, loadSaved, loadProfile, loadMessages, loadConversation, loadCirclePreview, loadNewsRss } from './views.js?v=23';
 import { ensureSecureDevice, sendSecureMessage } from './secure.js?v=22';
 
 function setReply(postId,handle){
@@ -339,6 +339,7 @@ function bindStaticEvents(){
         loadHome();
       }
       else if(view==='explore')loadExplore(document.getElementById('pulse-search').value);
+      else if(view==='visual')loadVisual();
       else if(view==='circles')loadCircles();
       else if(view==='notifications')loadNotifications();
       else if(view==='messages')loadMessages();
@@ -388,6 +389,18 @@ function bindDelegatedEvents(){
       return;
     }
 
+    const visual=event.target.closest('[data-visual-post]');
+    if(visual){
+      void (async()=>{
+        try{
+          const result=await api('/api/pulse/posts/'+encodeURIComponent(visual.dataset.visualPost));
+          const {renderPost}=await import('./render.js?v=23');
+          setView('visual','Publication');
+          dom.feed.innerHTML=renderPost(result.post);
+        }catch(error){alert(errorText(error))}
+      })();
+      return;
+    }
     const post=event.target.closest('.pulse-post');
     const action=event.target.closest('[data-action]');
     if(post&&action){
