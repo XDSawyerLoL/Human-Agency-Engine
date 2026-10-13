@@ -115,3 +115,6 @@ html.qs-site-nav-enabled body .q-sillage-global{display:none!important}
 .qs-site-mobile-products .qs-nav-family a img{width:24px;height:24px;flex:0 0 24px;object-fit:contain;border-radius:7px}
 .qs-site-products-grid .qs-nav-family a:hover img{filter:drop-shadow(0 0 8px rgba(86,186,255,.28))}
 .gekko-artifact-note{display:inline-flex;max-width:400px;align-items:center;font-size:11px;line-height:1.55;letter-spacing:normal;color:#adc9f2;padding:9px 12px;border:1px solid rgba(130,182,255,.22);border-radius:10px;background:rgba(10,32,71,.42)}
+
+/* GEKKO already has the Quantic corporate header above its native browser presentation. */
+html.qs-site-nav-enabled body .gekko-sillage-chip{display:none!important}
