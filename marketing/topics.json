@@ -1,0 +1,38 @@
+[
+  {
+    "id": "origins",
+    "hook": "Dix articles ne constituent pas dix preuves indépendantes.",
+    "body": "Avant d'alerter une entreprise, vérifier l'origine, la date et l'indépendance des sources permet d'éviter les fausses confirmations.",
+    "source": "https://www.data.gouv.fr/"
+  },
+  {
+    "id": "heat",
+    "hook": "La chaleur peut affecter les opérations avant de perturber la production.",
+    "body": "Repérez les sites et équipes exposés, puis confrontez les scénarios aux bulletins météorologiques officiels. Une vigilance n'est pas une certitude.",
+    "source": "https://meteofrance.com/"
+  },
+  {
+    "id": "flood",
+    "hook": "Une vigilance de crue n'a pas le même impact sur toutes les entreprises.",
+    "body": "La valeur d'une alerte dépend des implantations, des itinéraires et du temps disponible pour réagir. Vérifiez les sources officielles.",
+    "source": "https://www.vigicrues.gouv.fr/"
+  },
+  {
+    "id": "energy",
+    "hook": "Un signal énergétique isolé ne suffit pas à prédire une interruption.",
+    "body": "Rapprochez consommation, conditions météorologiques et informations du gestionnaire de réseau. Signalez aussi les lacunes des données.",
+    "source": "https://www.rte-france.com/"
+  },
+  {
+    "id": "continuity",
+    "hook": "La préparation d'une entreprise commence par ses dépendances.",
+    "body": "Cartographier les fournisseurs critiques, les transports et les options de repli aide à préparer une réponse sans prétendre anticiper chaque incident.",
+    "source": "https://www.georisques.gouv.fr/"
+  },
+  {
+    "id": "probability",
+    "hook": "Un score technique n'est pas forcément une probabilité fiable.",
+    "body": "Une prévision chiffrée mérite une validation historique sur des données qui étaient disponibles à la date de la prévision. Sans calibration, rester prudent.",
+    "source": "https://www.data.gouv.fr/"
+  }
+]
