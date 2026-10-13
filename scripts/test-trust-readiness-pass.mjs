@@ -12,9 +12,10 @@ assert.ok(portal.includes("Dernière vérification"),"Network must timestamp che
 assert.ok(portal.includes("setInterval"),"Network must refresh automatically");
 
 const mail=read("public/mail/index.html");
-assert.ok(mail.includes("Quantic ID requis"),"Mail static fallback must explain Quantic ID immediately");
-assert.ok(mail.includes("/downloads/#identity-vault"),"Mail static fallback must link Identity Vault");
-assert.ok(mail.includes("Réessayer"),"Mail static fallback must expose retry");
+assert.ok(mail.includes("Retrouvez votre boîte Mail"),"Mail entry must foreground existing mailbox recovery");
+assert.ok(mail.includes("quantic-mail-id-gate.js"),"Mail must still enforce Quantic ID access");
+assert.ok(mail.includes("/mail/devices"),"Mail must offer secure device QR linking");
+assert.ok(mail.includes("/mail/vault"),"Mail must offer encrypted vault restoration");
 const mailSync=read("scripts/sync-quantic-mail.mjs");
 assert.ok(mailSync.includes("Quantic ID requis."),"Mail sync must preserve explicit Quantic ID fallback");
 assert.ok(mailSync.includes("data-qm-static-actions"),"Mail sync must preserve immediate recovery actions");
