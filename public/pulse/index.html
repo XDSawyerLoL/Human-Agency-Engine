@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#071426">
-  <title>ZOON — by Quantic Sillage</title>
-  <meta name="description" content="ZOON : le réseau social public et communautaire de Quantic Sillage.">
+  <title>SOCIAL — by Quantic Sillage</title>
+  <meta name="description" content="SOCIAL : le réseau social public et communautaire de Quantic Sillage.">
   <link rel="stylesheet" href="/pulse/site.css?v=1">
   <link rel="stylesheet" href="/quantic-system-v6.css?v=6.1">
   <link rel="stylesheet" href="/brand-2026.css?v=20260919.2">
-  <link rel="stylesheet" href="/pulse/pulse.css?v=12">
+  <link rel="stylesheet" href="/pulse/pulse.css?v=23">
   <link rel="icon" type="image/svg+xml" href="/assets/brand-2026/zoon-mark.svg?v=20260922.5">
 <link rel="stylesheet" href="/site-nav.css?v=20261013.2">
 </head>
@@ -22,7 +22,7 @@
     <nav class="q-sillage-global-links" aria-label="Navigation Quantic Sillage">
       <a href="/vision/"><img class="q-sillage-app-icon" src="/assets/brand-2026/vision-mark.svg?v=20260919.9" alt=""><span>Vision</span></a>
       <a href="/mail/"><img class="q-sillage-app-icon" src="/assets/brand-2026/mail-mark.svg?v=20260919.9" alt=""><span>Mail</span></a>
-      <a class="active" href="/pulse/" aria-current="page"><img class="q-sillage-app-icon" src="/assets/brand-2026/zoon-mark.svg?v=20260922.5" alt=""><span>ZOON</span></a>
+      <a class="active" href="/pulse/" aria-current="page"><img class="q-sillage-app-icon" src="/assets/brand-2026/zoon-mark.svg?v=20260922.5" alt=""><span>SOCIAL</span></a>
       <a href="/news/"><img class="q-sillage-app-icon" src="/assets/brand-2026/news-mark.svg?v=20260919.9" alt=""><span>News</span></a>
       <a href="/downloads/">Produits &amp; outils</a>
       <a class="identity" href="/quantic/">Quantic ID</a>
@@ -52,10 +52,10 @@
   <div class="pulse-shell">
     <aside class="pulse-sidebar">
       <a class="pulse-brand" href="/" aria-label="Retour à Quantic Sillage">
-        <img src="/assets/brand-2026/zoon-mark.svg?v=20260922.5" alt="ZOON">
-        <div><span>by Quantic Sillage</span><strong>ZOON</strong></div>
+        <img src="/assets/brand-2026/zoon-mark.svg?v=20260922.5" alt="SOCIAL">
+        <div><span>by Quantic Sillage</span><strong>SOCIAL</strong></div>
       </a>
-      <nav class="pulse-nav" aria-label="Navigation ZOON">
+      <nav class="pulse-nav" aria-label="Navigation SOCIAL">
         <button class="pulse-nav-item active" data-view="home"><svg class="pi " aria-hidden="true"><use href="#pi-home"></use></svg><span class="pulse-nav-label">Accueil</span></button>
         <button class="pulse-nav-item" data-view="explore"><svg class="pi " aria-hidden="true"><use href="#pi-search"></use></svg><span class="pulse-nav-label">Explorer</span></button>
         <button class="pulse-nav-item" data-view="circles"><svg class="pi " aria-hidden="true"><use href="#pi-circles"></use></svg><span class="pulse-nav-label">Communautés</span></button>
@@ -69,25 +69,25 @@
       <button class="pulse-primary" id="compose-focus"><svg class="pi " aria-hidden="true"><use href="#pi-plus"></use></svg><span class="pulse-primary-label">Publier</span></button>
       <button class="pulse-account" id="account-button">
         <div class="pulse-avatar" id="account-avatar">?</div>
-        <div><strong id="account-name">Compte ZOON</strong><span id="account-handle">Identité locale ZOON</span></div>
+        <div><strong id="account-name">Compte SOCIAL</strong><span id="account-handle">Identité locale SOCIAL</span></div>
       </button>
     </aside>
 
     <main class="pulse-main">
       <header class="pulse-topbar">
-        <div><span class="pulse-kicker">ZOON · by Quantic Sillage</span><h1 id="view-title">Accueil</h1></div>
+        <div><span class="pulse-kicker">SOCIAL · by Quantic Sillage</span><h1 id="view-title">Accueil</h1></div>
         <div class="pulse-top-actions">
           <a class="pulse-top-button pulse-mail-access" href="/mail/"><svg class="pi" aria-hidden="true"><use href="#pi-mail"></use></svg><span>QuanticMail</span></a>
-          <button class="pulse-top-button" id="auth-button">Compte ZOON</button>
+          <button class="pulse-top-button" id="auth-button">Compte SOCIAL</button>
           </div>
       </header>
 
-      <section class="pulse-welcome" id="pulse-welcome">
+      <section class="pulse-welcome" id="pulse-welcome" aria-live="polite">
         <div class="pulse-welcome-mark"><img src="/assets/brand-2026/zoon-mark.svg?v=20260922.5" alt=""></div>
         <div class="pulse-welcome-copy">
-          <span class="pulse-kicker">Bienvenue sur ZOON</span>
+          <span class="pulse-kicker">Bienvenue sur SOCIAL</span>
           <h2>Suivez. Publiez. Échangez.</h2>
-          <p>Vous pouvez lire ZOON sans compte. Pour publier ou créer un profil, activez Quantic ID : votre pseudo public reste distinct de votre identité cryptographique. Les publications disparaissent automatiquement après 24 h.</p>
+          <p>Vous pouvez lire SOCIAL sans compte. Pour publier ou créer un profil, activez Quantic ID : votre pseudo public reste distinct de votre identité cryptographique. Les publications disparaissent automatiquement après 24 h.</p>
           <div class="pulse-welcome-actions">
             <button class="pulse-welcome-primary" id="welcome-register">Créer avec Quantic ID</button>
             <button class="pulse-welcome-secondary" id="welcome-login">Entrer avec Quantic ID</button>
@@ -114,7 +114,7 @@
               <button class="pulse-tool-btn pulse-gif-button" title="Ajouter un GIF" data-tool="gif" type="button" aria-label="Ajouter un GIF"><span>GIF</span></button>
               <button class="pulse-tool-btn pulse-tool-close" title="Annuler la réponse" id="cancel-context" hidden aria-label="Annuler la réponse"><svg class="pi" aria-hidden="true"><use href="#pi-close"></use></svg></button>
               <div class="pulse-emoji-picker" id="pulse-emoji-picker" hidden aria-label="Emojis Quantic">
-                <div class="pulse-popover-head"><strong>Emojis Quantic</strong><small>Ajoute une touche à ZOON</small></div>
+                <div class="pulse-popover-head"><strong>Emojis Quantic</strong><small>Ajoute une touche à SOCIAL</small></div>
                 <div class="pulse-emoji-grid">
                   <button type="button" data-emoji="🌀">🌀</button><button type="button" data-emoji="⚡">⚡</button><button type="button" data-emoji="🌌">🌌</button><button type="button" data-emoji="🧭">🧭</button><button type="button" data-emoji="🪐">🪐</button><button type="button" data-emoji="🐚">🐚</button><button type="button" data-emoji="🫧">🫧</button><button type="button" data-emoji="🛰️">🛰️</button><button type="button" data-emoji="🔭">🔭</button><button type="button" data-emoji="✨">✨</button><button type="button" data-emoji="🌊">🌊</button><button type="button" data-emoji="🧿">🧿</button>
                 </div>
@@ -165,12 +165,12 @@
   <div class="pulse-modal" id="auth-modal" hidden>
     <div class="pulse-modal-card" role="dialog" aria-modal="true" aria-labelledby="auth-title">
       <button class="pulse-modal-close" id="auth-close" aria-label="Fermer"><svg class="pi " aria-hidden="true"><use href="#pi-close"></use></svg></button>
-      <span class="pulse-kicker">ZOON · by Quantic Sillage</span>
+      <span class="pulse-kicker">SOCIAL · by Quantic Sillage</span>
       <h2 id="auth-title">Se connecter</h2>
       <p id="auth-copy">Retrouve ton fil, tes abonnements, tes messages et tes cercles.</p>
       <div class="pulse-id-status" data-pulse-id-status data-state="checking">
         <span class="pulse-id-dot"></span>
-        <div><strong data-pulse-id-title>Vérification d’Identity Vault…</strong><small data-pulse-id-detail>ZOON exige Quantic Identity Vault pour créer un compte ou se connecter.</small></div>
+        <div><strong data-pulse-id-title>Vérification d’Identity Vault…</strong><small data-pulse-id-detail>SOCIAL exige Quantic Identity Vault pour créer un compte ou se connecter.</small></div>
         <a href="/downloads/#identity-vault">Installer</a>
       </div>
       <form id="auth-form">
@@ -185,7 +185,7 @@
 
   <script src="/quantic-id-runtime.js?v=20260920.2"></script>
   <script src="/pulse/pulse-config.js?v=1"></script>
-  <script type="module" src="/pulse/app.js?v=22"></script>
-<script src="/site-nav.js?v=20261013.1" defer></script>
+  <script type="module" src="/pulse/app.js?v=23"></script>
+<script src="/site-nav.js?v=20261013.3" defer></script>
 </body>
 </html>
