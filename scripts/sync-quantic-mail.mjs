@@ -219,7 +219,7 @@ function verifyDevicePairingBundle(directory){
   if(/\.toString\(["']base64url["']\)/.test(source)||/\.from\([^\n)]*,["']base64url["']\)/.test(source)){
     throw new Error("Encodage QR incompatible dans la distribution: "+name);
   }
-  if(!source.includes('toString("base64").replace(')||!source.includes('h.from(e.replace(')){
+  if(!source.includes('btoa(Array.from(')||!source.includes('Uint8Array.from(atob(')){
     throw new Error("Codec QR portable attendu absent du bundle: "+name);
   }
   const html=readFileSync(join(directory,"devices","index.html"),"utf8");
