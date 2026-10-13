@@ -1,0 +1,77 @@
+/* GEKKO site — Quantic 2026 visual design based on actual 2.4 renderer UI. */
+:root{--g-bg:#080f29;--g-panel:#111d42;--g-panel2:#172953;--g-text:#eff7ff;--g-muted:#a9bbe2;--g-cyan:#6cdbff;--g-violet:#9c85ff;--g-line:rgba(149,179,255,.22)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body.gekko-page{margin:0;background:var(--g-bg);color:var(--g-text);font:15px/1.65 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.gekko-page a{color:inherit;text-decoration:none}
+.gekko-page button,.gekko-page input{font:inherit}
+.gekko-shell{width:min(1300px,calc(100% - 52px));margin:auto}
+.gekko-showcase{position:relative;overflow:hidden;background:radial-gradient(ellipse at 95% 4%,rgba(105,65,220,.25),transparent 49%),radial-gradient(ellipse at 12% 60%,rgba(24,118,197,.14),transparent 44%),linear-gradient(140deg,#080e25,#0f1a3f)}
+.gekko-hero{padding:103px 0 94px;display:grid;grid-template-columns:minmax(330px,.73fr) minmax(0,1.27fr);align-items:center;gap:48px}
+.gekko-eyebrow{display:inline-block;color:#82dbff;font-weight:850;font-size:11px;letter-spacing:.2em}
+.gekko-logo-title{display:flex;gap:17px;align-items:center;margin:22px 0 12px}
+.gekko-logo-title img{width:77px;height:77px;object-fit:contain;filter:drop-shadow(0 12px 23px rgba(43,132,235,.24))}
+.gekko-logo-title h1{margin:0;font-size:clamp(56px,6vw,85px);letter-spacing:-.085em;line-height:1;color:#fff}
+.gekko-hero-copy h2{max-width:500px;font-size:clamp(28px,3.5vw,43px);line-height:1.13;letter-spacing:-.055em;margin:19px 0 17px;font-weight:760}
+.gekko-hero-copy h2 em{font-style:normal;background:linear-gradient(110deg,#59dffe,#b5a0ff);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.gekko-hero-copy p{font-size:15px;line-height:1.8;color:#bdcceb;max-width:510px;margin:0}
+.gekko-hero-chips{display:flex;gap:9px;flex-wrap:wrap;margin:21px 0 0}
+.gekko-hero-chips span{padding:7px 10px;border:1px solid rgba(142,179,248,.23);border-radius:999px;color:#cfe0ff;font-size:11px;font-weight:680;background:rgba(133,167,238,.065)}
+.gekko-hero-actions{display:flex;gap:11px;flex-wrap:wrap;margin:30px 0 12px}
+.gekko-action{display:inline-flex;gap:15px;justify-content:center;align-items:center;min-height:49px;border-radius:11px;border:1px solid rgba(156,179,255,.30);padding:11px 19px;font-weight:770;font-size:13px;background:rgba(121,145,242,.10)}
+.gekko-action:hover{background:rgba(121,145,242,.18)}
+.gekko-action.primary{color:#fff;background:linear-gradient(105deg,#348dfc,#7866f3);box-shadow:0 16px 32px rgba(40,80,231,.21)}
+.gekko-action.primary:hover{background:linear-gradient(105deg,#59a6ff,#9781ff)}
+.gekko-hero-note{font-size:11px!important;color:#90a7d1!important;max-width:460px}
+.gekko-hero-note a{color:#93dbff;text-decoration:underline}
+.gekko-browser-shell{position:relative;min-height:525px;overflow:hidden;border:1px solid rgba(152,190,255,.40);border-radius:27px;background:radial-gradient(circle at 65% 2%,#26477c 0%,#12264b 43%,#0b1639 80%);box-shadow:0 40px 96px rgba(1,6,24,.5),0 0 70px rgba(81,112,237,.1);isolation:isolate}
+.gekko-browser-shell:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(173,207,255,.075) 1px,transparent 1px),linear-gradient(90deg,rgba(173,207,255,.075) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(180deg,transparent 7%,black 80%);z-index:-1}
+.gekko-browser-shell:after{content:"";position:absolute;z-index:-1;width:440px;height:440px;left:50%;top:0;transform:translateX(-20%);border-radius:100%;background:radial-gradient(circle,rgba(62,179,223,.17),transparent 68%)}
+.gekko-browser-topbar{height:46px;display:flex;align-items:center;gap:10px;padding:7px 14px;border-bottom:1px solid rgba(142,173,251,.24);background:rgba(4,13,34,.66);backdrop-filter:blur(20px)}
+.gekko-browser-topbar .gekko-tab-pill{display:flex;gap:10px;align-items:center;padding:5px 12px;border:1px solid rgba(161,185,255,.2);border-radius:10px;background:rgba(130,161,250,.16);font-size:11px;min-width:132px;color:#e3ecff}
+.gekko-tab-pill img{width:18px;height:18px}
+.gekko-tab-plus{color:#c1d3f4;font-size:17px;margin-left:2px}
+.gekko-window-actions{margin-left:auto;display:flex;gap:17px;color:#b8c7e7;font-size:14px}
+.gekko-scene{position:relative;min-height:410px;padding:45px 42px 123px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.gekko-scene-brand{display:flex;flex-direction:column;align-items:center}
+.gekko-scene-brand img{width:96px;height:96px;filter:drop-shadow(0 15px 20px rgba(9,16,42,.5))}
+.gekko-scene-brand strong{margin-top:6px;font-size:28px;letter-spacing:.07em;font-weight:870;color:#fff}
+.gekko-scene-brand span{color:#b0d5ee;letter-spacing:.19em;font-size:9px;font-weight:850}
+.gekko-quicklinks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-top:30px;width:min(390px,100%)}
+.gekko-quicklinks a{display:grid;justify-items:center;gap:7px;background:rgba(162,185,255,.085);border:1px solid rgba(145,187,255,.16);padding:11px 6px;border-radius:14px;backdrop-filter:blur(12px);font-size:10px;color:#dceaff}
+.gekko-quicklinks a:hover{background:rgba(143,177,255,.19)}
+.gekko-quicklinks img{width:26px;height:26px}
+.gekko-side-rail{position:absolute;z-index:2;right:14px;top:63px;display:flex;flex-direction:column;gap:8px;padding:8px;background:rgba(12,25,57,.78);border:1px solid rgba(163,190,255,.22);border-radius:18px;backdrop-filter:blur(20px)}
+.gekko-side-rail a{display:grid;place-items:center;width:35px;height:35px;border-radius:10px;color:#bad5ff;font-size:16px}
+.gekko-side-rail a:hover{background:rgba(126,171,255,.19)}
+.gekko-side-rail img{width:25px;height:25px;object-fit:contain}
+.gekko-bottom-dock{position:absolute;z-index:3;bottom:14px;left:14px;right:14px;display:flex;gap:10px;align-items:center;min-height:67px;border:1px solid rgba(185,217,255,.32);border-radius:20px;padding:10px 13px;background:linear-gradient(132deg,rgba(40,65,106,.78),rgba(16,34,75,.83));backdrop-filter:blur(24px) saturate(130%);box-shadow:0 10px 36px rgba(0,9,31,.30)}
+.gekko-dock-nav{display:flex;gap:8px;align-items:center;color:#cce2ff}
+.gekko-dock-nav span{padding:4px;font-size:18px}
+.gekko-engine-tag{padding:7px 11px;border:1px solid rgba(128,183,255,.25);border-radius:10px;color:#96e9ff;font-size:11px;font-weight:850;white-space:nowrap;background:rgba(53,113,184,.20)}
+.gekko-omnibox{display:flex;flex:1;min-width:70px;align-items:center;gap:9px;background:rgba(1,12,38,.35);border:1px solid rgba(151,199,249,.24);border-radius:12px;padding:0 10px;min-height:43px}
+.gekko-omnibox input{min-width:0;flex:1;width:100%;border:0;outline:0;background:transparent;color:#f3f8ff!important;-webkit-text-fill-color:#f3f8ff!important;caret-color:#92e6ff;font-size:12px}
+.gekko-omnibox input::placeholder{color:#aabfe5!important;-webkit-text-fill-color:#aabfe5!important;opacity:1}
+.gekko-omnibox button{border:0;background:transparent;color:#89e3ff;font-size:18px;cursor:pointer}
+.gekko-mock-label{position:absolute;top:56px;left:18px;color:#8ea8d6;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.gekko-section{padding:78px 0 84px;background:#101938}
+.gekko-section:nth-of-type(even){background:#0c1432}
+.gekko-section-header{display:flex;justify-content:space-between;align-items:end;gap:25px;margin-bottom:32px}
+.gekko-section-header h2{font-size:clamp(28px,3.6vw,45px);line-height:1.14;letter-spacing:-.048em;margin:0;color:#f1f6ff}
+.gekko-section-header p{color:#b3c5e8;max-width:490px;margin:0;font-size:14px}
+.gekko-feature-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:17px}
+.gekko-feature-strip article{padding:29px 26px;border:1px solid rgba(131,173,250,.22);border-radius:19px;background:linear-gradient(135deg,#18254d,#111b3d)}
+.gekko-feature-strip b{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:12px;color:#84ddff;background:rgba(90,131,236,.15);font-size:19px}
+.gekko-feature-strip strong{display:block;color:#f1f6ff;margin:20px 0 9px;font-size:16px}
+.gekko-feature-strip p{color:#b4c3e3;line-height:1.7;margin:0;font-size:13px}
+.gekko-download{display:flex;gap:30px;align-items:center;justify-content:space-between;padding:42px;border-radius:24px;border:1px solid rgba(143,181,248,.25);background:radial-gradient(ellipse at 90% 0%,rgba(80,82,214,.20),transparent 65%),#182549}
+.gekko-download h2{font-size:clamp(27px,3vw,40px);line-height:1.18;letter-spacing:-.05em;margin:10px 0;color:#fff}
+.gekko-download p{max-width:700px;color:#b8c8ec;font-size:14px;margin:0}
+.gekko-footer{background:#070d24;border-top:1px solid rgba(131,157,239,.18);padding:29px 0;color:#b3c3e2;font-size:12px}
+.gekko-footer .gekko-shell{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.gekko-footer a{margin-left:17px}
+.gekko-page :focus-visible{outline:2px solid #8addff;outline-offset:3px}
+@media(max-width:1110px){.gekko-hero{grid-template-columns:1fr;gap:32px}.gekko-hero-copy{max-width:760px}.gekko-browser-shell{width:100%;max-width:900px;margin-inline:auto}}
+@media(max-width:750px){.gekko-shell{width:min(100% - 30px,620px)}.gekko-hero{padding:67px 0}.gekko-logo-title img{width:60px;height:60px}.gekko-browser-shell{min-height:440px}.gekko-scene{padding:45px 30px 110px;min-height:390px}.gekko-side-rail{right:8px;top:60px}.gekko-side-rail a{width:29px;height:29px}.gekko-side-rail img{width:22px;height:22px}.gekko-bottom-dock{left:8px;right:8px;bottom:8px;padding:8px;gap:6px;min-height:58px}.gekko-dock-nav span:nth-child(n+3){display:none}.gekko-dock-nav span{font-size:15px}.gekko-engine-tag{font-size:9px;padding:7px 6px}.gekko-section{padding:58px 0}.gekko-feature-strip{grid-template-columns:1fr}.gekko-section-header{display:block}.gekko-section-header p{margin-top:15px}.gekko-download{flex-direction:column;align-items:flex-start;padding:28px}}
+@media(max-width:430px){.gekko-quicklinks{grid-template-columns:repeat(2,minmax(0,1fr));max-width:230px}.gekko-browser-shell{min-height:480px}.gekko-scene{min-height:432px}.gekko-dock-nav{display:none}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
