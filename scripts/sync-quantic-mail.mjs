@@ -185,7 +185,7 @@ function injectPortalNav(directory){
 }
 
 function injectSharedSiteNav(directory){
-  const stylesheet='<link rel="stylesheet" href="/site-nav.css?v=20261013.1">';
+  const stylesheet='<link rel="stylesheet" href="/site-nav.css?v=20261013.2">';
   const script='<script src="/site-nav.js?v=20261013.1" defer></script>';
   let updated=0;
   function visit(current){
@@ -197,7 +197,7 @@ function injectSharedSiteNav(directory){
       if(!info.isFile()||!filePath.endsWith(".html"))continue;
       let source=readFileSync(filePath,"utf8");
       const before=source;
-      if(!source.includes("/site-nav.css?v=20261013.1")&&source.includes("</head>"))source=source.replace("</head>",stylesheet+"</head>");
+      if(!source.includes("/site-nav.css?v=20261013.2")&&source.includes("</head>"))source=source.replace("</head>",stylesheet+"</head>");
       if(!source.includes("/site-nav.js?v=20261013.1")&&source.includes("</body>"))source=source.replace("</body>",script+"</body>");
       if(source!==before){writeFileSync(filePath,source,"utf8");updated+=1;}
     }
