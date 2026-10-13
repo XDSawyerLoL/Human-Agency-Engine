@@ -43,4 +43,9 @@ Ne jamais écrire les identifiants de la base, les clés administrateur ou les d
 
 Installer la clé `CRON_SECRET` uniquement comme variable Vercel chiffrée. Vérifier l'accès public au site, la persistence d'une demande consentie sur un environnement de test, l'envoi du formulaire, le bon fonctionnement du scheduler et les règles légales avant utilisation en production à large échelle.
 
-- Huit organisations ciblées et sourcées sont suivies dans `partner_targets` ; `api/admin/partners.js` ne divulgue leur liste qu’au tableau administrateur. Aucun partenariat n’est déclaré conclu.
+## Diagnostic de continuité gratuit
+
+- `/diagnostic.html` : questionnaire local (aucune donnée transmise), conseils heuristiques strictement bornés et imprimables ; pas de score scientifique ni de prévision.
+- `/api/admin/health` : contrôle authentifié de l’accès à la base et des trois tables, sans accès public aux secrets ou aux prospects.
+- Les métriques sociales restent chez Metricool, le compte Stripe relié à ChatGPT n’étant pas vérifié comme le compte marchand HORIZON ; aucun débit n’a été activé.
+- Tests : `node --test tests/*.test.mjs`. Il reste à réaliser un parcours navigateur en production avant de parler de validation E2E.

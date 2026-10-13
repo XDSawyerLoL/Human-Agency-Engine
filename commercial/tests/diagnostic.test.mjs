@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {evaluateDiagnostic} from '../public/diagnostic.js';
+import {readFileSync} from 'node:fs';
+const data={sector:'logistique',risk:'transport',resilience:'medium',backup:false,plan:false,monitor:false};
+test('diagnostic refuse les réponses invalides',()=>{assert.throws(()=>evaluateDiagnostic({...data,risk:'unknown'}));assert.throws(()=>evaluateDiagnostic({...data,sector:''}));});
+test('diagnostic fournit exactement trois mesures pour chaque domaine',()=>{for(const risk of ['energy','supply','weather','transport']){const a=evaluateDiagnostic({...data,risk});assert.equal(a.actions.length,3);assert.equal(a.preparednessCount,0);assert.ok(a.title.includes('Préparer votre entreprise'));}});
+test('contrôles existants affectent les conseils, sans calculer de probabilité',()=>{const a=evaluateDiagnostic({...data,backup:true,plan:true,monitor:true,resilience:'long'});assert.equal(a.preparednessCount,3);assert.equal(a.actions.length,3);assert.doesNotMatch(JSON.stringify(a),/%|probabilit[ée]|certitude/i)});
+test('supporte estimation inconnue et plan court terme',()=>{const u=evaluateDiagnostic({...data,resilience:'unknown'});assert.match(u.summary,/pas encore estimé/);const s=evaluateDiagnostic({...data,resilience:'short'});assert.match(s.summary,/24 heures/)});
+test('le résultat reste strictement local, sans fetch ni analytics',()=>{const js=readFileSync(new URL('../public/diagnostic.js',import.meta.url),'utf8');const html=readFileSync(new URL('../public/diagnostic.html',import.meta.url),'utf8');assert.doesNotMatch(js, /\bfetch\s*\(|sendBeacon|XMLHttpRequest|localStorage/);assert.match(html,/aucune adresse e-mail/i);assert.match(html,/rel="canonical"/);});
