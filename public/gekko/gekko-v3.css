@@ -75,3 +75,16 @@ body.gekko-page{margin:0;background:var(--g-bg);color:var(--g-text);font:15px/1.
 @media(max-width:750px){.gekko-shell{width:min(100% - 30px,620px)}.gekko-hero{padding:67px 0}.gekko-logo-title img{width:60px;height:60px}.gekko-browser-shell{min-height:440px}.gekko-scene{padding:45px 30px 110px;min-height:390px}.gekko-side-rail{right:8px;top:60px}.gekko-side-rail a{width:29px;height:29px}.gekko-side-rail img{width:22px;height:22px}.gekko-bottom-dock{left:8px;right:8px;bottom:8px;padding:8px;gap:6px;min-height:58px}.gekko-dock-nav span:nth-child(n+3){display:none}.gekko-dock-nav span{font-size:15px}.gekko-engine-tag{font-size:9px;padding:7px 6px}.gekko-section{padding:58px 0}.gekko-feature-strip{grid-template-columns:1fr}.gekko-section-header{display:block}.gekko-section-header p{margin-top:15px}.gekko-download{flex-direction:column;align-items:flex-start;padding:28px}}
 @media(max-width:430px){.gekko-quicklinks{grid-template-columns:repeat(2,minmax(0,1fr));max-width:230px}.gekko-browser-shell{min-height:480px}.gekko-scene{min-height:432px}.gekko-dock-nav{display:none}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* Authentic GEKKO Windows preview, replaces the earlier invented browser layout. */
+.gekko-hero{grid-template-columns:minmax(320px,.74fr) minmax(0,1.26fr);gap:37px}
+.gekko-real-shot{position:relative;align-self:center;margin:0;min-width:0}
+.gekko-real-screen{position:relative;overflow:hidden;border:1px solid rgba(141,204,245,.41);border-radius:19px;background:#071c2b;box-shadow:0 35px 85px rgba(0,0,0,.39),0 0 65px rgba(52,170,199,.10);transform:perspective(1500px) rotateY(-2deg);transition:transform .3s ease}
+.gekko-real-screen:hover{transform:perspective(1500px) rotateY(0deg)}
+.gekko-real-screen img{display:block;width:100%;height:auto;aspect-ratio:1441/784;object-fit:cover;background:#062033}
+.gekko-real-shot figcaption{display:flex;gap:10px;align-items:center;margin:15px 4px 0;color:#a4c5e7;font-size:11px;line-height:1.4}
+.gekko-live-dot{display:inline-block;flex:0 0 8px;width:8px;height:8px;background:#77d5ef;border-radius:50%;box-shadow:0 0 0 4px rgba(96,204,240,.11)}
+.gekko-hero-copy{min-width:0}
+@media(max-width:1110px){.gekko-hero{grid-template-columns:1fr}.gekko-real-shot{width:100%;max-width:850px;margin:8px 0 0}.gekko-real-screen{transform:none}}
+@media(max-width:700px){.gekko-real-screen{border-radius:12px}.gekko-real-shot figcaption{font-size:10px;margin-left:3px}}
+@media(prefers-reduced-motion:reduce){.gekko-real-screen{transition:none;transform:none}}
