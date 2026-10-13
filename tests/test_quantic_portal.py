@@ -38,7 +38,9 @@ def test_operational_surfaces_exist():
     assert "Quantic Mail" in dashboard
     assert "Quantic Network" in dashboard
     assert "quanticmail.onrender.com" not in mail
-    assert "Quantic Mail" in mail
+    assert "QuanticMail" in mail or "Retrouvez votre boîte Mail" in mail
+    assert "quantic-mail-id-gate.js" in mail
+    assert "quantic-mail-v7.css" in mail
     assert '/downloads/#network' in network
     assert 'location.replace(\'/downloads/#network\')' in network
     assert 'url=/downloads/' in products
@@ -154,7 +156,6 @@ def test_quantic_desire_visual_system_is_wired():
 def test_quantic_surfaces_share_premium_shell():
     for path in (
         "public/quantic/index.html",
-        "public/mail/index.html",
         "public/downloads/index.html",
         "public/plans/index.html",
     ):
@@ -168,11 +169,14 @@ def test_all_quantic_primary_surfaces_load_unified_providence_visual_layer():
     for path in (
         "public/index.html",
         "public/quantic/index.html",
-        "public/mail/index.html",
         "public/downloads/index.html",
     ):
         page = text(path)
         assert "quantic-unified.css?v=3.0" in page, path
+    mail = text("public/mail/index.html")
+    assert 'quantic-mail-v7.css' in mail
+    assert 'site-nav.js' in mail
+    assert 'quantic-mail-id-gate.js' in mail
     vision = text("public/vision/index.html")
     assert "quantic-vision-home-v8.css?v=8.0" in vision
     assert "providence-v15.css" not in vision
