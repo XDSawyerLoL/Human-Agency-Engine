@@ -34,6 +34,21 @@ jobs:
             d=$(curl --location --silent --show-error --max-time 13 -o /tmp/quanticmail-devices.html -w '%{http_code}' "$URL/mail/devices/" || true)
             a=$(curl --location --silent --show-error --max-time 13 -o /tmp/quanticmail-chunk.js -w '%{http_code}' "$URL/mail/_next/static/chunks/app/devices/page-120fe15f7e0eacfa.js" || true)
             echo "attempt=$i mail=$h devices=$d qr_bundle=$a"
+            if [ "$i" = "1" ]; then
+              for entry in "home:/tmp/quanticmail-home.html" "devices:/tmp/quanticmail-devices.html" "bundle:/tmp/quanticmail-chunk.js"; do
+                label="${entry%%:*}"; file="${entry#*:}"
+                echo "diagnostic_file=$label size=$(wc -c < "$file")"
+                echo "diagnostic_head=$label $(head -c 115 "$file" | tr '\n' ' ')"
+              done
+              for check in \
+                "home_recovery:Retrouvez votre boîte Mail:/tmp/quanticmail-home.html" \
+                "home_gate:quantic-mail-id-gate.js:/tmp/quanticmail-home.html" \
+                "devices_bundle:page-120fe15f7e0eacfa.js:/tmp/quanticmail-devices.html" \
+                "qr_encoder:btoa(Array.from(:/tmp/quanticmail-chunk.js"; do
+                label="${check%%:*}"; payload="${check#*:}"; pattern="${payload%:*}"; file="${payload##*:}"
+                if grep -Fq "$pattern" "$file"; then echo "diagnostic_match=$label true"; else echo "diagnostic_match=$label false"; fi
+              done
+            fi
             if [ "$h" = "200" ] && [ "$d" = "200" ] && [ "$a" = "200" ] \
               && grep -q 'Retrouvez votre boîte Mail' /tmp/quanticmail-home.html \
               && grep -q 'quantic-mail-id-gate.js' /tmp/quanticmail-home.html \
