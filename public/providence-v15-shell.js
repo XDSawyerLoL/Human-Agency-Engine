@@ -108,4 +108,16 @@ if(page==='home'&&document.body?.dataset?.visionNative!=='true'&&!document.query
   script.async=true;
   document.body.appendChild(script);
 }
+/* Quantic site navigation — shared header; preserve Vision subnavigation. */
+if(!document.querySelector('link[href*="/site-nav.css"]')){
+ const navigationCss=document.createElement('link');
+ navigationCss.rel='stylesheet';
+ navigationCss.href='/site-nav.css?v=20261013.1';
+ document.head.appendChild(navigationCss);
+}
+if(!document.querySelector('script[src*="/site-nav.js"]')){
+ const navigationScript=document.createElement('script');
+ navigationScript.src='/site-nav.js?v=20261013.1';
+ document.body.appendChild(navigationScript);
+}
 })();
