@@ -71,3 +71,90 @@ html.pricing-body body.q-body{margin:0;background:#f5f7f9;color:#152329;font-fam
 @media(max-width:1000px){.pricing-grid{grid-template-columns:1fr 1fr}.pricing-card:last-child{grid-column:1/-1}.pricing-card:last-child .pricing-summary{min-height:0}.pricing-hero{padding-top:70px}}
 @media(max-width:680px){.pricing-shell{width:min(100% - 32px,480px)}.pricing-hero{padding:48px 0 35px}.pricing-grid{grid-template-columns:1fr}.pricing-card:last-child{grid-column:auto}.pricing-card{padding:27px 24px}.pricing-heading{display:block}.pricing-heading p{margin-top:12px}.pricing-enterprise{display:block;padding:25px}.pricing-enterprise .pricing-button{margin-top:22px}.pricing-why-grid{grid-template-columns:1fr;gap:16px}.pricing-why{padding-bottom:45px}.pricing-section{padding-bottom:56px}.pricing-footer .pricing-shell{align-items:flex-start;flex-direction:column}.pricing-footer a{margin:0 15px 0 0}.pricing-benefit span{font-size:11px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.pricing-button{transition:none}}
+/* Pricing v2: conversion-first professional service landing page. */
+.pricing-hero{padding:108px 0 76px}
+.pricing-hero h1{max-width:1060px;font-size:clamp(42px,6.2vw,77px);line-height:1.08}
+.pricing-lead{max-width:770px}
+.pricing-hero-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:33px}
+.pricing-hero-actions .pricing-button{min-height:55px;min-width:205px;padding:0 25px;font-size:14px;gap:20px}
+.pricing-primary-action{background:#173b32;color:#fff!important;box-shadow:0 9px 24px #153f301c}
+.pricing-primary-action:hover{background:#2a5947;box-shadow:0 12px 29px #153f3025}
+.pricing-secondary-action{background:#fff;border:1px solid #d2e4db;color:#255c4b}
+.pricing-benefit{margin-top:29px}
+.pricing-benefit span{background:transparent;padding:6px 0;border:0;border-radius:0;font-size:12px;font-weight:650;margin-right:16px}
+.pricing-benefit span:before{content:"✓";display:inline-flex;align-items:center;justify-content:center;margin-right:8px;background:#dcefe6;color:#277d5f;width:18px;height:18px;border-radius:50%}
+.pricing-method{padding:20px 0 66px}
+.pricing-method-head{align-items:end}
+.pricing-method-head .pricing-kicker,.pricing-section .pricing-kicker{margin-bottom:15px}
+.pricing-method-head h2{max-width:600px}
+.pricing-service-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.pricing-service-steps article{background:#fff;border:1px solid #dfe9e5;border-radius:20px;padding:28px 21px 27px;min-width:0;box-shadow:0 13px 34px #1c433009}
+.pricing-step-n{font-weight:800;color:#448b70;font-size:10px;letter-spacing:.13em}
+.pricing-service-steps h3{font-size:18px;font-weight:760;letter-spacing:-.033em;line-height:1.28;color:#1c3732;margin:22px 0 9px}
+.pricing-service-steps p{font-size:13px;line-height:1.64;color:#6a7e78;margin:0}
+.pricing-section{padding:32px 0 80px}
+.pricing-heading h2{max-width:660px}
+.pricing-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.pricing-grid .pricing-card{padding:38px 38px 33px;min-height:510px}
+.pricing-card h3{font-size:33px}
+.pricing-card .pricing-summary{min-height:51px;max-width:480px;font-size:14px}
+.pricing-amount strong{font-size:clamp(42px,4vw,57px)}
+.pricing-card .pricing-amount{margin-top:24px}
+.pricing-card .pricing-includes{letter-spacing:.01em}
+.pricing-card .pricing-cycle{font-size:13px;margin-bottom:24px}
+.pricing-features{gap:16px}
+.pricing-card .pricing-button{gap:12px;font-size:14px}
+.pricing-offer-note{font-size:12px;line-height:1.6;color:#667870;margin:24px 0 0;padding:17px 0 0;border-top:1px solid #dfeae4}
+.pricing-offer-note strong{color:#375c4f}
+.pricing-card.featured .pricing-offer-note{color:#bdd8ca;border-color:#3c5a4e}
+.pricing-card.featured .pricing-offer-note strong{color:#fff}
+.pricing-enterprise{margin-top:22px;padding:35px 38px;background:linear-gradient(120deg,#edf4ef,#fff);gap:24px}
+.pricing-enterprise h3{font-size:27px}
+.pricing-enterprise p{max-width:690px}
+.pricing-enterprise p.pricing-enterprise-rate{margin-top:13px;color:#3c6556;font-weight:650;font-size:13px}
+.pricing-enterprise-rate strong{color:#1a4535}
+.pricing-enterprise .pricing-button{flex:0 0 205px;min-height:51px}
+.pricing-terms{margin-top:25px;font-size:11px}
+.pricing-cta-final{padding:75px 0;background:radial-gradient(ellipse at 87% 5%,#32624b 0,#173a31 49%,#0d2928 100%);color:#f8fdfb}
+.pricing-cta-content{display:flex;align-items:center;justify-content:space-between;gap:44px}
+.pricing-cta-final .pricing-kicker{color:#a4dfc1}
+.pricing-cta-final .pricing-kicker:before{background:#a4dfc1;box-shadow:0 0 0 5px #41705e}
+.pricing-cta-final h2{font-size:clamp(26px,3.3vw,42px);letter-spacing:-.05em;line-height:1.16;margin:20px 0 15px}
+.pricing-cta-final h2 span{color:#b1e7ca}
+.pricing-cta-final p{color:#c5dcd1;max-width:700px;font-size:14px;line-height:1.72;margin:0}
+.pricing-cta-final .pricing-primary-action{flex-shrink:0;padding:17px 24px;background:#dcf9e7;color:#163a2e!important;gap:18px;min-width:240px}
+.pricing-cta-final .pricing-primary-action:hover{background:#fff}
+.pricing-free{display:flex;justify-content:space-between;align-items:center;gap:24px;padding-block:43px 47px}
+.pricing-free h2{font-size:19px;letter-spacing:-.035em;color:#203d34;margin:12px 0 9px}
+.pricing-free p{margin:0;font-size:13px;color:#72817b;line-height:1.55}
+.pricing-free a{font-size:13px;font-weight:750;color:#2c7458;white-space:nowrap}
+.pricing-free a:hover{text-decoration:underline}
+@media(max-width:1000px){
+ .pricing-service-steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .pricing-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .pricing-grid .pricing-card:last-child{grid-column:auto}
+ .pricing-grid .pricing-card{padding:30px 27px}
+ .pricing-cta-content{align-items:flex-start;flex-direction:column;gap:26px}
+}
+@media(max-width:680px){
+ .pricing-hero{padding-top:52px;padding-bottom:50px}
+ .pricing-hero h1{font-size:clamp(38px,9vw,54px)}
+ .pricing-hero-actions{flex-direction:column;align-items:stretch}
+ .pricing-hero-actions .pricing-button{width:100%;min-height:52px}
+ .pricing-benefit{gap:7px 18px}
+ .pricing-benefit span{margin:0}
+ .pricing-method{padding:20px 0 47px}
+ .pricing-service-steps{grid-template-columns:1fr}
+ .pricing-service-steps article{padding:21px 22px}
+ .pricing-service-steps h3{margin-top:11px}
+ .pricing-grid{grid-template-columns:1fr}
+ .pricing-grid .pricing-card{min-height:0;padding:30px 25px}
+ .pricing-grid .pricing-card:last-child{grid-column:auto}
+ .pricing-card .pricing-summary{min-height:0}
+ .pricing-enterprise{padding:27px 24px}
+ .pricing-enterprise .pricing-button{margin-top:22px}
+ .pricing-cta-final{padding:57px 0}
+ .pricing-cta-final .pricing-primary-action{width:100%;min-width:0}
+ .pricing-free{align-items:flex-start;flex-direction:column;gap:18px}
+ .pricing-free a{white-space:normal}
+}
