@@ -13,9 +13,8 @@ def test_gekko_portal_exists_and_links_to_published_build():
     downloads = read("public/downloads/index.html")
 
     assert "<title>GEKKO" in portal
-    assert 'id="gekko-omnibox"' in portal
-    assert 'class="gekko-bottom-dock"' in portal
-    assert 'data-gekko-search' in portal
+    assert 'gekko-interface-reelle.webp' in portal
+    assert 'Interface réelle GEKKO 2.4' in portal
     assert '/assets/brand-2026/gekko-mark.svg' in portal
     assert '/mail/' in portal and '/pulse/' in portal and '/vision/' in portal
     assert '/news/' in portal
@@ -39,28 +38,20 @@ def test_gekko_logo_is_real_crisp_vector_art():
     assert '<circle' in mark and '<path' in mark
 
 
-def test_gekko_preview_matches_actual_glass_layout():
+def test_gekko_page_uses_authenticated_real_screenshot():
     portal = read("public/gekko/index.html")
     css = read("public/gekko/gekko-v3.css")
-    js = read("public/gekko/gekko.js")
+    image = ROOT / "public/gekko/gekko-interface-reelle.webp"
 
-    for marker in (
-        'class="gekko-showcase"',
-        'class="gekko-browser-shell"',
-        'class="gekko-browser-topbar"',
-        'class="gekko-scene"',
-        'class="gekko-side-rail"',
-        'class="gekko-bottom-dock"',
-        'class="gekko-omnibox"',
-        'id="gekko-omnibox"',
-    ):
-        assert marker in portal
-
-    assert 'RECONSTITUTION HTML' in portal
-    assert 'Maquette' not in portal or 'reconstitué' in portal
+    assert image.is_file() and image.stat().st_size > 4000
+    assert image.read_bytes()[:4] == b"RIFF"
+    assert 'class="gekko-showcase"' in portal
+    assert 'class="gekko-real-shot"' in portal
+    assert 'class="gekko-real-screen"' in portal
+    assert 'gekko-interface-reelle.webp' in portal
+    assert 'Capture de l’application Windows' in portal
+    assert 'RECONSTITUTION HTML' not in portal
+    assert 'id="gekko-omnibox"' not in portal
+    assert '.gekko-real-screen img' in css
     assert 'prefers-reduced-motion' in css
-    assert 'backdrop-filter' in css
     assert 'radial-gradient' in css
-    assert 'drop-shadow' in css
-    assert 'search.brave.com' in js
-    assert 'window.open' in js
