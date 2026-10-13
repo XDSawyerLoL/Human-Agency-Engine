@@ -417,3 +417,14 @@ body.pulse-body{
   .pulse-post{padding:15px 14px!important}
   .pulse-rich-card{margin-left:-4px;margin-right:-4px}
 }
+
+/* SOCIAL v23 — native layout below shared Quantic navigation. */
+.pulse-body{--pulse-bg:#f3f6fe;--pulse-ink:#1b2d55;--pulse-line:#dce5f8}
+.pulse-welcome{background:linear-gradient(125deg,#edf5ff,#f0edff)!important;border:1px solid #cfdafa;border-radius:19px;margin:16px 0 20px;padding:25px!important}
+.pulse-welcome-copy h2{color:#132e61}.pulse-welcome-copy p{color:#586f96}
+.pulse-welcome[data-identity-state=checking]{border-color:#85b9f5;background:linear-gradient(125deg,#e9f3ff,#ecebff)!important}
+.pulse-welcome[data-identity-state=error]{border-color:#bcb1fa;background:linear-gradient(125deg,#eef3ff,#f4edff)!important}
+.pulse-welcome-actions>[hidden]{display:none!important}
+@media(min-width:1101px){html.qs-site-nav-enabled .pulse-sidebar,html.qs-site-nav-enabled .pulse-right{top:77px;height:calc(100dvh - 77px)}html.qs-site-nav-enabled .pulse-shell{min-height:calc(100dvh - 77px)}}
+@media(max-width:1100px){.pulse-welcome{margin:12px 9px 18px;padding:20px!important}}
+@media(max-width:650px){.pulse-welcome{grid-template-columns:1fr;padding:18px!important}.pulse-welcome-mark{width:46px;height:46px}.pulse-welcome-actions{flex-direction:column}.pulse-welcome-actions button{width:100%;min-height:45px}}
