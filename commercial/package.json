@@ -1,0 +1,9 @@
+{
+  "name": "horizon-commercial",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=20"},
+  "dependencies": {"@neondatabase/serverless": "^1.0.0"},
+  "scripts": {"test": "node --test", "check": "node --check api/leads.js && node --check api/admin/leads.js && node --check api/admin/stats.js && node --check api/admin/delete.js"}
+}
