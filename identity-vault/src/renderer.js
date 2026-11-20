@@ -5,6 +5,12 @@ const createNote=$("#create-note");
 const unlockCard=$("#unlock-card");
 const unlockIntro=$("#unlock-intro");
 const unlockButton=$("#unlock");
+const unlockPassphrase=$("#unlock-passphrase");
+const unlockPassphraseWrap=$("#unlock-passphrase-wrap");
+const createPassphraseFields=$("#create-passphrase-fields");
+const upgradeForm=$("#upgrade-form");
+const profilePassphrase=$("#profile-passphrase");
+const profilePassphraseWrap=$("#profile-passphrase-wrap");
 const profileForm=$("#profile-form");
 const modeText=$("#mode");
 const locationText=$("#location");
@@ -33,7 +39,13 @@ function humanError(error){
     vault_format_invalid:"Ce fichier n’est pas un coffre Quantic Identity Vault valide.",
     usb_key_missing:"Le fichier d’accès de la clé USB est absent.",
     usb_key_invalid:"Le fichier d’accès USB est invalide.",
-    usb_vault_unlock_failed:"Le coffre et le fichier d’accès USB ne correspondent pas.",
+    usb_vault_unlock_failed:"Le coffre ne peut pas être déchiffré.",
+    usb_passphrase_required:"Une phrase secrète d’au moins 16 caractères est requise, distincte de la clé USB.",
+    usb_passphrase_weak:"Choisissez une phrase plus forte, idéalement cinq mots aléatoires.",
+    usb_passphrase_invalid:"Phrase secrète erronée, clé USB incompatible ou données endommagées.",
+    usb_existing_identity_requires_migration:"Ce coffre existe déjà. Sécurisez-le plutôt que de remplacer une identité liée à SWAPP.",
+    usb_upgrade_not_required:"Ce coffre n’a pas besoin de conversion.",
+    usb_upgrade_required:"Ancien coffre USB clonable : sécurisez-le avec une phrase secrète avant de vous connecter à SWAPP.",
     legacy_vault_requires_code:"Cet ancien coffre a été créé avec l’ancien système de code local.",
     pc_unlock_failed:"Ce coffre PC ne peut pas être déchiffré sur ce compte Windows.",
     profile_photo_invalid:"La photo sélectionnée n’est pas dans un format accepté.",
@@ -103,14 +115,20 @@ function render(status){
   appVersionText.textContent=status.appVersion?"v"+status.appVersion:"";
   modeText.textContent=status.hardwareMode
     ?"Quantic Hardware · P-256 · privée non exportable"
-    :status.vaultMode==="portable"?"Mode portable · présence USB":"Mode PC · chiffrement Windows";
+    :status.usbTwoFactorEnabled?"Mode USB · 2 facteurs"
+    :status.needsUsbUpgrade?"Ancien USB · conversion obligatoire"
+    :status.vaultMode==="portable"?"Mode portable":"Mode PC · chiffrement Windows";
   locationText.textContent=status.vaultPath||"";
   document.body.dataset.mode=status.vaultMode;
 
   createForm.hidden=true;
   unlockCard.hidden=true;
+  upgradeForm.hidden=true;
   profileForm.hidden=true;
   lockButton.hidden=true;
+  createPassphraseFields.hidden=status.vaultMode!=="portable";
+  unlockPassphraseWrap.hidden=!status.usbTwoFactorEnabled;
+  profilePassphraseWrap.hidden=!status.usbTwoFactorEnabled;
   hardwareCard.hidden=status.vaultMode!=="portable";
 
   if(status.hardwareMode){
@@ -127,6 +145,13 @@ function render(status){
     else hardwareText("Option renforcée : identité non copiable avec une Quantic Hardware Key.","idle");
   }
 
+  if(status.identityAvailable&&status.needsUsbUpgrade){
+    statusBox.dataset.state="error";
+    statusBox.innerHTML="<strong>Migration obligatoire avant connexion</strong><span>Le secret de l’ancienne clé USB était clonable. Définissez une phrase secrète indépendante.</span>";
+    upgradeForm.hidden=false;
+    lockButton.hidden=false;
+    return;
+  }
   if(status.identityAvailable){
     statusBox.dataset.state="ready";
     const hardware=status.hardwareMode?" · HARDWARE":"";
@@ -156,8 +181,12 @@ function render(status){
   if(status.vaultExists&&status.vaultMode==="portable"){
     if(status.usbPresenceAvailable){
       statusBox.dataset.state="locked";
-      statusBox.innerHTML="<strong>Identity Vault verrouillé</strong><span>Clé USB détectée. Cliquez simplement sur Déverrouiller.</span>";
-      unlockIntro.textContent="La clé USB est détectée. Aucun code n’est nécessaire.";
+      statusBox.innerHTML=status.needsUsbUpgrade
+        ?"<strong>Ancien coffre USB clonable</strong><span>Déverrouillez-le puis configurez une phrase secrète indépendante.</span>"
+        :"<strong>Identity Vault verrouillé</strong><span>Clé USB détectée. Phrase secrète nécessaire.</span>";
+      unlockIntro.textContent=status.needsUsbUpgrade
+        ?"Ancien coffre : après déverrouillage, migration obligatoire avant signature."
+        :"Entrez la phrase secrète distincte de la clé USB.";
       unlockCard.hidden=false;
     }else{
       statusBox.dataset.state="error";
@@ -176,7 +205,7 @@ function render(status){
 
   statusBox.dataset.state="empty";
   statusBox.innerHTML="<strong>Aucune identité</strong><span>Créez votre Quantic ID ou associez une Quantic Hardware Key.</span>";
-  createNote.textContent="Le mode USB standard ne demande aucun code local. Le mode Hardware conserve la clé privée hors du stockage USB.";
+  createNote.textContent="Un nouveau coffre USB exige une phrase secrète indépendante ; la clé Hardware conserve sa clé privée dans un composant sécurisé.";
   createForm.hidden=false;
 }
 
@@ -194,7 +223,10 @@ createForm.addEventListener("submit",async event=>{
   event.preventDefault();
   const data=new FormData(createForm);
   try{
-    const result=await window.IdentityVault.create({label:data.get("label"),profile:basicProfileFromCreate()});
+    const passphrase=String(data.get("usbPassphrase")||"");
+    if(lastStatus?.vaultMode==="portable"&&passphrase!==String(data.get("usbPassphraseConfirm")||""))
+      throw Error("Les deux phrases secrètes ne correspondent pas.");
+    const result=await window.IdentityVault.create({label:data.get("label"),profile:basicProfileFromCreate(),usbPassphrase:passphrase});
     render(result);
     createForm.reset();
   }catch(error){alert(humanError(error))}
@@ -206,12 +238,26 @@ unlockButton.addEventListener("click",async()=>{
       const unlocked=await window.QuanticHardware.unlock(lastStatus.hardwareDeviceId);
       render(await window.IdentityVault.unlockHardware(unlocked));
     }else{
-      render(await window.IdentityVault.unlock());
+      render(await window.IdentityVault.unlock({usbPassphrase:unlockPassphrase.value}));
+      unlockPassphrase.value="";
     }
   }catch(error){
     statusBox.dataset.state="error";
     statusBox.innerHTML="<strong>Déverrouillage impossible</strong><span>"+escapeHtml(humanError(error))+"</span>";
   }
+});
+
+upgradeForm.addEventListener("submit",async event=>{
+  event.preventDefault();
+  const data=new FormData(upgradeForm);
+  const phrase=String(data.get("usbPassphrase")||"");
+  if(phrase!==String(data.get("usbPassphraseConfirm")||"")){alert("Les deux phrases secrètes ne correspondent pas.");return}
+  try{
+    const result=await window.IdentityVault.migrateUsb({usbPassphrase:phrase});
+    upgradeForm.reset();
+    render(result);
+    alert("Coffre migré sans changer le Quantic ID. Conservez votre phrase secrète hors de la clé USB. Révoquez l’ancienne clé si une copie a déjà pu être volée.");
+  }catch(error){alert(humanError(error))}
 });
 
 profileForm.addEventListener("submit",async event=>{
@@ -222,7 +268,8 @@ profileForm.addEventListener("submit",async event=>{
       const unlocked=await window.QuanticHardware.unlock(lastStatus.hardwareDeviceId);
       hardwareVaultKey=unlocked.vaultKey;
     }
-    const result=await window.IdentityVault.updateProfile(profileFromForm(profileForm),hardwareVaultKey);
+    const result=await window.IdentityVault.updateProfile(profileFromForm(profileForm),hardwareVaultKey,profilePassphrase.value);
+    profilePassphrase.value="";
     render(result);
   }catch(error){alert(humanError(error))}
 });
