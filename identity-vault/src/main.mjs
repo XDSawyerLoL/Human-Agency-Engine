@@ -155,7 +155,7 @@ function saveRecord(record){
 }
 
 function readUsbUnlockToken(record=loadRecord()){
-  if(record?.mode!=="portable"||record?.unlockMode!=="usb-presence")throw new Error("usb_presence_not_supported");
+  if(record?.mode!=="portable"||!["usb-presence",USB_PASSPHRASE_MODE].includes(record?.unlockMode))throw new Error("usb_presence_not_supported");
   const path=keyPathFor();
   if(!existsSync(path))throw new Error("usb_key_missing");
   const token=String(readFileSync(path,"utf8")||"").trim();
@@ -342,7 +342,7 @@ function unlockIdentity({usbPassphrase=""}={}){
   if(record.mode==="portable"){
     if(![USB_PASSPHRASE_MODE,"usb-presence"].includes(record.unlockMode))throw Error("legacy_vault_requires_code");
     try{
-      const token=readUsbUnlockToken({...record,unlockMode:"usb-presence"});
+      const token=readUsbUnlockToken(record);
       secretValue=record.unlockMode===USB_PASSPHRASE_MODE
         ?decryptUsbPassphrase(record.encryptedSecret,token,usbPassphrase)
         :decryptPortableRecord(record,token);
@@ -407,7 +407,7 @@ function updateProfile(profile={},hardwareVaultKey="",usbPassphrase=""){
     encryptedSecret=encryptPortable(secret,key);
   }else if(record.mode==="portable"){
     if(record.unlockMode!==USB_PASSPHRASE_MODE)throw Error("usb_upgrade_required");
-    const token=readUsbUnlockToken({...record,unlockMode:"usb-presence"});
+    const token=readUsbUnlockToken(record);
     // Ensure the correct phrase is supplied before updating. Otherwise a
     // typo could irreversibly rewrite a valid identity with a new phrase.
     try{decryptUsbPassphrase(record.encryptedSecret,token,usbPassphrase)}
