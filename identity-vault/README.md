@@ -74,3 +74,20 @@ En mode Hardware, `/v1/assert` transmet le payload au périphérique QHK/1 et re
 Créer une identité Hardware produit nécessairement une **nouvelle paire cryptographique** et donc un nouveau `qid_...`.
 
 Avant remplacement du coffre actif, Identity Vault sauvegarde automatiquement le coffre existant.
+
+
+## Compatibilité SWAPP.TV — v0.4.1
+
+La version 0.4.1 (20 novembre 2026) autorise spécifiquement les origines HTTPS `https://swapp.tv` et `https://www.swapp.tv` pour la **présence Quantic ID optionnelle**.
+
+- Installer l'édition Windows v0.4.1 sur le même PC que le navigateur.
+- Lancer Identity Vault, puis déverrouiller l'identité.
+- Ouvrir `https://swapp.tv/compte`, puis cliquer « Activer ma présence Quantic ID ».
+- Si Chrome ou Edge le demande, autoriser l'accès de SWAPP aux **applications sur cet appareil** (réseau local / loopback). Ne jamais désactiver la sécurité générale du navigateur.
+- Dans Identity Vault, confirmer le domaine `swapp.tv` dans la boîte de dialogue Quantic ID ; sans cet accord, aucune preuve n'est émise.
+- L'autorisation d'un site n'est conservée qu'en mémoire pour la session déverrouillée. Le verrouillage du coffre annule l'autorisation et les preuves de présence ne peuvent plus être renouvelées.
+- Le test direct `http://127.0.0.1:47621/v1/status` permet uniquement de savoir si le bridge local est lancé. Son état public est restreint pour les origines non autorisées.
+
+Une erreur « Failed to fetch » sur SWAPP peut signifier que l'application est absente, que la version est trop ancienne ou qu'Edge/Chrome a refusé la connexion locale. Le site doit afficher un diagnostic précis au lieu de ce message générique.
+
+La présence Quantic ID sur SWAPP n'accorde **aucun accès à un compte SWAPP existant**. Les comptes SWAPP, leurs messages et leurs droits ne sont pas migrés par cette mise à jour.
