@@ -163,7 +163,7 @@ function readUsbUnlockToken(record=loadRecord()){
   return token;
 }
 function usbPresenceAvailable(record=loadRecord()){
-  if(record?.mode!=="portable"||record?.unlockMode!=="usb-presence")return false;
+  if(record?.mode!=="portable"||!["usb-presence",USB_PASSPHRASE_MODE].includes(record?.unlockMode))return false;
   try{return readUsbUnlockToken(record).length>=32}catch{return false}
 }
 function backupExistingPortableVault(target=ensureVaultPath()){
@@ -199,7 +199,7 @@ function parseSecret(value){
 function publicStatus(){
   const record=loadRecord();
   if(activeIdentity&&!record)activeIdentity=null;
-  if(activeIdentity&&record?.mode==="portable"&&record?.unlockMode==="usb-presence"&&!usbPresenceAvailable(record)){
+  if(activeIdentity&&record?.mode==="portable"&&["usb-presence",USB_PASSPHRASE_MODE].includes(record?.unlockMode)&&!usbPresenceAvailable(record)){
     activeIdentity=null;
     approvedWebOrigins.clear();
   }
@@ -283,6 +283,7 @@ function createHardwareIdentity({label="",profile={},deviceId="",publicKey="",ke
   const suggestedLabel=normalizedProfile.preferredName||[normalizedProfile.firstName,normalizedProfile.lastName].filter(Boolean).join(" ");
   const identityLabel=String(label||suggestedLabel||"Mon identité Quantic Hardware").trim().slice(0,80)||"Mon identité Quantic Hardware";
   const target=ensureVaultPath();
+  if(loadRecord()?.unlockMode==="usb-presence")throw Error("usb_upgrade_required");
   backupExistingPortableVault(target);
   const encryptedSecret=encryptPortable(secretPayload("",normalizedProfile),secretKey);
   saveRecord({
@@ -475,7 +476,7 @@ function startPresenceMonitor(){
     // background polling. The Vault must not remain unlocked indefinitely.
     try{if(powerMonitor.getSystemIdleTime()>=VAULT_IDLE_LOCK_SECONDS){lockIdentity();return;}}catch{}
     const record=loadRecord();
-    if(!record||(record.mode==="portable"&&record.unlockMode==="usb-presence"&&!usbPresenceAvailable(record))){
+    if(!record||(record.mode==="portable"&&["usb-presence",USB_PASSPHRASE_MODE].includes(record.unlockMode)&&!usbPresenceAvailable(record))){
       activeIdentity=null;
       approvedWebOrigins.clear();
     }
