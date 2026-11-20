@@ -16,7 +16,7 @@ function requireToken(token){
 function requirePhrase(phrase){
  if(typeof phrase!=='string'||phrase.length<16||phrase.length>256||phrase.trim().length<16)
   throw Error('usb_passphrase_required');
- if(/^(.{1,4})\1{3,}$/.test(phrase))throw Error('usb_passphrase_weak');
+ if(/^(.{1,4})\1{3,}$/.test(phrase)||/^\d+$/.test(phrase))throw Error('usb_passphrase_weak');
  return phrase;
 }
 function keyFor(phrase,token,salt){
