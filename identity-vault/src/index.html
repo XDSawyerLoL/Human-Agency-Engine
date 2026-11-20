@@ -18,7 +18,7 @@
     <section class="hero">
       <p class="kicker">QUANTIC ID</p>
       <h2>Votre identité reste chez vous.</h2>
-      <p>Mode USB simple sans code ou mode Quantic Hardware : dans ce dernier, la clé privée est créée dans un composant sécurisé et n’est jamais écrite dans le coffre USB.</p>
+      <p>Mode USB à deux facteurs : la clé USB et une phrase secrète distincte. Pour empêcher toute exportation de clé privée, utiliser une véritable Quantic Hardware Key.</p>
     </section>
 
     <section id="status" class="status" data-state="checking"><strong>Chargement…</strong></section>
@@ -47,20 +47,46 @@
 
     <form id="create-form" class="card" hidden>
       <h3>Créer mon Quantic ID</h3>
-      <p class="card-intro" id="create-note">Le coffre sera protégé par la présence physique de la clé USB. Aucun code local ne sera créé.</p>
+      <p class="card-intro" id="create-note">Une copie des fichiers USB ne suffira plus à ouvrir le coffre : une phrase secrète indépendante est obligatoire.</p>
       <div class="form-grid">
         <label class="wide">Nom de l’identité<input name="label" maxlength="80" value="Mon identité Quantic" required></label>
         <label>Prénom<input name="firstName" maxlength="100"></label>
         <label>Nom<input name="lastName" maxlength="100"></label>
       </div>
-      <button type="submit">Créer l’identité USB</button>
+      <div id="create-passphrase-fields" class="form-grid">
+        <label class="wide">Phrase secrète USB (16 caractères minimum, idéalement 5 mots aléatoires)
+          <input name="usbPassphrase" type="password" minlength="16" maxlength="256" autocomplete="new-password">
+        </label>
+        <label class="wide">Confirmer la phrase secrète
+          <input name="usbPassphraseConfirm" type="password" minlength="16" maxlength="256" autocomplete="new-password">
+        </label>
+        <small class="wide">Ne stockez jamais cette phrase sur la clé USB. Sans elle, le coffre sera irrécupérable ; conservez une sauvegarde dans un lieu distinct.</small>
+      </div>
+      <button type="submit">Créer l’identité USB protégée</button>
     </form>
 
     <section id="unlock-card" class="card" hidden>
       <h3>Identity Vault verrouillé</h3>
       <p id="unlock-intro" class="card-intro">La clé USB est détectée. Aucun code n’est nécessaire.</p>
+      <label id="unlock-passphrase-wrap" hidden>Phrase secrète USB
+        <input id="unlock-passphrase" type="password" minlength="16" maxlength="256" autocomplete="off">
+      </label>
       <button id="unlock" type="button">Déverrouiller</button>
     </section>
+
+    <form id="upgrade-form" class="card" hidden>
+      <h3>Sécuriser l'ancien coffre USB</h3>
+      <p class="card-intro">Cet ancien coffre s'ouvrait avec les fichiers copiables de la clé. Ajoutez une phrase secrète indépendante sans changer votre Quantic ID ni votre compte SWAPP. Les éventuelles anciennes copies restent utilisables jusqu’à révocation/rotation de l’identité.</p>
+      <div class="form-grid">
+        <label class="wide">Nouvelle phrase secrète (16 caractères minimum)
+          <input name="usbPassphrase" type="password" minlength="16" maxlength="256" autocomplete="new-password" required>
+        </label>
+        <label class="wide">Confirmer la phrase secrète
+          <input name="usbPassphraseConfirm" type="password" minlength="16" maxlength="256" autocomplete="new-password" required>
+        </label>
+      </div>
+      <button type="submit">Sécuriser mon coffre sans changer d’identité</button>
+    </form>
 
     <form id="profile-form" class="card profile-card" hidden>
       <div class="profile-heading">
@@ -118,6 +144,9 @@
         <label class="wide">Informations complémentaires<textarea name="notes" maxlength="2000" rows="4"></textarea></label>
       </div>
 
+      <label id="profile-passphrase-wrap" class="wide" hidden>Phrase secrète USB pour enregistrer
+        <input id="profile-passphrase" type="password" minlength="16" maxlength="256" autocomplete="off">
+      </label>
       <button type="submit">Enregistrer dans le coffre</button>
     </form>
 
