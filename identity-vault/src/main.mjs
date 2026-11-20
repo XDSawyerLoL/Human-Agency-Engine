@@ -1,4 +1,4 @@
-import {app,BrowserWindow,dialog,ipcMain,safeStorage,shell} from "electron";
+import {app,BrowserWindow,dialog,ipcMain,powerMonitor,safeStorage,shell} from "electron";
 import {createServer} from "node:http";
 import {createHash,createPublicKey} from "node:crypto";
 import {copyFileSync,existsSync,mkdirSync,readFileSync,unlinkSync,writeFileSync} from "node:fs";
@@ -30,6 +30,7 @@ let presenceTimer=null;
 let hardwarePermissionConfigured=false;
 const pendingHardwareSigns=new Map();
 const approvedWebOrigins=new Set();
+const VAULT_IDLE_LOCK_SECONDS=15*60;
 function siteApprovalKey(origin){return String(activeIdentity?.keyId||"")+"|"+origin;}
 function isInternalMailOrigin(origin){return origin==="http://127.0.0.1:18787"||origin==="http://localhost:18787";}
 function mayRevealPublicIdentity(origin){
@@ -37,8 +38,10 @@ function mayRevealPublicIdentity(origin){
 }
 function approveQuanticSiteOrigin(origin,audience){
  if(!origin||!localOriginAllowed(origin))throw new Error("site_origin_not_allowed");
- if(isInternalMailOrigin(origin)&&audience==="quantic-mail-desktop")return;
- if(audience!==origin)throw new Error("quantic_audience_must_match_site");
+ // Local Quantic Mail must request explicit user approval too. Previously its
+ // local Origin + fixed audience bypassed the confirmation entirely.
+ const internalMail=isInternalMailOrigin(origin)&&audience==="quantic-mail-desktop";
+ if(!internalMail&&audience!==origin)throw new Error("quantic_audience_must_match_site");
  if(!activeIdentity)throw new Error("identity_locked");
  const key=siteApprovalKey(origin);
  if(approvedWebOrigins.has(key))return;
@@ -412,6 +415,13 @@ async function loadVaultFile(){
 function lockIdentity(){
   activeIdentity=null;
   approvedWebOrigins.clear();
+  // A Windows screen lock or suspend also invalidates outstanding hardware
+  // signature requests; a late reply cannot reactivate the key.
+  for(const pending of pendingHardwareSigns.values()){
+    clearTimeout(pending.timer);
+    pending.reject(new Error("identity_locked"));
+  }
+  pendingHardwareSigns.clear();
   return publicStatus();
 }
 function tryAutoUnlockInstalled(){
@@ -424,6 +434,9 @@ function startPresenceMonitor(){
   if(presenceTimer)clearInterval(presenceTimer);
   presenceTimer=setInterval(()=>{
     if(!activeIdentity)return;
+    // Windows idle includes time without mouse/keyboard input, unlike SWAPP's
+    // background polling. The Vault must not remain unlocked indefinitely.
+    try{if(powerMonitor.getSystemIdleTime()>=VAULT_IDLE_LOCK_SECONDS){lockIdentity();return;}}catch{}
     const record=loadRecord();
     if(!record||(record.mode==="portable"&&record.unlockMode==="usb-presence"&&!usbPresenceAvailable(record))){
       activeIdentity=null;
@@ -583,6 +596,9 @@ ipcMain.handle("vault:reveal-location",()=>{
 
 app.whenReady().then(()=>{
   ensureVaultPath();
+  // Electron's OS session notifications are not browser heuristics.
+  powerMonitor.on("lock-screen",lockIdentity);
+  powerMonitor.on("suspend",lockIdentity);
   tryAutoUnlockInstalled();
   startPresenceMonitor();
   startBridge();
@@ -598,5 +614,5 @@ app.on("before-quit",()=>{
   }
   pendingHardwareSigns.clear();
   bridge?.close();
-  activeIdentity=null;
+  lockIdentity();
 });
