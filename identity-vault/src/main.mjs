@@ -1,10 +1,11 @@
 import {app,BrowserWindow,dialog,ipcMain,powerMonitor,safeStorage,shell} from "electron";
 import {createServer} from "node:http";
-import {createHash,createPublicKey} from "node:crypto";
-import {copyFileSync,existsSync,mkdirSync,readFileSync,unlinkSync,writeFileSync} from "node:fs";
+import {createHash,createPublicKey,randomBytes} from "node:crypto";
+import {copyFileSync,existsSync,mkdirSync,readFileSync,renameSync,unlinkSync,writeFileSync} from "node:fs";
 import {dirname,join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {generateIdentity,generateUsbUnlockToken,encryptPortable,decryptPortableRecord,normalizeIdentityProfile,assertionPayload,signAssertion} from "./vault-core.mjs";
+import {USB_PASSPHRASE_MODE,encryptUsbPassphrase,decryptUsbPassphrase} from "./usb-two-factor.mjs";
 
 const __dirname=dirname(fileURLToPath(import.meta.url));
 const HOST="127.0.0.1";
@@ -145,7 +146,12 @@ function loadRecord(){
 function saveRecord(record){
   const path=ensureVaultPath();
   mkdirSync(dirname(path),{recursive:true});
-  writeFileSync(path,JSON.stringify(record,null,2),{encoding:"utf8",mode:0o600});
+  // Write and rename in the same directory to avoid truncating a valid key on crash.
+  const tmp=path+".tmp-"+randomBytes(8).toString("hex");
+  try{
+    writeFileSync(tmp,JSON.stringify(record,null,2),{encoding:"utf8",mode:0o600,flag:"wx"});
+    renameSync(tmp,path);
+  }finally{if(existsSync(tmp))try{unlinkSync(tmp)}catch{}}
 }
 
 function readUsbUnlockToken(record=loadRecord()){
@@ -198,7 +204,8 @@ function publicStatus(){
     approvedWebOrigins.clear();
   }
   const hardwareMode=record?.unlockMode===HARDWARE_UNLOCK_MODE;
-  const legacyVault=Boolean(record?.mode==="portable"&&!["usb-presence",HARDWARE_UNLOCK_MODE].includes(record?.unlockMode));
+  const legacyVault=Boolean(record?.mode==="portable"&&!["usb-presence",USB_PASSPHRASE_MODE,HARDWARE_UNLOCK_MODE].includes(record?.unlockMode));
+  const needsUsbUpgrade=Boolean(record?.mode==="portable"&&record?.unlockMode==="usb-presence");
   return {
     product:"Quantic Identity Vault",
     version:5,
@@ -217,6 +224,8 @@ function publicStatus(){
     identityAvailable:Boolean(activeIdentity),
     usbPresenceAvailable:usbPresenceAvailable(record),
     legacyVault,
+    needsUsbUpgrade,
+    usbTwoFactorEnabled:record?.unlockMode===USB_PASSPHRASE_MODE,
     keyId:activeIdentity?.keyId||record?.keyId||null,
     label:activeIdentity?.label||record?.label||null,
     publicKey:activeIdentity?.publicKey||record?.publicKey||null,
@@ -227,7 +236,7 @@ function publicStatus(){
   };
 }
 
-function createIdentity({label="",profile={}}={}){
+function createIdentity({label="",profile={},usbPassphrase=""}={}){
   const normalizedProfile=normalizeIdentityProfile(profile);
   const suggestedLabel=normalizedProfile.preferredName||[normalizedProfile.firstName,normalizedProfile.lastName].filter(Boolean).join(" ");
   const identity=generateIdentity(label||suggestedLabel||"Mon identité Quantic");
@@ -236,21 +245,23 @@ function createIdentity({label="",profile={}}={}){
 
   if(isPortable){
     const target=ensureVaultPath();
-    backupExistingPortableVault(target);
+    // Never overwrite a registered identity or preserve a copyable old
+    // private key in an automatic backup. Use the in-place upgrade instead.
+    if(existsSync(target))throw Error("usb_existing_identity_requires_migration");
     const token=generateUsbUnlockToken();
-    const encryptedSecret=encryptPortable(secret,token);
-    writeFileSync(keyPathFor(target),token,{encoding:"utf8",mode:0o600});
-    saveRecord({
-      version:5,
-      mode:"portable",
-      unlockMode:"usb-presence",
-      algorithm:"ed25519",
-      keyId:identity.keyId,
-      label:identity.label,
-      publicKey:identity.publicKey,
-      encryptedSecret,
-      createdAt
-    });
+    const encryptedSecret=encryptUsbPassphrase(secret,token,usbPassphrase);
+    // Store the random USB factor only on the USB; NEVER store the passphrase.
+    writeFileSync(keyPathFor(target),token,{encoding:"utf8",mode:0o600,flag:"wx"});
+    try{
+      saveRecord({
+        version:6,mode:"portable",unlockMode:USB_PASSPHRASE_MODE,
+        algorithm:"ed25519",keyId:identity.keyId,label:identity.label,
+        publicKey:identity.publicKey,encryptedSecret,createdAt
+      });
+    }catch(error){
+      try{unlinkSync(keyPathFor(target))}catch{}
+      throw error;
+    }
     activeIdentity={...identity,algorithm:"ed25519",profile:normalizedProfile};
   }else{
     if(!safeStorage.isEncryptionAvailable())throw new Error("system_encryption_unavailable");
@@ -322,19 +333,22 @@ function unlockHardwareIdentity({deviceId="",vaultKey=""}={}){
   return publicStatus();
 }
 
-function unlockIdentity(){
+function unlockIdentity({usbPassphrase=""}={}){
   const record=loadRecord();
   if(!record)throw new Error("vault_not_found");
   if(record.unlockMode===HARDWARE_UNLOCK_MODE)throw new Error("hardware_unlock_required");
   let secretValue="";
   if(record.mode==="portable"){
-    if(record.unlockMode!=="usb-presence")throw new Error("legacy_vault_requires_code");
+    if(![USB_PASSPHRASE_MODE,"usb-presence"].includes(record.unlockMode))throw Error("legacy_vault_requires_code");
     try{
-      secretValue=decryptPortableRecord(record,readUsbUnlockToken(record));
+      const token=readUsbUnlockToken({...record,unlockMode:"usb-presence"});
+      secretValue=record.unlockMode===USB_PASSPHRASE_MODE
+        ?decryptUsbPassphrase(record.encryptedSecret,token,usbPassphrase)
+        :decryptPortableRecord(record,token);
     }catch(error){
       const code=String(error?.message||error);
-      if(["usb_key_missing","usb_key_invalid"].includes(code))throw error;
-      throw new Error("usb_vault_unlock_failed");
+      if(["usb_key_missing","usb_key_invalid","usb_passphrase_required","usb_passphrase_weak","usb_passphrase_invalid"].includes(code))throw error;
+      throw Error("usb_vault_unlock_failed");
     }
   }else if(record.mode==="pc"){
     if(!safeStorage.isEncryptionAvailable())throw new Error("system_encryption_unavailable");
@@ -358,7 +372,25 @@ function unlockIdentity(){
   return publicStatus();
 }
 
-function updateProfile(profile={},hardwareVaultKey=""){
+function migrateLegacyUsb({usbPassphrase=""}={}){
+  const record=loadRecord();
+  if(record?.mode!=="portable"||record.unlockMode!=="usb-presence")
+    throw Error("usb_upgrade_not_required");
+  if(!activeIdentity?.privateKeyPem||activeIdentity.keyId!==record.keyId)
+    throw Error("identity_locked");
+  const token=readUsbUnlockToken(record);
+  // Preserve the same public identity: existing SWAPP associations still work.
+  // Historical cloned backups remain a risk until this key is rotated.
+  const encryptedSecret=encryptUsbPassphrase(
+    secretPayload(activeIdentity.privateKeyPem,activeIdentity.profile),token,usbPassphrase);
+  saveRecord({...record,version:6,unlockMode:USB_PASSPHRASE_MODE,
+    encryptedSecret,updatedAt:new Date().toISOString()});
+  approvedWebOrigins.clear();
+  activeIdentity=null;
+  return publicStatus();
+}
+
+function updateProfile(profile={},hardwareVaultKey="",usbPassphrase=""){
   if(!activeIdentity)throw new Error("identity_locked");
   const record=loadRecord();
   if(!record)throw new Error("vault_not_found");
@@ -373,8 +405,13 @@ function updateProfile(profile={},hardwareVaultKey=""){
     if(key.length<32)throw new Error("hardware_vault_key_required");
     encryptedSecret=encryptPortable(secret,key);
   }else if(record.mode==="portable"){
-    if(record.unlockMode!=="usb-presence")throw new Error("legacy_vault_requires_code");
-    encryptedSecret=encryptPortable(secret,readUsbUnlockToken(record));
+    if(record.unlockMode!==USB_PASSPHRASE_MODE)throw Error("usb_upgrade_required");
+    const token=readUsbUnlockToken({...record,unlockMode:"usb-presence"});
+    // Ensure the correct phrase is supplied before updating. Otherwise a
+    // typo could irreversibly rewrite a valid identity with a new phrase.
+    try{decryptUsbPassphrase(record.encryptedSecret,token,usbPassphrase)}
+    catch{throw Error("usb_passphrase_invalid")}
+    encryptedSecret=encryptUsbPassphrase(secret,token,usbPassphrase);
   }else{
     if(!safeStorage.isEncryptionAvailable())throw new Error("system_encryption_unavailable");
     encryptedSecret=safeStorage.encryptString(secret).toString("base64");
@@ -502,6 +539,8 @@ function startBridge(){
     }
     if(url.pathname==="/v1/assert"&&req.method==="POST"){
       if(!activeIdentity)return json(res,423,{error:"identity_locked"},cors);
+      // Old removable-storage keys are copyable. Require migration before signing.
+      if(loadRecord()?.unlockMode==="usb-presence")return json(res,426,{error:"usb_upgrade_required"},cors);
       try{
         const body=await readJsonBody(req);
         const input={
@@ -563,9 +602,10 @@ ipcMain.handle("vault:status",()=>publicStatus());
 ipcMain.handle("vault:create",(_event,options)=>createIdentity(options||{}));
 ipcMain.handle("vault:create-hardware",(_event,options)=>createHardwareIdentity(options||{}));
 ipcMain.handle("vault:load-file",()=>loadVaultFile());
-ipcMain.handle("vault:unlock",()=>unlockIdentity());
+ipcMain.handle("vault:unlock",(_event,options)=>unlockIdentity(options||{}));
+ipcMain.handle("vault:migrate-usb",(_event,options)=>migrateLegacyUsb(options||{}));
 ipcMain.handle("vault:unlock-hardware",(_event,options)=>unlockHardwareIdentity(options||{}));
-ipcMain.handle("vault:update-profile",(_event,{profile,hardwareVaultKey}={})=>updateProfile(profile||{},hardwareVaultKey||""));
+ipcMain.handle("vault:update-profile",(_event,{profile,hardwareVaultKey,usbPassphrase}={})=>updateProfile(profile||{},hardwareVaultKey||"",usbPassphrase||""));
 ipcMain.handle("vault:lock",()=>lockIdentity());
 ipcMain.handle("vault:hardware-disconnected",(_event,{deviceId}={})=>{
   if(activeIdentity?.algorithm===HARDWARE_ALGORITHM&&(!deviceId||deviceId===activeIdentity.hardwareDeviceId)){
