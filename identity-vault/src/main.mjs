@@ -17,7 +17,9 @@ const HARDWARE_PRODUCT_ID=0x5148;
 const isPortable=Boolean(process.env.PORTABLE_EXECUTABLE_DIR);
 const allowedOrigins=new Set([
   "https://mediumorchid-badger-314305.hostingersite.com",
-  "https://xdsawyerlol.github.io"
+  "https://xdsawyerlol.github.io",
+  "https://swapp.tv",
+  "https://www.swapp.tv"
 ]);
 
 let vaultPath="";
@@ -27,6 +29,30 @@ let bridgeError="";
 let presenceTimer=null;
 let hardwarePermissionConfigured=false;
 const pendingHardwareSigns=new Map();
+const approvedWebOrigins=new Set();
+function siteApprovalKey(origin){return String(activeIdentity?.keyId||"")+"|"+origin;}
+function isInternalMailOrigin(origin){return origin==="http://127.0.0.1:18787"||origin==="http://localhost:18787";}
+function mayRevealPublicIdentity(origin){
+ return isInternalMailOrigin(origin)||(Boolean(activeIdentity)&&approvedWebOrigins.has(siteApprovalKey(origin)));
+}
+function approveQuanticSiteOrigin(origin,audience){
+ if(!origin||!localOriginAllowed(origin))throw new Error("site_origin_not_allowed");
+ if(isInternalMailOrigin(origin)&&audience==="quantic-mail-desktop")return;
+ if(audience!==origin)throw new Error("quantic_audience_must_match_site");
+ if(!activeIdentity)throw new Error("identity_locked");
+ const key=siteApprovalKey(origin);
+ if(approvedWebOrigins.has(key))return;
+ const options={
+   type:"question",title:"Quantic ID · autorisation de site",
+   message:"Autoriser ce site à vérifier votre identité Quantic ID ?",
+   detail:origin+"\n\nLe site recevra votre clé publique et une preuve signée pour cette session, jamais votre clé privée. Le verrouillage révoque l’autorisation.",
+   buttons:["Refuser","Autoriser pour cette session"],defaultId:0,cancelId:0,noLink:true
+ };
+ const owner=BrowserWindow.getFocusedWindow()||BrowserWindow.getAllWindows()[0];
+ const answer=owner?dialog.showMessageBoxSync(owner,options):dialog.showMessageBoxSync(options);
+ if(answer!==1)throw new Error("quantic_site_authorization_denied");
+ approvedWebOrigins.add(key);
+}
 
 function localOriginAllowed(origin){
   if(!origin)return true;
@@ -166,6 +192,7 @@ function publicStatus(){
   if(activeIdentity&&!record)activeIdentity=null;
   if(activeIdentity&&record?.mode==="portable"&&record?.unlockMode==="usb-presence"&&!usbPresenceAvailable(record)){
     activeIdentity=null;
+    approvedWebOrigins.clear();
   }
   const hardwareMode=record?.unlockMode===HARDWARE_UNLOCK_MODE;
   const legacyVault=Boolean(record?.mode==="portable"&&!["usb-presence",HARDWARE_UNLOCK_MODE].includes(record?.unlockMode));
@@ -378,11 +405,13 @@ async function loadVaultFile(){
   readRecordAt(selected);
   vaultPath=selected;
   activeIdentity=null;
+  approvedWebOrigins.clear();
   return publicStatus();
 }
 
 function lockIdentity(){
   activeIdentity=null;
+  approvedWebOrigins.clear();
   return publicStatus();
 }
 function tryAutoUnlockInstalled(){
@@ -398,6 +427,7 @@ function startPresenceMonitor(){
     const record=loadRecord();
     if(!record||(record.mode==="portable"&&record.unlockMode==="usb-presence"&&!usbPresenceAvailable(record))){
       activeIdentity=null;
+      approvedWebOrigins.clear();
     }
   },1000);
 }
@@ -449,9 +479,9 @@ function startBridge(){
         appVersion:status.appVersion,
         vaultFormatVersion:status.formatVersion,
         identityAvailable:status.identityAvailable,
-        keyId:status.keyId,
-        label:status.label,
-        publicKey:status.publicKey,
+        keyId:mayRevealPublicIdentity(origin)?status.keyId:null,
+        label:mayRevealPublicIdentity(origin)?status.label:null,
+        publicKey:mayRevealPublicIdentity(origin)?status.publicKey:null,
         algorithm:status.keyAlgorithm,
         hardwareMode:status.hardwareMode,
         vaultMode:status.vaultMode
@@ -466,9 +496,12 @@ function startBridge(){
           challenge:body.challenge,
           audience:body.audience||origin||""
         };
+        approveQuanticSiteOrigin(origin,input.audience);
         if(activeIdentity.algorithm===HARDWARE_ALGORITHM){
           const payload=assertionPayload(input);
+          const keyId=activeIdentity.keyId;
           const signature=await requestHardwareSignature(payload,activeIdentity.hardwareDeviceId);
+          if(activeIdentity?.keyId!==keyId||!mayRevealPublicIdentity(origin))return json(res,423,{error:"identity_locked"},cors);
           return json(res,200,{
             version:1,
             algorithm:HARDWARE_ALGORITHM,
@@ -522,7 +555,10 @@ ipcMain.handle("vault:unlock-hardware",(_event,options)=>unlockHardwareIdentity(
 ipcMain.handle("vault:update-profile",(_event,{profile,hardwareVaultKey}={})=>updateProfile(profile||{},hardwareVaultKey||""));
 ipcMain.handle("vault:lock",()=>lockIdentity());
 ipcMain.handle("vault:hardware-disconnected",(_event,{deviceId}={})=>{
-  if(activeIdentity?.algorithm===HARDWARE_ALGORITHM&&(!deviceId||deviceId===activeIdentity.hardwareDeviceId))activeIdentity=null;
+  if(activeIdentity?.algorithm===HARDWARE_ALGORITHM&&(!deviceId||deviceId===activeIdentity.hardwareDeviceId)){
+    activeIdentity=null;
+    approvedWebOrigins.clear();
+  }
   return publicStatus();
 });
 ipcMain.on("hardware:sign-response",(_event,response={})=>{
