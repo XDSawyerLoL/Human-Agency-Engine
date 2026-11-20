@@ -4,15 +4,26 @@ Compagnon local de **Quantic ID**.
 
 ## Modes
 
-### USB standard
+### USB standard protégé par deux facteurs (v0.4.3)
 
-- aucun code local à mémoriser ;
-- `identity-vault.json` contient le coffre chiffré ;
-- `identity-vault.key` contient le secret logiciel qui ouvre le coffre ;
-- brancher la clé permet un déverrouillage en un clic ;
-- retirer la clé verrouille l’identité.
+Une **clé USB ordinaire est toujours copiable** : on ne peut pas garantir qu’elle est physiquement présente à partir de ses seuls fichiers.
 
-Ce mode est simple, mais une copie complète de la clé USB peut être clonée.
+Pour un nouveau coffre USB, Identity Vault exige désormais :
+- `identity-vault.key` : jeton aléatoire de 256 bits qui reste sur la clé USB ;
+- **une phrase secrète de 16 caractères minimum, idéalement 5 mots aléatoires, qui ne doit jamais être enregistrée sur cette clé** ;
+- une dérivation `scrypt` (N=2^17, r=8, p=1, 128 Mio de mémoire) et `AES-256-GCM` pour chiffrer la clé privée et le profil.
+
+Une copie du contenu USB **ne suffit plus à déchiffrer le nouveau coffre** sans cette phrase. Une phrase faible peut être attaquée hors ligne ; choisissez une phrase longue et réellement imprévisible.
+
+Les anciens coffres en mode `usb-presence` doivent être déverrouillés **dans Identity Vault**, puis migrés à l’aide du formulaire intégré. Pendant la migration :
+- le **même Quantic ID** et la même paire de clés sont conservés pour que l'association SWAPP existante reste valable ;
+- le coffre est réécrit de manière atomique et la phrase n’est pas sauvegardée ;
+- les anciens coffres clonables **ne peuvent plus émettre de signature SWAPP** tant que la conversion n'est pas faite ;
+- l'application ne crée pas de sauvegarde en clair des deux facteurs pendant la conversion.
+
+**Limite fondamentale :** une copie prise AVANT la migration peut encore signer avec **la même clé privée**. Seule une **rotation/revocation côté serveur du Quantic ID historique** peut neutraliser ces copies. Rechercher les anciennes sauvegardes `identity-vault.backup-*.json` accompagnées de leur `.key` ; les traiter comme des secrets susceptibles d'avoir été copiés. Conserver des sauvegardes de secours uniquement sous protection indépendante. Sans la nouvelle phrase et sans une récupération préalablement organisée, le coffre pourrait être définitivement perdu.
+
+Un poste Windows compromis peut surveiller les saisies, prendre une session active et demander une signature. La double protection USB n'est pas une preuve de présence physique inviolable ; le mode matériel à vérification de présence reste nécessaire pour cet objectif.
 
 ### Quantic Hardware Key
 
@@ -76,11 +87,11 @@ Créer une identité Hardware produit nécessairement une **nouvelle paire crypt
 Avant remplacement du coffre actif, Identity Vault sauvegarde automatiquement le coffre existant.
 
 
-## Compatibilité SWAPP.TV — v0.4.1
+## Compatibilité SWAPP.TV — v0.4.3
 
-La version 0.4.1 (20 novembre 2026) autorise spécifiquement les origines HTTPS `https://swapp.tv` et `https://www.swapp.tv` pour la **présence Quantic ID optionnelle**.
+La version 0.4.3 conserve la compatibilité avec spécifiquement les origines HTTPS `https://swapp.tv` et `https://www.swapp.tv` pour la **présence Quantic ID optionnelle**.
 
-- Installer l'édition Windows v0.4.1 sur le même PC que le navigateur.
+- Installer l'édition Windows v0.4.3 sur le même PC que le navigateur.
 - Lancer Identity Vault, puis déverrouiller l'identité.
 - Ouvrir `https://swapp.tv/compte`, puis cliquer « Activer ma présence Quantic ID ».
 - Si Chrome ou Edge le demande, autoriser l'accès de SWAPP aux **applications sur cet appareil** (réseau local / loopback). Ne jamais désactiver la sécurité générale du navigateur.
